@@ -13,9 +13,13 @@ import {
   type SessionEnv,
 } from "./session";
 import { servedEstates, TOWN } from "../../../estate/faithnet";
+import { connectRoutes, hasWire } from "./routes/connect";
+import { askingKeyAddress, type WireEnv } from "./wires";
 export { ReaderRunDO };
 
-export interface Env extends SessionEnv {
+export interface Env extends SessionEnv, WireEnv {
+  /** The estate's agent runtime — a reader's own agent is asked there over their wire. */
+  A2A_URL?: string;
   /** reader-mcp by URL (dev) or by service binding (deployed — same-account workers.dev fetches 1042). */
   MCP_URL?: string;
   MCP?: {
@@ -36,6 +40,7 @@ const DEV_AGENT: Address = "0x0000000000000000000000000000000000000001";
 
 const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors());
+app.route("/", connectRoutes);
 
 const mcpUrl = (env: Env) =>
   (env.MCP_URL ?? "http://127.0.0.1:8890").replace(/\/$/, "");
@@ -111,6 +116,8 @@ app.get("/health", (c) =>
     chainId: Number(c.env.A2A_CHAIN_ID ?? TOWN.chainId),
     estates: servedEstates(c.env).map((e) => ({ id: e.id, home: e.home })),
     devStubSessions: c.env.DEV_STUB_SESSIONS === "1",
+    askingKey: askingKeyAddress(c.env),
+    wireStore: !!c.env.DB,
   })
 );
 
@@ -168,7 +175,7 @@ app.post("/hello", async (c) => {
 app.get("/me", async (c) => {
   const reader = await readerFromToken(c.env, bearerOf(c.req.raw));
   if (!reader) return c.json({ ok: false, error: "no reader session" }, 401);
-  return c.json({ ok: true, reader });
+  return c.json({ ok: true, reader, wire: await hasWire(c.env, reader.agent) });
 });
 
 /** Local dev only: the seed demo reader(s) the web app may sign in as. Empty unless DEV_STUB_SESSIONS = "1". */

@@ -30,6 +30,12 @@
         "description",
         "a2aEndpoint"
       ]
+    },
+    "vaultKeyBound": "2026-10-21 (until 2027-10-21)",
+    "governor": {
+      "name": "seed-reader.org",
+      "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
+      "paired": false
     }
   },
   "people": {
@@ -45,18 +51,34 @@
           "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
           "name": "seed-reader.workspace",
           "kind": "workspace"
+        },
+        {
+          "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
+          "name": "seed-reader.org",
+          "kind": "organization",
+          "role": "steward"
+        },
+        {
+          "sa": "0x8f627eca02ecff4e948bc39b7da3cc79ddf9333c",
+          "name": "seed-bible.svc",
+          "kind": "service",
+          "role": "steward"
         }
-      ],
-      "treasury": {
-        "sa": "0x0a27f9dc2eaf2a532599acdbeea354a707833cc7",
-        "purpose": "person-treasury",
-        "note": "minted by the Home at first sign-in (spec 431 birthright, 1,000 SHQ); paid 8 SHQ for seedreader.me and 4 SHQ for seed-reader.workspace"
-      },
-      "nameBought": {
-        "at": "2026-10-21",
-        "claimTx": "0xe0a6d1f1bae25fa9\u2026",
-        "note": "seedreader.me bought and presented via ap-home scripts/buy-name.mts"
-      }
+      ]
     }
+  },
+  "org": {
+    "name": "seed-reader.org",
+    "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
+    "facts": "estate/seed-reader-org.faithnet.json"
+  },
+  "service": {
+    "name": "seed-bible.svc",
+    "sa": "0x8f627eca02ecff4e948bc39b7da3cc79ddf9333c",
+    "facts": "estate/seed-bible-svc.faithnet.json"
+  },
+  "client": {
+    "client_id": "seed-bible-reader",
+    "facts": "estate/client.seed-bible-reader.json"
   }
 }

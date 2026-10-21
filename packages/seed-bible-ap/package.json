@@ -17,7 +17,10 @@
     "deploy:faithnet": "wrangler deploy -c apps/reader-mcp/wrangler.toml --env faithnet && wrangler deploy -c apps/reader-a2a/wrangler.toml --env faithnet && pnpm build:web && wrangler deploy -c apps/reader-web/wrangler.toml --env faithnet",
     "test": "vitest run",
     "test:watch": "vitest",
-    "port:locales": "node scripts/port-locales.mjs"
+    "port:locales": "node scripts/port-locales.mjs",
+    "charter:services": "node scripts/charter-services.mjs",
+    "buy:names": "node scripts/buy-names.mjs",
+    "register:client": "node scripts/register-client.mjs"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",

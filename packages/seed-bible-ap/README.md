@@ -88,6 +88,20 @@ ap-home `scripts/charter-service-agent.mts --type workspace`, salt 1 over seedre
 | Shape       | standalone: no governing organization, so no members; access is a direct person → workspace grant               |
 | Name        | `seed-reader.workspace` not bought yet (priced root; needs seedreader's treasury with SHQ, then `buy-name.mts`) |
 
+### The estate (step 1 — estate-custody, 2026-10-21)
+
+| Agent                             | Address          | Name           | Custody / steward                                                        |
+| --------------------------------- | ---------------- | -------------- | ------------------------------------------------------------------------ |
+| `seedreader.me` (person)          | `0xdbb41f…b3db`  | bought (8 SHQ) | seedreader's key                                                         |
+| `seed-reader.workspace`           | `0x5DD5f3…d307F` | bought (4)     | seedreader's key, salt 1; vault key bound; standalone (org pairing open) |
+| `seed-reader.org` (governing org) | `0x0D6f3D…cEA26` | bought (12)    | chartered through seedreader's Ask; seedreader stewards                  |
+| `seed-bible.svc` (serving plane)  | `0x8f627e…9333c` | bought (10)    | chartered through seedreader's Ask; vault key bound                      |
+
+The `seed-bible-reader` client at the Home now mints the **ask-as-me wire** beside the id_token (`ask_with_login`, template
+`ask-as-me`, `ask_delegate` = reader-a2a's asking key, `libraryFolders: ['seed-bible']`). reader-web hands the wire to
+reader-a2a (`POST /api/connect`), which checks it is the reader's, names its key and is `harness.ask`-shaped, and keeps it
+in D1 (`seed-reader-a2a`, `migrations/`). `GET /me` reports `wire: true`. Facts: `estate/*.json`; procedures: `docs/runbooks/`.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App        | Worker                           | Host                                                                                         |

@@ -154,6 +154,24 @@ pub.people[handle] = {
 save();
 
 // The local dev lane: reader-a2a admits `dev:<handle>` as this person (DEV_STUB_SESSIONS=1, never deployed).
+// Beside it, the workspace's ASKING KEY — the `ask_delegate` the Home registers for `seed-bible-reader` — kept in
+// .seed/ (gitignored) and handed to the Worker as `READER_ASK_PRIVATE_KEY`. A revocable delegate, never an identity.
+const ASK_KEY = new URL(".seed/reader-a2a-ask.local.json", ROOT);
+let askKey = existsSync(ASK_KEY)
+  ? JSON.parse(readFileSync(ASK_KEY, "utf8"))
+  : null;
+if (!askKey?.privateKey) {
+  const privateKey = generatePrivateKey();
+  askKey = {
+    purpose:
+      "reader-a2a asking key — the ask_delegate the Home registers for seed-bible-reader; a revocable delegate, never an identity",
+    privateKey,
+    address: privateKeyToAccount(privateKey).address,
+  };
+  writeFileSync(ASK_KEY, `${JSON.stringify(askKey, null, 2)}\n`, {
+    mode: 0o600,
+  });
+}
 const existingVars = existsSync(DEV_VARS) ? readFileSync(DEV_VARS, "utf8") : "";
 const marker =
   /^A2A_INTERNAL_MARKER=(.+)$/m.exec(existingVars)?.[1] ??
@@ -171,6 +189,7 @@ writeFileSync(
     "DEV_STUB_SESSIONS=1",
     `DEV_READERS=${JSON.stringify(devReaders)}`,
     `A2A_INTERNAL_MARKER=${marker}`,
+    `READER_ASK_PRIVATE_KEY=${askKey.privateKey}`,
     "",
   ].join("\n"),
   { mode: 0o600 }
@@ -186,10 +205,13 @@ console.log(`  public row      ${PUBLIC.pathname}`);
 console.log(
   `  dev session     apps/reader-a2a/.dev.vars → sign in locally as dev:${handle}`
 );
+console.log(
+  `  asking key      ${askKey.address} (reader-a2a ask_delegate at the Home)`
+);
 
 if (!MINT) {
   console.log(
-    `\nNot minted on chain. To deploy the account, claim ${handle}.me and bind the vault key on faithchain: pnpm seed:reader -- --mint --handle ${handle}`
+    `\nNot minted on chain. To deploy the account, declare the person type and bind the vault key on faithchain: pnpm seed:reader -- --mint --handle ${handle}`
   );
   process.exit(0);
 }

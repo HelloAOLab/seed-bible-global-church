@@ -68,3 +68,44 @@ export async function listDevReaders(): Promise<DevReader[]> {
     return [];
   }
 }
+
+/** Hand the reader's ask-as-me wire to reader-a2a, which keeps it per person (only after their Home verified them). */
+export async function connectWire(
+  token: string,
+  delegation: Record<string, unknown>
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${A2A_BASE}/api/connect`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ delegation }),
+  }).catch(() => null);
+  if (!res)
+    return { ok: false, error: "the reader workspace could not be reached" };
+  return (await res
+    .json()
+    .catch(() => ({ ok: false, error: `HTTP ${res.status}` }))) as {
+    ok: boolean;
+    error?: string;
+  };
+}
+
+/** Who the workspace says you are, verified against your Home, and whether it holds your wire. */
+export async function whoAmI(token: string): Promise<{
+  ok: boolean;
+  reader?: { agent: string; name: string; via: string };
+  wire?: boolean;
+  error?: string;
+}> {
+  const res = await fetch(`${A2A_BASE}/me`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  return res.json() as Promise<{
+    ok: boolean;
+    reader?: { agent: string; name: string; via: string };
+    wire?: boolean;
+    error?: string;
+  }>;
+}

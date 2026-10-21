@@ -3,6 +3,7 @@
 #   DEV_STUB_SESSIONS = "1"      accept `dev:<handle>` sessions for the seed demo reader — NEVER deployed
 #   DEV_READERS       = {...}    the seed reader's handle → { sa, name }
 #   A2A_INTERNAL_MARKER          the in-Worker marker the run object requires
+#   READER_ASK_PRIVATE_KEY       the asking key (the ask_delegate registered at the Home) — a revocable delegate
 name = "seed-bible-reader-a2a"
 main = "src/worker.ts"
 compatibility_date = "2026-05-19"
@@ -17,6 +18,14 @@ MCP_URL = "http://127.0.0.1:8890"
 ESTATE_IDS = "faithnet"
 AGENT_NAME = "seed-reader.workspace"
 A2A_CHAIN_ID = "34348"
+A2A_URL = "https://a2a.faithnet.io"
+
+# The ask-as-me wires readers hand this workspace (migrations/). Local dev: a local D1 under .wrangler/.
+[[d1_databases]]
+binding = "DB"
+database_name = "seed-reader-a2a"
+database_id = "9960fc7c-297e-47bc-87bb-272b0f0ac72e"
+migrations_dir = "migrations"
 
 # The agent's own run object (checkpoints · progress · records).
 [[durable_objects.bindings]]
@@ -31,6 +40,7 @@ new_sqlite_classes = ["ReaderRunDO"]
 # FAITHNET (faithchain 34348) — serves the readers of the faithnet estate: a reader's id_token is
 # accepted only from www.faithnet.me or a member's own `<label>.faithnet.me`. Secrets to set:
 #   wrangler secret put A2A_INTERNAL_MARKER -c apps/reader-a2a/wrangler.toml --env faithnet
+#   wrangler secret put READER_ASK_PRIVATE_KEY -c apps/reader-a2a/wrangler.toml --env faithnet
 # A2A_AGENT_SA is the chartered `seed-reader.workspace` Smart Agent (estate/seed-reader.faithnet.json),
 # custodied by the seed reader.
 # ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -46,6 +56,7 @@ custom_domain = true
 ESTATE_IDS = "faithnet"
 AGENT_NAME = "seed-reader.workspace"
 A2A_CHAIN_ID = "34348"
+A2A_URL = "https://a2a.faithnet.io"
 DEV_STUB_SESSIONS = "0"
 A2A_AGENT_SA = "0x5DD5f3dB5085604b0f6A907BBb35AE645AFd307F"
 A2A_PUBLIC_ORIGIN = "https://seed-reader-a2a.faithnet.io"
@@ -53,6 +64,12 @@ A2A_PUBLIC_ORIGIN = "https://seed-reader-a2a.faithnet.io"
 [[env.faithnet.services]]
 binding = "MCP"
 service = "seed-bible-reader-mcp-faithnet"
+
+[[env.faithnet.d1_databases]]
+binding = "DB"
+database_name = "seed-reader-a2a"
+database_id = "9960fc7c-297e-47bc-87bb-272b0f0ac72e"
+migrations_dir = "migrations"
 
 [[env.faithnet.durable_objects.bindings]]
 name = "RUNS"

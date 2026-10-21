@@ -1,0 +1,29 @@
+{
+  "purpose": "spec 444 W3 \u2014 the organization that issues its members' credentials (an operator note, not a persona)",
+  "home": "https://www.faithnet.me",
+  "chainId": 34348,
+  "org": {
+    "label": "seed-reader",
+    "sa": "0x0D6f3D14Fa8d28b8A8681649368B073BDC5cEA26",
+    "name": "seed-reader.org",
+    "nameLater": false,
+    "steward": "seedreader",
+    "custodian": "0xe7d5068b8d0bbca9a08f3642d183f08aaaa774a2",
+    "txHash": "0xf99b8c53254adddf98e133d2d6ff26f4537f1e2c345c94c817b08348e450378c",
+    "kind": "organization",
+    "displayName": "Seed Bible readers",
+    "governs": {
+      "workspace": "seed-reader.workspace",
+      "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
+      "paired": false,
+      "note": "the governance pair (workspace.governor / workspace:<ws>) is not written yet \u2014 the workspace stands alone until it gets members (step 5)"
+    }
+  },
+  "createdAt": "2026-10-21T23:42:07.610Z",
+  "nameBought": {
+    "at": "2026-10-21",
+    "price": "12 SHQ",
+    "payer": "0x0a27f9dc2eaf2a532599acdbeea354a707833cc7",
+    "records": ["addr", "agentKind", "displayName", "description"]
+  }
+}

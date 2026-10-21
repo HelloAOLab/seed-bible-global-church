@@ -130,6 +130,12 @@ export function App() {
             <span class="muted small">
               {s.sub} · via {s.via}
             </span>
+            <br />
+            <span class="muted small">
+              {s.wire
+                ? "Your agent may keep your reading record in your Library (ask-as-me wire held by the reader workspace)."
+                : (s.wireNote ?? "No wire: reading stays local-only.")}
+            </span>
           </p>
           <button onClick={onSignOut}>Sign out</button>
         </section>
