@@ -1,0 +1,59 @@
+# reader-a2a — the Seed Bible reader workspace agent (hello world). Local dev: `pnpm dev:a2a` (:8891).
+# Dev secrets come from `.dev.vars` beside this file, written by `pnpm seed:reader` (gitignored):
+#   DEV_STUB_SESSIONS = "1"      accept `dev:<handle>` sessions for the seed demo reader — NEVER deployed
+#   DEV_READERS       = {...}    the seed reader's handle → { sa, name }
+#   A2A_INTERNAL_MARKER          the in-Worker marker the run object requires
+name = "seed-bible-reader-a2a"
+main = "src/worker.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8891
+local_protocol = "http"
+
+[vars]
+MCP_URL = "http://127.0.0.1:8890"
+ESTATE_IDS = "faithnet"
+AGENT_NAME = "seed-reader.workspace"
+A2A_CHAIN_ID = "34348"
+
+# The agent's own run object (checkpoints · progress · records).
+[[durable_objects.bindings]]
+name = "RUNS"
+class_name = "ReaderRunDO"
+
+[[migrations]]
+tag = "v1-reader-runs"
+new_sqlite_classes = ["ReaderRunDO"]
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# FAITHNET (faithchain 34348) — serves the readers of the faithnet estate: a reader's id_token is
+# accepted only from www.faithnet.me or a member's own `<label>.faithnet.me`. Secrets to set:
+#   wrangler secret put A2A_INTERNAL_MARKER -c apps/reader-a2a/wrangler.toml --env faithnet
+# A2A_AGENT_SA is the chartered `seed-reader.workspace` Smart Agent (estate/seed-reader.faithnet.json),
+# custodied by the seed reader.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+[env.faithnet]
+name = "seed-bible-reader-a2a-faithnet"
+workers_dev = true
+
+[[env.faithnet.routes]]
+pattern = "seed-reader-a2a.faithnet.io"
+custom_domain = true
+
+[env.faithnet.vars]
+ESTATE_IDS = "faithnet"
+AGENT_NAME = "seed-reader.workspace"
+A2A_CHAIN_ID = "34348"
+DEV_STUB_SESSIONS = "0"
+A2A_AGENT_SA = "0x5DD5f3dB5085604b0f6A907BBb35AE645AFd307F"
+A2A_PUBLIC_ORIGIN = "https://seed-reader-a2a.faithnet.io"
+
+[[env.faithnet.services]]
+binding = "MCP"
+service = "seed-bible-reader-mcp-faithnet"
+
+[[env.faithnet.durable_objects.bindings]]
+name = "RUNS"
+class_name = "ReaderRunDO"

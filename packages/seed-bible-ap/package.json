@@ -1,0 +1,48 @@
+{
+  "name": "@seed-bible/ap",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Seed Bible on the agenticprimitives substrate — a hello-world reader triad (reader-web, reader-a2a, reader-mcp) on the faithnet town and estate, built the same way as verifiable-content-demo. Feature set is deliberately tiny; the real apps are planned after this scaffold stands.",
+  "type": "module",
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:mcp": "wrangler dev -c apps/reader-mcp/wrangler.toml",
+    "dev:a2a": "wrangler dev -c apps/reader-a2a/wrangler.toml",
+    "dev:web": "vite --config apps/reader-web/vite.config.ts",
+    "build:web": "vite build --config apps/reader-web/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/reader-web/tsconfig.json --noEmit",
+    "smoke": "tsx scripts/smoke.ts",
+    "seed:reader": "node scripts/seed-reader.mjs",
+    "doctor": "ap doctor",
+    "deploy:faithnet": "wrangler deploy -c apps/reader-mcp/wrangler.toml --env faithnet && wrangler deploy -c apps/reader-a2a/wrangler.toml --env faithnet && pnpm build:web && wrangler deploy -c apps/reader-web/wrangler.toml --env faithnet",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "port:locales": "node scripts/port-locales.mjs"
+  },
+  "dependencies": {
+    "@agenticprimitives/a2a": "0.0.0-alpha.45",
+    "@agenticprimitives/connect-client": "1.0.0-alpha.31",
+    "@agenticprimitives/orchestration": "0.0.0-alpha.22",
+    "@agenticprimitives/service-host": "0.0.0-alpha.24",
+    "@agenticprimitives/types": "1.0.0-alpha.41",
+    "@preact/signals": "^2.9.1",
+    "hono": "^4.12.23",
+    "jose": "^6.2.12",
+    "preact": "catalog:",
+    "viem": "^2.52.2"
+  },
+  "devDependencies": {
+    "@agenticprimitives/agent-account": "1.0.0-alpha.41",
+    "@agenticprimitives/agent-naming": "1.0.0-alpha.41",
+    "@agenticprimitives/delegation": "1.0.0-alpha.41",
+    "@agenticprimitives/devkit": "0.0.0-alpha.29",
+    "@cloudflare/workers-types": "^4.20260604.1",
+    "@preact/preset-vite": "^2.10.5",
+    "@types/node": "^24.5.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.13",
+    "vitest": "^4.1.8",
+    "wrangler": "^4.0.0"
+  }
+}

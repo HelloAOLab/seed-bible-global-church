@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@seed/*": ["lib/*"]
+    }
+  },
+  "include": [
+    "estate/**/*.ts",
+    "lib/**/*.ts",
+    "apps/reader-mcp/src/**/*",
+    "apps/reader-a2a/src/**/*",
+    "apps/seed-bible-mcp/src/**/*",
+    "apps/seed-bible-a2a/src/**/*",
+    "scripts/smoke.ts",
+    "scripts/smoke/**/*.ts",
+    "test/**/*.ts"
+  ]
+}

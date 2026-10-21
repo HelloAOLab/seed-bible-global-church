@@ -1,0 +1,62 @@
+{
+  "v": 1,
+  "note": "The Seed Bible reader workspace on faithchain \u2014 public addresses only; keys live in .seed/ (gitignored) and, for Quick Connect, in the Home's roster.",
+  "chainId": 34348,
+  "estate": "faithnet",
+  "clientId": "seed-bible-reader",
+  "workspace": {
+    "name": "seed-reader.workspace",
+    "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
+    "displayName": "Seed Bible reader workspace",
+    "agentType": "workspace",
+    "custodian": "seedreader",
+    "custodianEoa": "0xE7d5068b8D0bBca9a08f3642d183f08aAAA774a2",
+    "salt": 1,
+    "estate": "faithnet.estate",
+    "charteredAt": "2026-10-21T23:20:00Z",
+    "charteredBy": "ap-home scripts/charter-service-agent.mts --type workspace (standalone: no governing organization)",
+    "deployTx": "0xb15cd3d3c04979e64704927741fce9aea6085df89e0dfb1a16123cb11658a196",
+    "endpoints": {
+      "a2aEndpoint": "https://seed-reader-a2a.faithnet.io"
+    },
+    "notWritten": [],
+    "nameBought": {
+      "at": "2026-10-21",
+      "claimTx": "0x6ee27457681edeae\u2026",
+      "records": [
+        "addr",
+        "agentKind",
+        "displayName",
+        "description",
+        "a2aEndpoint"
+      ]
+    }
+  },
+  "people": {
+    "seedreader": {
+      "name": "seedreader.me",
+      "displayName": "Seed Reader",
+      "sa": "0xdbb41f779194d605e636f9bab64b105fd025b3db",
+      "custodianEoa": "0xE7d5068b8D0bBca9a08f3642d183f08aAAA774a2",
+      "deployed": true,
+      "blurb": "The Seed Bible reader workspace's demo reader \u2014 signs in at the faithnet Home and says hello through seed-reader.workspace.",
+      "custodies": [
+        {
+          "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
+          "name": "seed-reader.workspace",
+          "kind": "workspace"
+        }
+      ],
+      "treasury": {
+        "sa": "0x0a27f9dc2eaf2a532599acdbeea354a707833cc7",
+        "purpose": "person-treasury",
+        "note": "minted by the Home at first sign-in (spec 431 birthright, 1,000 SHQ); paid 8 SHQ for seedreader.me and 4 SHQ for seed-reader.workspace"
+      },
+      "nameBought": {
+        "at": "2026-10-21",
+        "claimTx": "0xe0a6d1f1bae25fa9\u2026",
+        "note": "seedreader.me bought and presented via ap-home scripts/buy-name.mts"
+      }
+    }
+  }
+}
