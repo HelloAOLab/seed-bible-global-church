@@ -151,3 +151,44 @@ describe("what the reader did goes before reading history", () => {
     );
   });
 });
+
+describe("reading history during a send", () => {
+  it("waits for the pass after the send in flight, rather than going up beside it", async () => {
+    const { backend, live } = slow(200);
+    const d = device(backend);
+    const order: string[] = [];
+    const merge = backend.mergeBucket.bind(backend);
+    backend.mergeBucket = async (collection, ...rest) => {
+      order.push(`start:${collection}`);
+      return merge(collection, ...rest).finally(() =>
+        order.push(`done:${collection}`)
+      );
+    };
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await until(() => live.now === 1);
+    await d.stores.buckets.set("history:JHN.3", {
+      "@context": {},
+      "@id": "h",
+      "@graph": [
+        {
+          "@id": "urn:seed:read:1",
+          "@type": "seed:ReadingEvent",
+          heldBy: READER.agent,
+          aboutPassage: "JHN.3",
+          opId: "h1",
+          createdAt: "2026-10-22T00:00:00Z",
+          updatedAt: "2026-10-22T00:00:00Z",
+        },
+      ],
+    } as never);
+    await d.outbox.queue("history", "JHN.3", "h1");
+    await until(
+      async () =>
+        (await d.stores.outbox.keys()).length === 0 && !d.outbox.flushing.value,
+      3000
+    );
+    expect(order.indexOf("done:highlights")).toBeLessThan(
+      order.indexOf("start:history")
+    );
+  });
+});

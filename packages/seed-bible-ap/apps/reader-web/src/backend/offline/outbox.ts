@@ -113,7 +113,9 @@ export function createOutbox(deps: OutboxDeps) {
     }, settleMs);
   }
 
-  async function flushOnce(): Promise<FlushReport> {
+  async function flushOnce(
+    opts: { marksOnly?: boolean } = {}
+  ): Promise<FlushReport> {
     const report: FlushReport = { merged: [], skipped: [] };
     if (!deps.backend.identity()) {
       report.error = "signed out";
@@ -193,7 +195,8 @@ export function createOutbox(deps: OutboxDeps) {
       FLUSH_CONCURRENCY,
       send
     );
-    await eachLimited(keys.filter(isHistory), FLUSH_CONCURRENCY, send);
+    if (!opts.marksOnly)
+      await eachLimited(keys.filter(isHistory), FLUSH_CONCURRENCY, send);
     await count();
     return report;
   }
@@ -204,7 +207,7 @@ export function createOutbox(deps: OutboxDeps) {
       // ANOTHER bucket goes up now, beside it, rather than waiting for a pass that may take seconds.
       again = true;
       if (!beside)
-        beside = flushOnce()
+        beside = flushOnce({ marksOnly: true })
           .catch(() => undefined)
           .finally(() => {
             beside = null;
