@@ -48,6 +48,8 @@ export interface FakePersonAgentOptions {
   connectors?: Record<string, unknown[]>;
   /** The runtime's clock, for an expiry test. */
   now?: () => number;
+  /** Tools this agent's playbook does not offer (an older snapshot): refused in the runtime's words. */
+  refuse?: string[];
 }
 
 export interface FakePersonAgent {
@@ -180,6 +182,10 @@ export function fakePersonAgent(opts: FakePersonAgentOptions): FakePersonAgent {
     addressee: string
   ): Promise<unknown> {
     const args = step.args ?? {};
+    if (opts.refuse?.includes(step.toolId))
+      throw new Error(
+        `plan_refused: step 1 names "${step.toolId}", which this agent does not offer — choose among: library.file.save, library.file.visibility, library.file.publish, ask.unsupported.`
+      );
     if (LIBRARY.has(step.toolId)) {
       // A Library is written by its own agent; another agent's is read only when public.
       const acts = step.toolId.startsWith("library.file.");

@@ -31,21 +31,42 @@ const ALLOWED_CLASSES = new Set([
   "sb-verse-reference-link",
 ]);
 
+/** Elements whose CONTENT is not text either: nothing between their tags is a note. */
+const DROPPED_WITH_CONTENT = new Set([
+  "script",
+  "style",
+  "template",
+  "iframe",
+  "object",
+  "embed",
+  "noscript",
+]);
+
 const escapeText = (s: string) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function sanitizeNoteHtml(html: string): string {
   let out = "";
-  const re = /<([^>]*)>|([^<]+)/g;
+  // A tag, a run of text, or a stray `<` that opens no tag (escaped, never dropped silently).
+  const re = /<([^>]*)>|([^<]+)|(<)/g;
   let m: RegExpExecArray | null;
+  let dropping: string | null = null;
   while ((m = re.exec(html))) {
-    if (m[2] !== undefined) {
-      out += escapeText(m[2]);
+    if (m[2] !== undefined || m[3] !== undefined) {
+      if (!dropping) out += m[3] !== undefined ? "&lt;" : escapeText(m[2]!);
       continue;
     }
     const raw = m[1] ?? "";
     const closing = raw.startsWith("/");
     const nameMatch = /^\/?\s*([a-zA-Z][a-zA-Z0-9]*)/.exec(raw);
     const name = nameMatch?.[1]?.toLowerCase();
+    if (dropping) {
+      if (closing && name === dropping) dropping = null;
+      continue;
+    }
+    if (name && DROPPED_WITH_CONTENT.has(name)) {
+      if (!closing && !raw.trimEnd().endsWith("/")) dropping = name;
+      continue;
+    }
     if (!name || !ALLOWED_TAGS.has(name)) continue;
     if (closing) {
       if (name !== "br") out += `</${name}>`;

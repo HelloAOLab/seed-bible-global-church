@@ -48,6 +48,21 @@ const slugOf = (s: string) =>
 
 type Existing = { id: string; version: number } | undefined;
 
+/**
+ * The id a slice's document gets when the agent cannot be asked what it holds: a playbook assigned before the
+ * Library reads joined the corpus offers the saves but refuses `library.file.read` as unknown (the Home brings the
+ * reads on its next open). A well-formed id the save supplies is kept by the Library (ap-home `upsertEntry`), so the
+ * same slice re-published lands as a new version of the same document, never a twin on the shelf.
+ */
+export function deterministicId(folder: string, name: string): string {
+  return `sb-${`${folder}/${name}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")}`.slice(0, 64);
+}
+
+const READS_NOT_OFFERED = /does not offer|unknown_tool|plan_refused/i;
+
 async function existingId(
   agent: {
     run: <T>(
@@ -71,6 +86,8 @@ async function existingId(
   } catch (e) {
     if (e instanceof WireRefusal && /no document named/i.test(e.message))
       return undefined;
+    if (e instanceof WireRefusal && READS_NOT_OFFERED.test(e.message))
+      return { id: deterministicId(folder, name), version: 0 };
     throw e;
   }
 }

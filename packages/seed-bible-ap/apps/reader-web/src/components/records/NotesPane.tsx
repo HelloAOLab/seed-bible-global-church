@@ -4,7 +4,8 @@
 import { lazy, Suspense } from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Editor } from "@tiptap/core";
-import type { ReaderState } from "../../state";
+import { NEEDS_HOME, type ReaderState } from "../../state";
+import { estateById } from "../../../../../estate/faithnet";
 import { useI18n } from "../../i18n";
 import type { Note } from "../../state/records/annotations";
 import { isHtmlNote, sanitizeNoteHtml } from "./noteHtml";
@@ -303,7 +304,25 @@ export function NotesPane({ state }: { state: ReaderState }) {
         </div>
       )}
       {state.publishing.error.value && (
-        <p className="sb-pane-error">{state.publishing.error.value}</p>
+        <p className="sb-pane-error">
+          {state.publishing.error.value}
+          {NEEDS_HOME.test(state.publishing.error.value) && (
+            <>
+              {" "}
+              {t("first-run-playbook", {
+                defaultValue:
+                  "Your agent does not offer the reader's behaviour yet. Open your Home once — it gives your agent the behaviour by itself — then come back here: the reader retries on its own.",
+              })}{" "}
+              <a
+                href={`${estateById(state.session.value?.estate)?.home ?? "https://www.faithnet.me"}/`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("open-home", { defaultValue: "Open your Home" })}
+              </a>
+            </>
+          )}
+        </p>
       )}
       {!notes.length && !draft && (
         <p className="sb-pane-empty">

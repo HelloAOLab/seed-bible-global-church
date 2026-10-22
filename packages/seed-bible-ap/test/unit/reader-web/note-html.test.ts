@@ -16,7 +16,7 @@ describe("note html", () => {
     const html =
       '<p onclick="x()">hi <script>alert(1)</script><a href="https://evil.example" class="sb-verse-reference-link">x</a><img src=x onerror=y><span style="color:red">s</span></p>';
     expect(sanitizeNoteHtml(html)).toBe(
-      '<p>hi alert(1)<a class="sb-verse-reference-link">x</a><span>s</span></p>'
+      '<p>hi <a class="sb-verse-reference-link">x</a><span>s</span></p>'
     );
   });
   it("tells html notes from the first cut's plain text, and flattens both to text", () => {
