@@ -399,7 +399,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
             <p className="sb-small sb-muted">{progress.value}</p>
           )}
           {samplePeople.value.length > 0 && (
-            <details open>
+            <details>
               <summary>
                 {t("try-sample-people", {
                   defaultValue: "Or try it as one of the Home's sample people",
