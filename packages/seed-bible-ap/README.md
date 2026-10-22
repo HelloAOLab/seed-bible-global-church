@@ -158,6 +158,14 @@ token; follow the leader, decorations (outlined ribbons), presence, chat, roles
 link `?session=&code=`. Proof: `pnpm smoke:session`. Not yet: chat from the scope's topic, huddles, agent seats,
 the SSE fallback, org/circle standing, anonymous guests.
 
+### Church and library (step 7, first cut — church-library, 2026-10-22)
+
+Playlists and reading plans as the reader's own works (`seed:Playlist`, `seed:ReadingPlan`: private JSON-LD
+documents through `seed.work.save/list/read`), plan progress as a `seed:PlanProgress` mark in the `progress`
+bucket, the Library pane (maker, player, sessions to tick), and Publish for a work (a released slice the registry
+lists). Not yet: org acts from a steward (`seed.workspace.ask.org`, §11) and customizations, files on R2 (the
+bucket is bound), link previews.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |

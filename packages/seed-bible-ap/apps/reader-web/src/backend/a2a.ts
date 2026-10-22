@@ -11,6 +11,8 @@ import {
   type PublishSliceArgs,
   type SessionPassageArgs,
   type SessionTicket,
+  type WorkEntry,
+  type WorkFolder,
   type ReaderBackend,
   type ReaderIdentity,
 } from "./ReaderBackend";
@@ -200,6 +202,32 @@ export function createA2aBackend(
         `start a reading session on ${passage.bookId} ${passage.chapterNumber}`
       );
       return r as unknown as SessionTicket;
+    },
+    async listWorks(folder: WorkFolder): Promise<WorkEntry[]> {
+      const r = await ask("seed.work.list", { folder }, `list my ${folder}`);
+      return (r.files as WorkEntry[] | undefined) ?? [];
+    },
+    async readWork(folder: WorkFolder, name: string): Promise<unknown> {
+      const r = await ask(
+        "seed.work.read",
+        { folder, name },
+        `read my work ${name}`
+      );
+      return r.doc;
+    },
+    async saveWork(
+      folder: WorkFolder,
+      name: string,
+      doc: unknown,
+      id?: string
+    ): Promise<{ id?: string }> {
+      const r = await ask(
+        "seed.work.save",
+        { folder, name, doc, ...(id ? { id } : {}) },
+        `keep my work ${name}`
+      );
+      const file = r.file as { id?: string } | undefined;
+      return { ...(file?.id ? { id: file.id } : {}) };
     },
     async sessionJoin(sessionId, code): Promise<SessionTicket> {
       const r = await ask(

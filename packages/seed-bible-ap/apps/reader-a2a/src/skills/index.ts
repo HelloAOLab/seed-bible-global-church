@@ -24,7 +24,15 @@ import {
   startSession,
   type RoomsEnv,
 } from "./session";
-import type { Collection } from "../../../../lib/library-client";
+import {
+  listStep,
+  readStep,
+  saveJsonLdStep,
+  type Collection,
+  type LibraryList,
+  type LibraryRead,
+  type LibrarySaved,
+} from "../../../../lib/library-client";
 
 export const HELLO_TOOL: ToolSpec = {
   id: "seed.hello",
@@ -125,6 +133,64 @@ export const DISCOVER: ToolSpec = {
   establishes: "lookup",
 };
 
+// The reader's own works — playlists and reading plans — as private Library documents under their own folders.
+const WORK_FOLDERS: ReadonlySet<string> = new Set([
+  "seed-bible/playlists",
+  "seed-bible/plans",
+]);
+const workFolderOf = (raw: unknown): string => {
+  const f = String(raw ?? "");
+  if (!WORK_FOLDERS.has(f))
+    throw new WireRefusal(400, `not a work folder: ${f}`);
+  return f;
+};
+const workNameOf = (raw: unknown): string => {
+  const n = String(raw ?? "");
+  if (!/^[a-z0-9][a-z0-9-]{0,80}\.jsonld$/i.test(n))
+    throw new WireRefusal(400, "a work is named <id>.jsonld");
+  return n;
+};
+
+export const WORK_SAVE: ToolSpec = {
+  id: "seed.work.save",
+  description:
+    "Saves one of the signed-in reader's works — a seed:Playlist or seed:ReadingPlan JSON-LD document — privately in their Library (seed-bible/playlists or seed-bible/plans). Args: folder, name (<id>.jsonld), doc, id (the Library file id from an earlier save or list — saves a new version without a read).",
+  inputSchema: {
+    type: "object",
+    properties: {
+      folder: { type: "string" },
+      name: { type: "string" },
+      doc: { type: "object" },
+      id: { type: "string" },
+    },
+    required: ["folder", "name", "doc"],
+  },
+  answers: ["save my playlist", "keep this reading plan"],
+};
+export const WORK_LIST: ToolSpec = {
+  id: "seed.work.list",
+  description:
+    "Lists the signed-in reader's works in a folder (seed-bible/playlists or seed-bible/plans). Args: folder.",
+  inputSchema: {
+    type: "object",
+    properties: { folder: { type: "string" } },
+    required: ["folder"],
+  },
+  answers: ["my playlists", "my reading plans"],
+  establishes: "lookup",
+};
+export const WORK_READ: ToolSpec = {
+  id: "seed.work.read",
+  description: "Reads one of the signed-in reader's works. Args: folder, name.",
+  inputSchema: {
+    type: "object",
+    properties: { folder: { type: "string" }, name: { type: "string" } },
+    required: ["folder", "name"],
+  },
+  answers: ["open my playlist"],
+  establishes: "lookup",
+};
+
 export const CONTACTS: ToolSpec = {
   id: "seed.workspace.contacts",
   description:
@@ -147,6 +213,9 @@ export const TOOLS: ToolSpec[] = [
   SESSION_START,
   SESSION_JOIN,
   SESSION_RECORD,
+  WORK_SAVE,
+  WORK_LIST,
+  WORK_READ,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -154,6 +223,7 @@ const COLLECTIONS: ReadonlySet<string> = new Set([
   "annotations",
   "bookmarks",
   "saves",
+  "progress",
 ]);
 const collectionOf = (raw: unknown): Collection => {
   const c = String(raw ?? "");
@@ -236,6 +306,94 @@ export function invokers(
           slug: String(w.slug ?? ""),
         });
       return publishSlice(deps.env, reader, args as unknown as PublishArgs);
+    },
+    [WORK_SAVE.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const folder = workFolderOf(args.folder);
+      const name = workNameOf(args.name);
+      const agent = await agentFor(deps.env, reader);
+      const known =
+        typeof args.id === "string" && args.id ? args.id : undefined;
+      const existing =
+        known ??
+        (await agent
+          .run<LibraryRead>([readStep(folder, name)], `find ${folder}/${name}`)
+          .then((o) =>
+            o.result.read && o.result.file?.id ? o.result.file.id : undefined
+          )
+          .catch((e: unknown) => {
+            if (
+              e instanceof WireRefusal &&
+              /no document named/i.test(e.message)
+            )
+              return undefined;
+            throw e;
+          }));
+      const out = await agent.run<LibrarySaved>(
+        [
+          saveJsonLdStep(
+            folder,
+            name,
+            JSON.stringify(args.doc ?? {}),
+            existing,
+            "private"
+          ),
+        ],
+        `keep my work ${name}`
+      );
+      if (!out.result.saved || !out.result.file?.id)
+        throw new WireRefusal(
+          502,
+          out.result.refused ?? `your agent did not save ${folder}/${name}`
+        );
+      return {
+        saved: true,
+        folder,
+        name,
+        file: out.result.file,
+        runRef: out.runRef,
+      };
+    },
+    [WORK_LIST.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const folder = workFolderOf(args.folder);
+      const agent = await agentFor(deps.env, reader);
+      try {
+        const out = await agent.run<LibraryList>(
+          [listStep(folder)],
+          `list my ${folder}`
+        );
+        return { folder, files: out.result.files ?? [], runRef: out.runRef };
+      } catch (e) {
+        if (e instanceof WireRefusal && /no (folder|document)/i.test(e.message))
+          return { folder, files: [] };
+        throw e;
+      }
+    },
+    [WORK_READ.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const folder = workFolderOf(args.folder);
+      const name = workNameOf(args.name);
+      const agent = await agentFor(deps.env, reader);
+      const out = await agent.run<LibraryRead>(
+        [readStep(folder, name)],
+        `read my work ${name}`
+      );
+      if (!out.result.read)
+        throw new WireRefusal(404, out.result.refused ?? "no such work");
+      let doc: unknown = null;
+      try {
+        doc = JSON.parse(out.result.text ?? "null");
+      } catch {
+        throw new WireRefusal(502, "the work is not JSON");
+      }
+      return {
+        folder,
+        name,
+        doc,
+        file: out.result.file ?? null,
+        runRef: out.runRef,
+      };
     },
     [SESSION_START.id]: async (_t, args) => {
       const reader = readerOf(asker);

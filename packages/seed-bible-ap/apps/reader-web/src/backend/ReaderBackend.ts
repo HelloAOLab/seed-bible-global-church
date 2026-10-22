@@ -103,4 +103,21 @@ export interface ReaderBackend {
   sessionStart(passage: SessionPassageArgs): Promise<SessionTicket>;
   /** Join a session with its share code (the host needs none). A stranger is refused. */
   sessionJoin(sessionId: string, code?: string): Promise<SessionTicket>;
+  /** The reader's works (playlists, plans) in their Library: list a folder, read one, save one (private). */
+  listWorks(folder: WorkFolder): Promise<WorkEntry[]>;
+  readWork(folder: WorkFolder, name: string): Promise<unknown>;
+  /** Returns the Library file id, which a later save presents to skip the read. */
+  saveWork(
+    folder: WorkFolder,
+    name: string,
+    doc: unknown,
+    id?: string
+  ): Promise<{ id?: string }>;
+}
+
+export type WorkFolder = "seed-bible/playlists" | "seed-bible/plans";
+export interface WorkEntry {
+  id?: string;
+  name: string;
+  version?: number;
 }

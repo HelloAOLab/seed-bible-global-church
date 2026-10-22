@@ -12,6 +12,8 @@ import { createDiscover } from "./social/discover";
 import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
 import { createLiveSession } from "./sessions/live";
+import { createPlaylists } from "./library/playlists";
+import { createPlans } from "./library/plans";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -77,6 +79,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const annotations = createAnnotations(buckets, identity);
   const bookmarks = createBookmarks(buckets, identity);
   const saves = createSaves(buckets, identity);
+  const playlists = createPlaylists(backend, stores, identity);
+  const plans = createPlans(backend, stores, buckets, identity);
   const search = createVerseSearch();
   const position = createPosition(stores);
   const settings = createSettings();
@@ -149,6 +153,25 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     live.leaderMoved();
   });
   const verses = signal<number[]>([]);
+  // Playing a playlist: a Scripture item opens its passage in the selected tab.
+  effect(() => {
+    const c = playlists.current.value;
+    const it = c?.item;
+    if (!it || it["@type"] !== "seed:ScriptureItem") return;
+    const [book, ch, v] = it.aboutPassage.split("-")[0]!.split(".");
+    const r = readingOf();
+    void r
+      .goTo(it.ofEdition ?? r.translationId.value, book!, Number(ch))
+      .then(() => {
+        if (v) {
+          const end = it.aboutPassage.split("-")[1]?.split(".")[2];
+          verses.value = Array.from(
+            { length: Number(end ?? v) - Number(v) + 1 },
+            (_, i) => Number(v) + i
+          );
+        }
+      });
+  });
   effect(() => {
     readingOf().chapterRef.value;
     verses.value = [];
@@ -189,6 +212,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "today"
       | "discover"
       | "session"
+      | "library"
     >("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
@@ -207,6 +231,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     session.value = s;
     await buckets.resync();
     void today.refresh();
+    void playlists.refresh();
+    void plans.refresh();
     const pj = ui.pendingJoin.value;
     if (pj) {
       ui.pendingJoin.value = null;
@@ -253,6 +279,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     annotations,
     bookmarks,
     saves,
+    playlists,
+    plans,
     search,
     position,
     settings,

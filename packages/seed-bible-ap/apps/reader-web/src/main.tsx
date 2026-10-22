@@ -25,6 +25,8 @@ import "./styles/pane-layout.css";
 import "./styles/today.css";
 import "./styles/discover.css";
 import "./styles/friends.css";
+import "./styles/playlists.css";
+import "./styles/plans.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;

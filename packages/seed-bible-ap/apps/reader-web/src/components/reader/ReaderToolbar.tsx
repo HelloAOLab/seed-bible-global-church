@@ -46,7 +46,14 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const pending = state.outbox.pending.value;
   const dark = settings.resolvedTheme().id === "dark";
   const togglePane = (
-    p: "notes" | "account" | "content" | "today" | "discover" | "session"
+    p:
+      | "notes"
+      | "account"
+      | "content"
+      | "today"
+      | "discover"
+      | "session"
+      | "library"
   ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
   const audioPlaying = audio.controller.isPlaying.value;
   const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
@@ -157,6 +164,12 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         active={ui.pane.value === "notes"}
         badge={notes}
         onClick={() => togglePane("notes")}
+      />
+      <Item
+        icon="queue_music"
+        label={t("library", { defaultValue: "Library" })}
+        active={ui.pane.value === "library" || !!state.playlists.playing.value}
+        onClick={() => togglePane("library")}
       />
       <Item
         icon="library_books"

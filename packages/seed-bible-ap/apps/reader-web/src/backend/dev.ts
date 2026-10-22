@@ -15,6 +15,8 @@ import {
   type PublishSliceArgs,
   type ReaderBackend,
   type SessionTicket,
+  type WorkEntry,
+  type WorkFolder,
   type ReaderIdentity,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
@@ -35,6 +37,8 @@ export interface DevBackend extends ReaderBackend {
   readonly registry: Map<string, Offering & { markdown: string }>;
   /** Contacts the fake Home reports. */
   contactList: Contact[];
+  /** The reader's works as the fake Library holds them, by `folder/name`. */
+  readonly works: Map<string, unknown>;
   setIdentity(identity: ReaderIdentity | null): void;
   /** Make the next calls fail as if the network were down (until set back). */
   setOffline(offline: boolean): void;
@@ -49,6 +53,7 @@ export function createDevBackend(
   const buckets = new Map<string, BucketDocument>();
   const calls: DevCall[] = [];
   const registry = new Map<string, Offering & { markdown: string }>();
+  const works = new Map<string, unknown>();
   let who = identity;
   let offline = false;
   const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -67,6 +72,7 @@ export function createDevBackend(
     calls,
     registry,
     contactList: [],
+    works,
     setIdentity: (i) => (who = i),
     setOffline: (o) => (offline = o),
     identity: () => who,
@@ -166,6 +172,28 @@ export function createDevBackend(
     async contacts() {
       guard();
       return clone(this.contactList);
+    },
+    async listWorks(folder: WorkFolder): Promise<WorkEntry[]> {
+      guard();
+      return [...works.keys()]
+        .filter((k) => k.startsWith(`${who!.agent.toLowerCase()}:${folder}/`))
+        .map((k) => ({ name: k.slice(k.lastIndexOf("/") + 1), id: k }));
+    },
+    async readWork(folder: WorkFolder, name: string): Promise<unknown> {
+      guard();
+      const doc = works.get(`${who!.agent.toLowerCase()}:${folder}/${name}`);
+      if (doc === undefined) throw new BackendError("no such work", "refused");
+      return clone(doc);
+    },
+    async saveWork(
+      folder: WorkFolder,
+      name: string,
+      doc: unknown
+    ): Promise<{ id?: string }> {
+      guard();
+      const k = `${who!.agent.toLowerCase()}:${folder}/${name}`;
+      works.set(k, clone(doc));
+      return { id: k };
     },
     async sessionStart(): Promise<SessionTicket> {
       guard();

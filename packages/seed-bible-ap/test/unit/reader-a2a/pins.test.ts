@@ -13,6 +13,9 @@ const WORKSPACE_LOCAL = new Set([
   "seed.session.start",
   "seed.session.join",
   "seed.session.record",
+  "seed.work.save",
+  "seed.work.list",
+  "seed.work.read",
 ]);
 
 describe("pinned skills", () => {

@@ -13,6 +13,7 @@ import { YourContentPane } from "./components/records/YourContentPane";
 import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
 import { SessionPane } from "./components/sessions/SessionPane";
+import { LibraryPane } from "./components/library/LibraryPane";
 import { completeRedirectIfReturning } from "./session";
 
 export function App({ state }: { state: ReaderState }) {
@@ -58,6 +59,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "session" && (
         <aside className="sb-app-pane">
           <SessionPane state={state} />
+        </aside>
+      )}
+      {pane === "library" && (
+        <aside className="sb-app-pane">
+          <LibraryPane state={state} />
         </aside>
       )}
       {pane === "account" && (

@@ -172,7 +172,21 @@ Not yet: choosing between readers, auto-continue to the next chapter, the phone 
 | The session as a record     | ✅   | Starting a session keeps a `seed:ReadingSession` record in the host's Library (the pane shows where). The room itself keeps nothing permanent. |
 | Anonymous guests, voice, QR | ⬜   | [later cuts of step 6]                                                                                                                         |
 
-## 10. Coming next (not working yet)
+## 10. Playlists and reading plans
+
+The **music-list** icon in the bottom toolbar opens the Library pane.
+
+| Feature                     | Mark | How                                                                                                                                       |
+| --------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Make a playlist             | ✅   | Playlists tab → type a title → **Create**. It starts with the passage on screen (the selected verses, or the chapter).                    |
+| Add, reorder, remove items  | ✅   | Open the playlist → **Add the passage on screen**, the arrows, the **x**. (Notes and links as items come with the editor; ⬜)             |
+| Play a playlist             | ✅   | **Play playlist**: the reader opens each passage in turn; **Next** / **Previous** / **Stop** in the player card.                          |
+| Make a reading plan         | ✅   | Reading plans tab → up to which chapter → **Create plan**: one chapter a day from the chapter on screen.                                  |
+| Start a plan, tick readings | ✅   | Open the plan → **Start · Daily** or **Self-paced**. The day's session is outlined; tick a reading when done. Progress syncs like a mark. |
+| Publish a playlist or plan  | ✅   | **Publish** on the card (signed in with a wire): it goes to your public shelf and Discover lists it under its first passage.              |
+| Where they are kept         | ✅   | On this device at once; in your Library when signed in (the card's **Refresh** re-reads the Library).                                     |
+
+## 11. Coming next (not working yet)
 
 | Feature                                                                | Step |
 | ---------------------------------------------------------------------- | ---- |
@@ -186,7 +200,7 @@ Not yet: choosing between readers, auto-continue to the next chapter, the phone 
 | Extensions (audio reader, references, transcript, Twitch …), AI        | 8    |
 | Sitemap, embed mode, onboarding tour, legal modals                     | 9    |
 
-## 11. For testers: how to check it yourself
+## 12. For testers: how to check it yourself
 
 - **The live gate** (needs the repo): `cd packages/seed-bible-ap && A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`
   signs in as `seedreader`, makes marks on one "device", reads them on a second, edits a note and cleans up.

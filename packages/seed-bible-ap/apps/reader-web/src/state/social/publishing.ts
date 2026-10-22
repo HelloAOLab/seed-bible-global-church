@@ -10,6 +10,8 @@ import {
   plainToMarkdown,
 } from "../../components/records/noteMarkdown";
 import type { Note } from "../records/annotations";
+import type { Playlist, ReadingPlan, PlaylistItem } from "@seed/seed-schema";
+import { spanOf } from "../records/marks";
 import { passageOf } from "../records/marks";
 
 export interface PublishedNote {
@@ -87,6 +89,83 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     }
   }
 
+  const itemLine = (it: PlaylistItem) =>
+    it["@type"] === "seed:ScriptureItem"
+      ? `- ${it.aboutPassage}${it.ofEdition ? ` (${it.ofEdition})` : ""}${it.note ? ` — ${it.note}` : ""}`
+      : it["@type"] === "seed:HtmlItem"
+        ? `- ${it.label ?? "Note"}`
+        : `- [${it.label ?? it.url}](${it.url})`;
+
+  /** A playlist or plan released to the public shelf as a slice (kind playlist / plan), indexed under its first passage. */
+  async function publishWork(work: Playlist | ReadingPlan) {
+    const kind = work["@type"] === "seed:Playlist" ? "playlist" : "plan";
+    const items: PlaylistItem[] =
+      work["@type"] === "seed:Playlist"
+        ? work.hasItem
+        : work.hasSession.flatMap((s) => s.readings.map((r) => r.item));
+    const first = items.find((it) => it["@type"] === "seed:ScriptureItem");
+    const passage =
+      first && first["@type"] === "seed:ScriptureItem"
+        ? spanOf(first.aboutPassage).chapter
+        : "GEN.1";
+    const body =
+      work["@type"] === "seed:Playlist"
+        ? work.hasItem.map(itemLine).join("\n")
+        : work.hasSession
+            .map(
+              (s, i) =>
+                `## ${s.label ?? `Day ${i + 1}`}\n\n${s.readings.map((r) => itemLine(r.item)).join("\n")}`
+            )
+            .join("\n\n");
+    const slug = `${kind}-${work["@id"].split(":").pop()!.slice(0, 12).toLowerCase()}`;
+    busy.value = work["@id"];
+    error.value = null;
+    try {
+      const r = await backend.publishSlice({
+        kind,
+        passage,
+        title: work.label,
+        slug,
+        markdown: `# ${work.label}\n\n${work.description ? `${work.description}\n\n` : ""}${body}`,
+        descriptor: { "prov:wasDerivedFrom": work["@id"], work },
+      });
+      published.value = {
+        ...published.value,
+        [work["@id"]]: {
+          noteId: work["@id"],
+          slug,
+          descriptorId: r.descriptorId,
+          passage,
+          publishedAt: new Date().toISOString(),
+        },
+      };
+      await save();
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      throw e;
+    } finally {
+      busy.value = null;
+    }
+  }
+
+  async function withdrawWork(id: string, kind: "playlist" | "plan") {
+    const p = published.value[id];
+    if (!p) return;
+    busy.value = id;
+    try {
+      await backend.withdrawSlice(kind, p.slug);
+      const next = { ...published.value };
+      delete next[id];
+      published.value = next;
+      await save();
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      throw e;
+    } finally {
+      busy.value = null;
+    }
+  }
+
   return {
     published,
     busy,
@@ -94,6 +173,8 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     ready,
     publishNote,
     withdrawNote,
+    publishWork,
+    withdrawWork,
     isPublished: (noteId: string) => noteId in published.value,
   };
 }

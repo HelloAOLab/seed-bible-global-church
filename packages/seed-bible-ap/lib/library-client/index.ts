@@ -7,7 +7,12 @@ import { BucketItem, SEED_CONTEXT } from "../seed-schema";
 import { chapterOf, type OsisRef } from "../seed-protocol";
 
 export const SEED_FOLDER = "seed-bible";
-export type Collection = "highlights" | "annotations" | "bookmarks" | "saves";
+export type Collection =
+  | "highlights"
+  | "annotations"
+  | "bookmarks"
+  | "saves"
+  | "progress";
 /** Collections bucketed by chapter; the rest keep one bucket. */
 const CHAPTERED: ReadonlySet<Collection> = new Set([
   "highlights",
@@ -316,6 +321,21 @@ export interface LibraryRead {
   truncated?: boolean;
   refused?: string;
   file?: { id?: string; version?: number; name?: string; path?: string };
+}
+/** What `library.files.list` answers: the folder's entries (ap-home library-tools.ts). */
+export interface LibraryList {
+  files?: Array<{
+    id?: string;
+    name: string;
+    folder?: string;
+    path?: string;
+    version?: number;
+    size?: number;
+    contentType?: string;
+  }>;
+  count?: number;
+  truncated?: boolean;
+  refused?: string;
 }
 export interface LibrarySaved {
   saved: boolean;
