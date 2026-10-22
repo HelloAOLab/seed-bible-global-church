@@ -9,7 +9,10 @@ import { spanOf } from "../../state/records/marks";
 import { noteText, sanitizeNoteHtml } from "../records/noteHtml";
 import { NoteEditor } from "../records/NotesPane";
 import { passageOf } from "../../state/records/marks";
-import { EDITABLE_VARIABLES } from "../../state/chrome/customizations";
+import {
+  EDITABLE_TEXT_VARIABLES,
+  EDITABLE_VARIABLES,
+} from "../../state/chrome/customizations";
 import type { LinkPreview } from "../../backend/ReaderBackend";
 
 function itemLabel(state: ReaderState, it: PlaylistItem): string {
@@ -808,6 +811,45 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                               </label>
                             );
                           })}
+                        </div>
+                        <div className="sb-customization-grid sb-customization-text">
+                          {EDITABLE_TEXT_VARIABLES.map(
+                            ([name, label, hint]) => {
+                              const key = `${c["@id"]}:${v["@id"]}:${name}`;
+                              const value =
+                                variableDrafts[key] ?? v.variables[name] ?? "";
+                              return (
+                                <label
+                                  key={name}
+                                  className="sb-small sb-customization-field sb-customization-field-text"
+                                >
+                                  <span>{label}</span>
+                                  <input
+                                    className="sb-note-editor"
+                                    placeholder={hint}
+                                    value={value}
+                                    onInput={(e) =>
+                                      setVariableDrafts({
+                                        ...variableDrafts,
+                                        [key]: (e.target as HTMLInputElement)
+                                          .value,
+                                      })
+                                    }
+                                    onBlur={(e) =>
+                                      void state.customizations.setVariable(
+                                        c["@id"],
+                                        v["@id"],
+                                        name,
+                                        (
+                                          e.target as HTMLInputElement
+                                        ).value.trim()
+                                      )
+                                    }
+                                  />
+                                </label>
+                              );
+                            }
+                          )}
                         </div>
                       </div>
                     ))}

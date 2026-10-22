@@ -273,6 +273,20 @@ export function createCustomizations(
 
 export type Customizations = ReturnType<typeof createCustomizations>;
 
+/** The typography a church theme may set, as text: fonts, a Google Fonts stylesheet, line height, column width, UI size. */
+export const EDITABLE_TEXT_VARIABLES: Array<[string, string, string]> = [
+  ["readerFontFamily", "Reader font", "Newsreader, serif"],
+  ["fontFamily", "Interface font", "Plus Jakarta Sans, sans-serif"],
+  [
+    "fontStylesheet",
+    "Font stylesheet (Google Fonts URL)",
+    "https://fonts.googleapis.com/css2?family=Lora&display=swap",
+  ],
+  ["readerLineHeight", "Reader line height", "1.7"],
+  ["readerMaxWidth", "Reader column width", "42rem"],
+  ["uiFontSize", "Interface size", "100%"],
+];
+
 /** The variables a church editor exposes, in order, with plain names. */
 export const EDITABLE_VARIABLES: Array<[string, string]> = [
   ["primaryColor", "Accent"],

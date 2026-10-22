@@ -301,6 +301,56 @@ export function AccountPane({ state }: { state: ReaderState }) {
             ))}
           </select>
         </label>
+
+        {(
+          [
+            [
+              "lineHeight",
+              "Line height",
+              [
+                ["compact", "Compact"],
+                ["normal", "Normal"],
+                ["relaxed", "Relaxed"],
+              ],
+            ],
+            [
+              "margins",
+              "Margins",
+              [
+                ["narrow", "Narrow"],
+                ["normal", "Normal"],
+                ["wide", "Wide"],
+              ],
+            ],
+            [
+              "uiScale",
+              "Interface size",
+              [
+                ["s", "Small"],
+                ["m", "Normal"],
+                ["l", "Large"],
+              ],
+            ],
+          ] as const
+        ).map(([k, label, opts]) => (
+          <label key={k} className="sb-small sb-account-row">
+            <span>{t(`setting-${k}`, { defaultValue: label })}</span>
+            <select
+              value={state.settings[k].value}
+              onChange={(e) =>
+                ((state.settings[k] as { value: string }).value = (
+                  e.target as HTMLSelectElement
+                ).value)
+              }
+            >
+              {opts.map(([v, name]) => (
+                <option key={v} value={v}>
+                  {t(`setting-${k}-${v}`, { defaultValue: name })}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
         {(
           [
             ["showVerseNumbers", "Verse numbers"],

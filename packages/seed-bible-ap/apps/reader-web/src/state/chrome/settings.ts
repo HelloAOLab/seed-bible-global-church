@@ -20,12 +20,35 @@ export interface ScriptureElementsBehavior {
 
 export type ThemeChoice = "light" | "dark" | "system";
 export type FontSize = "xs" | "s" | "m" | "l" | "xl";
+export type LineHeight = "compact" | "normal" | "relaxed";
+export type Margins = "narrow" | "normal" | "wide";
+export type UiScale = "s" | "m" | "l";
+
+/** A theme's font stylesheet is loaded only from Google Fonts or the serving plane's files — never anywhere else. */
+export function allowedFontStylesheet(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return null;
+    if (
+      u.hostname === "fonts.googleapis.com" ||
+      /\.faithnet\.io$/.test(u.hostname)
+    )
+      return u.toString();
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 const KEY = "sbr.settings";
 
 interface Persisted {
   theme?: ThemeChoice;
   fontSize?: FontSize;
+  lineHeight?: LineHeight;
+  margins?: Margins;
+  uiScale?: UiScale;
   scripture?: Partial<ScriptureElementsBehavior>;
 }
 
@@ -46,6 +69,9 @@ export function createSettings(deps: SettingsDeps = {}) {
   const saved = read();
   const theme = signal<ThemeChoice>(saved.theme ?? "system");
   const fontSize = signal<FontSize>(saved.fontSize ?? "m");
+  const lineHeight = signal<LineHeight>(saved.lineHeight ?? "normal");
+  const margins = signal<Margins>(saved.margins ?? "normal");
+  const uiScale = signal<UiScale>(saved.uiScale ?? "m");
   const scripture = signal<ScriptureElementsBehavior>({
     showVerseNumbers: true,
     showHeadings: true,
@@ -80,6 +106,25 @@ export function createSettings(deps: SettingsDeps = {}) {
     }
     el.textContent = `body {\n${generateThemeCssVariables(t)}\n}\n${generateThemeCssClasses(t)}`;
     document.documentElement.dataset["sbTheme"] = t.id;
+    // The reader's own typography choices beat the theme's defaults; "normal" leaves the theme's value in force.
+    const root = document.documentElement;
+    root.dataset["sbLine"] = lineHeight.value;
+    root.dataset["sbMargins"] = margins.value;
+    root.dataset["sbScale"] = uiScale.value;
+    // A theme may bring its fonts (a Google Fonts stylesheet); anything else is not loaded.
+    const font = allowedFontStylesheet(t.variables["fontStylesheet"]);
+    let link = document.getElementById(
+      "sb-theme-font"
+    ) as HTMLLinkElement | null;
+    if (font) {
+      if (!link) {
+        link = document.createElement("link");
+        link.id = "sb-theme-font";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+      }
+      if (link.href !== font) link.href = font;
+    } else link?.remove();
     const meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]'
     );
@@ -89,6 +134,9 @@ export function createSettings(deps: SettingsDeps = {}) {
       const p: Persisted = {
         theme: theme.value,
         fontSize: fontSize.value,
+        lineHeight: lineHeight.value,
+        margins: margins.value,
+        uiScale: uiScale.value,
         scripture: scripture.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
@@ -101,7 +149,17 @@ export function createSettings(deps: SettingsDeps = {}) {
     theme.value = prefersDark() ? "light" : "dark";
   };
 
-  return { theme, fontSize, scripture, resolvedTheme, toggleTheme, dispose };
+  return {
+    theme,
+    fontSize,
+    lineHeight,
+    margins,
+    uiScale,
+    scripture,
+    resolvedTheme,
+    toggleTheme,
+    dispose,
+  };
 }
 
 export type Settings = ReturnType<typeof createSettings>;

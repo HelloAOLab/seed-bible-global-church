@@ -91,3 +91,58 @@ describe("customizations", () => {
     ).toBeTruthy();
   });
 });
+
+describe("a theme's typography", () => {
+  it("loads a font stylesheet only from Google Fonts or the estate", async () => {
+    const { allowedFontStylesheet } =
+      await import("../../../apps/reader-web/src/state/chrome/settings");
+    expect(
+      allowedFontStylesheet(
+        "https://fonts.googleapis.com/css2?family=Lora&display=swap"
+      )
+    ).toBe("https://fonts.googleapis.com/css2?family=Lora&display=swap");
+    expect(
+      allowedFontStylesheet(
+        "https://seed-bible-a2a.faithnet.io/files/0xab/sha.css"
+      )
+    ).toMatch(/faithnet\.io/);
+    expect(
+      allowedFontStylesheet("http://fonts.googleapis.com/css2?family=Lora")
+    ).toBeNull();
+    expect(allowedFontStylesheet("https://evil.example/fonts.css")).toBeNull();
+    expect(allowedFontStylesheet(undefined)).toBeNull();
+  });
+  it("carries fonts, line height and width as variables the stylesheet reads", async () => {
+    const { themeFromVariant } =
+      await import("../../../apps/reader-web/src/state/chrome/customizations");
+    const { generateThemeCssVariables } =
+      await import("../../../apps/reader-web/src/state/chrome/theme");
+    const variant = {
+      "@type": "seed:ThemeVariant" as const,
+      "@id": "v",
+      label: "Serif",
+      scheme: "light" as const,
+      variables: {
+        readerFontFamily: "Lora, serif",
+        readerLineHeight: "1.8",
+        readerMaxWidth: "40rem",
+        uiFontSize: "105%",
+      },
+    };
+    const theme = themeFromVariant(
+      {
+        "@id": "urn:seed:customization:t",
+        "@type": "seed:Customization",
+        publishedBy: "0x" + "11".repeat(20),
+        label: "Serif church",
+        hasVariant: [variant],
+      },
+      variant
+    );
+    const css = generateThemeCssVariables(theme);
+    expect(css).toContain("--sb-reader-font-family: Lora, serif;");
+    expect(css).toContain("--sb-reader-line-height: 1.8;");
+    expect(css).toContain("--sb-reader-max-width: 40rem;");
+    expect(css).toContain("--sb-ui-font-size: 105%;");
+  });
+});
