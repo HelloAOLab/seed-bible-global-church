@@ -1,5 +1,6 @@
 // THE SESSION PANE — start or join a live reading, who is here and where, the share link, roles (host), chat,
 // and the end button. Participants and the room's decorations show in the reader; this is the roster and the chat.
+import { SessionQRCode } from "./SessionQRCode";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -13,6 +14,7 @@ export function SessionPane({ state }: { state: ReaderState }) {
   const [joinCode, setJoinCode] = useState("");
   const [guestName, setGuestName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const log = useRef<HTMLDivElement>(null);
   const s = live.state.value;
 
@@ -200,8 +202,18 @@ export function SessionPane({ state }: { state: ReaderState }) {
                   {copied
                     ? t("copied", { defaultValue: "Copied" })
                     : t("copy-link", { defaultValue: "Copy link" })}
+                </button>{" "}
+                <button
+                  className="sb-note-button"
+                  aria-expanded={showQr}
+                  onClick={() => setShowQr((v) => !v)}
+                >
+                  {t("session-qr", { defaultValue: "QR code" })}
                 </button>
               </p>
+            )}
+            {live.shareLink.value && showQr && (
+              <SessionQRCode url={live.shareLink.value} />
             )}
             {live.recordRef.value && (
               <p className="sb-small sb-muted">

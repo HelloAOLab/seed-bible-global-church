@@ -17,41 +17,12 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const start = Math.min(...verses);
   const end = Math.max(...verses);
   const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
-  const [shared, setShared] = useState(false);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 1800);
     return () => clearTimeout(t);
   }, [copied]);
-  useEffect(() => {
-    if (!shared) return;
-    const t = setTimeout(() => setShared(false), 1800);
-    return () => clearTimeout(t);
-  }, [shared]);
-  /** The link to these verses: the system share sheet where there is one, else the clipboard. */
-  const share = async () => {
-    const url = shareUrl(
-      location.origin,
-      {
-        translationId: reading.translationId.value,
-        bookId: reading.bookId.value,
-        chapterNumber: reading.chapterNumber.value,
-      },
-      start,
-      end
-    );
-    const nav = navigator as Navigator & {
-      share?: (d: { title: string; url: string }) => Promise<void>;
-    };
-    try {
-      if (nav.share) await nav.share({ title: ref, url });
-      else await navigator.clipboard.writeText(url);
-      setShared(true);
-    } catch {
-      /* the sheet was dismissed, or the clipboard refused: nothing to say */
-    }
-  };
   const current = state.highlights.forChapter(chapterRef).value.find((h) => {
     const v = h.verse;
     return typeof v === "number"
@@ -212,16 +183,28 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
         </button>
         <button
           className="sb-verse-toolbar-action"
-          onClick={() => void share()}
+          onClick={() => {
+            state.ui.share.value = {
+              title: ref,
+              url: shareUrl(
+                location.origin,
+                {
+                  translationId: reading.translationId.value,
+                  bookId: reading.bookId.value,
+                  chapterNumber: reading.chapterNumber.value,
+                },
+                start,
+                end
+              ),
+            };
+          }}
           aria-label={t("share-verses", { defaultValue: "Share" })}
         >
           <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-            {shared ? "check" : "share"}
+            share
           </span>
           <span className="sb-verse-toolbar-action-label">
-            {shared
-              ? t("link-copied", { defaultValue: "Copied" })
-              : t("share-verses", { defaultValue: "Share" })}
+            {t("share-verses", { defaultValue: "Share" })}
           </span>
         </button>
         <button

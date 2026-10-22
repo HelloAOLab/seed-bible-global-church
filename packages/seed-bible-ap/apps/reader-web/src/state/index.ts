@@ -392,6 +392,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarDrawer: signal(false),
     /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
     embed: signal(false),
+    /** What the Share dialog is sharing (components/chrome/ShareDialog.tsx); null when closed. */
+    share: signal<{ title: string; url: string } | null>(null),
     /** The verse toolbar opened as a menu at the pointer (a right-click on a verse); null when docked. */
     verseMenuAt: signal<{ x: number; y: number } | null>(null),
     /** A share link's session, joined once signed in. */
@@ -556,7 +558,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       });
       if (!action) return;
       if (action === "escape") {
-        if (ui.selector.value) ui.selector.value = null;
+        if (ui.share.value) ui.share.value = null;
+        else if (ui.selector.value) ui.selector.value = null;
         else if (ui.sidebarDrawer.value) ui.sidebarDrawer.value = false;
         else if (verses.value.length) selection.clear();
         else if (ui.pane.value !== "none") ui.pane.value = "none";
@@ -595,7 +598,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       // Embed mode and a theme or customization named in the link (the old `?embed=`, `?theme=`, `?customization=`).
       const embed = q.get("embed");
       if (embed === "minimal" || embed === "true") ui.embed.value = true;
-      const theme = q.get("theme");
+      // `app.themeId` is the old reader's embed parameter; links made by it keep working.
+      const theme = q.get("theme") ?? q.get("app.themeId");
       if (theme === "light" || theme === "dark") settings.theme.value = theme;
       const cust = q.get("customization");
       if (cust)

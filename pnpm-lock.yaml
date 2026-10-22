@@ -652,6 +652,9 @@ importers:
       preact:
         specifier: 'catalog:'
         version: 10.29.8(preact-render-to-string@6.7.0)
+      qrcode:
+        specifier: 'catalog:'
+        version: 1.5.4
       viem:
         specifier: ^2.52.2
         version: 2.57.7(typescript@5.9.3)(zod@4.4.3)
@@ -689,6 +692,9 @@ importers:
       '@types/node':
         specifier: ^24.5.2
         version: 24.10.9
+      '@types/qrcode':
+        specifier: 1.5.5
+        version: 1.5.5
       '@vitest/coverage-v8':
         specifier: 4.1.8
         version: 4.1.8(vitest@4.1.8)
@@ -4386,6 +4392,9 @@ packages:
 
   '@types/prompts@2.4.9':
     resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
+
+  '@types/qrcode@1.5.5':
+    resolution: {integrity: sha512-CdfBi/e3Qk+3Z/fXYShipBT13OJ2fDO2Q2w5CIP5anLTLIndQG9z6P1cnm+8zCWSpm5dnxMFd/uREtb0EXuQzg==}
 
   '@types/qrcode@1.5.6':
     resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
@@ -12811,6 +12820,10 @@ snapshots:
     dependencies:
       '@types/node': 24.10.9
       kleur: 3.0.3
+
+  '@types/qrcode@1.5.5':
+    dependencies:
+      '@types/node': 24.10.9
 
   '@types/qrcode@1.5.6':
     dependencies:

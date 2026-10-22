@@ -384,23 +384,33 @@ const BASE_FLOWS: Flow[] = [
   },
   {
     id: "M4",
-    rows: ["Share a verse / copy link"],
+    rows: ["Share a verse / copy link", "Embed in another site"],
     section: "4. Marking the text",
-    title: "Share a verse (copy link)",
-    checks: "Select 3:16 → Share copies a link ending in ?v=16",
+    title: "Share a verse: link and embed code",
+    checks:
+      "Select 3:16 → Share opens the Share dialog; Copy link copies a link ending in ?v=16; the embed code is an iframe of the compact reader, dark when Dark is chosen",
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
       await c.page
         .locator(".sb-verse-toolbar-action", { hasText: /share/i })
         .click();
-      await c.page.waitForTimeout(500);
+      const dialog = c.page.locator(".sb-share-dialog");
+      await dialog.waitFor({ timeout: 5000 });
+      await dialog.getByRole("button", { name: /copy link/i }).click();
+      await c.page.waitForTimeout(300);
       const clip = await c.page
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
-      if (!/\/read\/BSB\/JHN\/3\?v=16/.test(clip))
+      if (!/\/read\/BSB\/JHN\/3\?v=16$/.test(clip))
         throw new Error(`clipboard: "${clip.slice(0, 80)}"`);
-      return clip;
+      await dialog.locator("select").selectOption("dark");
+      const code = await dialog.locator(".sb-share-embed-code").inputValue();
+      if (!/^<iframe src="[^"]*embed=minimal[^"]*theme=dark/.test(code))
+        throw new Error(`embed code: ${code.slice(0, 120)}`);
+      await c.page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "detached", timeout: 3000 });
+      return `${clip}; embed ${code.slice(0, 60)}…`;
     },
   },
   {

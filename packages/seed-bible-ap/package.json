@@ -54,6 +54,7 @@
     "jose": "^6.2.12",
     "leaflet": "1.9.4",
     "preact": "catalog:",
+    "qrcode": "catalog:",
     "viem": "^2.52.2",
     "workbox-window": "7.4.1",
     "zod": "catalog:"
@@ -68,6 +69,7 @@
     "@testing-library/preact": "3.2.4",
     "@types/leaflet": "1.9.12",
     "@types/node": "^24.5.2",
+    "@types/qrcode": "1.5.5",
     "@vitest/coverage-v8": "4.1.8",
     "fake-indexeddb": "^6.0.0",
     "jsdom": "26.1.0",

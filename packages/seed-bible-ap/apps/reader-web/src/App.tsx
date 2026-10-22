@@ -1,5 +1,6 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
+import { ShareDialog } from "./components/chrome/ShareDialog";
 import { useEffect, useRef } from "preact/hooks";
 import type { ReaderState } from "./state";
 import { TabsSidebar } from "./components/reader/TabsSidebar";
@@ -151,6 +152,7 @@ export function App({ state }: { state: ReaderState }) {
       <VerseToolbar state={state} />
       <ReaderToolbar state={state} />
       <BibleSelector state={state} />
+      <ShareDialog state={state} />
       <Onboarding state={state} />
     </div>
   );

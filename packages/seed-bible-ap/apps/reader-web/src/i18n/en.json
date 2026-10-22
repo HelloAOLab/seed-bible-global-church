@@ -322,5 +322,21 @@
   "playlist-history-step": "Step {{step}} of {{total}} ({{percent}}%)",
   "playlist-history-open-failed": "This playlist is no longer in your Library.",
   "play-again": "Play again",
-  "resume": "Resume"
+  "resume": "Resume",
+  "session-qr": "QR code",
+  "session-qr-failed": "The QR code could not be made; share the link instead.",
+  "session-qr-alt": "QR code to join this session",
+  "session-qr-hint": "Scan to join with the share code.",
+  "session-qr-save": "Save image",
+  "share": "Share",
+  "share-link": "Share a link",
+  "share-via": "Share via…",
+  "share-embed": "Embed",
+  "share-embed-theme": "Theme",
+  "theme-system": "Follow the device",
+  "theme-light": "Light",
+  "theme-dark": "Dark",
+  "share-embed-code": "Embed code",
+  "share-copy-embed": "Copy embed code",
+  "share-embed-preview": "Preview"
 }
