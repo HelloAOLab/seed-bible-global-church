@@ -327,6 +327,50 @@ const COMPANION_WHO_HEADER = COMPANION_WHO.replace(" · ", " / ");
 const COMPANION_SYSTEM =
   "You are a study companion inside a Bible reader. The reader has a chapter open; its text is given. Answer the reader's question about that passage: literary context, meaning of words, what to notice, connections within Scripture. Be concise (under 200 words), plain, and honest about uncertainty; cite verses by number. Do not invent quotations. If the question is not about the passage, say so briefly and offer to help with the passage.";
 
+// ── Transcription: one chunk of audio (a WAV the device made) through Workers AI's speech model, read-only ────────
+export const TRANSCRIBE_MODEL = "@cf/openai/whisper";
+export const TRANSCRIBE_MAX_BYTES = 4_000_000;
+app.post("/transcribe", async (c) => {
+  if (
+    !c.env.UPLOAD_TOKEN ||
+    c.req.header("x-sb-upload-token") !== c.env.UPLOAD_TOKEN
+  )
+    return c.json({ ok: false, error: "not allowed" }, 403);
+  if (!c.env.AI)
+    return c.json({ ok: false, error: "transcription is not configured" }, 503);
+  const type = c.req.header("content-type") ?? "";
+  if (!/^audio\//.test(type))
+    return c.json({ ok: false, error: "send audio bytes (audio/wav)" }, 400);
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (!bytes.byteLength || bytes.byteLength > TRANSCRIBE_MAX_BYTES)
+    return c.json(
+      {
+        ok: false,
+        error: `a chunk is 1 byte to ${TRANSCRIBE_MAX_BYTES} bytes`,
+      },
+      413
+    );
+  try {
+    const out = (await c.env.AI.run(TRANSCRIBE_MODEL, {
+      audio: [...bytes],
+    })) as {
+      text?: string;
+      words?: Array<{ word: string; start: number; end: number }>;
+    };
+    return c.json({
+      ok: true,
+      model: TRANSCRIBE_MODEL,
+      text: out.text ?? "",
+      words: out.words ?? [],
+    });
+  } catch (e) {
+    return c.json(
+      { ok: false, error: e instanceof Error ? e.message : String(e) },
+      502
+    );
+  }
+});
+
 app.post("/companion", async (c) => {
   if (
     !c.env.UPLOAD_TOKEN ||

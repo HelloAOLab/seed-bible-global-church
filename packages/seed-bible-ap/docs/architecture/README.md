@@ -12,6 +12,8 @@ This folder is the architecture for Seed Bible on the agenticprimitives substrat
 | [repo-layout.md](./repo-layout.md)                       | Every folder under `packages/seed-bible-ap` and what goes in it                                                                                                                                                                                      |
 | [hard-problems.md](./hard-problems.md)                   | The difficult design problems (vault as file shelf, async writes, merge, friends-only visibility, first-run consent, session state, streaming hops, secrets, org acts, registry, offline, SSR, skew, testing), each with approach and open questions |
 
+Quality: [`../test-plan.md`](../test-plan.md) — where each old testing approach went, the harness build order, and the run procedure.
+
 **Scope rule.** Only `packages/seed-bible-ap/` changes in this repository (see [`AGENTS.md`](../../AGENTS.md), [ADR-0001](../adr/0001-only-this-folder-changes.md)). Other packages are read-only sources to port from; the only permitted side effect is the regenerated root `pnpm-lock.yaml`.
 
 Skills and the `seed:` T-box are built in **`~/skills`** under the **`seed` domain** (`skills/seed/…`, `ontology/seed.ttl`, `specs/seed/`). `~/skills/specs/seed/` is the domain's spec collection and carries copies of these documents (`who-acts.md`, `architecture.md`, `agents-and-skills.md`, `ontology.md`, `seed.ttl.md`, `feature-map.md`, `realtime-collaboration.md`); keep the two in step. This package pins digests and implements the tools. Draft T-box: [`seed.ttl.md`](./seed.ttl.md).

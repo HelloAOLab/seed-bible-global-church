@@ -1210,3 +1210,10 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   height: 1.35rem;
   font-size: 0.7rem;
 }
+
+.sb-transcript-text {
+  max-height: 50vh;
+  overflow: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

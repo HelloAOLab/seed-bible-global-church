@@ -273,6 +273,25 @@ app.post("/api/session/guest", async (c) => {
   }
 });
 
+/** Transcription (read-only): a chunk of the reader's audio to the serving plane's speech model; nothing is kept. */
+app.post("/api/transcribe", async (c) => {
+  const reader = await readerFromToken(c.env, bearerOf(c.req.raw));
+  if (!reader)
+    return c.json({ ok: false, error: "sign in to transcribe" }, 401);
+  const res = await platformSend(c.env, "/transcribe", {
+    method: "POST",
+    headers: {
+      "content-type": c.req.header("content-type") ?? "audio/wav",
+      "x-sb-upload-token": c.env.PLATFORM_UPLOAD_TOKEN ?? "",
+    },
+    body: await c.req.arrayBuffer(),
+  });
+  return new Response(res.body, {
+    status: res.status,
+    headers: { "content-type": "application/json" },
+  });
+});
+
 /** The places map: tiles and geometry from the serving plane (cached there), so the page talks to this origin only. */
 app.get("/api/tiles/:z/:x/:y", async (c) => {
   const res = await platformSend(

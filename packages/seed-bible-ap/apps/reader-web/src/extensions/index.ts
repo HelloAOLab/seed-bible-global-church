@@ -7,8 +7,16 @@ import references from "./references";
 import locations from "./locations";
 import companion from "./companion";
 import twitch from "./twitch";
+import transcript from "./transcript";
 
 export function registerBuiltInExtensions(host: ExtensionHost) {
-  for (const ext of [compare, references, locations, companion, twitch])
+  for (const ext of [
+    compare,
+    references,
+    locations,
+    companion,
+    twitch,
+    transcript,
+  ])
     host.register(ext);
 }

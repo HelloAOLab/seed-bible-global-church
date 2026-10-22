@@ -97,7 +97,7 @@ Federation visitors (plan step 8) are **not** in this work order; keep the `stan
 
 ## 4. Working conventions
 
-- **Tests** follow repo `CLAUDE.md`: observable behavior, mock only at the boundary (Home JWKS, person-agent A2A, Library), poll conditions instead of sleeping, regression tests go red on the pre-fix code. Fakes live in `test/helpers/`.
+- **Tests** follow repo `CLAUDE.md`: observable behavior, mock only at the boundary (Home JWKS, person-agent A2A, Library), poll conditions instead of sleeping, regression tests go red on the pre-fix code. Fakes live in `test/helpers/`. The harness build order, the gate (`pnpm gate` + smokes), and the manual pass are in [`test-plan.md`](./test-plan.md).
 - **Docs are part of the change.** When a step lands: tick the rows in `feature-map.md`; turn the relevant `hard-problems.md` entry into an ADR under `docs/adr/` and shorten the entry to a pointer; add a `docs/porting/<Manager>.md` note for each manager ported; copy changed architecture docs to `~/skills/specs/seed/`.
 - **Commits:** one step or sub-step per PR; title with the plan todo id (`[core-reader] highlights bucket + outbox`). Prettier settings are the repo's (2-space, double quotes, trailing commas).
 - **Comments** only for the non-obvious why. No narrating the task.
