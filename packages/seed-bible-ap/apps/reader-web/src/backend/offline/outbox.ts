@@ -65,6 +65,8 @@ export function createOutbox(deps: OutboxDeps) {
   /** The last error's kind (a BackendError code, else "error"); null once a flush goes through. */
   const lastErrorCode = signal<BackendError["code"] | "error" | null>(null);
   let inflight: Promise<FlushReport> | null = null;
+  /** A flush was asked for while one was in flight. */
+  let again = false;
   /** The buckets whose batch a run is sending right now. */
   const sending = new Set<string>();
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -120,69 +122,89 @@ export function createOutbox(deps: OutboxDeps) {
       report.error = "offline";
       return report;
     }
-    for (const k of await deps.stores.outbox.keys()) {
-      const entry = await deps.stores.outbox.get(k);
-      const local = await deps.stores.buckets.get(k);
-      if (!entry) continue;
-      if (!local) {
-        await deps.stores.outbox.delete(k);
-        report.skipped.push(k);
-        continue;
-      }
-      sending.add(k);
-      try {
-        let merged: BucketDocument;
-        try {
-          merged = await deps.backend.mergeBucket(
-            entry.collection,
-            entry.chapter,
-            local,
-            entry.batchId
-          );
-        } catch (e) {
-          const fixed =
-            e instanceof BackendError && /not held by/i.test(e.message)
-              ? deps.repair?.(entry.collection, entry.chapter, local)
-              : null;
-          if (!fixed) throw e;
-          await deps.stores.buckets.set(k, fixed);
-          merged = await deps.backend.mergeBucket(
-            entry.collection,
-            entry.chapter,
-            fixed,
-            `${entry.batchId}-repaired`
-          );
-        }
-        // Changes made on the device while this run was in flight are not in `merged`: fold them back on top,
-        // or the merged copy would overwrite them (they stay queued and go up with the next batch).
-        const latest = await deps.stores.buckets.get(k);
-        if (latest) merged = foldUnsent(merged, latest);
-        await deps.stores.buckets.set(k, merged);
-        // Changes queued while this run was in flight start a new batch; only this one is done.
-        const again = await deps.stores.outbox.get(k);
-        if (again && again.batchId === entry.batchId)
+    // Buckets go up side by side (a few at a time): each is one merge at the reader's agent, seconds long, and one
+    // bucket never waits for another's. A failure other than a refusal stops new sends (the network or the session).
+    let stopped = false;
+    await eachLimited(
+      await deps.stores.outbox.keys(),
+      FLUSH_CONCURRENCY,
+      async (k) => {
+        if (stopped) return;
+        const entry = await deps.stores.outbox.get(k);
+        const local = await deps.stores.buckets.get(k);
+        if (!entry) return;
+        if (!local) {
           await deps.stores.outbox.delete(k);
-        deps.onMerged?.(entry.collection, entry.chapter, merged);
-        report.merged.push(k);
-        lastError.value = null;
-        lastErrorCode.value = null;
-      } catch (e) {
-        report.error = e instanceof Error ? e.message : String(e);
-        lastError.value = report.error;
-        lastErrorCode.value = e instanceof BackendError ? e.code : "error";
-        if (e instanceof BackendError && e.code !== "refused") break;
-      } finally {
-        sending.delete(k);
+          report.skipped.push(k);
+          return;
+        }
+        sending.add(k);
+        try {
+          let merged: BucketDocument;
+          try {
+            merged = await deps.backend.mergeBucket(
+              entry.collection,
+              entry.chapter,
+              local,
+              entry.batchId
+            );
+          } catch (e) {
+            const fixed =
+              e instanceof BackendError && /not held by/i.test(e.message)
+                ? deps.repair?.(entry.collection, entry.chapter, local)
+                : null;
+            if (!fixed) throw e;
+            await deps.stores.buckets.set(k, fixed);
+            merged = await deps.backend.mergeBucket(
+              entry.collection,
+              entry.chapter,
+              fixed,
+              `${entry.batchId}-repaired`
+            );
+          }
+          // Changes made on the device while this run was in flight are not in `merged`: fold them back on top,
+          // or the merged copy would overwrite them (they stay queued and go up with the next batch).
+          const latest = await deps.stores.buckets.get(k);
+          if (latest) merged = foldUnsent(merged, latest);
+          await deps.stores.buckets.set(k, merged);
+          // Changes queued while this run was in flight start a new batch; only this one is done.
+          const again = await deps.stores.outbox.get(k);
+          if (again && again.batchId === entry.batchId)
+            await deps.stores.outbox.delete(k);
+          deps.onMerged?.(entry.collection, entry.chapter, merged);
+          report.merged.push(k);
+          lastError.value = null;
+          lastErrorCode.value = null;
+        } catch (e) {
+          report.error = e instanceof Error ? e.message : String(e);
+          lastError.value = report.error;
+          lastErrorCode.value = e instanceof BackendError ? e.code : "error";
+          if (e instanceof BackendError && e.code !== "refused") stopped = true;
+        } finally {
+          sending.delete(k);
+        }
       }
-    }
+    );
     await count();
     return report;
   }
 
   function flush(): Promise<FlushReport> {
-    if (inflight) return inflight;
+    if (inflight) {
+      // A change queued while a flush is on its way is not in it: one more pass when this one ends.
+      again = true;
+      return inflight;
+    }
     flushing.value = true;
-    inflight = flushOnce().finally(() => {
+    inflight = (async () => {
+      let report = await flushOnce();
+      while (again && !report.error) {
+        again = false;
+        report = await flushOnce();
+      }
+      again = false;
+      return report;
+    })().finally(() => {
       inflight = null;
       flushing.value = false;
     });
@@ -203,3 +225,21 @@ export function createOutbox(deps: OutboxDeps) {
 }
 
 export type Outbox = ReturnType<typeof createOutbox>;
+
+/** How many buckets go up at once. */
+const FLUSH_CONCURRENCY = 3;
+
+/** Run `fn` over `items`, at most `limit` at a time; resolves when all have finished. */
+export async function eachLimited<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) await fn(items[next++]!);
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker)
+  );
+}

@@ -79,6 +79,13 @@ export class PersonAgent {
       addressee: (opts.addressee ?? this.reader).toLowerCase(),
       message,
       plan: { steps },
+      // The reader renders the step's rows, never the agent's sentence: no composer call, no retrieval to ground one,
+      // no tool sources the plan does not name (the runtime's `rowsOnly`, honoured for a supplied plan only). A plan
+      // of reads alone is the app's own bookkeeping, kept out of the person's "what my agent did" list.
+      rowsOnly: true,
+      ...(steps.every((st) => /\.(read|list)$/.test(st.toolId))
+        ? { background: true }
+        : {}),
     });
     const base: Omit<CallerAssertionV1, "signature"> = {
       agent: this.reader,
@@ -125,6 +132,14 @@ export class PersonAgent {
         String(out["error"] ?? `your agent answered ${res.status}`)
       );
     const reply = (out["reply"] ?? {}) as Reply;
+    // Where the agent's time went, per stage (names and ms only) — the runtime puts it on every reply's trace.
+    const stages = (
+      reply as { plannerTrace?: { stages?: Record<string, number> } }
+    ).plannerTrace?.stages;
+    if (stages)
+      console.log(
+        `[agent-timing] ${steps.map((s) => s.toolId).join("+")} ${JSON.stringify(stages)}`
+      );
     const runRef =
       typeof out["runRef"] === "string"
         ? out["runRef"]

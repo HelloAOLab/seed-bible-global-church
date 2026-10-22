@@ -2,6 +2,9 @@
 // signal: the device's copy first (instant, offline), then the reader's Library copy merged in when signed in and
 // online. A local put applies at once, is saved to the device and queued in the outbox; the flush brings the
 // merged bucket back. Marks a stranger makes are held by LOCAL_AGENT and adopted when they sign in.
+import { eachLimited } from "../../backend/offline/outbox";
+/** How many buckets are read at once (each is one read at the reader's agent). */
+const READ_CONCURRENCY = 4;
 import { signal, type Signal } from "@preact/signals";
 import {
   applyPut,
@@ -192,16 +195,17 @@ export function createBucketStore(deps: BucketStoreDeps) {
     if (!deps.backend.identity() || !isOnline()) return 0;
     const entries = await deps.backend.listBuckets(collection);
     const have = new Set(await deps.stores.buckets.keys());
-    let n = 0;
-    for (const e of entries) {
-      const chapter = e.bucket === collection ? undefined : e.bucket;
-      const k = storeKey(collection, chapter);
-      if (have.has(k) || open.has(k)) continue;
-      if (n >= max) break;
+    const wanted = entries
+      .map((e) => (e.bucket === collection ? undefined : e.bucket))
+      .filter((chapter) => {
+        const k = storeKey(collection, chapter);
+        return !have.has(k) && !open.has(k);
+      })
+      .slice(0, max);
+    await eachLimited(wanted, READ_CONCURRENCY, async (chapter) => {
       await get(collection, chapter).ready;
-      n++;
-    }
-    return n;
+    });
+    return wanted.length;
   }
 
   /** Every pulled collection, in the background of a sign-in; errors are per collection and logged. */
@@ -245,11 +249,15 @@ export function createBucketStore(deps: BucketStoreDeps) {
         await deps.outbox.queue(collection, chapter, `adopt-${newId()}`);
       }
     }
-    for (const [k, ob] of open) {
+    // What waits to go up goes now, beside the re-reads (which run a few at a time): a change made just after
+    // sign-in must not queue behind every open bucket being read again.
+    const sent = who ? deps.outbox.flush() : Promise.resolve();
+    await eachLimited([...open], READ_CONCURRENCY, async ([k, ob]) => {
       const [collection, chapter] = splitKey(k);
       await load(collection, chapter, ob);
-    }
+    });
     if (who) {
+      await sent;
       await deps.outbox.flush();
       void pullAll();
     }

@@ -1,0 +1,90 @@
+// THE OUTBOX KEEPS PACE. A mark made while a send is in flight used to sit queued until something else happened to
+// flush (a reading-history save waited ~24 s behind a highlight's), and buckets went up one at a time. Now a change
+// queued mid-flight gets one more pass when the flight ends, and different buckets go up side by side.
+import { describe, expect, it } from "vitest";
+import { createDevBackend } from "../../../apps/reader-web/src/backend/dev";
+import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
+import { createOutbox } from "../../../apps/reader-web/src/backend/offline/outbox";
+import { createBucketStore } from "../../../apps/reader-web/src/state/records/buckets";
+import { createHighlights } from "../../../apps/reader-web/src/state/records/highlights";
+
+const READER = {
+  agent: "0x" + "ab".repeat(20),
+  name: "Seed Reader",
+  wire: true,
+};
+
+async function until(ok: () => boolean | Promise<boolean>, ms = 3000) {
+  const t0 = Date.now();
+  while (!(await ok())) {
+    if (Date.now() - t0 > ms) throw new Error("timed out");
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
+/** A backend whose merges take a while and are counted in flight. */
+function slow(delayMs: number) {
+  const backend = createDevBackend(READER);
+  const live = { now: 0, max: 0, done: 0 };
+  const merge = backend.mergeBucket.bind(backend);
+  backend.mergeBucket = async (...args: Parameters<typeof merge>) => {
+    live.now++;
+    live.max = Math.max(live.max, live.now);
+    await new Promise((r) => setTimeout(r, delayMs));
+    try {
+      return await merge(...args);
+    } finally {
+      live.now--;
+      live.done++;
+    }
+  };
+  return { backend, live };
+}
+
+function device(backend: ReturnType<typeof createDevBackend>) {
+  const stores = memoryStores();
+  const outbox = createOutbox({
+    backend,
+    stores,
+    isOnline: () => true,
+    settleMs: 1,
+    onMerged: (c, ch, b) => buckets.accept(c, ch, b),
+  });
+  const buckets = createBucketStore({
+    backend,
+    stores,
+    outbox,
+    isOnline: () => true,
+  });
+  return {
+    stores,
+    outbox,
+    highlights: createHighlights(buckets, () => backend.identity()),
+  };
+}
+
+describe("the outbox's pace", () => {
+  it("sends a change queued while a send is in flight, with nothing else to trigger it", async () => {
+    const { backend } = slow(60);
+    const d = device(backend);
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await until(() => d.outbox.flushing.value);
+    await d.highlights.set("ROM.8", 28, 28, "green");
+    await until(
+      async () =>
+        (await d.stores.outbox.keys()).length === 0 && !d.outbox.flushing.value
+    );
+    const remote = await backend.readBucket("highlights", "ROM.8");
+    expect(remote["@graph"].length).toBe(1);
+  });
+
+  it("sends different buckets side by side", async () => {
+    const { backend, live } = slow(80);
+    const d = device(backend);
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await d.highlights.set("ROM.8", 28, 28, "green");
+    await d.highlights.set("PSA.23", 1, 1, "blue");
+    await until(() => live.done >= 3);
+    expect(live.max).toBeGreaterThan(1);
+  });
+});
