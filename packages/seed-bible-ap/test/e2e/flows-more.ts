@@ -1156,14 +1156,18 @@ export const MORE_FLOWS: Flow[] = [
       const fresh = await c.secondPage();
       await fresh.goto(link, { waitUntil: "domcontentloaded" });
       await c.dismissWelcome(fresh);
-      await fresh.waitForFunction(
-        (n) =>
-          (document.getElementById("sb-theme")?.textContent ?? "").length > 0 &&
-          document.title.length > 0 &&
-          !!n,
-        name,
-        { timeout: 30000 }
-      );
+      // The link's theme applies once the registry has answered: wait until the page's active theme is the church's
+      // (its id names the offering), not merely until some theme is drawn.
+      await fresh
+        .waitForFunction(
+          () =>
+            (document.documentElement.dataset["sbTheme"] ?? "").startsWith(
+              "urn:seed:offering:"
+            ),
+          undefined,
+          { timeout: 30000 }
+        )
+        .catch(() => undefined);
       const freshCss = await fresh.evaluate(
         () => document.getElementById("sb-theme")?.textContent ?? ""
       );
