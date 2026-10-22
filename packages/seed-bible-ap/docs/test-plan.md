@@ -8,24 +8,24 @@ Scope rule applies ([`AGENTS.md`](../AGENTS.md)): everything lives in `packages/
 
 The old suite had ~406 unit files, 2 integration, 6 dead Puppeteer e2e. Its approaches, and their home here:
 
-| Old approach | Here | Status |
-| --- | --- | --- |
-| Full-state fixture (`createTestSeedBibleState`) | `test/helpers/createTestReaderState.ts` over `createReaderState()` + `createDevBackend()` + `memoryStores()` | build (A2) |
-| jsdom component tests, `TestHost`, aria/role queries | Vitest `jsdom` project; `test/helpers/TestHost.tsx`; `@testing-library/preact` | build (A1, A2) |
-| `blockRealSockets` | `test/setup/blockRealSockets.ts` **plus** `blockRealFetch.ts` (enforces ADR-0044: browser never calls MCP/svc) | build (A1) |
-| Fake timers + `waitFor` polling | `vi.useFakeTimers()` for coalescing/throttle/deadlines; `until()` for async | per test |
-| Offline/sync matrix (`RecordSyncManager`) | `test/unit/reader-web/outbox.test.ts` full matrix on buckets | build (A3.1) |
-| Hydration + no-storage-at-boot ESLint rule | `hydration.test.tsx`; `no-storage-at-boot.test.ts` (a test replaces the rule) | build (A3.5–6) |
-| SW routing, precache, chunk retry | `sw-routing`, `precache-manifest`, `retry-chunk-import` tests with the `src/sw/` code | build (A3.7) |
-| SSR bundle check + smoke after build | `pnpm smoke:ssr` (`scripts/check-ssr-bundle.ts`) | build (A4) |
-| Viewport/gesture integration | `test/integration/reader-viewport.test.tsx` | build (A3.8) |
-| Sanitization, session guard, telemetry | `sanitization.test.ts`, `session-expiry.test.ts`, `log-hygiene.test.ts` | build (A3.3, 9, 10) |
-| i18n lint rules | `i18n-keys.test.ts` — English keys only, by decision | build (A3.4) |
-| Typecheck, Prettier, coverage, size diff | `pnpm typecheck` (exists), repo pre-commit (already covers this folder), `test:coverage`, `pnpm size` with absolute budgets | build (A1, A4) |
-| Theme snapshot | explicit asserts in `places-and-themes.test.ts` | done |
-| Puppeteer two-browser e2e | `pnpm smoke:session` + `smoke:reader-web` against the real room, and the manual two-browser pass | done / per run |
+| Old approach | Here | Status | File |
+| --- | --- | --- | --- |
+| Full-state fixture (`createTestSeedBibleState`) | `test/helpers/createTestReaderState.ts` over `createReaderState()` + `createDevBackend()` + `memoryStores()` | ✅ | `test/helpers/createTestReaderState.ts`; proven by `test/integration/fixtures.test.ts` |
+| jsdom component tests, `TestHost`, aria/role queries | Vitest `jsdom` project; `test/helpers/TestHost.tsx`; `@testing-library/preact` | ✅ | `vitest.config.ts` (jsdom project), `test/helpers/TestHost.tsx`, `test/unit/reader-web/components/testHost.test.tsx` |
+| `blockRealSockets` | `test/setup/blockRealSockets.ts` **plus** `blockRealFetch.ts` (enforces ADR-0044: browser never calls MCP/svc) | ✅ | `test/setup/blockRealSockets.ts`, `test/setup/blockRealFetch.ts`, `test/helpers/fakeNetwork.ts` |
+| Fake timers + `waitFor` polling | `vi.useFakeTimers()` for coalescing/throttle/deadlines; `until()` for async | ✅ | `test/unit/reader-web/session-expiry.test.ts`, `test/integration/reader-viewport.test.tsx` (patterns) |
+| Offline/sync matrix (`RecordSyncManager`) | `test/unit/reader-web/outbox.test.ts` full matrix on buckets | ✅ | `test/unit/reader-web/outbox.test.ts` |
+| Hydration + no-storage-at-boot ESLint rule | `hydration.test.tsx`; `no-storage-at-boot.test.ts` (a test replaces the rule) | ✅ | `test/unit/reader-web/hydration.test.tsx`, `test/unit/reader-web/no-storage-at-boot.test.tsx` |
+| SW routing, precache, chunk retry | `sw-routing`, `precache-manifest`, `retry-chunk-import` tests with the `src/sw/` code | ✅ | `test/unit/reader-web/sw-routing.test.ts`, `precache-manifest.test.ts`, `retry-chunk-import.test.tsx` over `apps/reader-web/src/sw/` |
+| SSR bundle check + smoke after build | `pnpm smoke:ssr` (`scripts/check-ssr-bundle.ts`) | ✅ | `scripts/check-ssr-bundle.ts` (`pnpm smoke:ssr`) |
+| Viewport/gesture integration | `test/integration/reader-viewport.test.tsx` | ✅ | `test/integration/reader-viewport.test.tsx` |
+| Sanitization, session guard, telemetry | `sanitization.test.ts`, `session-expiry.test.ts`, `log-hygiene.test.ts` | ✅ | `test/unit/reader-web/sanitization.test.ts`, `test/unit/reader-web/session-expiry.test.ts`, `test/unit/reader-a2a/log-hygiene.test.ts` |
+| i18n lint rules | `i18n-keys.test.ts` — English keys only, by decision | ✅ | `test/unit/reader-web/i18n-keys.test.ts` (+ `i18n-keys.allowlist.json`) |
+| Typecheck, Prettier, coverage, size diff | `pnpm typecheck` (exists), repo pre-commit (already covers this folder), `test:coverage`, `pnpm size` with absolute budgets | ✅ | `pnpm typecheck`, `pnpm test:coverage`, `scripts/build-size.mjs` + `scripts/size-budgets.json` (`pnpm size`), `pnpm gate` |
+| Theme snapshot | explicit asserts in `places-and-themes.test.ts` | ✅ | `test/unit/reader-web/places-and-themes.test.ts` |
+| Puppeteer two-browser e2e | `pnpm smoke:session` + `smoke:reader-web` against the real room, and the manual two-browser pass | per run | `scripts/smoke/session.ts`, `scripts/smoke/reader-web.ts`, the B3 pass |
 
-New here, with no old equivalent: live protocol smokes (`smoke:vault`, `smoke:svc`, `smoke:rebuild`), schema↔ontology↔skill skew tests (`seed-schema.ttl`, `pins`, `seed-protocol.context-ref`), authority tests (`wires`, room authority).
+New here, with no old equivalent: live protocol smokes (`smoke:vault`, `smoke:svc`, `smoke:rebuild`), schema↔ontology↔skill skew tests (`seed-schema.ttl`, `pins`, `seed-protocol.context-ref`), authority tests (`wires`, `test/unit/reader-a2a/room-authority.test.ts` over `test/helpers/fakeAgentsSdk.ts`), the fixtures end to end (`test/integration/fixtures.test.ts`: a fake token, a highlight, a flush, the fake Library — `test/helpers/fakeHomeJwks.ts`, `fakeLibrary.ts`, `fakePersonAgent.ts`, `fakeWorkspace.ts`), and publishing without the Library reads (`test/unit/reader-a2a/publish-without-reads.test.ts`).
 
 ## Part A — build the harness
 

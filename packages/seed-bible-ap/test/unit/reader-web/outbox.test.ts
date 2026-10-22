@@ -250,8 +250,17 @@ describe("marks of another person on this device", () => {
 describe("the sync matrix", () => {
   const graph = (backend: ReturnType<typeof createDevBackend>, key: string) =>
     backend.buckets.get(key)?.["@graph"] ?? [];
+  type NoteItem = {
+    "@id": string;
+    opId: string;
+    note?: string;
+    conflictOf?: string;
+    deleted?: boolean;
+  };
   const liveNotes = (backend: ReturnType<typeof createDevBackend>) =>
-    graph(backend, "annotations:JHN.3").filter((it) => !it.deleted);
+    graph(backend, "annotations:JHN.3").filter(
+      (it) => !it.deleted
+    ) as unknown as NoteItem[];
   /** What another device put in the Library: a copy of the note with a new opId, body and time, no `supersedes`. */
   const elsewhere = (
     backend: ReturnType<typeof createDevBackend>,

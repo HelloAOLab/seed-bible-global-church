@@ -16,7 +16,6 @@ export function ensureI18n(locale = "en"): void {
       resources: { en: { translation: en } },
       interpolation: { escapeValue: false },
       returnEmptyString: false,
-      initImmediate: false,
     });
   if (language.value !== locale) language.value = locale;
 }

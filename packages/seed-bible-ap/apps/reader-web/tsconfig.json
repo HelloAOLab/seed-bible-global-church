@@ -28,6 +28,10 @@
     "../../lib/**/*.ts",
     "../../test/unit/reader-web/**/*",
     "../../scripts/smoke/reader-web.ts",
-    "../../scripts/smoke/session.ts"
+    "../../scripts/smoke/session.ts",
+    "../../test/helpers/**/*",
+    "../../test/integration/**/*",
+    "../../test/unit/reader-a2a/log-hygiene.test.ts",
+    "../../test/unit/reader-a2a/publish-without-reads.test.ts"
   ]
 }

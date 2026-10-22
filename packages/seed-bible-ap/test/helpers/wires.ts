@@ -11,7 +11,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import type { Hex } from "viem";
 import { TOWN } from "../../estate/faithnet";
-import type { DelegationWire } from "../../apps/reader-a2a/src/wires";
+import type { DelegationWire, WireDb } from "../../apps/reader-a2a/src/wires";
 
 export const TEST_READER_KEY =
   "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" as Hex;
@@ -62,7 +62,7 @@ export async function syntheticAskAsMeWire(opts: {
 }
 
 /** A D1 stand-in for the one table the wire store uses. Only the statements `wires/index.ts` issues are answered. */
-export function fakeWireDb(): D1Database {
+export function fakeWireDb(): WireDb {
   const rows = new Map<string, { wire_json: string; connected_at: number }>();
   const prepare = (sql: string) => {
     let args: unknown[] = [];
@@ -87,5 +87,5 @@ export function fakeWireDb(): D1Database {
     };
     return stmt;
   };
-  return { prepare } as unknown as D1Database;
+  return { prepare } as unknown as WireDb;
 }

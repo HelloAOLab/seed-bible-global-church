@@ -17,10 +17,20 @@ export interface DelegationWire {
   signature: string;
 }
 
+/** The wire table's store as this module uses it: the Worker binds D1, a test binds a map (test/helpers/wires.ts). */
+export interface WireStatement {
+  bind(...values: unknown[]): WireStatement;
+  first<T = unknown>(): Promise<T | null>;
+  run(): Promise<unknown>;
+}
+export interface WireDb {
+  prepare(sql: string): WireStatement;
+}
+
 export interface WireEnv {
   /** SECRET — this Worker's asking key: the `ask_delegate` on the `seed-bible-reader` client at the Home. */
   READER_ASK_PRIVATE_KEY?: string;
-  DB?: D1Database;
+  DB?: WireDb;
 }
 
 export class WireRefusal extends Error {
@@ -74,7 +84,7 @@ export function wireProblem(
     : null;
 }
 
-function db(env: WireEnv): D1Database {
+function db(env: WireEnv): WireDb {
   if (!env.DB)
     throw new WireRefusal(503, "this workspace has no wire store (DB)");
   return env.DB;

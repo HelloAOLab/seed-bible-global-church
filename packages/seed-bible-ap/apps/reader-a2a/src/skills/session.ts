@@ -13,8 +13,16 @@ import {
 import { WireRefusal } from "../wires";
 import { agentFor, type VaultEnv } from "./vault";
 
+/** The room's Durable Object namespace as this skill uses it: the Worker binds the real one, a test a stand-in. */
+export interface RoomNamespace {
+  idFromName(name: string): { toString(): string };
+  get(id: { toString(): string }): {
+    fetch(input: string, init?: RequestInit): Promise<Response>;
+  };
+}
+
 export interface RoomsEnv {
-  ReadingSession?: DurableObjectNamespace;
+  ReadingSession?: RoomNamespace;
   A2A_INTERNAL_MARKER?: string;
 }
 

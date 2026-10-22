@@ -30,7 +30,10 @@
     "smoke:rebuild": "tsx scripts/smoke/rebuild.ts",
     "smoke:reader-web": "tsx scripts/smoke/reader-web.ts",
     "smoke:session": "tsx scripts/smoke/session.ts",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "smoke:ssr": "tsx scripts/check-ssr-bundle.ts",
+    "size": "node scripts/build-size.mjs",
+    "gate": "pnpm typecheck && pnpm test && pnpm build:web && pnpm smoke:ssr && pnpm size"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",

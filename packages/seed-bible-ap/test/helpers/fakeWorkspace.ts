@@ -11,7 +11,17 @@ import { bearerOf, readerFromToken } from "../../apps/reader-a2a/src/session";
 import { keepWire, type DelegationWire } from "../../apps/reader-a2a/src/wires";
 import { invokers, type SkillDeps } from "../../apps/reader-a2a/src/skills";
 import { A2A_BASE } from "../../apps/reader-web/src/api";
-import type { ReaderSession } from "../../apps/reader-web/src/session";
+// The browser's session shape (apps/reader-web/src/session.ts `ReaderSession`), restated so this helper type-checks in
+// the Workers program too (session.ts is a browser module).
+export interface ReaderSession {
+  readonly token: string;
+  readonly estate: "faithnet";
+  readonly name: string;
+  readonly sub: string;
+  readonly via: "home" | "quick-connect" | "dev-stub";
+  readonly wire: boolean;
+  readonly wireNote?: string;
+}
 import { fakeWireDb, TEST_ASK_KEY } from "./wires";
 import type { FakeLibrary } from "./fakeLibrary";
 
