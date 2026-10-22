@@ -822,6 +822,75 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "G13",
+    section: "10. Playlists and reading plans",
+    title: "Edit a reading plan",
+    rows: ["Edit a reading plan"],
+    checks:
+      "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
+    run: async (c) => {
+      await c.open("/read/BSB/JHN/1");
+      const pane = await c.openLibrary("Reading plans");
+      const title = `Flow edit ${stamp()}`;
+      await pane.locator('input[placeholder^="Plan title"]').fill(title);
+      await pane.locator(".sb-plan-blank").click();
+      const editor = pane.locator(".sb-plan-editor");
+      await editor.waitFor({ timeout: 10000 });
+      const save = editor.getByRole("button", { name: /save changes/i });
+      if (await save.isEnabled())
+        throw new Error("Save was enabled with no readings");
+      const add = (day: number, ref: string) =>
+        editor
+          .getByLabel(`Add a reading to Day ${day}`)
+          .fill(ref)
+          .then(() =>
+            editor
+              .locator(".sb-plan-edit-day")
+              .nth(day - 1)
+              .getByRole("button", { name: /^add$/i })
+              .click()
+          );
+      await add(1, "Romans 8:28-39");
+      await editor.getByRole("button", { name: /add session/i }).click();
+      await add(2, "Nowhere 99");
+      await c.waitText(editor, /not a passage/i, 3000);
+      await add(2, "Psalm 23");
+      await editor
+        .locator(".sb-plan-edit-day")
+        .nth(1)
+        .getByRole("button", { name: /add what is on screen/i })
+        .click();
+      await editor.getByRole("button", { name: "Move Day 2 up" }).click();
+      await editor.getByLabel("Name of Day 1").fill("Comfort");
+      await c.check(editor, "Weekly").check();
+      await save.click();
+      await editor.waitFor({ state: "detached", timeout: 10000 });
+      const card = pane.locator(".sb-rp-card", { hasText: title }).first();
+      const days = async () =>
+        card
+          .locator(".sb-rpd-reading-card")
+          .evaluateAll((ds) =>
+            ds.map((d) =>
+              (d as HTMLElement).innerText.replace(/\s+/g, " ").trim()
+            )
+          );
+      const shown = (await days()).join(" | ");
+      if (!/^Comfort.*Psalm 23.*John 1 \| Day 2.*Romans 8:28/.test(shown))
+        throw new Error(`days: ${shown}`);
+      await c.page.reload();
+      const again = await c.openLibrary("Reading plans");
+      const kept = again.locator(".sb-rp-card", { hasText: title }).first();
+      await kept.waitFor({ timeout: 10000 });
+      await ensureOpen(kept);
+      await kept
+        .getByRole("button", { name: /start · weekly/i })
+        .waitFor({ timeout: 5000 });
+      c.page.once("dialog", (d) => void d.accept());
+      await kept.getByRole("button", { name: /^delete$/i }).click();
+      return `${shown.slice(0, 110)}; kept after a reload, Start · Weekly offered`;
+    },
+  },
+  {
     id: "P3",
     timeoutMs: 360_000,
     section: "10. Playlists and reading plans",

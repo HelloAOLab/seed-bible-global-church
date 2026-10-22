@@ -1,6 +1,7 @@
 // THE LIBRARY PANE — playlists and reading plans: the lists, a maker for each from the chapter on screen, the
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
+import { PlanEditor } from "./PlanEditor";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -385,6 +386,8 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   /** `${playlistId}:${index}` of the item being edited, "note:${playlistId}" for a new note. */
   const [editing, setEditing] = useState<string | null>(null);
   const [refText, setRefText] = useState("");
+  /** The plan open in the editor, or null. */
+  const [editingPlan, setEditingPlan] = useState<string | null>(null);
   /** A typed reference ("John 3:16-18") as a scripture item in the open translation. */
   const scriptureFromText = (text: string): PlaylistItem | null => {
     const r = state.search.parseReference(text.trim(), reading.books.value);
@@ -1129,6 +1132,25 @@ export function LibraryPane({ state }: { state: ReaderState }) {
               >
                 {t("create-plan", { defaultValue: "Create plan" })}
               </button>
+              <button
+                type="button"
+                className="sb-note-button sb-plan-blank"
+                onClick={() =>
+                  void plans
+                    .create(
+                      title.trim() ||
+                        t("new-plan-name", { defaultValue: "New plan" }),
+                      [{ items: [] }]
+                    )
+                    .then((p) => {
+                      setTitle("");
+                      setOpen(p["@id"]);
+                      setEditingPlan(p["@id"]);
+                    })
+                }
+              >
+                {t("plan-blank", { defaultValue: "Start a blank plan" })}
+              </button>
             </div>
           </form>
           {!plans.views.value.length && (
@@ -1161,7 +1183,18 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                     }}
                   />
                 </div>
-                {isOpen && (
+                {isOpen && editingPlan === pl["@id"] && (
+                  <PlanEditor
+                    state={state}
+                    plan={pl}
+                    onDone={() => setEditingPlan(null)}
+                    parseReference={scriptureFromText}
+                    passageOnScreen={scriptureItem}
+                    label={(it) => itemLabel(state, it)}
+                    ItemEditor={ItemEditor}
+                  />
+                )}
+                {isOpen && editingPlan !== pl["@id"] && (
                   <>
                     {!v.progress && (
                       <div className="sb-note-card-actions">
@@ -1246,6 +1279,12 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                             : t("publish", { defaultValue: "Publish" })}
                         </button>
                       )}
+                      <button
+                        className="sb-note-button sb-plan-edit-open"
+                        onClick={() => setEditingPlan(pl["@id"])}
+                      >
+                        {t("edit-plan", { defaultValue: "Edit" })}
+                      </button>
                       {v.progress && (
                         <button
                           className="sb-note-button"

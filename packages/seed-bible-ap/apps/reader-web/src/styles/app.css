@@ -1488,3 +1488,36 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   cursor: pointer;
   color: inherit;
 }
+
+/* The plan editor: a day's name and its move/remove buttons on one row, readings as rows beneath. */
+.sb-plan-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-plan-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.sb-plan-edit-row .sb-note-editor {
+  flex: 1;
+  min-width: 8rem;
+}
+.sb-plan-edit-label {
+  flex: 1;
+  min-width: 0;
+}
+.sb-plan-edit-icon {
+  padding: 0.125rem 0.25rem;
+  font-size: 1.125rem;
+}
+.sb-plan-edit-cadences {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
