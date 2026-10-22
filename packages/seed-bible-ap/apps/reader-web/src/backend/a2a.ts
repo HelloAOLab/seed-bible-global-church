@@ -1,7 +1,11 @@
 // THE LIVE BACKEND — one harness run on reader-a2a per call, as the signed-in reader (the id_token is the
 // session; the workspace plans the pinned `skill:seed/*` skill and the reader's own agent does the Library work).
 // reader-a2a never writes a person's record itself; a stranger is refused in words (BackendError "signed-out").
-import type { BucketDocument, Collection } from "@seed/library-client";
+import type {
+  BucketDocument,
+  Collection,
+  ManifestEntry,
+} from "@seed/library-client";
 import type { BucketItem } from "@seed/seed-schema";
 import { A2A_BASE } from "../api";
 import type { ReaderSession } from "../session";
@@ -109,6 +113,14 @@ export function createA2aBackend(
         `read my ${collection}${chapter ? ` for ${chapter}` : ""}`
       );
       return r.bucket as BucketDocument;
+    },
+    async listBuckets(collection) {
+      const r = await ask(
+        "seed.bucket.list",
+        { collection },
+        `list my ${collection}`
+      );
+      return (Array.isArray(r.buckets) ? r.buckets : []) as ManifestEntry[];
     },
     async putMark(collection, item: BucketItem) {
       const r = await ask(

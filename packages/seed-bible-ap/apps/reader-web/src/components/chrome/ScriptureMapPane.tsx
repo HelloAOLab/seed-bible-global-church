@@ -1,6 +1,6 @@
 // THE SCRIPTURE MAP — a first cut of packages/scripture-map: every book as a row of its chapters, the chapter on
-// screen marked, and a chapter shaded by how much of yours is in it (highlights and notes held on this device).
-// Reading history (the heat map of what you read) waits for seed:ReadingEvent buckets.
+// screen outlined, each chapter shaded by the days you read it (the history buckets on this device, pulled from
+// the Library when signed in) and dotted when it holds a highlight or note of yours.
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -9,6 +9,8 @@ export function ScriptureMapPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { reading } = state;
   const [marks, setMarks] = useState<Record<string, number>>({});
+  const [reads, setReads] = useState<Record<string, number>>({});
+  const changed = state.buckets.changed.value;
 
   useEffect(() => {
     void (async () => {
@@ -21,10 +23,11 @@ export function ScriptureMapPane({ state }: { state: ReaderState }) {
         counts[m[2]!] = (counts[m[2]!] ?? 0) + n;
       }
       setMarks(counts);
+      setReads(await state.history.heat());
     })();
-  }, [state.outbox.pending.value]);
+  }, [changed]);
 
-  const max = Math.max(1, ...Object.values(marks));
+  const max = Math.max(1, ...Object.values(reads));
   return (
     <section
       className="sb-pane sb-scripture-map"
@@ -43,7 +46,7 @@ export function ScriptureMapPane({ state }: { state: ReaderState }) {
       <p className="sb-small sb-muted">
         {t("scripture-map-blurb", {
           defaultValue:
-            "Every chapter of the open translation. Shaded where you have highlights or notes on this device; the chapter on screen is outlined.",
+            "Every chapter of the open translation. Shaded by how often you have read it; a dot marks a highlight or note; the chapter on screen is outlined.",
         })}
       </p>
       <div className="sb-map">
@@ -57,6 +60,7 @@ export function ScriptureMapPane({ state }: { state: ReaderState }) {
                 (c) => {
                   const key = `${b.id}.${c}`;
                   const n = marks[key] ?? 0;
+                  const r = reads[key] ?? 0;
                   const here =
                     reading.bookId.value === b.id &&
                     reading.chapterNumber.value === c;
@@ -64,11 +68,11 @@ export function ScriptureMapPane({ state }: { state: ReaderState }) {
                     <button
                       key={c}
                       type="button"
-                      className={`sb-map-chapter${here ? " sb-map-chapter-here" : ""}`}
-                      title={`${b.name} ${c}${n ? ` · ${n} mark${n === 1 ? "" : "s"}` : ""}`}
+                      className={`sb-map-chapter${here ? " sb-map-chapter-here" : ""}${n ? " sb-map-chapter-marked" : ""}`}
+                      title={`${b.name} ${c}${r ? ` · read ${r} day${r === 1 ? "" : "s"}` : ""}${n ? ` · ${n} mark${n === 1 ? "" : "s"}` : ""}`}
                       style={
                         {
-                          "--sb-map-heat": n ? 0.25 + (0.75 * n) / max : 0,
+                          "--sb-map-heat": r ? 0.25 + (0.75 * r) / max : 0,
                         } as never
                       }
                       onClick={() =>

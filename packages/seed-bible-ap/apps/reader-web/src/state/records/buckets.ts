@@ -85,8 +85,16 @@ export interface OpenBucket {
   ready: Promise<void>;
 }
 
+/** The collections a signed-in device pulls from the Library's manifests, so marks and reads made elsewhere show. */
+const PULLED: Collection[] = ["highlights", "annotations", "history"];
+/** How many buckets a pull opens per collection — a bound on the harness runs a first sign-in can cost. */
+const PULL_MAX = 150;
+
 export function createBucketStore(deps: BucketStoreDeps) {
   const open = new Map<string, OpenBucket>();
+  /** Bumped whenever a bucket on the device changes; the cross-chapter views re-read on it. */
+  const changed = signal(0);
+  const pulling = signal(false);
   const newId = deps.newId ?? (() => crypto.randomUUID());
   const isOnline =
     deps.isOnline ??
@@ -134,6 +142,7 @@ export function createBucketStore(deps: BucketStoreDeps) {
       ob.bucket.value = merged;
       ob.source.value = "library";
       await deps.stores.buckets.set(k, merged);
+      changed.value++;
       // The device held something the Library did not — a change made offline or before sign-in — so it goes up.
       if (serialize(merged) !== serialize(remote))
         await deps.outbox.queue(collection, chapter, `resync-${newId()}`);
@@ -158,6 +167,7 @@ export function createBucketStore(deps: BucketStoreDeps) {
     if (!out.changed) return;
     ob.bucket.value = out.bucket;
     await deps.stores.buckets.set(storeKey(collection, chapter), out.bucket);
+    changed.value++;
     await deps.outbox.queue(collection, chapter, item.opId);
   }
 
@@ -171,6 +181,39 @@ export function createBucketStore(deps: BucketStoreDeps) {
     if (!ob || !bucket) return;
     ob.bucket.value = bucket;
     ob.source.value = "library";
+    changed.value++;
+  }
+
+  /**
+   * The buckets of a collection the Library holds that this device never opened — what the reader did on another
+   * device — read and kept on the device (one run for the list, one per bucket). Bounded; a stranger pulls nothing.
+   */
+  async function pull(collection: Collection, max = PULL_MAX): Promise<number> {
+    if (!deps.backend.identity() || !isOnline()) return 0;
+    const entries = await deps.backend.listBuckets(collection);
+    const have = new Set(await deps.stores.buckets.keys());
+    let n = 0;
+    for (const e of entries) {
+      const chapter = e.bucket === collection ? undefined : e.bucket;
+      const k = storeKey(collection, chapter);
+      if (have.has(k) || open.has(k)) continue;
+      if (n >= max) break;
+      await get(collection, chapter).ready;
+      n++;
+    }
+    return n;
+  }
+
+  /** Every pulled collection, in the background of a sign-in; errors are per collection and logged. */
+  async function pullAll(): Promise<void> {
+    if (pulling.value) return;
+    pulling.value = true;
+    try {
+      for (const c of PULLED)
+        await pull(c).catch((e) => console.warn("[buckets] pull", c, e));
+    } finally {
+      pulling.value = false;
+    }
   }
 
   /**
@@ -206,7 +249,10 @@ export function createBucketStore(deps: BucketStoreDeps) {
       const [collection, chapter] = splitKey(k);
       await load(collection, chapter, ob);
     }
-    if (who) await deps.outbox.flush();
+    if (who) {
+      await deps.outbox.flush();
+      void pullAll();
+    }
   }
 
   /** Forget the open signals (sign-out): the device copies stay, the next open reads them again. */
@@ -214,7 +260,7 @@ export function createBucketStore(deps: BucketStoreDeps) {
     open.clear();
   }
 
-  return { get, put, accept, resync, reset };
+  return { get, put, accept, resync, reset, pull, pullAll, changed, pulling };
 }
 
 export type BucketStore = ReturnType<typeof createBucketStore>;

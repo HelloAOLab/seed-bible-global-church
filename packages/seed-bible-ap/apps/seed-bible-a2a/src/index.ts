@@ -372,7 +372,8 @@ app.get("/preview", async (c) => {
   const url = c.req.query("url") ?? "";
   if (!/^https?:\/\//.test(url))
     return c.json({ ok: false, error: "url must be http(s)" }, 400);
-  const cache = (globalThis as { caches?: { default: Cache } }).caches?.default;
+  const cache = (globalThis as unknown as { caches?: { default: Cache } })
+    .caches?.default;
   const cacheKey = new Request(
     `https://preview.seed-bible.svc/?u=${encodeURIComponent(url)}`
   );

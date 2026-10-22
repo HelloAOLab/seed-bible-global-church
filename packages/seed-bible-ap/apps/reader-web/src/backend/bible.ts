@@ -1573,7 +1573,7 @@ export class FreeUseBibleAPI {
     const controller = new AbortController();
     this._requestSubscriptions.set(url, { controller, subscriberCount: 0 });
 
-    const request: Promise<T> = fetch(url, { signal: controller.signal })
+    const request = fetch(url, { signal: controller.signal })
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(
@@ -1590,7 +1590,7 @@ export class FreeUseBibleAPI {
       })
       .finally(() => {
         this._requestSubscriptions.delete(url);
-      });
+      }) as Promise<T>;
 
     this._responseCache.set(url, request);
     return this._subscribeToRequest(url, request, options?.signal);

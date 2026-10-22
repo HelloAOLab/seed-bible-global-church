@@ -1,7 +1,8 @@
 // TODAY — the old TodayPane in outline: pick up where you left off, your recent bookmarks and saves, your friends
 // from the Home and what they released lately. Dressed by the copied `today.css` / `friends.css` where the
 // classes match, and `app.css` for the rest.
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+import type { RecentReading } from "../../state/records/history";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { DEFAULT_ESTATE } from "../../session";
@@ -22,6 +23,11 @@ export function TodayPane({ state }: { state: ReaderState }) {
   useEffect(() => {
     if (signedIn && !today.loadedFor.value) void today.refresh();
   }, [signedIn]);
+  const [recent, setRecent] = useState<RecentReading[]>([]);
+  const changed = state.buckets.changed.value;
+  useEffect(() => {
+    void state.history.recent(8).then(setRecent);
+  }, [changed]);
 
   const open = (chapter: string, start?: number, end?: number) => {
     const [book, ch] = chapter.split(".");
@@ -73,6 +79,36 @@ export function TodayPane({ state }: { state: ReaderState }) {
           </span>
         </button>
       </div>
+
+      {recent.length > 0 && (
+        <div className="sb-content-section">
+          <div className="sb-content-section-head">
+            <h3 className="sb-content-section-title">
+              {t("recent-reading", { defaultValue: "Recent reading" })}
+            </h3>
+          </div>
+          <div className="sb-recent-chips">
+            {recent.map((r) => (
+              <button
+                key={r.chapterRef}
+                className="sb-recent-chip"
+                title={new Date(r.at).toLocaleString()}
+                onClick={() => {
+                  const [book, ch] = r.chapterRef.split(".");
+                  void reading.goTo(
+                    r.edition ?? reading.translationId.value,
+                    book!,
+                    Number(ch)
+                  );
+                  state.ui.pane.value = "none";
+                }}
+              >
+                {label(state, r.chapterRef)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="sb-content-section">
         <div className="sb-content-section-head">

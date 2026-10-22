@@ -22,6 +22,7 @@ import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
 import { createSaves } from "./records/saves";
+import { createHistory } from "./records/history";
 import { createVerseSearch } from "../backend/search";
 import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
@@ -46,7 +47,12 @@ export interface ReaderStateOptions {
   api?: ReadingApi;
   session?: ReaderSession | null;
   isOnline?: () => boolean;
+  /** How long a chapter stays open before it counts as read (tests shorten it). */
+  readDwellMs?: number;
 }
+
+/** How long a chapter stays open before it counts as read. */
+export const READ_DWELL_MS = 8_000;
 
 export function createReaderState(opts: ReaderStateOptions = {}) {
   const session = signal<ReaderSession | null>(
@@ -88,6 +94,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const files = createFiles(backend, stores, identity);
   const extensions = createExtensionHost(stores);
   registerBuiltInExtensions(extensions);
+  const readingHistory = createHistory(buckets, stores, identity);
   const search = createVerseSearch();
   const position = createPosition(stores);
   const customizations = createCustomizations(backend, stores, identity);
@@ -161,6 +168,18 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   effect(() => {
     readingOf().chapterRef.value;
     live.leaderMoved();
+  });
+  // A chapter that stays open counts as read: today's reading event for it, on the device and then in the Library.
+  effect(() => {
+    const r = readingOf();
+    const ref = r.chapterRef.value;
+    const edition = r.translationId.value;
+    if (!r.chapterData.value || typeof setTimeout === "undefined") return;
+    const t = setTimeout(
+      () => void readingHistory.record(ref, edition).catch(() => {}),
+      opts.readDwellMs ?? READ_DWELL_MS
+    );
+    return () => clearTimeout(t);
   });
   const verses = signal<number[]>([]);
   // Playing a playlist: a Scripture item opens its passage in the selected tab.
@@ -314,6 +333,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     annotations,
     bookmarks,
     saves,
+    history: readingHistory,
     playlists,
     plans,
     files,

@@ -9,4 +9,4 @@ One file per manager in `packages/seed-bible/seed-bible/managers/` (read-only so
 
 Template: `_template.md`. Order of porting follows [`feature-map.md`](../architecture/feature-map.md).
 
-Step 9: [`OnboardingAboutEmbedAndMap.md`](./OnboardingAboutEmbedAndMap.md).
+Step 9: [`OnboardingAboutEmbedAndMap.md`](./OnboardingAboutEmbedAndMap.md). Core-reader second cut: [`ReadingHistoryManager.md`](./ReadingHistoryManager.md).

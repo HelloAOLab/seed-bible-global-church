@@ -8,6 +8,7 @@ import {
   mergeBuckets,
   type BucketDocument,
   type Collection,
+  type ManifestEntry,
 } from "@seed/library-client";
 import type { BucketItem } from "@seed/seed-schema";
 import {
@@ -27,7 +28,7 @@ import { chapterOf } from "@seed/seed-protocol";
 import { agentAddress } from "../state/records/marks";
 
 export interface DevCall {
-  op: "read" | "put" | "merge";
+  op: "read" | "put" | "merge" | "list";
   key: string;
   opId?: string;
 }
@@ -85,6 +86,21 @@ export function createDevBackend(
         buckets.get(key(collection, chapter)) ??
           emptyBucket(collection, chapter)
       );
+    },
+    async listBuckets(collection) {
+      guard();
+      calls.push({ op: "list", key: collection });
+      const out: ManifestEntry[] = [];
+      for (const [k, b] of buckets) {
+        if (!k.startsWith(`${collection}:`)) continue;
+        out.push({
+          bucket: k.slice(collection.length + 1),
+          version: 1,
+          count: b["@graph"].length,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      return out;
     },
     async putMark(collection, item: BucketItem) {
       guard();

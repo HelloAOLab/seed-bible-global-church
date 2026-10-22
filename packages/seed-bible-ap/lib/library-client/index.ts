@@ -12,11 +12,13 @@ export type Collection =
   | "annotations"
   | "bookmarks"
   | "saves"
-  | "progress";
+  | "progress"
+  | "history";
 /** Collections bucketed by chapter; the rest keep one bucket. */
 const CHAPTERED: ReadonlySet<Collection> = new Set([
   "highlights",
   "annotations",
+  "history",
 ]);
 /** The Library caps a text document here; a bucket splits before it. */
 export const LIBRARY_TEXT_MAX_CHARS = 12_000;

@@ -114,7 +114,7 @@ in D1 (`seed-reader-a2a`, `migrations/`). `GET /me` reports `wire: true`. Facts:
   pushed to GraphDB. Pinned here by digest: `apps/reader-a2a/src/pins/skills.json` (`pnpm pin:skills`).
 - **Here:** `lib/seed-schema` (zod per class, held to the TTL by a test), `lib/library-client` (chapter buckets,
   manifests, the idempotent put, the item-level merge — [ADR-0006](docs/adr/0006-chapter-buckets-and-the-vault-path.md)),
-  reader-a2a tools `seed.highlight.put` / `seed.annotation.put` / `seed.bookmark.put` / `seed.bucket.read` /
+  reader-a2a tools `seed.highlight.put` / `seed.annotation.put` / `seed.bookmark.put` / `seed.bucket.read` / `seed.bucket.list` /
   `seed.bucket.merge` over the reader's wire, reader-mcp `bucket_merge`.
 - **Proof:** `pnpm smoke:vault` — as seedreader, a highlight in John 3 lands in their Library, reads back at the same
   version, and a re-put with the same opId changes nothing. Passes locally and against `seed-reader-a2a.faithnet.io`.
@@ -176,6 +176,15 @@ translations, cross-references (the Bible API host's dataset, cached), places (t
 study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers AI on `seed-bible.svc`, streamed back,
 the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
 transcripts and Twitch (the outbound allowlist, §10).
+
+### Reading history and cross-device pull (core-reader, second cut, 2026-10-22)
+
+A chapter that stays open counts as read: one `seed:ReadingEvent` per reader, chapter and day in a new `history`
+collection (chaptered like highlights; it merges, adopts and flushes like a mark). `seed.bucket.list` on reader-a2a
+reads a collection's manifest, and a signed-in device pulls the highlights, annotations and history buckets it
+never opened (bounded, in the background of sign-in) — so another device's marks and reads show up in Your Content
+(**All chapters**), Today (**Recent reading**) and the Scripture map (shaded by days read, dotted by marks).
+`docs/porting/ReadingHistoryManager.md`.
 
 ### Cutover (step 9, first cut — cutover, 2026-10-22)
 

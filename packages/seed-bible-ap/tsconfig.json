@@ -33,6 +33,7 @@
   "exclude": [
     "test/unit/reader-web",
     "scripts/smoke/reader-web.ts",
-    "scripts/smoke/session.ts"
+    "scripts/smoke/session.ts",
+    "test/integration"
   ]
 }

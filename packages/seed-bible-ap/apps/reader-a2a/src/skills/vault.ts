@@ -120,7 +120,7 @@ export async function readBucket(
   };
 }
 
-async function readManifest(
+export async function readManifest(
   agent: PersonAgent,
   collection: Collection
 ): Promise<{

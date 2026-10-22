@@ -7,6 +7,10 @@ import { useI18n } from "../../i18n";
 import type { VerseHit } from "../../backend/search";
 import { noteText } from "./noteHtml";
 import { getVersePlainText } from "../reader/chapterContent";
+import { listStored, type StoredChapter } from "../../state/records/all";
+import { spanOf } from "../../state/records/marks";
+import type { Annotation, Highlight } from "@seed/seed-schema";
+import { colorIdOf } from "../../state/records/highlights";
 
 function refLabel(
   state: ReaderState,
@@ -86,6 +90,57 @@ export function YourContentPane({ state }: { state: ReaderState }) {
     : null;
   const chapterHighlights = state.highlights.forChapter(chapterRef).value;
   const chapterNotes = state.annotations.forChapter(chapterRef).value;
+  // "All chapters": every highlight and note on this device (opened here, or pulled from the Library).
+  const [scope, setScope] = useState<"chapter" | "all">("chapter");
+  const [allHighlights, setAllHighlights] = useState<
+    StoredChapter<Highlight>[]
+  >([]);
+  const [allNotes, setAllNotes] = useState<StoredChapter<Annotation>[]>([]);
+  const changed = state.buckets.changed.value;
+  useEffect(() => {
+    if (scope !== "all") return;
+    const who = () => state.backend.identity();
+    void listStored<Highlight>(
+      state.stores,
+      "highlights",
+      "seed:Highlight",
+      who
+    ).then(setAllHighlights);
+    void listStored<Annotation>(
+      state.stores,
+      "annotations",
+      "seed:Annotation",
+      who
+    ).then(setAllNotes);
+  }, [scope, changed]);
+  const openAt = (chapter: string, start: number, end: number) => {
+    const [book, ch] = chapter.split(".");
+    void reading
+      .goTo(reading.translationId.value, book!, Number(ch))
+      .then(() => state.selection.select(start, end));
+  };
+  const chapterLabel = (chapter: string) => {
+    const [book, ch] = chapter.split(".");
+    return `${reading.books.value.find((b) => b.id === book)?.name ?? book} ${ch}`;
+  };
+  const scopeToggle = (
+    <div className="sb-content-scope" role="group">
+      <button
+        className={`sb-content-scope-button${scope === "chapter" ? " sb-content-scope-active" : ""}`}
+        aria-pressed={scope === "chapter"}
+        onClick={() => setScope("chapter")}
+      >
+        {t("this-chapter", { defaultValue: "This chapter" })}
+      </button>
+      <button
+        className={`sb-content-scope-button${scope === "all" ? " sb-content-scope-active" : ""}`}
+        aria-pressed={scope === "all"}
+        onClick={() => setScope("all")}
+      >
+        {t("all-chapters", { defaultValue: "All chapters" })}
+      </button>
+    </div>
+  );
   const verseText = (n: number) => {
     const v = reading.chapterData.value?.chapter.content.find(
       (e) =>
@@ -284,84 +339,184 @@ export function YourContentPane({ state }: { state: ReaderState }) {
             ))}
           </div>
 
-          <div className="sb-content-section sb-content-highlights">
-            <div className="sb-content-section-head">
-              <h3 className="sb-content-section-title">
-                {t("highlights", { defaultValue: "Highlights" })} ·{" "}
-                {reading.bookName.value} {reading.chapterNumber.value}
-              </h3>
+          {scopeToggle}
+          {scope === "all" && (
+            <>
+              <div className="sb-content-section sb-content-highlights">
+                <div className="sb-content-section-head">
+                  <h3 className="sb-content-section-title">
+                    {t("highlights", { defaultValue: "Highlights" })} ·{" "}
+                    {t("n-chapters", {
+                      count: allHighlights.length,
+                      defaultValue: `${allHighlights.length} chapters`,
+                    })}
+                  </h3>
+                </div>
+                {!allHighlights.length && (
+                  <p className="sb-content-empty">
+                    {t("your-content-empty-highlights", {
+                      defaultValue: "Verses you highlight will show up here.",
+                    })}
+                  </p>
+                )}
+                {allHighlights.map((c) => (
+                  <div key={c.chapterRef} className="sb-content-chapter-group">
+                    <div className="sb-content-chapter-label">
+                      {chapterLabel(c.chapterRef)}
+                    </div>
+                    {c.items.map((h) => {
+                      const s = spanOf(h.aboutPassage);
+                      return (
+                        <button
+                          key={h["@id"]}
+                          className="sb-content-highlight-row"
+                          onClick={() => openAt(c.chapterRef, s.start, s.end)}
+                        >
+                          <span
+                            className="sb-content-highlight"
+                            style={{
+                              background: `var(--sb-highlight-${colorIdOf(h.highlightColor)}-color)`,
+                            }}
+                          />
+                          <span className="sb-content-highlight-ref">
+                            {refLabel(state, c.chapterRef, s.start, s.end)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              <div className="sb-content-section sb-content-annotations">
+                <div className="sb-content-section-head">
+                  <h3 className="sb-content-section-title">
+                    {t("notes", { defaultValue: "Notes" })} ·{" "}
+                    {t("n-chapters", {
+                      count: allNotes.length,
+                      defaultValue: `${allNotes.length} chapters`,
+                    })}
+                  </h3>
+                </div>
+                {!allNotes.length && (
+                  <p className="sb-content-empty">
+                    {t("feed-empty-notes-all", {
+                      defaultValue: "No notes yet.",
+                    })}
+                  </p>
+                )}
+                {allNotes.map((c) => (
+                  <div key={c.chapterRef} className="sb-content-chapter-group">
+                    <div className="sb-content-chapter-label">
+                      {chapterLabel(c.chapterRef)}
+                    </div>
+                    {c.items.map((n) => {
+                      const s = spanOf(n.aboutPassage);
+                      return (
+                        <button
+                          key={n["@id"]}
+                          className="sb-content-annotation"
+                          onClick={() => {
+                            openAt(c.chapterRef, s.start, s.end);
+                            state.ui.pane.value = "notes";
+                            state.ui.focusNoteVerse.value = s.start;
+                          }}
+                        >
+                          <span className="sb-content-annotation-head">
+                            {refLabel(state, c.chapterRef, s.start, s.end)}
+                          </span>
+                          <span className="sb-content-annotation-body">
+                            {noteText(n.note).slice(0, 140)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {scope === "chapter" && (
+            <div className="sb-content-section sb-content-highlights">
+              <div className="sb-content-section-head">
+                <h3 className="sb-content-section-title">
+                  {t("highlights", { defaultValue: "Highlights" })} ·{" "}
+                  {reading.bookName.value} {reading.chapterNumber.value}
+                </h3>
+              </div>
+              {!chapterHighlights.length && (
+                <p className="sb-content-empty">
+                  {t("your-content-empty-highlights", {
+                    defaultValue: "Verses you highlight will show up here.",
+                  })}
+                </p>
+              )}
+              {chapterHighlights.map((h) => {
+                const start =
+                  typeof h.verse === "number" ? h.verse : h.verse[0];
+                const end = typeof h.verse === "number" ? h.verse : h.verse[1];
+                return (
+                  <button
+                    key={h.id}
+                    className="sb-content-highlight-row"
+                    onClick={() => state.selection.select(start, end)}
+                  >
+                    <span
+                      className="sb-content-highlight"
+                      style={{
+                        background: `var(--sb-highlight-${h.colorId}-color)`,
+                      }}
+                    />
+                    <span className="sb-content-highlight-ref">
+                      {refLabel(state, chapterRef, start, end)}
+                    </span>
+                    <span className="sb-content-highlight-text">
+                      {verseText(start)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            {!chapterHighlights.length && (
-              <p className="sb-content-empty">
-                {t("your-content-empty-highlights", {
-                  defaultValue: "Verses you highlight will show up here.",
-                })}
-              </p>
-            )}
-            {chapterHighlights.map((h) => {
-              const start = typeof h.verse === "number" ? h.verse : h.verse[0];
-              const end = typeof h.verse === "number" ? h.verse : h.verse[1];
-              return (
+          )}
+          {scope === "chapter" && (
+            <div className="sb-content-section sb-content-annotations">
+              <div className="sb-content-section-head">
+                <h3 className="sb-content-section-title">
+                  {t("notes", { defaultValue: "Notes" })} ·{" "}
+                  {reading.bookName.value} {reading.chapterNumber.value}
+                </h3>
                 <button
-                  key={h.id}
-                  className="sb-content-highlight-row"
-                  onClick={() => state.selection.select(start, end)}
+                  className="sb-content-see-all"
+                  onClick={() => (state.ui.pane.value = "notes")}
                 >
-                  <span
-                    className="sb-content-highlight"
-                    style={{
-                      background: `var(--sb-highlight-${h.colorId}-color)`,
-                    }}
-                  />
-                  <span className="sb-content-highlight-ref">
-                    {refLabel(state, chapterRef, start, end)}
+                  {t("see-all", { defaultValue: "See all" })}
+                </button>
+              </div>
+              {!chapterNotes.length && (
+                <p className="sb-content-empty">
+                  {t("feed-empty-notes", {
+                    defaultValue: "No notes on this chapter yet.",
+                  })}
+                </p>
+              )}
+              {chapterNotes.slice(0, 5).map((n) => (
+                <button
+                  key={n.id}
+                  className="sb-content-annotation"
+                  onClick={() => {
+                    state.ui.pane.value = "notes";
+                    state.ui.focusNoteVerse.value = n.start;
+                  }}
+                >
+                  <span className="sb-content-annotation-head">
+                    {refLabel(state, chapterRef, n.start, n.end)}
                   </span>
-                  <span className="sb-content-highlight-text">
-                    {verseText(start)}
+                  <span className="sb-content-annotation-body">
+                    {noteText(n.note).slice(0, 140)}
                   </span>
                 </button>
-              );
-            })}
-          </div>
-
-          <div className="sb-content-section sb-content-annotations">
-            <div className="sb-content-section-head">
-              <h3 className="sb-content-section-title">
-                {t("notes", { defaultValue: "Notes" })} ·{" "}
-                {reading.bookName.value} {reading.chapterNumber.value}
-              </h3>
-              <button
-                className="sb-content-see-all"
-                onClick={() => (state.ui.pane.value = "notes")}
-              >
-                {t("see-all", { defaultValue: "See all" })}
-              </button>
+              ))}
             </div>
-            {!chapterNotes.length && (
-              <p className="sb-content-empty">
-                {t("feed-empty-notes", {
-                  defaultValue: "No notes on this chapter yet.",
-                })}
-              </p>
-            )}
-            {chapterNotes.slice(0, 5).map((n) => (
-              <button
-                key={n.id}
-                className="sb-content-annotation"
-                onClick={() => {
-                  state.ui.pane.value = "notes";
-                  state.ui.focusNoteVerse.value = n.start;
-                }}
-              >
-                <span className="sb-content-annotation-head">
-                  {refLabel(state, chapterRef, n.start, n.end)}
-                </span>
-                <span className="sb-content-annotation-body">
-                  {noteText(n.note).slice(0, 140)}
-                </span>
-              </button>
-            ))}
-          </div>
+          )}
         </>
       )}
     </section>

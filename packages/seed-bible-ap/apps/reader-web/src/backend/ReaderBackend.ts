@@ -3,7 +3,11 @@
 // OWN agent writes their Library over the ask-as-me wire) and dev.ts (in memory, for tests and local pages). The
 // browser never reaches reader-mcp, a Home, or the registry; the Bible text itself (backend/bible.ts) is the one
 // permitted exception (ADR-0003).
-import type { BucketDocument, Collection } from "@seed/library-client";
+import type {
+  BucketDocument,
+  Collection,
+  ManifestEntry,
+} from "@seed/library-client";
 import type { BucketItem } from "@seed/seed-schema";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -71,6 +75,8 @@ export interface ReaderBackend {
   identity(): ReaderIdentity | null;
   /** The reader's bucket as their Library holds it (empty when it was never saved). */
   readBucket(collection: Collection, chapter?: string): Promise<BucketDocument>;
+  /** Every bucket of a collection the Library holds (the manifest): what another device wrote. */
+  listBuckets(collection: Collection): Promise<ManifestEntry[]>;
   /** One mark into the reader's Library, idempotent by opId. */
   putMark(
     collection: Collection,

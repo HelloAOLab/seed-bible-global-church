@@ -148,12 +148,11 @@ export const ReadingPosition = z.object({
 });
 export type ReadingPosition = z.infer<typeof ReadingPosition>;
 
+/** One reading of a chapter — a bucket item in the `history` collection; one per reader, chapter and day. */
 export const ReadingEvent = z.object({
-  "@id": z.string().min(1),
+  ...mark,
   "@type": z.literal("seed:ReadingEvent"),
-  wasAssociatedWith: agentRef,
-  aboutPassage: osisRef,
-  ofEdition: z.string().min(1).optional(),
+  wasAssociatedWith: agentRef.optional(),
   startedAt: iso,
   endedAt: iso.optional(),
 });
@@ -312,6 +311,7 @@ export const BucketItem = z.discriminatedUnion("@type", [
   Annotation,
   Bookmark,
   Save,
+  ReadingEvent,
 ]);
 export type BucketItem = z.infer<typeof BucketItem>;
 

@@ -742,3 +742,67 @@ body {
 .sb-legal {
   font-size: 0.875rem;
 }
+
+/* The map: a dot for a chapter with a mark; the shade is the reads. */
+.sb-map-chapter {
+  position: relative;
+}
+.sb-map-chapter-marked::after {
+  content: "";
+  position: absolute;
+  inset: auto 2px 2px auto;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+/* Today: recent reading chips */
+.sb-recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sb-recent-chip {
+  border: 1px solid var(--sb-divider-color, #00000024);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+.sb-recent-chip:hover {
+  border-color: var(--sb-primary-color);
+}
+
+/* Your Content: this chapter / all chapters */
+.sb-content-scope {
+  display: inline-flex;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 0 1rem;
+}
+.sb-content-scope-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+.sb-content-scope-active {
+  background: var(--sb-primary-color);
+  color: var(--sb-on-primary-color, #fff);
+}
+.sb-content-chapter-group {
+  margin: 0 0 0.75rem;
+}
+.sb-content-chapter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.75;
+  margin: 0.25rem 0;
+}

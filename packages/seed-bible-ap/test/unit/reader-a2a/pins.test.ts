@@ -8,6 +8,7 @@ import { TOOLS } from "../../../apps/reader-a2a/src/skills";
 const WORKSPACE_LOCAL = new Set([
   "seed.hello",
   "seed.bucket.read",
+  "seed.bucket.list",
   "seed.workspace.discover",
   "seed.workspace.contacts",
   "seed.session.start",

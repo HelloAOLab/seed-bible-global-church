@@ -8,6 +8,7 @@ import {
   mergeBucket,
   putMark,
   readBucket,
+  readManifest,
   agentFor,
   setDefer,
   type Defer,
@@ -66,13 +67,26 @@ export const BOOKMARK_PUT: ToolSpec = mark("bookmarks", "Bookmark");
 export const BUCKET_READ: ToolSpec = {
   id: "seed.bucket.read",
   description:
-    "Reads one of the signed-in reader's chapter buckets from their Library as evidence (what the app syncs from). Args: collection (highlights · annotations · bookmarks · saves), chapter (OSIS, for highlights/annotations).",
+    "Reads one of the signed-in reader's chapter buckets from their Library as evidence (what the app syncs from). Args: collection (highlights · annotations · bookmarks · saves · progress · history), chapter (OSIS, for highlights/annotations/history).",
   inputSchema: {
     type: "object",
     properties: { collection: { type: "string" }, chapter: { type: "string" } },
     required: ["collection"],
   },
   answers: ["what did I highlight in this chapter", "my notes on this chapter"],
+  establishes: "lookup",
+};
+
+export const BUCKET_LIST: ToolSpec = {
+  id: "seed.bucket.list",
+  description:
+    "Lists the signed-in reader's buckets of one collection from the collection's manifest in their Library — which chapters hold marks or reads, each bucket's version, count and last update — so a device can fetch what it never opened. Args: collection.",
+  inputSchema: {
+    type: "object",
+    properties: { collection: { type: "string" } },
+    required: ["collection"],
+  },
+  answers: ["which chapters have I highlighted", "what have I read"],
   establishes: "lookup",
 };
 
@@ -250,6 +264,7 @@ export const TOOLS: ToolSpec[] = [
   ANNOTATION_PUT,
   BOOKMARK_PUT,
   BUCKET_READ,
+  BUCKET_LIST,
   BUCKET_MERGE,
   PUBLISH_SLICE,
   DISCOVER,
@@ -270,6 +285,7 @@ const COLLECTIONS: ReadonlySet<string> = new Set([
   "bookmarks",
   "saves",
   "progress",
+  "history",
 ]);
 const collectionOf = (raw: unknown): Collection => {
   const c = String(raw ?? "");
@@ -341,6 +357,17 @@ export function invokers(
         file: file ?? null,
         bucket,
         runRef,
+      };
+    },
+    [BUCKET_LIST.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const collection = collectionOf(args.collection);
+      const agent = await agentFor(deps.env, reader);
+      const { manifest } = await readManifest(agent, collection);
+      return {
+        collection,
+        buckets: Object.values(manifest.buckets),
+        updatedAt: manifest.updatedAt,
       };
     },
     [PUBLISH_SLICE.id]: async (_t, args) => {
@@ -460,7 +487,8 @@ export function invokers(
       }
       if (!bytes.byteLength || bytes.byteLength > 5 * 1024 * 1024)
         throw new WireRefusal(413, "a file is 1 byte to 5 MB");
-      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const buf = bytes.slice().buffer as ArrayBuffer;
+      const digest = await crypto.subtle.digest("SHA-256", buf);
       const sha256 = [...new Uint8Array(digest)]
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
@@ -473,7 +501,7 @@ export function invokers(
             "content-type": contentType,
             "x-sb-upload-token": deps.env.PLATFORM_UPLOAD_TOKEN ?? "",
           },
-          body: bytes,
+          body: buf,
         }
       );
       const out = (await res.json().catch(() => null)) as {
