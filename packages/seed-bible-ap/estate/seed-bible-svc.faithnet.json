@@ -40,7 +40,7 @@
       "seed-bible-svc-mcp-faithnet": "https://seed-bible-mcp.faithnet.io"
     },
     "d1": "seed-bible-svc (48e64d24-f48d-4017-ba5a-401e3b435ad8)",
-    "r2": "not yet \u2014 R2 is not enabled on the Cloudflare account (dashboard step)",
+    "r2": "seed-bible-files (binding FILES, created 2026-10-22; the file lane is step 7)",
     "cron": "*/15 * * * *"
   }
 }

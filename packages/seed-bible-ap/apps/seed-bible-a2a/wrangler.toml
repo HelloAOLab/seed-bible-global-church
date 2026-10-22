@@ -29,6 +29,12 @@ migrations_dir = "migrations"
 name = "RUNS"
 class_name = "SvcRunDO"
 
+# Public file bytes (hero images, photos, playlist assets — step 7). A serving-plane cache like D1: the vault
+# holds the catalog, R2 holds bytes that can be re-put from it (ADR-0004).
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "seed-bible-files"
+
 [[migrations]]
 tag = "v1-svc-runs"
 new_sqlite_classes = ["SvcRunDO"]
@@ -70,6 +76,10 @@ migrations_dir = "migrations"
 [[env.faithnet.durable_objects.bindings]]
 name = "RUNS"
 class_name = "SvcRunDO"
+
+[[env.faithnet.r2_buckets]]
+binding = "FILES"
+bucket_name = "seed-bible-files"
 
 [env.faithnet.triggers]
 crons = ["*/15 * * * *"]

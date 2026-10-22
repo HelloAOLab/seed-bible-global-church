@@ -34,6 +34,6 @@ central may author them.
 - The browser never reaches the registry: reader-web asks reader-a2a, which asks the svc.
 - Verification today is "the shelf reports a signed release"; checking the release signature against the owner's
   account (ERC-1271) and the content commitment is a follow-up before Discover shows strangers' shelves.
-- R2 (public file bytes) is not enabled on the Cloudflare account yet; files wait for the operator (step 7).
+- R2 was enabled on the account and the bucket `seed-bible-files` created 2026-10-22 (bound as `FILES` on `seed-bible.svc`); the file lane itself is step 7.
 - Crawl budget: full re-crawl of every registered shelf each run; fine at this scale, incremental keyed by
   `(owner, entryId, version, releaseId)` when it is not.
