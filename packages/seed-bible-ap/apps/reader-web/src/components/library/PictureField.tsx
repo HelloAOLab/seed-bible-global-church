@@ -11,6 +11,10 @@ import {
   type CropTarget,
 } from "../../state/library/crop";
 
+/** The pictures a field takes, by extension and type. */
+const PICTURE_TYPES =
+  ".jpg,.jpeg,.png,.gif,.webp,.avif,image/jpeg,image/png,image/gif,image/webp,image/avif";
+
 export function CropDialog({
   file,
   target,
@@ -281,7 +285,9 @@ export function PictureField({
         {state.files.uploading.value ? "…" : label}
         <input
           type="file"
-          accept="image/*"
+          // Named types, not "image/*": on Windows, Chrome resolves a wildcard against every image type the system
+          // knows before it shows the dialog, which took from seconds to minutes (the page looked frozen meanwhile).
+          accept={PICTURE_TYPES}
           hidden
           disabled={disabled}
           onChange={(e) => {
