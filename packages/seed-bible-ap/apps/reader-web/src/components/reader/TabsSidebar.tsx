@@ -31,11 +31,17 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { tabs } = state;
   const [layoutOpen, setLayoutOpen] = useState(false);
-  const collapsed = state.ui.sidebarCollapsed.value;
+  const drawer = state.ui.sidebarDrawer.value;
+  const collapsed = state.ui.sidebarCollapsed.value && !drawer;
+  /** Choosing a tab from the phone drawer closes it. */
+  const pick = (id: string) => {
+    tabs.selectTab(id);
+    state.ui.sidebarDrawer.value = false;
+  };
 
   return (
     <aside
-      className={`sb-tabs-sidebar${collapsed ? " sb-tabs-sidebar-collapsed" : ""}`}
+      className={`sb-tabs-sidebar${collapsed ? " sb-tabs-sidebar-collapsed" : ""}${drawer ? " sb-tabs-sidebar-drawer" : ""}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
       <div className="sb-sidebar-top-row">
@@ -48,7 +54,11 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                 ? t("open-sidebar", { defaultValue: "Open sidebar" })
                 : t("close-sidebar", { defaultValue: "Close sidebar" })
             }
-            onClick={() => (state.ui.sidebarCollapsed.value = !collapsed)}
+            onClick={() =>
+              drawer
+                ? (state.ui.sidebarDrawer.value = false)
+                : (state.ui.sidebarCollapsed.value = !collapsed)
+            }
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
@@ -146,7 +156,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                     role="tab"
                     aria-selected={isSelected}
                     className="sb-tab-button"
-                    onClick={() => tabs.selectTab(tab.id)}
+                    onClick={() => pick(tab.id)}
                   >
                     <div
                       className="sb-tab-main-content"

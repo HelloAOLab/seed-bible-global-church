@@ -47,6 +47,12 @@ export function App({ state }: { state: ReaderState }) {
       className={`sb-app${pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
     >
       <TabsSidebar state={state} />
+      {state.ui.sidebarDrawer.value && (
+        <div
+          className="sb-drawer-backdrop"
+          onClick={() => (state.ui.sidebarDrawer.value = false)}
+        />
+      )}
       <main className="sb-app-main">
         <PanesLayout state={state} />
       </main>

@@ -67,4 +67,53 @@ describe("the reader state", () => {
     expect(state.selection.verses.value).toEqual([1]);
     stop();
   });
+
+  it("remembers the open tabs, the layout and the selection across visits", async () => {
+    const stores = memoryStores();
+    const first = createReaderState({
+      backend: createDevBackend(null),
+      stores,
+      api,
+      session: null,
+      isOnline: () => true,
+    });
+    const stop = await first.start();
+    first.tabs.addTab({ bookId: "JHN", chapterNumber: 5 });
+    first.tabs.setLayout("split-2v");
+    // The new tab sits in slot 0, the first tab moved to slot 1: select the first.
+    first.tabs.selectSlot(1);
+    expect(first.reading.chapterRef.value).toBe("JHN.1");
+    const t0 = Date.now();
+    while (Date.now() - t0 < 3000) {
+      const saved = (await stores.prefs.get("tabs:open")) as
+        | { tabs: { chapterNumber: number }[]; layout: string }
+        | undefined;
+      if (
+        saved?.tabs.length === 2 &&
+        saved.layout === "split-2v" &&
+        saved.tabs.some((t) => t.chapterNumber === 5)
+      )
+        break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    stop();
+
+    const again = createReaderState({
+      backend: createDevBackend(null),
+      stores,
+      api,
+      session: null,
+      isOnline: () => true,
+    });
+    const stop2 = await again.start();
+    expect(again.tabs.tabs.value).toHaveLength(2);
+    expect(again.tabs.layout.value).toBe("split-2v");
+    expect(again.tabs.slotTabIds.value.filter(Boolean)).toHaveLength(2);
+    expect(again.tabs.selectedSlot.value).toBe(1);
+    expect(again.reading.chapterRef.value).toBe("JHN.1");
+    expect(
+      again.tabs.slots.value.map((t) => t?.reading.chapterRef.value)
+    ).toEqual(["JHN.5", "JHN.1"]);
+    stop2();
+  });
 });

@@ -1,9 +1,19 @@
 // THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
 // when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
 // then play or listen, notes, Your Content, theme, and the account.
+import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
+
+interface ToolbarAction {
+  id: string;
+  icon: string;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+  badge?: number;
+}
 
 function Item(props: {
   icon: string;
@@ -60,12 +70,83 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const speaking = tts.isSpeaking.value;
   const canListen =
     !audio.available.value && tts.canSpeakLanguage(state.speechLang());
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // Everything after the chapter controls: inline on a wide screen, under "More" on a narrow phone.
+  const secondary: ToolbarAction[] = [
+    {
+      id: "session",
+      icon: state.live.active.value ? "groups" : "group_add",
+      label: t("live-session", { defaultValue: "Live session" }),
+      active: ui.pane.value === "session" || state.live.active.value,
+      ...(state.live.active.value
+        ? { badge: state.live.state.value?.participants.length }
+        : {}),
+      onClick: () => togglePane("session"),
+    },
+    {
+      id: "today",
+      icon: "today",
+      label: t("today", { defaultValue: "Today" }),
+      active: ui.pane.value === "today",
+      onClick: () => togglePane("today"),
+    },
+    {
+      id: "discover",
+      icon: "explore",
+      label: t("discover", { defaultValue: "Discover" }),
+      active: ui.pane.value === "discover",
+      onClick: () => togglePane("discover"),
+    },
+    {
+      id: "notes",
+      icon: "sticky_note_2",
+      label: t("notes", { defaultValue: "Notes" }),
+      active: ui.pane.value === "notes",
+      badge: notes,
+      onClick: () => togglePane("notes"),
+    },
+    {
+      id: "library",
+      icon: "queue_music",
+      label: t("library", { defaultValue: "Library" }),
+      active: ui.pane.value === "library" || !!state.playlists.playing.value,
+      onClick: () => togglePane("library"),
+    },
+    {
+      id: "content",
+      icon: "library_books",
+      label: t("your-content", { defaultValue: "Your content" }),
+      active: ui.pane.value === "content",
+      onClick: () => togglePane("content"),
+    },
+    ...state.extensions.toolbarItems.value.map((it) => ({
+      id: `ext:${it.id}`,
+      icon: it.icon,
+      label: it.label,
+      active: ui.pane.value === (`ext:${it.id}` as never),
+      onClick: () => it.onSelect(),
+    })),
+    {
+      id: "theme",
+      icon: dark ? "light_mode" : "dark_mode",
+      label: t("themes", { defaultValue: "Themes" }),
+      onClick: () => settings.toggleTheme(),
+    },
+  ];
 
   return (
     <nav
       className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
+      <Item
+        icon="menu"
+        className="sb-reader-toolbar-phone-only"
+        label={t("tabs", { defaultValue: "Tabs" })}
+        active={ui.sidebarDrawer.value}
+        onClick={() => (ui.sidebarDrawer.value = !ui.sidebarDrawer.value)}
+      />
       {audioActive && (
         <>
           <div className="sb-reader-toolbar-audio">
@@ -135,62 +216,48 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => (speaking ? tts.stop() : state.listen())}
         />
       )}
-      <Item
-        icon={state.live.active.value ? "groups" : "group_add"}
-        label={t("live-session", { defaultValue: "Live session" })}
-        active={ui.pane.value === "session" || state.live.active.value}
-        badge={
-          state.live.active.value
-            ? state.live.state.value?.participants.length
-            : undefined
-        }
-        onClick={() => togglePane("session")}
-      />
-      <Item
-        icon="today"
-        label={t("today", { defaultValue: "Today" })}
-        active={ui.pane.value === "today"}
-        onClick={() => togglePane("today")}
-      />
-      <Item
-        icon="explore"
-        label={t("discover", { defaultValue: "Discover" })}
-        active={ui.pane.value === "discover"}
-        onClick={() => togglePane("discover")}
-      />
-      <Item
-        icon="sticky_note_2"
-        label={t("notes", { defaultValue: "Notes" })}
-        active={ui.pane.value === "notes"}
-        badge={notes}
-        onClick={() => togglePane("notes")}
-      />
-      <Item
-        icon="queue_music"
-        label={t("library", { defaultValue: "Library" })}
-        active={ui.pane.value === "library" || !!state.playlists.playing.value}
-        onClick={() => togglePane("library")}
-      />
-      <Item
-        icon="library_books"
-        label={t("your-content", { defaultValue: "Your content" })}
-        active={ui.pane.value === "content"}
-        onClick={() => togglePane("content")}
-      />
-      {state.extensions.toolbarItems.value.map((it) => (
+      {secondary.map((a) => (
         <Item
-          key={it.id}
-          icon={it.icon}
-          label={it.label}
-          active={ui.pane.value === (`ext:${it.id}` as never)}
-          onClick={() => it.onSelect()}
+          key={a.id}
+          icon={a.icon}
+          label={a.label}
+          active={a.active}
+          badge={a.badge}
+          className="sb-reader-toolbar-secondary"
+          onClick={a.onClick}
         />
       ))}
       <Item
-        icon={dark ? "light_mode" : "dark_mode"}
-        label={t("themes", { defaultValue: "Themes" })}
-        onClick={() => settings.toggleTheme()}
+        icon="more_horiz"
+        className="sb-reader-toolbar-more-button"
+        label={t("more", { defaultValue: "More" })}
+        active={moreOpen}
+        onClick={() => setMoreOpen((o) => !o)}
       />
+      {moreOpen && (
+        <div className="sb-reader-toolbar-more-menu" role="menu">
+          {secondary.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              role="menuitem"
+              className={`sb-reader-toolbar-more-item${a.active ? " sb-reader-toolbar-more-item-active" : ""}`}
+              onClick={() => {
+                setMoreOpen(false);
+                a.onClick();
+              }}
+            >
+              <span className="material-symbols-outlined">{a.icon}</span>
+              <span>{a.label}</span>
+              {a.badge ? (
+                <span className="sb-reader-toolbar-unread-indicator">
+                  {a.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      )}
       <Item
         icon={
           pending

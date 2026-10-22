@@ -28,7 +28,7 @@ import { setVerseLinkTranslation } from "../components/records/tiptap/VerseRefer
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
 import { bindRoute, parseRoute, pushRoute, versesOf } from "./reading/route";
-import { createTabs } from "./reading/tabs";
+import { createTabs, slotCountOf, type LayoutId } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
 import { createChapterAudio } from "./media/audio";
 import { createTextToSpeechManager } from "./media/textToSpeech";
@@ -53,6 +53,16 @@ export interface ReaderStateOptions {
 
 /** How long a chapter stays open before it counts as read. */
 export const READ_DWELL_MS = 8_000;
+
+const TABS_KEY = "tabs:open";
+const TABS_SAVE_MS = 300;
+interface SavedTabs {
+  tabs: { translationId: string; bookId: string; chapterNumber: number }[];
+  layout: LayoutId;
+  /** Each slot's tab as an index into `tabs`. */
+  slots: (number | null)[];
+  selectedSlot: number;
+}
 
 export function createReaderState(opts: ReaderStateOptions = {}) {
   const session = signal<ReaderSession | null>(
@@ -250,6 +260,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
     sidebarCollapsed: signal(false),
+    /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
+    sidebarDrawer: signal(false),
     /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
     embed: signal(false),
     /** A share link's session, joined once signed in. */
@@ -281,22 +293,77 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     buckets.reset();
   }
 
+  // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.
+  let tabsRestored = false;
+  let tabsSaveTimer: ReturnType<typeof setTimeout> | undefined;
+  let tabsPending: SavedTabs | null = null;
+  const saveTabsNow = () => {
+    clearTimeout(tabsSaveTimer);
+    if (!tabsPending) return;
+    const snap = tabsPending;
+    tabsPending = null;
+    void stores.prefs.set(TABS_KEY, snap);
+  };
+  effect(() => {
+    const snapshot: SavedTabs = {
+      tabs: tabs.tabs.value.map((t) => ({
+        translationId: t.reading.translationId.value,
+        bookId: t.reading.bookId.value,
+        chapterNumber: t.reading.chapterNumber.value,
+      })),
+      layout: tabs.layout.value,
+      slots: tabs.slotTabIds.value.map((id) =>
+        id === null ? null : tabs.tabs.value.findIndex((t) => t.id === id)
+      ),
+      selectedSlot: tabs.selectedSlot.value,
+    };
+    if (!tabsRestored) return;
+    tabsPending = snapshot;
+    clearTimeout(tabsSaveTimer);
+    tabsSaveTimer = setTimeout(saveTabsNow, TABS_SAVE_MS);
+  });
+  /** The remembered tabs opened again, slots and selection included; null when there were none. */
+  function restoreTabs(saved: SavedTabs | undefined) {
+    if (!saved?.tabs.length) return null;
+    const made = saved.tabs.map((t) => tabs.addTab(t));
+    tabs.setLayout(saved.layout);
+    const count = slotCountOf(saved.layout);
+    const ids = tabs.slotTabIds.value.map(
+      (fallback, i) => made[saved.slots[i] ?? -1]?.id ?? fallback
+    );
+    if (ids.length === count && new Set(ids).size === ids.length)
+      tabs.slotTabIds.value = ids;
+    tabs.selectedSlot.value = Math.min(
+      Math.max(0, saved.selectedSlot),
+      count - 1
+    );
+    return tabs.selected.value ?? made[0]!;
+  }
+
   /** Open the chapter the URL names, else where the reader left off, else John 1; wire history and the outbox. */
   async function start(): Promise<() => void> {
     const fromUrl =
       typeof location !== "undefined" ? parseRoute(location.pathname) : null;
     const target = fromUrl ?? (await position.load());
-    const tab = tabs.addTab(target ?? {});
+    const saved = (await stores.prefs.get(TABS_KEY)) as SavedTabs | undefined;
+    const restored = restoreTabs(saved);
+    const tab = restored ?? tabs.addTab(target ?? {});
+    tabsRestored = true;
     // A share link's verses: selected once the chapter it named is open.
     const shared =
       fromUrl && typeof location !== "undefined"
         ? versesOf(location.search)
         : null;
-    if (shared && fromUrl)
+    if (fromUrl && (restored || shared))
       void tab.reading
         .goTo(fromUrl.translationId, fromUrl.bookId, fromUrl.chapterNumber)
-        .then(() => selection.select(shared[0], shared[1]));
-    const stops = [bindRoute(readingOf), outbox.start()];
+        .then(() => shared && selection.select(shared[0], shared[1]));
+    const stops = [
+      bindRoute(readingOf),
+      outbox.start(),
+      // Leaving writes the last tab change at once rather than losing it to the debounce.
+      saveTabsNow,
+    ];
     void customizations.refresh();
     void extensions.bind(stateObject);
     // A share link: join the session (after sign-in when needed), and drop the query from the URL.

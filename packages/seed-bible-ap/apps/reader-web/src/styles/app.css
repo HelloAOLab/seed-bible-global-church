@@ -461,6 +461,76 @@ body {
   .sb-tabs-sidebar {
     display: none;
   }
+  /* On a phone the sidebar is a drawer over the reader, opened from the toolbar's menu button. */
+  .sb-tabs-sidebar.sb-tabs-sidebar-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(20rem, 85vw);
+    z-index: 120;
+    background: var(--sb-background-color, #fff);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+  }
+  .sb-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 119;
+  }
+  .sb-reader-toolbar-phone-only {
+    display: block;
+  }
+}
+.sb-reader-toolbar-phone-only,
+.sb-reader-toolbar-more-button,
+.sb-drawer-backdrop {
+  display: none;
+}
+/* A narrow phone: the actions after the chapter controls go under "More". */
+@media (max-width: 480px) {
+  .sb-reader-toolbar-secondary {
+    display: none;
+  }
+  .sb-reader-toolbar-more-button {
+    display: block;
+  }
+}
+.sb-reader-toolbar-more-menu {
+  position: fixed;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 4.75rem;
+  z-index: 102;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: var(
+    --sb-reader-toolbar-background,
+    var(--sb-background-color, #fff)
+  );
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+.sb-reader-toolbar-more-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.sb-reader-toolbar-more-item-active {
+  color: var(--sb-primary-color);
 }
 
 /* Discover + Today */
@@ -725,7 +795,11 @@ body {
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   border-radius: 2px;
-  background: color-mix(in srgb, var(--sb-primary-color) calc(var(--sb-map-heat, 0) * 100%), transparent);
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color) calc(var(--sb-map-heat, 0) * 100%),
+    transparent
+  );
   cursor: pointer;
 }
 .sb-map-chapter-here {

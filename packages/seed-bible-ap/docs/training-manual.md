@@ -146,10 +146,13 @@ closes one. The **columns** icon in the sidebar header picks a layout: one pane,
 or one left with two stacked right. Each pane shows one tab; tap a pane to make it the active one (the toolbar,
 the URL and the panes follow the active tab). The hamburger collapses the sidebar to a rail.
 
-Not yet: dragging the divider between panes, tabs remembered across visits, the tab strip on phones (the sidebar
-hides below 720 px). ⬜ _Why · when:_ the drag divider and the phone tab strip are UI work carried over from the old
-`TabsManager` layout code and were cut for time; remembered tabs need the tab list in a device pref. Next
-core-reader cut.
+Tabs, the layout and which tab was selected are remembered on the device and come back on the next visit; a
+chapter link opens in the selected tab. ✅ On a phone (under 720 px) the sidebar is a **drawer**: the menu icon at
+the left of the bottom toolbar opens it over the reader; picking a tab closes it. On a narrow phone (under 480 px)
+the actions after the chapter controls sit under **⋯ More**. ✅
+
+Not yet: dragging the divider between panes. ⬜ _Why · when:_ the resize handles are UI work carried over from the old
+`TabsLayoutManager` and were cut for time. Next core-reader cut.
 
 ## 7. Listening — ✅
 
@@ -283,4 +286,4 @@ under the sync line. For a note conflict or a lost mark, the two devices and the
 - The workspace's reply can take a few seconds (it is a run on your agent); the UI never waits on it.
 - A brand-new Home person needs the seed-reader behaviour assigned at the Home before marks sync (§2.5).
 - Sample people share a Library: another tester's marks may be there already.
-- Phones: the sidebar is hidden; the rest works, the toolbar can be crowded on small screens.
+- Phones: the sidebar is a drawer from the toolbar's menu icon; under 480 px the extra actions are under ⋯ More.
