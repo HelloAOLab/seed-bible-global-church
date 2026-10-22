@@ -54,6 +54,16 @@ Approximate count of user-facing capabilities in the old app: **~95**.
 | Intentional drop | ~4    | PostHog, YouVersion, publicRead-everything, Twitch write-to-Twitch                                                                                                                                                                               |
 | Deferred         | ~4    | 3D patterns, ao.bot portals, federation visitors, huddle/RealtimeKit                                                                                                                                                                             |
 
+**Gap build status (2026-10-22).** Every item in punch list (2) is closed, and so are default-content and theographic
+from (3): guided tours, keyboard navigation, the right-click menu, whole-translation download, shared pages, playlist
+history, the full plan editor, picture crop and earlier pictures, the testament filter, wake lock, the default
+translation by language, the toolbar customizer, the Friends pane, the session QR code, the embed snippet, the reader's
+fonts, theme variants with a live preview, Videos and articles, and People, places and events — each with a browser
+flow (G1–G18) in `test/e2e/`. Still open: Apologist (a partner offering), friends-only sharing and team-record notes
+(substrate), acts on MCP servers (decision pending), a dockable theme preview, a public gallery page, sub-daily plan
+paces, and the shared-page link on your own Library cards (use Discover for now). The counts above are the analysis as
+written, before the build.
+
 ---
 
 ## 1. Core reading
