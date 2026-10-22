@@ -946,3 +946,12 @@ body {
   border-radius: 0.75rem;
   background: #000;
 }
+
+/* Bookmarks and saves: the inline editors */
+.sb-bookmark-swatches {
+  display: flex;
+  gap: 0.35rem;
+}
+.sb-content-folder {
+  margin: 0 0 0.5rem;
+}

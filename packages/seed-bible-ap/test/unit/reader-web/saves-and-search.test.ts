@@ -67,6 +67,43 @@ describe("verse search", () => {
       firstChapterNumber: 1,
     },
   ];
+  it("saves take a label and a folder, and are moved between folders in place", async () => {
+    const backend = createDevBackend(READER);
+    const stores = memoryStores();
+    const outbox = createOutbox({
+      backend,
+      stores,
+      isOnline: () => true,
+      settleMs: 1,
+    });
+    const buckets = createBucketStore({
+      backend,
+      stores,
+      outbox,
+      isOnline: () => true,
+    });
+    const saves = createSaves(buckets, () => READER);
+    const a = await saves.add("JHN.3.16", "BSB", "Gospel", "Memory verses");
+    const b = await saves.add("ROM.8", "BSB");
+    expect(saves.folders.value).toEqual(["Memory verses"]);
+    await saves.update(b, { folder: "Memory verses", label: "Romans 8" });
+    expect(saves.all.value.map((s) => `${s.label}@${s.folder}`).sort()).toEqual(
+      ["Gospel@Memory verses", "Romans 8@Memory verses"]
+    );
+    await saves.update(a, { folder: "" });
+    expect(saves.all.value.find((s) => s.id === a)).toMatchObject({
+      label: "Gospel",
+    });
+    expect(saves.all.value.find((s) => s.id === a)?.folder).toBeUndefined();
+    // The update supersedes the earlier write, so it is a plain update rather than a conflict on merge.
+    const raw = buckets
+      .get("saves")
+      .bucket.value["@graph"].find((it) => it["@id"] === a) as {
+      supersedes?: string;
+    };
+    expect(raw.supersedes).toBeTruthy();
+  });
+
   it("answers a typed reference locally", () => {
     const s = createVerseSearch({
       fetchImpl: () => Promise.reject(new Error("no network")),

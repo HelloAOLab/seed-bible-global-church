@@ -1,6 +1,6 @@
 // SAVES — ported from packages/seed-bible SavesManager (docs/porting/SavesManager.md): a save files a passage away
-// (a chapter, or a verse range of it) with an optional label; one bucket for the whole collection. Folders
-// (categories) are not in `seed:Save` yet and wait for the ontology.
+// (a chapter, or a verse range of it) with an optional label and an optional folder (the old categories); one
+// bucket for the whole collection.
 import { computed, type ReadonlySignal } from "@preact/signals";
 import type { Save } from "@seed/seed-schema";
 import { chapterOf } from "@seed/seed-protocol";
@@ -17,6 +17,8 @@ export interface SaveView {
   end: number | null;
   edition?: string;
   label?: string;
+  /** The reader's grouping; absent means unfiled. */
+  folder?: string;
   createdAt: string;
 }
 
@@ -38,6 +40,7 @@ export function toSaves(items: readonly unknown[]): SaveView[] {
           end: whole ? null : span.end,
           ...(it.ofEdition ? { edition: it.ofEdition } : {}),
           ...(it.label ? { label: it.label } : {}),
+          ...(it.folder ? { folder: it.folder } : {}),
           createdAt: it.createdAt ?? it.updatedAt ?? "",
           index,
         };
@@ -61,11 +64,20 @@ export function createSaves(
 
   const forPassage = (passage: string) =>
     all.value.filter((s) => s.passage === passage);
+  /** The folders in use, sorted; the unfiled saves are not a folder. */
+  const folders: ReadonlySignal<string[]> = computed(() =>
+    [
+      ...new Set(
+        all.value.map((s) => s.folder).filter((f): f is string => !!f)
+      ),
+    ].sort((a, b) => a.localeCompare(b))
+  );
 
   async function add(
     passage: string,
     edition?: string,
-    label?: string
+    label?: string,
+    folder?: string
   ): Promise<string> {
     const id = `urn:seed:save:${passage}:${newOpId()}`;
     const item: Save = {
@@ -75,12 +87,39 @@ export function createSaves(
       aboutPassage: passage,
       ...(edition ? { ofEdition: edition } : {}),
       ...(label ? { label } : {}),
+      ...(folder?.trim() ? { folder: folder.trim() } : {}),
       opId: newOpId(),
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
     await buckets.put("saves", undefined, item);
     return id;
+  }
+
+  /** A save relabelled or moved to a folder (an empty folder unfiles it); a plain update from this device's copy. */
+  async function update(
+    id: string,
+    patch: { label?: string | null; folder?: string | null }
+  ) {
+    const cur = (ob.bucket.value["@graph"] as Save[]).find(
+      (it) => it["@id"] === id && !it.deleted
+    );
+    if (!cur) return;
+    const { label: _l, folder: _f, ...rest } = cur;
+    const label =
+      patch.label === undefined ? cur.label : patch.label?.trim() || undefined;
+    const folder =
+      patch.folder === undefined
+        ? cur.folder
+        : patch.folder?.trim() || undefined;
+    await buckets.put("saves", undefined, {
+      ...rest,
+      ...(label ? { label } : {}),
+      ...(folder ? { folder } : {}),
+      opId: newOpId(),
+      supersedes: cur.opId,
+      updatedAt: nowIso(),
+    });
   }
 
   async function remove(id: string) {
@@ -110,7 +149,7 @@ export function createSaves(
     else await add(passage, edition);
   }
 
-  return { all, forPassage, add, remove, toggle };
+  return { all, forPassage, folders, add, update, remove, toggle };
 }
 
 export type Saves = ReturnType<typeof createSaves>;

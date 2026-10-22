@@ -27,6 +27,8 @@ export const SEED_CONTEXT = {
   offeredForPassage: { "@id": "seed:offeredForPassage", "@type": "@id" },
   ofEdition: { "@id": "seed:ofEdition", "@type": "@id" },
   highlightColor: { "@id": "seed:highlightColor", "@type": "@id" },
+  bookmarkColor: { "@id": "seed:bookmarkColor", "@type": "@id" },
+  folder: "seed:folder",
   offeringKind: { "@id": "seed:offeringKind", "@type": "@id" },
   visibility: { "@id": "seed:visibility", "@type": "@id" },
   replyTo: { "@id": "seed:replyTo", "@type": "@id" },
@@ -129,6 +131,14 @@ export const Bookmark = z.object({
   ...mark,
   "@type": z.literal("seed:Bookmark"),
   bookmarkName: z.string().min(1),
+  bookmarkColor: z
+    .enum(
+      HIGHLIGHT_COLORS.map((c) => conceptIri("highlightcolor", c)) as [
+        string,
+        ...string[],
+      ]
+    )
+    .optional(),
 });
 export type Bookmark = z.infer<typeof Bookmark>;
 
@@ -136,6 +146,8 @@ export const Save = z.object({
   ...mark,
   "@type": z.literal("seed:Save"),
   label: z.string().optional(),
+  /** The reader's own grouping; absent means unfiled. */
+  folder: z.string().min(1).optional(),
 });
 export type Save = z.infer<typeof Save>;
 

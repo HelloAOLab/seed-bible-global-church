@@ -141,7 +141,14 @@ export function TodayPane({ state }: { state: ReaderState }) {
             className="sb-content-save"
             onClick={() => open(b.chapter)}
           >
-            <span className="sb-content-save-kind">
+            <span
+              className="sb-content-save-kind"
+              style={
+                b.colorId
+                  ? { color: `var(--sb-highlight-${b.colorId}-color)` }
+                  : undefined
+              }
+            >
               <span className="material-symbols-outlined">bookmark</span>
             </span>
             <span className="sb-content-save-name">{b.name}</span>

@@ -92,6 +92,21 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   const chapterNotes = state.annotations.forChapter(chapterRef).value;
   // "All chapters": every highlight and note on this device (opened here, or pulled from the Library).
   const [scope, setScope] = useState<"chapter" | "all">("chapter");
+  // In-place editing of a bookmark (name, colour) or a save (label, folder).
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [draftFolder, setDraftFolder] = useState("");
+  const COLORS = ["yellow", "green", "blue", "pink", "orange", "purple"];
+  const saveGroups = (() => {
+    const groups = new Map<string, typeof saves.all.value>();
+    for (const s of saves.all.value) {
+      const k = s.folder ?? "";
+      groups.set(k, [...(groups.get(k) ?? []), s]);
+    }
+    return [...groups.entries()].sort(([a], [b]) =>
+      a === "" ? -1 : b === "" ? 1 : a.localeCompare(b)
+    );
+  })();
   const [allHighlights, setAllHighlights] = useState<
     StoredChapter<Highlight>[]
   >([]);
@@ -266,35 +281,126 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                 })}
               </p>
             )}
-            {saves.all.value.map((s) => (
-              <div key={s.id} className="sb-content-save-row">
-                <button
-                  className="sb-content-save"
-                  onClick={() =>
-                    open(s.chapter, s.start ?? undefined, s.end ?? undefined)
-                  }
-                >
-                  <span
-                    className={`sb-content-save-kind${s.start !== null ? " sb-content-save-kind-verse" : ""}`}
-                  >
-                    <span className="material-symbols-outlined">
-                      {s.start !== null ? "format_quote" : "menu_book"}
+            {saveGroups.map(([folder, list]) => (
+              <div key={folder || "·"} className="sb-content-folder">
+                {folder && (
+                  <div className="sb-content-chapter-label">
+                    <span className="material-symbols-outlined sb-item-icon">
+                      folder
                     </span>
-                  </span>
-                  <span className="sb-content-save-name">
-                    {s.label ?? refLabel(state, s.chapter, s.start, s.end)}
-                  </span>
-                  <span className="sb-content-save-date">
-                    {s.createdAt.slice(0, 10)}
-                  </span>
-                </button>
-                <button
-                  className="sb-content-kebab"
-                  aria-label={t("remove-save", { defaultValue: "Remove save" })}
-                  onClick={() => void saves.remove(s.id)}
-                >
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
+                    {folder}
+                  </div>
+                )}
+                {list.map((s) =>
+                  editingId === s.id ? (
+                    <form
+                      key={s.id}
+                      className="sb-item-editor"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void saves.update(s.id, {
+                          label: draftName,
+                          folder: draftFolder,
+                        });
+                        setEditingId(null);
+                      }}
+                    >
+                      <input
+                        className="sb-note-editor"
+                        placeholder={t("save-label", {
+                          defaultValue: "Label (optional)",
+                        })}
+                        value={draftName}
+                        onInput={(e) =>
+                          setDraftName((e.target as HTMLInputElement).value)
+                        }
+                      />
+                      <input
+                        className="sb-note-editor"
+                        list="sb-save-folders"
+                        placeholder={t("save-folder", {
+                          defaultValue: "Folder (leave empty for none)",
+                        })}
+                        value={draftFolder}
+                        onInput={(e) =>
+                          setDraftFolder((e.target as HTMLInputElement).value)
+                        }
+                      />
+                      <datalist id="sb-save-folders">
+                        {saves.folders.value.map((f) => (
+                          <option key={f} value={f} />
+                        ))}
+                      </datalist>
+                      <div className="sb-note-card-actions">
+                        <button
+                          type="submit"
+                          className="sb-note-button sb-note-button-primary"
+                        >
+                          {t("save", { defaultValue: "Save" })}
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-note-button"
+                          onClick={() => setEditingId(null)}
+                        >
+                          {t("cancel", { defaultValue: "Cancel" })}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div key={s.id} className="sb-content-save-row">
+                      <button
+                        className="sb-content-save"
+                        onClick={() =>
+                          open(
+                            s.chapter,
+                            s.start ?? undefined,
+                            s.end ?? undefined
+                          )
+                        }
+                      >
+                        <span
+                          className={`sb-content-save-kind${s.start !== null ? " sb-content-save-kind-verse" : ""}`}
+                        >
+                          <span className="material-symbols-outlined">
+                            {s.start !== null ? "format_quote" : "menu_book"}
+                          </span>
+                        </span>
+                        <span className="sb-content-save-name">
+                          {s.label ??
+                            refLabel(state, s.chapter, s.start, s.end)}
+                        </span>
+                        <span className="sb-content-save-date">
+                          {s.createdAt.slice(0, 10)}
+                        </span>
+                      </button>
+                      <button
+                        className="sb-content-kebab"
+                        aria-label={t("edit-save", {
+                          defaultValue: "Edit save",
+                        })}
+                        onClick={() => {
+                          setEditingId(s.id);
+                          setDraftName(s.label ?? "");
+                          setDraftFolder(s.folder ?? "");
+                        }}
+                      >
+                        <span className="material-symbols-outlined">edit</span>
+                      </button>
+                      <button
+                        className="sb-content-kebab"
+                        aria-label={t("remove-save", {
+                          defaultValue: "Remove save",
+                        })}
+                        onClick={() => void saves.remove(s.id)}
+                      >
+                        <span className="material-symbols-outlined">
+                          delete
+                        </span>
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
             ))}
           </div>
@@ -312,31 +418,113 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                 })}
               </p>
             )}
-            {bookmarks.all.value.map((b) => (
-              <div key={b.id} className="sb-content-save-row">
-                <button
-                  className="sb-content-save"
-                  onClick={() => open(b.chapter)}
+            {bookmarks.all.value.map((b) =>
+              editingId === b.id ? (
+                <form
+                  key={b.id}
+                  className="sb-item-editor"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void bookmarks.update(b.id, { name: draftName });
+                    setEditingId(null);
+                  }}
                 >
-                  <span className="sb-content-save-kind">
-                    <span className="material-symbols-outlined">bookmark</span>
-                  </span>
-                  <span className="sb-content-save-name">{b.name}</span>
-                  <span className="sb-content-save-date">
-                    {b.updatedAt.slice(0, 10)}
-                  </span>
-                </button>
-                <button
-                  className="sb-content-kebab"
-                  aria-label={t("remove-bookmark", {
-                    defaultValue: "Remove bookmark",
-                  })}
-                  onClick={() => void bookmarks.remove(b.id)}
-                >
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            ))}
+                  <input
+                    className="sb-note-editor"
+                    value={draftName}
+                    onInput={(e) =>
+                      setDraftName((e.target as HTMLInputElement).value)
+                    }
+                    placeholder={t("bookmark-name", {
+                      defaultValue: "Bookmark name",
+                    })}
+                  />
+                  <div className="sb-verse-toolbar-swatches sb-bookmark-swatches">
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="sb-verse-toolbar-color-button"
+                        aria-label={c}
+                        aria-pressed={b.colorId === c}
+                        onClick={() =>
+                          void bookmarks.update(b.id, {
+                            colorId: b.colorId === c ? null : c,
+                          })
+                        }
+                      >
+                        <span
+                          className={`sb-verse-toolbar-color${b.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
+                          style={{
+                            background: `var(--sb-highlight-${c}-color)`,
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <div className="sb-note-card-actions">
+                    <button
+                      type="submit"
+                      className="sb-note-button sb-note-button-primary"
+                    >
+                      {t("save", { defaultValue: "Save" })}
+                    </button>
+                    <button
+                      type="button"
+                      className="sb-note-button"
+                      onClick={() => setEditingId(null)}
+                    >
+                      {t("cancel", { defaultValue: "Cancel" })}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div key={b.id} className="sb-content-save-row">
+                  <button
+                    className="sb-content-save"
+                    onClick={() => open(b.chapter)}
+                  >
+                    <span
+                      className="sb-content-save-kind"
+                      style={
+                        b.colorId
+                          ? { color: `var(--sb-highlight-${b.colorId}-color)` }
+                          : undefined
+                      }
+                    >
+                      <span className="material-symbols-outlined">
+                        bookmark
+                      </span>
+                    </span>
+                    <span className="sb-content-save-name">{b.name}</span>
+                    <span className="sb-content-save-date">
+                      {b.updatedAt.slice(0, 10)}
+                    </span>
+                  </button>
+                  <button
+                    className="sb-content-kebab"
+                    aria-label={t("edit-bookmark", {
+                      defaultValue: "Edit bookmark",
+                    })}
+                    onClick={() => {
+                      setEditingId(b.id);
+                      setDraftName(b.name);
+                    }}
+                  >
+                    <span className="material-symbols-outlined">edit</span>
+                  </button>
+                  <button
+                    className="sb-content-kebab"
+                    aria-label={t("remove-bookmark", {
+                      defaultValue: "Remove bookmark",
+                    })}
+                    onClick={() => void bookmarks.remove(b.id)}
+                  >
+                    <span className="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              )
+            )}
           </div>
 
           {scopeToggle}
