@@ -23,6 +23,9 @@ apps/reader-web  (:5185)  →  apps/reader-a2a (:8891)  →  apps/reader-mcp (:8
 `towns/faithchain/town.yaml` and the `faithchain.json` deployment): which Homes may issue a reader's token, the
 chain, the contracts. Which estates a deployment **serves** is `ESTATE_IDS` on the worker; nothing is inferred.
 
+For people trying the app: [docs/training-manual.md](docs/training-manual.md) says how each feature works and
+which ones should be working today.
+
 ## Run it
 
 ```bash
