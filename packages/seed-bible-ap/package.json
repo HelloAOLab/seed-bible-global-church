@@ -28,7 +28,8 @@
     "smoke:svc": "tsx scripts/smoke/svc.ts",
     "smoke:rebuild": "tsx scripts/smoke/rebuild.ts",
     "smoke:reader-web": "tsx scripts/smoke/reader-web.ts",
-    "smoke:session": "tsx scripts/smoke/session.ts"
+    "smoke:session": "tsx scripts/smoke/session.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",
@@ -58,9 +59,12 @@
     "@agenticprimitives/devkit": "0.0.0-alpha.29",
     "@cloudflare/workers-types": "^4.20260604.1",
     "@preact/preset-vite": "^2.10.5",
+    "@testing-library/preact": "3.2.4",
     "@types/leaflet": "1.9.12",
     "@types/node": "^24.5.2",
+    "@vitest/coverage-v8": "4.1.8",
     "fake-indexeddb": "^6.0.0",
+    "jsdom": "26.1.0",
     "preact-render-to-string": "catalog:",
     "tsx": "^4.20.5",
     "typescript": "^5.9.3",

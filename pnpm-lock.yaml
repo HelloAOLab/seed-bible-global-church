@@ -215,7 +215,7 @@ importers:
         version: 4.2.8-alpha.38630400059
       '@casual-simulation/aux-records':
         specifier: 4.2.8-alpha.38630400059
-        version: 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(ws@8.19.0)
+        version: 4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(ws@8.21.0)
       '@casual-simulation/aux-runtime':
         specifier: 4.2.8-alpha.38630400059
         version: 4.2.8-alpha.38630400059(@babel/runtime@7.29.2)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(ws@8.21.0)
@@ -680,15 +680,24 @@ importers:
       '@preact/preset-vite':
         specifier: ^2.10.5
         version: 2.10.5(@babel/core@7.28.6)(preact@10.29.8)(rollup@4.62.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
+      '@testing-library/preact':
+        specifier: 3.2.4
+        version: 3.2.4(preact@10.29.8)
       '@types/leaflet':
         specifier: 1.9.12
         version: 1.9.12
       '@types/node':
         specifier: ^24.5.2
         version: 24.10.9
+      '@vitest/coverage-v8':
+        specifier: 4.1.8
+        version: 4.1.8(vitest@4.1.8)
       fake-indexeddb:
         specifier: ^6.0.0
         version: 6.2.6
+      jsdom:
+        specifier: 26.1.0
+        version: 26.1.0
       preact-render-to-string:
         specifier: 'catalog:'
         version: 6.7.0(preact@10.29.8)
@@ -706,7 +715,7 @@ importers:
         version: 1.3.0(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1)
       vitest:
         specifier: ^4.1.8
-        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1(@noble/hashes@2.4.0))(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@26.1.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
       wrangler:
         specifier: ^4.0.0
         version: 4.151.3(@cloudflare/workers-types@4.20260702.1)(@types/node@24.10.9)
@@ -8650,18 +8659,6 @@ packages:
     resolution: {integrity: sha512-OTIk8iR8/aCRWBqvxrzxR0hgxWpnYBblY1S5hDWBQfk/VFmJwzmJgQFN3WsoUKHISv2eAwe+PpbUzyL1CKTLXg==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  ws@8.19.0:
-    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
     engines: {node: '>=10.0.0'}
@@ -10308,51 +10305,6 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@casual-simulation/aux-records@4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(ws@8.19.0)':
-    dependencies:
-      '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
-      '@casual-simulation/aux-common': 4.2.8-alpha.38630400059
-      '@casual-simulation/crypto': 4.0.5
-      '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
-      '@casual-simulation/rate-limit-redis': 4.0.0
-      '@casual-simulation/timesync': 4.0.0
-      '@google/genai': 2.19.0(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))
-      '@libsql/client': 0.15.15
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.43.0
-      '@simplewebauthn/server': 9.0.3
-      '@simplewebauthn/types': 9.0.1
-      axios: 1.7.7
-      base64-js: 1.5.1
-      es-toolkit: 1.39.10
-      hash.js: 1.1.7
-      jose: 5.4.0
-      libsql: 0.5.22
-      livekit-server-sdk: 2.7.2
-      luxon: 3.4.4
-      mime: 2.4.6
-      node-html-parser: 6.1.13
-      openai: 4.89.0(ws@8.19.0)(zod@4.4.3)
-      openid-client: 5.6.1
-      preact: 10.28.4
-      preact-render-to-string: 6.6.3(preact@10.28.4)
-      tigerbeetle-node: 0.16.44
-      tweetnacl: 1.0.3
-      typesense: 3.0.5(@babel/runtime@7.29.2)
-      uuid: 10.0.0
-      yjs: 13.6.8
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@babel/runtime'
-      - '@modelcontextprotocol/sdk'
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-      - ws
-
   '@casual-simulation/aux-records@4.2.8-alpha.38630400059(patch_hash=211caad01ba464512db3e345ef9b20b70408fc871f94e204037ff368d8c10c50)(@babel/runtime@7.29.2)(@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3))(ws@8.21.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.92.0(zod@4.4.3)
@@ -11157,7 +11109,7 @@ snapshots:
       google-auth-library: 10.6.2
       p-retry: 4.6.2
       protobufjs: 7.5.5
-      ws: 8.19.0
+      ws: 8.21.0
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.32.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)
     transitivePeerDependencies:
@@ -11581,7 +11533,7 @@ snapshots:
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/sourcemap-codec': 1.6.0
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
@@ -11639,7 +11591,7 @@ snapshots:
   '@libsql/isomorphic-ws@0.1.5':
     dependencies:
       '@types/ws': 8.18.1
-      ws: 8.19.0
+      ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -13098,7 +13050,7 @@ snapshots:
       obug: 2.1.2
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1(@noble/hashes@2.4.0))(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
+      vitest: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@26.1.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
 
   '@vitest/expect@4.1.8':
     dependencies:
@@ -15562,7 +15514,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.19.0
+      ws: 8.21.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -16015,21 +15967,6 @@ snapshots:
       is-inside-container: 1.0.0
       is-wsl: 3.1.0
 
-  openai@4.89.0(ws@8.19.0)(zod@4.4.3):
-    dependencies:
-      '@types/node': 18.19.130
-      '@types/node-fetch': 2.6.13
-      abort-controller: 3.0.0
-      agentkeepalive: 4.6.0
-      form-data-encoder: 1.7.2
-      formdata-node: 4.4.1
-      node-fetch: 2.7.0
-    optionalDependencies:
-      ws: 8.19.0
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - encoding
-
   openai@4.89.0(ws@8.21.0)(zod@4.4.3):
     dependencies:
       '@types/node': 18.19.130
@@ -16423,7 +16360,7 @@ snapshots:
       devtools-protocol: 0.0.1551306
       typed-query-selector: 2.12.0
       webdriver-bidi-protocol: 0.4.0
-      ws: 8.19.0
+      ws: 8.21.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -17565,6 +17502,36 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.9.1
 
+  vitest@4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@26.1.0)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)):
+    dependencies:
+      '@vitest/expect': 4.1.8
+      '@vitest/mocker': 4.1.8(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
+      '@vitest/pretty-format': 4.1.8
+      '@vitest/runner': 4.1.8
+      '@vitest/snapshot': 4.1.8
+      '@vitest/spy': 4.1.8
+      '@vitest/utils': 4.1.8
+      es-module-lexer: 2.1.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.2
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.1.0
+      tinybench: 2.9.0
+      tinyexec: 1.2.4
+      tinyglobby: 0.2.16
+      tinyrainbow: 3.1.0
+      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
+      '@types/node': 24.10.9
+      '@vitest/coverage-v8': 4.1.8(vitest@4.1.8)
+      jsdom: 26.1.0
+    transitivePeerDependencies:
+      - msw
+
   vitest@4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1(@noble/hashes@2.4.0))(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.8
@@ -17586,36 +17553,6 @@ snapshots:
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
       vite: 8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      '@types/node': 24.10.9
-      '@vitest/coverage-v8': 4.1.8(vitest@4.1.8)
-      jsdom: 29.1.1(@noble/hashes@2.4.0)
-    transitivePeerDependencies:
-      - msw
-
-  vitest@4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.10.9)(@vitest/coverage-v8@4.1.8)(jsdom@29.1.1(@noble/hashes@2.4.0))(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)):
-    dependencies:
-      '@vitest/expect': 4.1.8
-      '@vitest/mocker': 4.1.8(vite@8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1))
-      '@vitest/pretty-format': 4.1.8
-      '@vitest/runner': 4.1.8
-      '@vitest/snapshot': 4.1.8
-      '@vitest/spy': 4.1.8
-      '@vitest/utils': 4.1.8
-      es-module-lexer: 2.1.0
-      expect-type: 1.3.0
-      magic-string: 0.30.21
-      obug: 2.1.2
-      pathe: 2.0.3
-      picomatch: 4.0.4
-      std-env: 4.1.0
-      tinybench: 2.9.0
-      tinyexec: 1.2.4
-      tinyglobby: 0.2.16
-      tinyrainbow: 3.1.0
-      vite: 8.0.13(@types/node@24.10.9)(esbuild@0.28.2)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
@@ -17910,8 +17847,6 @@ snapshots:
   write-file-atomic@7.0.1:
     dependencies:
       signal-exit: 4.1.0
-
-  ws@8.19.0: {}
 
   ws@8.21.0: {}
 
