@@ -122,4 +122,37 @@ describe("publishing without the Library reads", () => {
     ]);
     expect(docs.every((e) => e.id.startsWith("art-"))).toBe(true);
   });
+
+  it("keeps the playlist itself on the published descriptor, so a reader can save it and play it", async () => {
+    const { library, backend } = await readerWith([]);
+    const work = {
+      "@id": "urn:seed:playlist:p1",
+      "@type": "seed:Playlist",
+      publishedBy: READER,
+      label: "Lent",
+      hasItem: [{ "@type": "seed:ScriptureItem", aboutPassage: "MAT.4" }],
+    };
+    await backend.publishSlice({
+      kind: "playlist",
+      passage: "MAT.4",
+      title: "Lent",
+      slug: "playlist-p1",
+      markdown: "# Lent\n\n- MAT.4",
+      descriptor: {
+        "prov:wasDerivedFrom": work["@id"],
+        work,
+        label: "not this",
+      },
+    });
+    const text = library.text(
+      READER,
+      "seed-bible/public/playlist",
+      "playlist-p1.jsonld"
+    );
+    const d = JSON.parse(text ?? "{}") as Record<string, unknown>;
+    expect(d["work"]).toEqual(work);
+    expect(d["prov:wasDerivedFrom"]).toBe(work["@id"]);
+    expect(d["label"]).toBe("Lent");
+    expect(d["@type"]).toBe("seed:Offering");
+  });
 });

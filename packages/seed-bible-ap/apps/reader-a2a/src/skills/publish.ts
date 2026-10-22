@@ -114,20 +114,31 @@ export async function publishSlice(
   if (!raw.markdown?.trim()) throw new WireRefusal(400, "markdown required");
   const slug = slugOf(raw.slug ?? raw.title);
   const folder = `${PUBLIC_FOLDER}/${kind}`;
-  const descriptor = Offering.parse({
-    "@context": SEED_CONTEXT,
-    ...(raw.descriptor ?? {}),
-    "@id": `urn:seed:offering:${raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as) ? raw.as.toLowerCase() : reader}:${kind}:${slug}`,
-    "@type": "seed:Offering",
-    label: raw.title.trim(),
-    publishedBy:
-      raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as)
-        ? raw.as.toLowerCase()
-        : reader,
-    ...(raw.passage ? { offeredForPassage: raw.passage } : {}),
-    offeringKind: conceptIri("offeringkind", kind),
-    visibility: conceptIri("visibility", "world"),
-  });
+  // The schema checks the fields the registry indexes and drops the rest — but the rest is the point for a
+  // playlist, plan or theme (`work`: what a reader saves or applies) and its provenance. They ride along under the
+  // checked fields, which always win.
+  const extras = Object.fromEntries(
+    Object.entries(raw.descriptor ?? {}).filter(
+      ([k]) => k === "work" || k === "prov:wasDerivedFrom"
+    )
+  );
+  const descriptor = {
+    ...extras,
+    ...Offering.parse({
+      "@context": SEED_CONTEXT,
+      ...(raw.descriptor ?? {}),
+      "@id": `urn:seed:offering:${raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as) ? raw.as.toLowerCase() : reader}:${kind}:${slug}`,
+      "@type": "seed:Offering",
+      label: raw.title.trim(),
+      publishedBy:
+        raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as)
+          ? raw.as.toLowerCase()
+          : reader,
+      ...(raw.passage ? { offeredForPassage: raw.passage } : {}),
+      offeringKind: conceptIri("offeringkind", kind),
+      visibility: conceptIri("visibility", "world"),
+    }),
+  };
   const person = await agentFor(env, reader);
   // AS AN ORGANIZATION: every step is addressed to the organization, asked as the reader who stewards it; the
   // descriptor names the organization as the publisher and the slice lands on ITS shelf.
