@@ -19,6 +19,7 @@ ESTATE_IDS = "faithnet"
 AGENT_NAME = "seed-reader.workspace"
 A2A_CHAIN_ID = "34348"
 A2A_URL = "https://a2a.faithnet.io"
+PLATFORM_URL = "http://127.0.0.1:8892"
 
 # The ask-as-me wires readers hand this workspace (migrations/). Local dev: a local D1 under .wrangler/.
 [[d1_databases]]
@@ -64,6 +65,11 @@ A2A_PUBLIC_ORIGIN = "https://seed-reader-a2a.faithnet.io"
 [[env.faithnet.services]]
 binding = "MCP"
 service = "seed-bible-reader-mcp-faithnet"
+
+# seed-bible.svc — the serving plane (the Seed registry), over a service binding.
+[[env.faithnet.services]]
+binding = "PLATFORM"
+service = "seed-bible-svc-a2a-faithnet"
 
 [[env.faithnet.d1_databases]]
 binding = "DB"

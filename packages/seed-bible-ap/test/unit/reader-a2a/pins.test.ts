@@ -5,7 +5,11 @@ import pins from "../../../apps/reader-a2a/src/pins/skills.json";
 import { TOOLS } from "../../../apps/reader-a2a/src/skills";
 
 /** Tools the workspace answers itself — reads, and the hello — need no person-agent skill behind them. */
-const WORKSPACE_LOCAL = new Set(["seed.hello", "seed.bucket.read"]);
+const WORKSPACE_LOCAL = new Set([
+  "seed.hello",
+  "seed.bucket.read",
+  "seed.workspace.discover",
+]);
 
 describe("pinned skills", () => {
   const byCapability = new Map(

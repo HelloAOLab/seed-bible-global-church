@@ -11,6 +11,8 @@ import {
   agentFor,
   type VaultEnv,
 } from "./vault";
+import { publishSlice, withdrawSlice, type PublishArgs } from "./publish";
+import { platformGet, type PlatformEnv } from "../clients/platform";
 import type { Collection } from "../../../../lib/library-client";
 
 export const HELLO_TOOL: ToolSpec = {
@@ -68,6 +70,47 @@ export const BUCKET_MERGE: ToolSpec = {
   answers: ["sync what I marked offline", "merge my phone's notes"],
 };
 
+export const PUBLISH_SLICE: ToolSpec = {
+  id: "seed.publish.slice",
+  description:
+    "Makes ONE slice of the signed-in reader's Library public on their shelf as a seed:Offering — a note on a chapter, a playlist, a plan — by saving the descriptor and a markdown rendering public and minting a signed release of each; the Seed registry indexes it by passage. Args: kind (note · study · playlist · plan · …), passage (OSIS), title, markdown, slug (optional), descriptor (optional extras); or { withdraw: { kind, slug } } to take it off the shelf.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      kind: { type: "string" },
+      passage: { type: "string" },
+      title: { type: "string" },
+      markdown: { type: "string" },
+      slug: { type: "string" },
+      descriptor: { type: "object" },
+      withdraw: { type: "object" },
+    },
+  },
+  answers: [
+    "publish this note",
+    "share this with everyone",
+    "make this playlist public",
+    "take this off my shelf",
+  ],
+};
+
+export const DISCOVER: ToolSpec = {
+  id: "seed.workspace.discover",
+  description:
+    "What Seed Bible agents released for a passage, from the Seed registry on seed-bible.svc (offerings, studies, published notes, playlists, plans). Args: passage (OSIS; a verse narrows to its chapter), kind (optional).",
+  inputSchema: {
+    type: "object",
+    properties: { passage: { type: "string" }, kind: { type: "string" } },
+    required: ["passage"],
+  },
+  answers: [
+    "what is there for this chapter",
+    "discover John 3",
+    "studies on this passage",
+  ],
+  establishes: "lookup",
+};
+
 export const TOOLS: ToolSpec[] = [
   HELLO_TOOL,
   HIGHLIGHT_PUT,
@@ -75,6 +118,8 @@ export const TOOLS: ToolSpec[] = [
   BOOKMARK_PUT,
   BUCKET_READ,
   BUCKET_MERGE,
+  PUBLISH_SLICE,
+  DISCOVER,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -90,7 +135,7 @@ const collectionOf = (raw: unknown): Collection => {
 };
 
 export interface SkillDeps {
-  env: VaultEnv;
+  env: VaultEnv & PlatformEnv;
   hello: (
     name: string | undefined
   ) => Promise<{ greeting: string; workspace: string }>;
@@ -150,6 +195,38 @@ export function invokers(
         file: file ?? null,
         bucket,
         runRef,
+      };
+    },
+    [PUBLISH_SLICE.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const w = args.withdraw as { kind?: string; slug?: string } | undefined;
+      if (w && typeof w === "object")
+        return withdrawSlice(deps.env, reader, {
+          kind: String(w.kind ?? ""),
+          slug: String(w.slug ?? ""),
+        });
+      return publishSlice(deps.env, reader, args as unknown as PublishArgs);
+    },
+    [DISCOVER.id]: async (_t, args) => {
+      const passage = String(args.passage ?? "");
+      const kind =
+        typeof args.kind === "string"
+          ? `&kind=${encodeURIComponent(args.kind)}`
+          : "";
+      const out = await platformGet<{
+        ok: boolean;
+        passage: string;
+        count: number;
+        offerings: Array<{ title: string; kind: string; shelf: string }>;
+      }>(
+        deps.env,
+        `/registry/offerings?passage=${encodeURIComponent(passage)}${kind}`
+      );
+      return {
+        ...out,
+        text: out.count
+          ? `${out.count} offering(s) for ${out.passage}: ${out.offerings.map((o) => `${o.title} (${o.kind}, ${o.shelf})`).join("; ")}`
+          : `Nothing released for ${out.passage} yet.`,
       };
     },
     [BUCKET_MERGE.id]: async (_t, args) =>

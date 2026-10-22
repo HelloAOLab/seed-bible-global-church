@@ -10,3 +10,4 @@ Decisions local to this package. Estate-wide ADRs (e.g. ADR-0044 browser never c
 | 0004                                                 | The vault is the record; DO/D1/R2 are a serving plane                      |
 | 0005                                                 | Live sessions: A2A control plane, Agents SDK room on the reader-a2a origin |
 | [0006](./0006-chapter-buckets-and-the-vault-path.md) | Chapter buckets, manifests, and the vault path over the reader's own agent |
+| [0007](./0007-seed-registry-over-public-shelves.md)  | The Seed registry is a rebuildable index over public shelves               |

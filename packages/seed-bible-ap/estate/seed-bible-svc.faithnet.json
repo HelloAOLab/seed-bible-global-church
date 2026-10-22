@@ -32,5 +32,15 @@
       "mcpEndpoint"
     ]
   },
-  "note": "Public facts only. A2A_AGENT_SA for apps/seed-bible-a2a (step 3). The hosts named in the endpoint records are routed when the Workers deploy."
+  "note": "Public facts only. A2A_AGENT_SA for apps/seed-bible-a2a (step 3). The hosts named in the endpoint records are routed when the Workers deploy.",
+  "deployed": {
+    "at": "2026-10-21",
+    "workers": {
+      "seed-bible-svc-a2a-faithnet": "https://seed-bible-a2a.faithnet.io",
+      "seed-bible-svc-mcp-faithnet": "https://seed-bible-mcp.faithnet.io"
+    },
+    "d1": "seed-bible-svc (48e64d24-f48d-4017-ba5a-401e3b435ad8)",
+    "r2": "not yet \u2014 R2 is not enabled on the Cloudflare account (dashboard step)",
+    "cron": "*/15 * * * *"
+  }
 }

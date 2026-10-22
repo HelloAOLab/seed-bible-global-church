@@ -117,13 +117,24 @@ in D1 (`seed-reader-a2a`, `migrations/`). `GET /me` reports `wire: true`. Facts:
   version, and a re-put with the same opId changes nothing. Passes locally and against `seed-reader-a2a.faithnet.io`.
 - First run: a reader's agent needs a playbook that carries the Library reads (`docs/runbooks/assign-playbook.md`).
 
+### The serving plane (step 3 — platform-apps, 2026-10-21)
+
+`apps/seed-bible-a2a` (`seed-bible.svc`, service-host + Hono + D1 + cron) crawls configured public shelves through the
+estate's public door, indexes released, signed `seed:Offering`s by chapter, tombstones withdrawals, and rebuilds from
+nothing ([ADR-0007](docs/adr/0007-seed-registry-over-public-shelves.md)). `apps/seed-bible-mcp` carries the pure
+`offering_validate` tool. reader-a2a gained `seed.publish.slice` (a slice to the reader's own shelf, released) and
+`seed.workspace.discover` (the registry over the `PLATFORM` binding). Proof: `pnpm smoke:svc` (publish → indexed →
+discover → wipe+reindex equal → withdraw → gone) and `pnpm smoke:rebuild`. Live at `seed-bible-a2a.faithnet.io`.
+
 ## Deployed on faithnet (2026-10-21)
 
-| App        | Worker                           | Host                                                                                         |
-| ---------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| reader-web | `seed-bible-reader-web-faithnet` | https://seed-reader.faithnet.io                                                              |
-| reader-a2a | `seed-bible-reader-a2a-faithnet` | https://seed-reader-a2a.faithnet.io                                                          |
-| reader-mcp | `seed-bible-reader-mcp-faithnet` | service-bound from reader-a2a; `seed-bible-reader-mcp-faithnet.richardpedersen3.workers.dev` |
+| App            | Worker                           | Host                                                                                         |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| reader-web     | `seed-bible-reader-web-faithnet` | https://seed-reader.faithnet.io                                                              |
+| reader-a2a     | `seed-bible-reader-a2a-faithnet` | https://seed-reader-a2a.faithnet.io                                                          |
+| reader-mcp     | `seed-bible-reader-mcp-faithnet` | service-bound from reader-a2a; `seed-bible-reader-mcp-faithnet.richardpedersen3.workers.dev` |
+| seed-bible-a2a | `seed-bible-svc-a2a-faithnet`    | https://seed-bible-a2a.faithnet.io (the Seed registry; `/registry/offerings?passage=JHN.3`)  |
+| seed-bible-mcp | `seed-bible-svc-mcp-faithnet`    | https://seed-bible-mcp.faithnet.io                                                           |
 
 ```bash
 wrangler secret put A2A_INTERNAL_MARKER -c apps/reader-a2a/wrangler.toml --env faithnet   # once (done)

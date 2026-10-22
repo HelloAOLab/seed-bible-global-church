@@ -195,6 +195,26 @@ writeFileSync(
   { mode: 0o600 }
 );
 
+// The serving plane's dev secrets: its run-object marker and the operator's admin door for reindex / wipe.
+const SVC_VARS = new URL("apps/seed-bible-a2a/.dev.vars", ROOT);
+const svcExisting = existsSync(SVC_VARS) ? readFileSync(SVC_VARS, "utf8") : "";
+const svcMarker =
+  /^A2A_INTERNAL_MARKER=(.+)$/m.exec(svcExisting)?.[1] ??
+  randomBytes(24).toString("hex");
+const adminToken =
+  /^ADMIN_TOKEN=(.+)$/m.exec(svcExisting)?.[1] ??
+  randomBytes(18).toString("hex");
+writeFileSync(
+  SVC_VARS,
+  [
+    "# Written by scripts/seed-reader.mjs — local dev only, gitignored.",
+    `A2A_INTERNAL_MARKER=${svcMarker}`,
+    `ADMIN_TOKEN=${adminToken}`,
+    "",
+  ].join("\n"),
+  { mode: 0o600 }
+);
+
 console.log(`${handle}.me — ${displayName}`);
 console.log(`  custodian EOA   ${signer.address}`);
 console.log(

@@ -1,0 +1,18 @@
+# seed-bible-mcp — the serving plane's tools (HTTP + MCP JSON-RPC): today `offering_validate`, the pure check a
+# shelf document must pass before the registry indexes it. Called by seed-bible-a2a. Local dev: `pnpm dev:svc-mcp` (:8893).
+name = "seed-bible-svc-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8893
+local_protocol = "http"
+
+[env.faithnet]
+name = "seed-bible-svc-mcp-faithnet"
+workers_dev = true
+
+[[env.faithnet.routes]]
+pattern = "seed-bible-mcp.faithnet.io"
+custom_domain = true

@@ -22,6 +22,7 @@ import type {
 import type { Address } from "@agenticprimitives/types";
 import { TOOLS, HELLO_TOOL, invokers, type SkillDeps } from "./skills";
 import type { VaultEnv } from "./skills/vault";
+import type { PlatformEnv } from "./clients/platform";
 export { HELLO_TOOL };
 
 export function readerAgentCard(origin: string): Record<string, unknown> {
@@ -52,7 +53,7 @@ export function readerAgentCard(origin: string): Record<string, unknown> {
 
 export interface ReaderHostDeps {
   /** The workspace's wires and asking key: what the act tools use to ask the reader's agent as them. */
-  env: VaultEnv;
+  env: VaultEnv & PlatformEnv;
   agentSa: Address;
   origin: string;
   internalHeaders: () => Record<string, string>;

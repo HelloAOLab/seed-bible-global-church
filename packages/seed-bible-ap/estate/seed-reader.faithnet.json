@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "note": "The Seed Bible reader workspace on faithchain \u2014 public addresses only; keys live in .seed/ (gitignored) and, for Quick Connect, in the Home's roster.",
+  "note": "The Seed Bible reader workspace on faithchain — public addresses only; keys live in .seed/ (gitignored) and, for Quick Connect, in the Home's roster.",
   "chainId": 34348,
   "estate": "faithnet",
   "clientId": "seed-bible-reader",
@@ -22,7 +22,7 @@
     "notWritten": [],
     "nameBought": {
       "at": "2026-10-21",
-      "claimTx": "0x6ee27457681edeae\u2026",
+      "claimTx": "0x6ee27457681edeae…",
       "records": [
         "addr",
         "agentKind",
@@ -45,26 +45,7 @@
       "sa": "0xdbb41f779194d605e636f9bab64b105fd025b3db",
       "custodianEoa": "0xE7d5068b8D0bBca9a08f3642d183f08aAAA774a2",
       "deployed": true,
-      "blurb": "The Seed Bible reader workspace's demo reader \u2014 signs in at the faithnet Home and says hello through seed-reader.workspace.",
-      "custodies": [
-        {
-          "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
-          "name": "seed-reader.workspace",
-          "kind": "workspace"
-        },
-        {
-          "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
-          "name": "seed-reader.org",
-          "kind": "organization",
-          "role": "steward"
-        },
-        {
-          "sa": "0x8f627eca02ecff4e948bc39b7da3cc79ddf9333c",
-          "name": "seed-bible.svc",
-          "kind": "service",
-          "role": "steward"
-        }
-      ]
+      "blurb": "The Seed Bible reader workspace's demo reader — signs in at the faithnet Home and says hello through seed-reader.workspace."
     }
   },
   "org": {

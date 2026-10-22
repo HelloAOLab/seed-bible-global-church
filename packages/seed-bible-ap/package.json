@@ -7,14 +7,14 @@
   "scripts": {
     "dev": "bash scripts/dev.sh",
     "dev:mcp": "wrangler dev -c apps/reader-mcp/wrangler.toml",
-    "dev:a2a": "wrangler dev -c apps/reader-a2a/wrangler.toml",
+    "dev:a2a": "wrangler dev -c apps/reader-a2a/wrangler.toml --persist-to .wrangler/state",
     "dev:web": "vite --config apps/reader-web/vite.config.ts",
     "build:web": "vite build --config apps/reader-web/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/reader-web/tsconfig.json --noEmit",
     "smoke": "tsx scripts/smoke.ts",
     "seed:reader": "node scripts/seed-reader.mjs",
     "doctor": "ap doctor",
-    "deploy:faithnet": "wrangler deploy -c apps/reader-mcp/wrangler.toml --env faithnet && wrangler deploy -c apps/reader-a2a/wrangler.toml --env faithnet && pnpm build:web && wrangler deploy -c apps/reader-web/wrangler.toml --env faithnet",
+    "deploy:faithnet": "wrangler deploy -c apps/reader-mcp/wrangler.toml --env faithnet && wrangler deploy -c apps/seed-bible-mcp/wrangler.toml --env faithnet && wrangler deploy -c apps/seed-bible-a2a/wrangler.toml --env faithnet && wrangler deploy -c apps/reader-a2a/wrangler.toml --env faithnet && pnpm build:web && wrangler deploy -c apps/reader-web/wrangler.toml --env faithnet",
     "test": "vitest run",
     "test:watch": "vitest",
     "port:locales": "node scripts/port-locales.mjs",
@@ -22,7 +22,11 @@
     "buy:names": "node scripts/buy-names.mjs",
     "register:client": "node scripts/register-client.mjs",
     "pin:skills": "node scripts/pin-skills.mjs",
-    "smoke:vault": "tsx scripts/smoke/vault.ts"
+    "smoke:vault": "tsx scripts/smoke/vault.ts",
+    "dev:svc": "wrangler dev -c apps/seed-bible-a2a/wrangler.toml --persist-to .wrangler/state",
+    "dev:svc-mcp": "wrangler dev -c apps/seed-bible-mcp/wrangler.toml",
+    "smoke:svc": "tsx scripts/smoke/svc.ts",
+    "smoke:rebuild": "tsx scripts/smoke/rebuild.ts"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",

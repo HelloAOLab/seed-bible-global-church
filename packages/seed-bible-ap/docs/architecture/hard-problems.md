@@ -110,6 +110,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 12. A rebuildable Seed registry that stays honest
 
+**First cut 2026-10-21 — [ADR-0007](../adr/0007-seed-registry-over-public-shelves.md):** configured shelves crawled through the public door, released+signed `seed:Offering`s only, tombstones on withdrawal, wipe+reindex proven by the svc smoke. Open: release signature verification, town discovery of shelves, crawl budget.
+
 **Problem.** Discover/Today need "every public offering, playlist, plan, customization for John 3" across many shelves. The svc index must find shelves (town `list_agents_by_context`), crawl `library.public.list/read`, **verify the release** before indexing, notice un-publishing (a public re-save without a new release is a withdrawal), and be wipeable (ADR-0055).
 
 **Approach.** Incremental crawl keyed by `(owner, entryId, version, releaseId)`; only released + public JSON-LD with a `seed:` `@type` and valid SHACL shape is indexed; tombstone when the shelf no longer lists it; a scheduled full re-crawl bounds drift; D1 holds `(passage, type, owner, entryId, version, excerpt)`. Spec 413 announce hints from org agents are accepted as "re-read this," never as content.

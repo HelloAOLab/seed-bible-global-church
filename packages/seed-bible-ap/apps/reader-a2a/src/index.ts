@@ -15,9 +15,10 @@ import {
 import { servedEstates, TOWN } from "../../../estate/faithnet";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { askingKeyAddress, type WireEnv } from "./wires";
+import type { PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
 
-export interface Env extends SessionEnv, WireEnv {
+export interface Env extends SessionEnv, WireEnv, PlatformEnv {
   /** The estate's agent runtime — a reader's own agent is asked there over their wire. */
   A2A_URL?: string;
   /** reader-mcp by URL (dev) or by service binding (deployed — same-account workers.dev fetches 1042). */
