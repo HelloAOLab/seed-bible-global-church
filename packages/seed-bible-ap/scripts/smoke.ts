@@ -123,8 +123,8 @@ const check = (label: string, cond: boolean, detail?: unknown) => {
     await a2a.request("/.well-known/agent-card.json", {}, env)
   ).json()) as { skills?: Array<{ id: string }> };
   check(
-    "reader-a2a card advertises hello-reader",
-    card.skills?.[0]?.id === "hello-reader",
+    "reader-a2a card advertises seed.hello",
+    card.skills?.[0]?.id === "seed.hello",
     card
   );
 }

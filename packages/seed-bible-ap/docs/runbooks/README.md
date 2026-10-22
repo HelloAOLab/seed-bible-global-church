@@ -10,3 +10,4 @@ Operator steps, one file each, in the order they are first needed:
 6. `rotate-internal-marker.md` — `A2A_INTERNAL_MARKER` per Worker
 7. `rebuild-serving-plane.md` — wipe D1/R2/DO and reindex from public shelves (proves ADR-0055)
 8. `town-listing.md` — name records, profile, `/project`, crawl lane
+9. `assign-playbook.md` — a reader's agent must carry a playbook with the Library reads (done for seedreader 2026-10-21)

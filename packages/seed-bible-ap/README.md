@@ -102,6 +102,21 @@ The `seed-bible-reader` client at the Home now mints the **ask-as-me wire** besi
 reader-a2a (`POST /api/connect`), which checks it is the reader's, names its key and is `harness.ask`-shaped, and keeps it
 in D1 (`seed-reader-a2a`, `migrations/`). `GET /me` reports `wire: true`. Facts: `estate/*.json`; procedures: `docs/runbooks/`.
 
+### The vault path (step 2 — seed-ontology · grow-reader-a2a · grow-reader-mcp, 2026-10-21)
+
+- **`~/skills` seed domain:** `ontology/seed.ttl` (38 classes, shapes for every produced class), `seed.clusters.ttl`,
+  `seed.data.ttl` (vocabularies, examples, capabilities, skills, archetypes), skills `hello`, `highlight-put`,
+  `annotation-put`, `bookmark-put`, `reading-position-set`, `bucket-merge`, `publish-slice`, archetypes
+  `seed-reader` / `seed-publisher` / `seed-workspace`, `scripts/register-seed.mjs`. Preflight clean; registered and
+  pushed to GraphDB. Pinned here by digest: `apps/reader-a2a/src/pins/skills.json` (`pnpm pin:skills`).
+- **Here:** `lib/seed-schema` (zod per class, held to the TTL by a test), `lib/library-client` (chapter buckets,
+  manifests, the idempotent put, the item-level merge — [ADR-0006](docs/adr/0006-chapter-buckets-and-the-vault-path.md)),
+  reader-a2a tools `seed.highlight.put` / `seed.annotation.put` / `seed.bookmark.put` / `seed.bucket.read` /
+  `seed.bucket.merge` over the reader's wire, reader-mcp `bucket_merge`.
+- **Proof:** `pnpm smoke:vault` — as seedreader, a highlight in John 3 lands in their Library, reads back at the same
+  version, and a re-put with the same opId changes nothing. Passes locally and against `seed-reader-a2a.faithnet.io`.
+- First run: a reader's agent needs a playbook that carries the Library reads (`docs/runbooks/assign-playbook.md`).
+
 ## Deployed on faithnet (2026-10-21)
 
 | App        | Worker                           | Host                                                                                         |

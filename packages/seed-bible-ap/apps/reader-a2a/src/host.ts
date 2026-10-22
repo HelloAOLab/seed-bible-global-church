@@ -20,15 +20,9 @@ import type {
   Planner,
 } from "@agenticprimitives/orchestration";
 import type { Address } from "@agenticprimitives/types";
-
-export const HELLO_TOOL: ToolSpec = {
-  id: "hello-reader",
-  description:
-    "Says hello to whoever is asking and names the reader workspace. Args: name (optional — the signed-in reader's name is used when present).",
-  inputSchema: { type: "object", properties: { name: { type: "string" } } },
-  answers: ["hello", "say hello", "who am I here"],
-  establishes: "lookup",
-};
+import { TOOLS, HELLO_TOOL, invokers, type SkillDeps } from "./skills";
+import type { VaultEnv } from "./skills/vault";
+export { HELLO_TOOL };
 
 export function readerAgentCard(origin: string): Record<string, unknown> {
   return {
@@ -57,6 +51,8 @@ export function readerAgentCard(origin: string): Record<string, unknown> {
 }
 
 export interface ReaderHostDeps {
+  /** The workspace's wires and asking key: what the act tools use to ask the reader's agent as them. */
+  env: VaultEnv;
   agentSa: Address;
   origin: string;
   internalHeaders: () => Record<string, string>;
@@ -84,28 +80,6 @@ export function singleSkillPlanner(): Planner {
   };
 }
 
-function invokers(
-  deps: ReaderHostDeps,
-  asker: AdmittedPrincipal,
-  askerName: string | undefined
-): Record<string, ToolInvoker> {
-  return {
-    [HELLO_TOOL.id]: async (_toolId, args) => {
-      const name =
-        typeof args.name === "string" && args.name.trim()
-          ? args.name.trim()
-          : askerName;
-      const out = await deps.hello(name);
-      return {
-        ...out,
-        text: out.greeting,
-        asker: asker.credential.kind === "public" ? "a stranger" : asker.agent,
-        source: "seed-reader.workspace",
-      };
-    },
-  };
-}
-
 export function createReaderHost(deps: ReaderHostDeps): ServiceHost {
   const runStore = durableObjectRunStore(deps.runs, deps.internalHeaders);
   // The bearer port answers only an address; the name rides beside it for the greeting.
@@ -115,9 +89,16 @@ export function createReaderHost(deps: ReaderHostDeps): ServiceHost {
     origin: deps.origin,
     card: readerAgentCard(deps.origin),
     playbook: () => null,
-    tools: [HELLO_TOOL],
+    tools: TOOLS,
     invokers: ({ asker }) =>
-      invokers(deps, asker, names.get(asker.agent.toLowerCase())),
+      invokers(
+        {
+          env: deps.env,
+          hello: deps.hello,
+          askerName: names.get(asker.agent.toLowerCase()),
+        } satisfies SkillDeps,
+        asker
+      ),
     planner: singleSkillPlanner(),
     runStore,
     admission: {

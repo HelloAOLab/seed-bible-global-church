@@ -55,9 +55,12 @@ export class PersonAgent {
     if (!env.A2A_URL) throw new WireRefusal(503, "A2A_URL is not configured");
     this.key = env.READER_ASK_PRIVATE_KEY as Hex;
     this.origin = env.A2A_URL.replace(/\/+$/, "");
-    this.fetch = fetchImpl;
+    this.fetch = (input, init) => fetchImpl(input, init);
   }
-  private readonly fetch: typeof fetch;
+  private readonly fetch: (
+    input: RequestInfo | URL,
+    init?: RequestInit
+  ) => Promise<Response>;
 
   /** ONE supplied plan at the reader's agent, as them. The first step's result, or a refusal in their agent's words. */
   async run<T>(

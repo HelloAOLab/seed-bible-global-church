@@ -5,6 +5,8 @@
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { BUCKET_MERGE_TOOL, bucketMerge } from "./tools/bucket-merge";
+import type { Collection } from "../../../lib/library-client";
 
 export interface Env {
   /** The `.workspace` agent this MCP serves — a name, shown in every greeting (estate/seed-reader.faithnet.json). */
@@ -49,13 +51,38 @@ app.get("/health", (c) =>
     ok: true,
     service: SERVER.name,
     workspace: c.env.WORKSPACE_NAME ?? null,
-    tools: [HELLO_TOOL.name],
+    tools: [HELLO_TOOL.name, BUCKET_MERGE_TOOL.name],
   })
 );
 
 app.post("/tools/hello", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as { name?: unknown };
   return c.json({ ok: true, ...hello(c.env, body.name) });
+});
+
+app.post("/tools/bucket_merge", async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as {
+    collection?: Collection;
+    chapter?: string;
+    current?: unknown;
+    incoming?: unknown;
+  };
+  try {
+    if (!body.collection)
+      return c.json({ ok: false, error: "collection required" }, 400);
+    const out = bucketMerge({
+      collection: body.collection,
+      chapter: body.chapter,
+      current: body.current ?? {},
+      incoming: body.incoming ?? {},
+    });
+    return c.json({ ok: true, ...out });
+  } catch (e) {
+    return c.json(
+      { ok: false, error: e instanceof Error ? e.message : String(e) },
+      400
+    );
+  }
 });
 
 /** A minimal MCP server over JSON-RPC 2.0 — enough for an MCP client to list and call `hello`. */
@@ -93,9 +120,37 @@ app.post("/mcp", async (c) => {
     case "ping":
       return reply({});
     case "tools/list":
-      return reply({ tools: [HELLO_TOOL] });
+      return reply({ tools: [HELLO_TOOL, BUCKET_MERGE_TOOL] });
     case "tools/call": {
       const name = String(req.params?.name ?? "");
+      if (name === BUCKET_MERGE_TOOL.name) {
+        try {
+          const a = (req.params?.arguments ?? {}) as {
+            collection?: Collection;
+            chapter?: string;
+            current?: unknown;
+            incoming?: unknown;
+          };
+          if (!a.collection) return refuse(-32602, "collection required");
+          const out = bucketMerge({
+            collection: a.collection,
+            chapter: a.chapter,
+            current: a.current ?? {},
+            incoming: a.incoming ?? {},
+          });
+          return reply({
+            content: [
+              {
+                type: "text",
+                text: `merged: ${out.report.added.length} added, ${out.report.replaced.length} replaced, ${out.report.kept.length} kept, ${out.report.conflicts.length} in conflict`,
+              },
+            ],
+            structuredContent: out,
+          });
+        } catch (e) {
+          return refuse(-32602, e instanceof Error ? e.message : String(e));
+        }
+      }
       if (name !== HELLO_TOOL.name)
         return refuse(-32602, `unknown tool: ${name}`);
       const args = (req.params?.arguments ?? {}) as { name?: unknown };

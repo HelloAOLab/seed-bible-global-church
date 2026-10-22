@@ -6,6 +6,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 1. The vault is a file shelf, not a database
 
+**Settled 2026-10-21 — [ADR-0006](../adr/0006-chapter-buckets-and-the-vault-path.md):** chapter buckets + per-collection manifests, idempotent by `opId`, read/merge/re-save through the reader's own agent; the read lane is the person's playbook (`person-steward` carries `library.file.read`), not a vault credential. The text below is the original framing.
+
 **Problem.** CasualOS gave `listDataByMarker` + address prefixes: "all highlights in John 3" was one indexed query. The Library is a catalog of documents with a 12k-char text cap, no query, no changed-since, and every write is a harness act on the person's agent. A reader opening a chapter needs highlights, notes, bookmarks, saves, position for that chapter in well under a second, offline too.
 
 **Approach.**

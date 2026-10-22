@@ -93,6 +93,7 @@ const readerHost = (c: {
 }) => {
   const ctx = executionCtxOf(c);
   return createReaderHost({
+    env: c.env,
     agentSa: agentSa(c.env),
     origin: publicOrigin(c),
     internalHeaders: () => ({

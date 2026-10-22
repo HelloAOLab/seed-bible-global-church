@@ -20,7 +20,9 @@
     "port:locales": "node scripts/port-locales.mjs",
     "charter:services": "node scripts/charter-services.mjs",
     "buy:names": "node scripts/buy-names.mjs",
-    "register:client": "node scripts/register-client.mjs"
+    "register:client": "node scripts/register-client.mjs",
+    "pin:skills": "node scripts/pin-skills.mjs",
+    "smoke:vault": "tsx scripts/smoke/vault.ts"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",
@@ -32,7 +34,8 @@
     "hono": "^4.12.23",
     "jose": "^6.2.12",
     "preact": "catalog:",
-    "viem": "^2.52.2"
+    "viem": "^2.52.2",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@agenticprimitives/agent-account": "1.0.0-alpha.41",
