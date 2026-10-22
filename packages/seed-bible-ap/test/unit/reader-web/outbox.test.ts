@@ -10,6 +10,7 @@ import {
 } from "../../../apps/reader-web/src/state/records/buckets";
 import { createHighlights } from "../../../apps/reader-web/src/state/records/highlights";
 import { createBookmarks } from "../../../apps/reader-web/src/state/records/bookmarks";
+import { createAnnotations } from "../../../apps/reader-web/src/state/records/annotations";
 
 const READER = {
   agent: "0x" + "ab".repeat(20),
@@ -34,7 +35,17 @@ function device(backend = createDevBackend(READER), online = { value: true }) {
   });
   const highlights = createHighlights(buckets, () => backend.identity());
   const bookmarks = createBookmarks(buckets, () => backend.identity());
-  return { backend, stores, outbox, buckets, highlights, bookmarks, online };
+  const notes = createAnnotations(buckets, () => backend.identity());
+  return {
+    backend,
+    stores,
+    outbox,
+    buckets,
+    highlights,
+    bookmarks,
+    notes,
+    online,
+  };
 }
 
 const tick = () => new Promise((r) => setTimeout(r, 5));
@@ -231,5 +242,212 @@ describe("marks of another person on this device", () => {
     expect(
       d.highlights.forChapter("JHN.3").value.map((h) => h.colorId)
     ).toEqual(["yellow"]);
+  });
+});
+
+// THE SYNC MATRIX (test-plan A3.1) — every way a bucket can move between this device and the Library, driven
+// by mutating `backend.buckets` to stand for what another device already put there.
+describe("the sync matrix", () => {
+  const graph = (backend: ReturnType<typeof createDevBackend>, key: string) =>
+    backend.buckets.get(key)?.["@graph"] ?? [];
+  const liveNotes = (backend: ReturnType<typeof createDevBackend>) =>
+    graph(backend, "annotations:JHN.3").filter((it) => !it.deleted);
+  /** What another device put in the Library: a copy of the note with a new opId, body and time, no `supersedes`. */
+  const elsewhere = (
+    backend: ReturnType<typeof createDevBackend>,
+    id: string,
+    patch: Record<string, unknown>
+  ) => {
+    const doc = backend.buckets.get("annotations:JHN.3")!;
+    const at = doc["@graph"].findIndex((it) => it["@id"] === id);
+    const cur = doc["@graph"][at]!;
+    const { supersedes: _s, ...rest } = cur as Record<string, unknown>;
+    const next = [...doc["@graph"]];
+    next[at] = { ...rest, ...patch } as typeof cur;
+    backend.buckets.set("annotations:JHN.3", { ...doc, "@graph": next });
+  };
+  const PAST = "2020-01-01T00:00:00.000Z";
+  const FUTURE = "2099-01-01T00:00:00.000Z";
+
+  it("create: a new note goes up once and the device holds what the Library holds", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "For God so loved");
+    const r = await d.outbox.flush();
+    expect(r.merged).toEqual(["annotations:JHN.3"]);
+    expect(liveNotes(d.backend).map((it) => it["@id"])).toEqual([id]);
+    expect(await d.stores.buckets.get("annotations:JHN.3")).toEqual(
+      d.backend.buckets.get("annotations:JHN.3")
+    );
+  });
+
+  it("update unchanged: nothing new on the device means no run, and the same bucket again changes nothing", async () => {
+    const d = device();
+    await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    const merges = () => d.backend.calls.filter((c) => c.op === "merge").length;
+    expect(merges()).toBe(1);
+    const again = await d.outbox.flush();
+    expect(again.merged).toEqual([]);
+    expect(merges()).toBe(1);
+    // A second device sends the identical bucket: kept as is, the item not duplicated.
+    const e = device(d.backend);
+    await e.buckets.get("annotations", "JHN.3").ready;
+    const before = graph(d.backend, "annotations:JHN.3");
+    const rep = await d.backend.mergeBucket(
+      "annotations",
+      "JHN.3",
+      e.buckets.get("annotations", "JHN.3").bucket.value,
+      "batch-again"
+    );
+    expect(rep["@graph"]).toEqual(before);
+    expect(liveNotes(d.backend)).toHaveLength(1);
+  });
+
+  it("changed elsewhere: an edit here collides with an edit it never saw — both kept, the copy flagged conflictOf", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    elsewhere(d.backend, id, {
+      note: "one, from the phone",
+      opId: "op-phone",
+      updatedAt: FUTURE,
+    });
+    await d.notes.edit("JHN.3", id, "one, from the laptop");
+    const r = await d.outbox.flush();
+    expect(r.error).toBeUndefined();
+    const live = liveNotes(d.backend);
+    expect(live.map((it) => it.note).sort()).toEqual([
+      "one, from the laptop",
+      "one, from the phone",
+    ]);
+    const copy = live.find((it) => it.conflictOf)!;
+    expect(copy.conflictOf).toBe(id);
+    expect(copy.note).toBe("one, from the laptop");
+    // The device took the merged bucket as its truth: it shows both, the copy flagged.
+    const seen = d.notes.forChapter("JHN.3").value;
+    expect(seen).toHaveLength(2);
+    expect(seen.find((n) => n.conflictOf)?.conflictOf).toBe(id);
+  });
+
+  it("changed elsewhere, same words: no conflict, the later write wins and one copy remains", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    elsewhere(d.backend, id, { opId: "op-phone", updatedAt: PAST });
+    await d.notes.edit("JHN.3", id, "one");
+    await d.outbox.flush();
+    const live = liveNotes(d.backend);
+    expect(live).toHaveLength(1);
+    expect(live[0]!.opId).not.toBe("op-phone");
+  });
+
+  it("deleted elsewhere: the tombstone comes down on resync; an edit made after it wins (later wins, deletes too)", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    elsewhere(d.backend, id, {
+      deleted: true,
+      opId: "op-phone-delete",
+      updatedAt: FUTURE,
+    });
+    await d.buckets.resync();
+    expect(d.notes.forChapter("JHN.3").value).toEqual([]);
+
+    const e = device();
+    const id2 = await e.notes.add("JHN.3", 17, 17, "two");
+    await e.outbox.flush();
+    elsewhere(e.backend, id2, {
+      deleted: true,
+      opId: "op-phone-delete",
+      updatedAt: PAST,
+    });
+    await e.notes.edit("JHN.3", id2, "two, kept after all");
+    await e.outbox.flush();
+    expect(liveNotes(e.backend).map((it) => it.note)).toEqual([
+      "two, kept after all",
+    ]);
+  });
+
+  it("delete after edit offline: one batch, one run, and the Library ends with the tombstone, not the edit", async () => {
+    const online = { value: true };
+    const d = device(createDevBackend(READER), online);
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    online.value = false;
+    await d.notes.edit("JHN.3", id, "one, edited");
+    await d.notes.remove("JHN.3", id);
+    await tick();
+    expect(d.outbox.pending.value).toBe(1);
+    const entry = await d.stores.outbox.get("annotations:JHN.3");
+    expect(entry?.opIds).toHaveLength(2);
+    online.value = true;
+    const r = await d.outbox.flush();
+    expect(r.merged).toEqual(["annotations:JHN.3"]);
+    expect(d.backend.calls.filter((c) => c.op === "merge")).toHaveLength(2);
+    const all = graph(d.backend, "annotations:JHN.3");
+    expect(all).toHaveLength(1);
+    expect(all[0]).toMatchObject({ "@id": id, deleted: true });
+    expect(d.notes.forChapter("JHN.3").value).toEqual([]);
+  });
+
+  it("converge when already gone: deleting what another device deleted is one tombstone, no error, nothing pending", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    elsewhere(d.backend, id, {
+      deleted: true,
+      opId: "op-phone-delete",
+      updatedAt: PAST,
+    });
+    await d.notes.remove("JHN.3", id);
+    const r = await d.outbox.flush();
+    expect(r.error).toBeUndefined();
+    const all = graph(d.backend, "annotations:JHN.3");
+    expect(all).toHaveLength(1);
+    expect(all[0]!.deleted).toBe(true);
+    expect(d.outbox.pending.value).toBe(0);
+    await d.buckets.resync();
+    expect(d.notes.forChapter("JHN.3").value).toEqual([]);
+  });
+
+  it("same opId twice: a replayed batch and a replayed item each leave one version", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "one");
+    await d.outbox.flush();
+    const mine = d.buckets.get("annotations", "JHN.3").bucket.value;
+    // The same bucket, the same batch, sent again (a retry after a lost reply).
+    const rep = await d.backend.mergeBucket("annotations", "JHN.3", mine, "b1");
+    expect(rep["@graph"]).toEqual(mine["@graph"]);
+    expect(graph(d.backend, "annotations:JHN.3")).toHaveLength(1);
+    // The same item put again on the device: no new version, nothing queued.
+    const item = mine["@graph"].find((it) => it["@id"] === id)!;
+    await d.buckets.put("annotations", "JHN.3", item);
+    expect(await d.stores.outbox.get("annotations:JHN.3")).toBeUndefined();
+    expect(d.notes.forChapter("JHN.3").value).toHaveLength(1);
+  });
+
+  it("offline across collections: one run per bucket, each bucket whole", async () => {
+    const online = { value: false };
+    const d = device(createDevBackend(READER), online);
+    await d.notes.add("JHN.3", 16, 16, "a note");
+    await d.notes.add("JHN.3", 17, 17, "another");
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await d.highlights.set("JHN.4", 1, 1, "green");
+    await d.bookmarks.add("JHN.3", "John 3");
+    await tick();
+    expect(d.backend.calls.filter((c) => c.op === "merge")).toHaveLength(0);
+    expect(d.outbox.pending.value).toBe(4);
+    online.value = true;
+    const r = await d.outbox.flush();
+    expect(r.error).toBeUndefined();
+    expect(r.merged.sort()).toEqual([
+      "annotations:JHN.3",
+      "bookmarks:bookmarks",
+      "highlights:JHN.3",
+      "highlights:JHN.4",
+    ]);
+    expect(d.backend.calls.filter((c) => c.op === "merge")).toHaveLength(4);
+    expect(liveNotes(d.backend)).toHaveLength(2);
+    expect(d.outbox.pending.value).toBe(0);
   });
 });

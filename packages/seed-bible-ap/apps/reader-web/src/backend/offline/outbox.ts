@@ -93,6 +93,11 @@ export function createOutbox(deps: OutboxDeps) {
       report.error = "signed out";
       return report;
     }
+    // A flush scheduled before the device went offline must not run now: the entries wait for the next online.
+    if (!isOnline()) {
+      report.error = "offline";
+      return report;
+    }
     for (const k of await deps.stores.outbox.keys()) {
       const entry = await deps.stores.outbox.get(k);
       const local = await deps.stores.buckets.get(k);
