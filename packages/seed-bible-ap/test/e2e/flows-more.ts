@@ -1739,6 +1739,68 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "G15",
+    section: "3. Reading",
+    title: "Choose the reader's fonts",
+    rows: ["Margins, line height, UI scale, custom fonts"],
+    checks:
+      "Account → Text: Verses in Inter, light, italic; Headings in Roboto; the verse text and the heading are drawn in those fonts (Google Fonts loaded only for them); kept after a reload; Reset returns the defaults",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openAccount();
+      const card = pane.locator(".sb-text-style-card");
+      await card.getByLabel("Font of Verses").selectOption({ label: "Inter" });
+      await card.getByLabel("Weight of Verses").selectOption("300");
+      await card
+        .locator(".sb-text-style-row")
+        .nth(2)
+        .getByLabel("Italic")
+        .check();
+      await card
+        .getByLabel("Font of Headings")
+        .selectOption({ label: "Roboto" });
+      const look = () =>
+        c.page.evaluate(() => {
+          const v = document.querySelector(".sb-verse-text, .sb-verse");
+          const h = document.querySelector(".sb-chapter-heading, h3");
+          const vs = v ? getComputedStyle(v) : null;
+          return {
+            verse: vs
+              ? `${vs.fontFamily}|${vs.fontWeight}|${vs.fontStyle}`
+              : "",
+            heading: h ? getComputedStyle(h).fontFamily : "",
+            sheets: [...document.querySelectorAll("link[data-sb-text-font]")]
+              .length,
+          };
+        });
+      const a = await look();
+      if (
+        !/Inter/.test(a.verse) ||
+        !/\|300\|italic$/.test(a.verse) ||
+        !/Roboto/.test(a.heading) ||
+        a.sheets !== 2
+      )
+        throw new Error(`after choosing: ${JSON.stringify(a)}`);
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await c.page.waitForTimeout(500);
+      const b = await look();
+      if (b.verse !== a.verse)
+        throw new Error(`after reload: ${JSON.stringify(b)}`);
+      const again = await c.openAccount();
+      await again
+        .locator(".sb-text-style-card")
+        .getByRole("button", { name: /^reset$/i })
+        .click();
+      const d = await look();
+      if (/Inter/.test(d.verse) || d.sheets)
+        throw new Error(`after reset: ${JSON.stringify(d)}`);
+      return `verses ${a.verse.replace(/"/g, "")}; headings ${a.heading.replace(/"/g, "")}; kept after a reload; Reset → ${d.verse.split("|")[0]!.replace(/"/g, "").slice(0, 30)}`;
+    },
+  },
+  {
     id: "G10",
     section: "3. Reading",
     title: "Customize the bottom toolbar",

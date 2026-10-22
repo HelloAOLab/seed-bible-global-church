@@ -1571,3 +1571,20 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   height: 100%;
   object-fit: cover;
 }
+
+/* Account → Text: a section's name, then its font, weight and italics on one row (wrapping on a phone). */
+.sb-text-style-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.25rem 0;
+}
+.sb-text-style-name {
+  flex: 0 0 5.5rem;
+}
+.sb-text-style-row select {
+  flex: 1;
+  min-width: 7rem;
+  width: auto;
+}

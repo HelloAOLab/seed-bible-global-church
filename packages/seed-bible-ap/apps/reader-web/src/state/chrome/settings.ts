@@ -1,6 +1,12 @@
 // SETTINGS — the few the core reader needs now (ported from SettingsManager's scripture-elements and theme bits):
 // which scripture elements show, the theme, the reader glyph size. Preferences live in localStorage (nothing
 // session-like does — ADR-0003's rule is about tokens, not a font size).
+import {
+  cleanTextStyle,
+  textStyleProperties,
+  textStyleSheets,
+  type TextStyle,
+} from "./textStyle";
 import { effect, signal } from "@preact/signals";
 import {
   DARK_THEME,
@@ -51,6 +57,7 @@ interface Persisted {
   uiScale?: UiScale;
   scripture?: Partial<ScriptureElementsBehavior>;
   keepScreenAwake?: boolean;
+  textStyle?: TextStyle;
 }
 
 function read(): Persisted {
@@ -75,6 +82,8 @@ export function createSettings(deps: SettingsDeps = {}) {
   const uiScale = signal<UiScale>(saved.uiScale ?? "m");
   /** Keep the screen on while the reader is open (state/chrome/wakeLock.ts). */
   const keepScreenAwake = signal(saved.keepScreenAwake === true);
+  /** Font, weight and italics for the book title, headings and verses (state/chrome/textStyle.ts). */
+  const textStyle = signal<TextStyle>(cleanTextStyle(saved.textStyle));
   const scripture = signal<ScriptureElementsBehavior>({
     showVerseNumbers: true,
     showHeadings: true,
@@ -114,6 +123,25 @@ export function createSettings(deps: SettingsDeps = {}) {
     root.dataset["sbLine"] = lineHeight.value;
     root.dataset["sbMargins"] = margins.value;
     root.dataset["sbScale"] = uiScale.value;
+    for (const [prop, value] of Object.entries(
+      textStyleProperties(textStyle.value)
+    ))
+      if (value) root.style.setProperty(prop, value);
+      else root.style.removeProperty(prop);
+    const sheets = textStyleSheets(textStyle.value);
+    document
+      .querySelectorAll<HTMLLinkElement>("link[data-sb-text-font]")
+      .forEach((l) => {
+        if (!sheets.includes(l.href)) l.remove();
+      });
+    for (const href of sheets)
+      if (!document.querySelector(`link[data-sb-text-font][href="${href}"]`)) {
+        const l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.href = href;
+        l.dataset["sbTextFont"] = "";
+        document.head.appendChild(l);
+      }
     // A theme may bring its fonts (a Google Fonts stylesheet); anything else is not loaded.
     const font = allowedFontStylesheet(t.variables["fontStylesheet"]);
     let link = document.getElementById(
@@ -142,6 +170,7 @@ export function createSettings(deps: SettingsDeps = {}) {
         uiScale: uiScale.value,
         scripture: scripture.value,
         keepScreenAwake: keepScreenAwake.value,
+        textStyle: textStyle.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
     } catch {
@@ -161,6 +190,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     uiScale,
     scripture,
     keepScreenAwake,
+    textStyle,
     resolvedTheme,
     toggleTheme,
     dispose,

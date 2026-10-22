@@ -439,5 +439,17 @@
   "crop-use": "Use picture",
   "crop-your-photo": "Crop your photo",
   "crop-cover": "Crop the cover image",
-  "crop-logo": "Fit your logo"
+  "crop-logo": "Fit your logo",
+  "text-section-bookTitle": "Book title",
+  "text-section-heading": "Headings",
+  "text-section-verse": "Verses",
+  "text-style": "Text",
+  "text-style-hint": "The font of the book title, headings and verses.",
+  "text-font-of": "Font of {{what}}",
+  "text-font-default": "Default",
+  "text-weight-of": "Weight of {{what}}",
+  "bold": "bold",
+  "regular": "regular",
+  "light": "light",
+  "italic": "Italic"
 }

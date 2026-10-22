@@ -1,4 +1,11 @@
 import { Avatar } from "./ConnectedChip";
+import {
+  TEXT_FONTS,
+  TEXT_SECTIONS,
+  type SectionStyle,
+  type TextSection,
+  type TextStyle,
+} from "../../state/chrome/textStyle";
 import { PictureField } from "../library/PictureField";
 import { PROFILE_PICTURE } from "../../state/library/crop";
 import { toolbarActions } from "../reader/ReaderToolbar";
@@ -250,6 +257,114 @@ function PublishAsCard({ state }: { state: ReaderState }) {
 }
 
 /** Account → Toolbar: which buttons the bottom toolbar shows, and in what order (the old toolbar customizer). */
+function TextStyleCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const style = state.settings.textStyle.value;
+  const set = (s: TextSection, patch: SectionStyle) => {
+    const next: SectionStyle = { ...style[s], ...patch };
+    for (const k of Object.keys(next) as Array<keyof SectionStyle>)
+      if (next[k] === undefined || next[k] === false || next[k] === "")
+        delete next[k];
+    const all: TextStyle = { ...style, [s]: next };
+    if (!Object.keys(next).length) delete all[s];
+    state.settings.textStyle.value = all;
+  };
+  const sectionName = (s: TextSection) =>
+    s === "bookTitle"
+      ? t("text-section-bookTitle", { defaultValue: "Book title" })
+      : s === "heading"
+        ? t("text-section-heading", { defaultValue: "Headings" })
+        : t("text-section-verse", { defaultValue: "Verses" });
+  return (
+    <div className="sb-account-card sb-text-style-card">
+      <p className="sb-small">
+        <strong>{t("text-style", { defaultValue: "Text" })}</strong>{" "}
+        <span className="sb-muted">
+          {t("text-style-hint", {
+            defaultValue: "The font of the book title, headings and verses.",
+          })}
+        </span>
+      </p>
+      {TEXT_SECTIONS.map((s) => {
+        const v = style[s] ?? {};
+        const name = sectionName(s);
+        return (
+          <div key={s} className="sb-text-style-row">
+            <span className="sb-small sb-text-style-name">{name}</span>
+            <select
+              className="sb-note-editor"
+              aria-label={t("text-font-of", {
+                defaultValue: "Font of {{what}}",
+                what: name,
+              })}
+              value={v.font ?? ""}
+              onChange={(e) =>
+                set(s, {
+                  font: (e.target as HTMLSelectElement).value || undefined,
+                })
+              }
+            >
+              <option value="">
+                {t("text-font-default", { defaultValue: "Default" })}
+              </option>
+              {TEXT_FONTS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="sb-note-editor"
+              aria-label={t("text-weight-of", {
+                defaultValue: "Weight of {{what}}",
+                what: name,
+              })}
+              value={v.weight ?? ""}
+              onChange={(e) =>
+                set(s, {
+                  weight:
+                    ((e.target as HTMLSelectElement)
+                      .value as SectionStyle["weight"]) || undefined,
+                })
+              }
+            >
+              <option value="">
+                {t("text-font-default", { defaultValue: "Default" })}
+              </option>
+              <option value="700">{t("bold", { defaultValue: "bold" })}</option>
+              <option value="400">
+                {t("regular", { defaultValue: "regular" })}
+              </option>
+              <option value="300">
+                {t("light", { defaultValue: "light" })}
+              </option>
+            </select>
+            <label className="sb-small sb-check">
+              <input
+                type="checkbox"
+                checked={v.italic === true}
+                onChange={(e) =>
+                  set(s, { italic: (e.target as HTMLInputElement).checked })
+                }
+              />{" "}
+              {t("italic", { defaultValue: "Italic" })}
+            </label>
+          </div>
+        );
+      })}
+      <div className="sb-note-card-actions">
+        <button
+          className="sb-note-button"
+          disabled={!Object.keys(style).length}
+          onClick={() => (state.settings.textStyle.value = {})}
+        >
+          {t("toolbar-reset", { defaultValue: "Reset" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ToolbarCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const actions = toolbarActions(state, t, {
@@ -802,6 +917,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
         </div>
       )}
 
+      <TextStyleCard state={state} />
       <ToolbarCard state={state} />
 
       <div className="sb-account-card">
