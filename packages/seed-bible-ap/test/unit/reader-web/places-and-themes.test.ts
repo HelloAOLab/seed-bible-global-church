@@ -26,7 +26,7 @@ describe("the places map", () => {
         ? new Response(
             JSON.stringify({
               type: "Feature",
-              geometry: { type: "Point", coordinates: [35.2, 31.7] },
+              geometry: { type: "Point", coordinates: ["31.704", "35.206"] },
             }),
             { status: 200 }
           )
