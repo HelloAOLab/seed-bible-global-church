@@ -185,7 +185,8 @@ async function handWire(
       };
 }
 
-async function finish(
+/** The end of a Home sign-in: the code exchanged, the id_token verified, the wire handed to reader-a2a. */
+export async function finish(
   c: ConnectClient,
   estateId: EstateId,
   authOrigin: string,
@@ -199,7 +200,10 @@ async function finish(
     ex.idToken,
     nonce
   )) as unknown as Record<string, unknown>;
-  const handed = await handWire(ex.idToken, ex.askDelegation);
+  // An `ask_with_login` client gets the wire beside the site grant (`askDelegation`); asking for the ask-as-me
+  // TEMPLATE (as this reader does) makes the wire the sign-in's own delegation. reader-a2a checks either is this
+  // reader's, for its key, before keeping it.
+  const handed = await handWire(ex.idToken, ex.askDelegation ?? ex.delegation);
   const s: ReaderSession = {
     token: ex.idToken,
     estate: estateId,
