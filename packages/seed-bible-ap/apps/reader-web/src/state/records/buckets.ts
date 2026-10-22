@@ -15,9 +15,30 @@ import type { BucketItem } from "@seed/seed-schema";
 import { BackendError, type ReaderBackend } from "../../backend/ReaderBackend";
 import type { ReaderStores } from "../../backend/offline/db";
 import { storeKey, type Outbox } from "../../backend/offline/outbox";
+import { agentAddress } from "./marks";
 
 /** `heldBy` of a mark made before signing in — never a real agent. */
 export const LOCAL_AGENT = "0x0000000000000000000000000000000000000000";
+
+/**
+ * The bucket with every anonymous mark made the reader's: fresh opIds so the Library takes them, updatedAt now.
+ * Null when nothing needed adopting. Marks held by anyone else are left as they are (the workspace refuses them).
+ */
+export function adoptBucket(
+  bucket: BucketDocument,
+  agent: string,
+  newId: () => string,
+  now = () => new Date().toISOString()
+): BucketDocument | null {
+  const mine = agentAddress(agent);
+  let changed = false;
+  const graph = bucket["@graph"].map((it) => {
+    if (agentAddress(it.heldBy) !== LOCAL_AGENT) return it;
+    changed = true;
+    return { ...it, heldBy: mine, opId: newId(), updatedAt: now() };
+  });
+  return changed ? { ...bucket, "@graph": graph } : null;
+}
 
 export interface BucketStoreDeps {
   backend: ReaderBackend;
@@ -131,20 +152,23 @@ export function createBucketStore(deps: BucketStoreDeps) {
    */
   async function resync(now = () => new Date().toISOString()) {
     const who = deps.backend.identity();
+    if (who) {
+      // Every bucket this device holds — open in this session or kept from an earlier one — gives its anonymous
+      // marks to the reader and goes up.
+      for (const k of await deps.stores.buckets.keys()) {
+        const stored = await deps.stores.buckets.get(k);
+        if (!stored) continue;
+        const adopted = adoptBucket(stored, who.agent, newId, now);
+        if (!adopted) continue;
+        const [collection, chapter] = splitKey(k);
+        await deps.stores.buckets.set(k, adopted);
+        const ob = open.get(k);
+        if (ob) ob.bucket.value = adopted;
+        await deps.outbox.queue(collection, chapter, `adopt-${newId()}`);
+      }
+    }
     for (const [k, ob] of open) {
       const [collection, chapter] = splitKey(k);
-      if (who) {
-        const adopted = ob.bucket.value["@graph"].map((it) =>
-          it.heldBy === LOCAL_AGENT
-            ? { ...it, heldBy: who.agent, opId: newId(), updatedAt: now() }
-            : it
-        );
-        if (adopted.some((it, i) => it !== ob.bucket.value["@graph"][i])) {
-          ob.bucket.value = { ...ob.bucket.value, "@graph": adopted };
-          await deps.stores.buckets.set(k, ob.bucket.value);
-          await deps.outbox.queue(collection, chapter, `adopt-${newId()}`);
-        }
-      }
       await load(collection, chapter, ob);
     }
     if (who) await deps.outbox.flush();

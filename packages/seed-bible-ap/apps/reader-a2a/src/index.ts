@@ -14,6 +14,7 @@ import {
 } from "./session";
 import { servedEstates, TOWN } from "../../../estate/faithnet";
 import { connectRoutes, hasWire } from "./routes/connect";
+import { publicRoutes } from "./routes/public";
 import { askingKeyAddress, type WireEnv } from "./wires";
 import type { PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
@@ -42,6 +43,7 @@ const DEV_AGENT: Address = "0x0000000000000000000000000000000000000001";
 const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors());
 app.route("/", connectRoutes);
+app.route("/", publicRoutes);
 
 const mcpUrl = (env: Env) =>
   (env.MCP_URL ?? "http://127.0.0.1:8890").replace(/\/$/, "");

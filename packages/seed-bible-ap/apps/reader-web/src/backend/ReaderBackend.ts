@@ -5,6 +5,22 @@
 // permitted exception (ADR-0003).
 import type { BucketDocument, Collection } from "@seed/library-client";
 import type { BucketItem } from "@seed/seed-schema";
+import type { Offering } from "../state/social/discover";
+import type { Contact } from "../state/social/today";
+
+export interface PublishSliceArgs {
+  kind: string;
+  passage: string;
+  title: string;
+  markdown: string;
+  slug?: string;
+  descriptor?: Record<string, unknown>;
+}
+
+export interface PublishReceipt {
+  descriptorId: string;
+  slug: string;
+}
 
 export type BackendErrorCode =
   | "signed-out"
@@ -51,4 +67,18 @@ export interface ReaderBackend {
     incoming: BucketDocument,
     opId: string
   ): Promise<BucketDocument>;
+  /** What agents released: for a chapter, or the recent releases of some owners (the registry, via the workspace). */
+  discover(q: {
+    passage?: string;
+    kind?: string;
+    owners?: string[];
+  }): Promise<Offering[]>;
+  /** A slice of the reader's own to their public shelf, released (`seed.publish.slice`). */
+  publishSlice(args: PublishSliceArgs): Promise<PublishReceipt>;
+  /** The slice made private again; the next crawl drops it. */
+  withdrawSlice(kind: string, slug: string): Promise<void>;
+  /** A public shelf document's text, read for the browser by the workspace. */
+  readPublic(shelf: string, path: string): Promise<string>;
+  /** The reader's contacts from their Home (their agent's `person.contact.list`). */
+  contacts(): Promise<Contact[]>;
 }

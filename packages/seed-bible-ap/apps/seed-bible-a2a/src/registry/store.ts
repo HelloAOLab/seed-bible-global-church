@@ -154,6 +154,26 @@ export async function queryByPassage(
   return r.results ?? [];
 }
 
+/** The newest live rows whose owner address or shelf name is one of `owners`. */
+export async function queryRecent(
+  db: D1Database,
+  owners: string[],
+  max = 50
+): Promise<OfferingRow[]> {
+  const keys = [
+    ...new Set(owners.map((o) => o.toLowerCase()).filter(Boolean)),
+  ].slice(0, 50);
+  if (!keys.length) return [];
+  const marks = keys.map((_, i) => `?${i + 1}`).join(",");
+  const r = await db
+    .prepare(
+      `SELECT * FROM offerings WHERE (owner IN (${marks}) OR lower(shelf) IN (${marks})) AND withdrawn_at IS NULL ORDER BY indexed_at DESC LIMIT ?${keys.length + 1}`
+    )
+    .bind(...keys, Math.min(Math.max(max, 1), 200))
+    .all<OfferingRow>();
+  return r.results ?? [];
+}
+
 /** Every row, tombstones included — what the rebuild smoke compares before and after a wipe. */
 export async function snapshot(
   db: D1Database

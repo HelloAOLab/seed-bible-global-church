@@ -28,7 +28,7 @@ import {
   estateById,
   type EstateId,
 } from "../../../estate/faithnet";
-import { connectWire } from "./api";
+import { connectWire, whoAmI } from "./api";
 
 export const CLIENT_ID = READER_CLIENT_ID;
 export const RELAY_CHANNEL = "seed-bible-reader-connect-relay";
@@ -161,12 +161,21 @@ async function handWire(
   token: string,
   wire: Wire | undefined
 ): Promise<{ wire: boolean; wireNote?: string }> {
-  if (!wire)
+  if (!wire) {
+    // The Home minted nothing this time; the workspace may still hold the wire from an earlier sign-in.
+    const me = await whoAmI(token).catch(() => null);
+    if (me?.ok && me.wire)
+      return {
+        wire: true,
+        wireNote:
+          "Your permission from an earlier sign-in is still held by the reader workspace.",
+      };
     return {
       wire: false,
       wireNote:
         "Your Home returned no permission for your agent to keep your reading record — reading still works.",
     };
+  }
   const out = await connectWire(token, wire);
   return out.ok
     ? { wire: true }

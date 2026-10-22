@@ -7,7 +7,10 @@ import type { ReaderBackend } from "../backend/ReaderBackend";
 import { createA2aBackend } from "../backend/a2a";
 import { indexedDbStores, type ReaderStores } from "../backend/offline/db";
 import { createOutbox } from "../backend/offline/outbox";
-import { createBucketStore } from "./records/buckets";
+import { adoptBucket, createBucketStore } from "./records/buckets";
+import { createDiscover } from "./social/discover";
+import { createPublishing } from "./social/publishing";
+import { createToday } from "./social/today";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -51,6 +54,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     stores,
     ...(opts.isOnline ? { isOnline: opts.isOnline } : {}),
     onMerged: (c, ch, b) => buckets.accept(c, ch, b),
+    repair: (_c, _ch, b) => {
+      const who = backend.identity();
+      return who ? adoptBucket(b, who.agent, () => crypto.randomUUID()) : null;
+    },
   });
   const buckets = createBucketStore({
     backend,
@@ -66,6 +73,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const search = createVerseSearch();
   const position = createPosition(stores);
   const settings = createSettings();
+  const discover = createDiscover(backend);
+  const publishing = createPublishing(backend, stores);
+  const today = createToday(backend, stores);
   const audio = createChapterAudio({ api });
   const tts = createTextToSpeechManager();
 
@@ -154,7 +164,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   };
 
   const ui = {
-    pane: signal<"none" | "notes" | "account" | "content">("none"),
+    pane: signal<
+      "none" | "notes" | "account" | "content" | "today" | "discover"
+    >("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
@@ -164,6 +176,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   async function signIn(s: ReaderSession) {
     session.value = s;
     await buckets.resync();
+    void today.refresh();
   }
   async function signOut() {
     forgetSession();
@@ -194,6 +207,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     search,
     position,
     settings,
+    discover,
+    publishing,
+    today,
     audio,
     tts,
     speechLang,

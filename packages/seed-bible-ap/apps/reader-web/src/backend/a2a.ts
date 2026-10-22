@@ -7,9 +7,14 @@ import { A2A_BASE } from "../api";
 import type { ReaderSession } from "../session";
 import {
   BackendError,
+  type PublishReceipt,
+  type PublishSliceArgs,
   type ReaderBackend,
   type ReaderIdentity,
 } from "./ReaderBackend";
+import type { Offering } from "../state/social/discover";
+import type { Contact } from "../state/social/today";
+import { agentAddress } from "../state/records/marks";
 
 interface HarnessReply {
   ok: boolean;
@@ -87,7 +92,9 @@ export function createA2aBackend(
     kind: "a2a",
     identity(): ReaderIdentity | null {
       const s = getSession();
-      return s ? { agent: s.sub, name: s.name, wire: s.wire } : null;
+      return s
+        ? { agent: agentAddress(s.sub), name: s.name, wire: s.wire }
+        : null;
     },
     async readBucket(collection, chapter) {
       const r = await ask(
@@ -115,6 +122,74 @@ export function createA2aBackend(
       return r.bucket && typeof r.bucket === "object"
         ? (r.bucket as BucketDocument)
         : this.readBucket(collection, chapter);
+    },
+    async discover(q) {
+      const r = await ask(
+        "seed.workspace.discover",
+        q.owners?.length
+          ? { owners: q.owners }
+          : { passage: q.passage ?? "", ...(q.kind ? { kind: q.kind } : {}) },
+        q.owners?.length
+          ? "what did they release recently"
+          : `what is there for ${q.passage}`
+      );
+      return (r.offerings as Offering[] | undefined) ?? [];
+    },
+    async publishSlice(args: PublishSliceArgs): Promise<PublishReceipt> {
+      const r = await ask(
+        "seed.publish.slice",
+        { ...args },
+        `publish my ${args.kind} on ${args.passage}`
+      );
+      if (r.published !== true)
+        throw new BackendError(
+          String(r.refused ?? "the slice was not published"),
+          "refused"
+        );
+      return {
+        descriptorId: String(r.descriptorId ?? ""),
+        slug: String(r.slug ?? args.slug ?? ""),
+      };
+    },
+    async withdrawSlice(kind, slug) {
+      const r = await ask(
+        "seed.publish.slice",
+        { withdraw: { kind, slug } },
+        `take my ${kind} ${slug} off my shelf`
+      );
+      if (r.withdrawn !== true)
+        throw new BackendError(
+          String(r.refused ?? "the slice was not withdrawn"),
+          "refused"
+        );
+    },
+    async readPublic(shelf, path) {
+      let res: Response;
+      try {
+        res = await fetchImpl(
+          `${A2A_BASE}/api/public/read?shelf=${encodeURIComponent(shelf)}&path=${encodeURIComponent(path)}`
+        );
+      } catch {
+        throw new BackendError(
+          "the reader workspace could not be reached",
+          "offline"
+        );
+      }
+      const out = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        text?: string;
+        error?: string;
+      } | null;
+      if (!out?.ok)
+        throw new BackendError(
+          out?.error ?? `HTTP ${res.status}`,
+          res.status === 404 ? "refused" : "unavailable"
+        );
+      return out.text ?? "";
+    },
+    async contacts() {
+      const r = await ask("seed.workspace.contacts", {}, "who are my contacts");
+      return (r.contacts as Contact[] | undefined) ?? [];
     },
   };
 }

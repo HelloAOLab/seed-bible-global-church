@@ -12,9 +12,14 @@ import {
 import type { BucketItem } from "@seed/seed-schema";
 import {
   BackendError,
+  type PublishSliceArgs,
   type ReaderBackend,
   type ReaderIdentity,
 } from "./ReaderBackend";
+import type { Offering } from "../state/social/discover";
+import type { Contact } from "../state/social/today";
+import { chapterOf } from "@seed/seed-protocol";
+import { agentAddress } from "../state/records/marks";
 
 export interface DevCall {
   op: "read" | "put" | "merge";
@@ -25,6 +30,10 @@ export interface DevCall {
 export interface DevBackend extends ReaderBackend {
   readonly buckets: Map<string, BucketDocument>;
   readonly calls: DevCall[];
+  /** The in-memory registry: what was published and not withdrawn. */
+  readonly registry: Map<string, Offering & { markdown: string }>;
+  /** Contacts the fake Home reports. */
+  contactList: Contact[];
   setIdentity(identity: ReaderIdentity | null): void;
   /** Make the next calls fail as if the network were down (until set back). */
   setOffline(offline: boolean): void;
@@ -38,6 +47,7 @@ export function createDevBackend(
 ): DevBackend {
   const buckets = new Map<string, BucketDocument>();
   const calls: DevCall[] = [];
+  const registry = new Map<string, Offering & { markdown: string }>();
   let who = identity;
   let offline = false;
   const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -54,6 +64,8 @@ export function createDevBackend(
     kind: "dev",
     buckets,
     calls,
+    registry,
+    contactList: [],
     setIdentity: (i) => (who = i),
     setOffline: (o) => (offline = o),
     identity: () => who,
@@ -78,10 +90,81 @@ export function createDevBackend(
       guard();
       const k = key(collection, chapter);
       calls.push({ op: "merge", key: k, opId });
+      if (
+        incoming["@graph"].some(
+          (it) => agentAddress(it.heldBy) !== agentAddress(who!.agent)
+        )
+      )
+        throw new BackendError(
+          "an item in the bucket is not held by the signed-in reader",
+          "refused"
+        );
       const cur = buckets.get(k) ?? emptyBucket(collection, chapter);
       const { bucket } = mergeBuckets(cur, clone(incoming));
       buckets.set(k, bucket);
       return clone(bucket);
+    },
+    async discover(q) {
+      if (offline)
+        throw new BackendError(
+          "the reader workspace could not be reached",
+          "offline"
+        );
+      const rows = [...registry.values()];
+      const hit = q.owners?.length
+        ? rows.filter((o) =>
+            q.owners!.some(
+              (x) => x.toLowerCase() === o.owner || x.toLowerCase() === o.shelf
+            )
+          )
+        : rows.filter(
+            (o) =>
+              chapterOf(o.passage) === chapterOf(q.passage ?? "") &&
+              (!q.kind || o.kind === q.kind)
+          );
+      return clone(
+        hit
+          .sort((a, b) => b.indexedAt.localeCompare(a.indexedAt))
+          .map(({ markdown: _m, ...o }) => o)
+      );
+    },
+    async publishSlice(args: PublishSliceArgs) {
+      guard();
+      const slug =
+        args.slug ?? args.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const descriptorId = `urn:seed:offering:${who!.agent.toLowerCase()}:${args.kind}:${slug}`;
+      registry.set(descriptorId, {
+        owner: who!.agent.toLowerCase(),
+        shelf: `${who!.name.toLowerCase().replace(/\s+/g, "")}.me`,
+        entryId: `e-${slug}`,
+        version: (registry.get(descriptorId)?.version ?? 0) + 1,
+        passage: args.passage,
+        kind: args.kind,
+        title: args.title,
+        descriptorId,
+        descriptor: { "@id": descriptorId, ...(args.descriptor ?? {}) },
+        markdownPath: `seed-bible/public/${args.kind}/${slug}.md`,
+        indexedAt: new Date().toISOString(),
+        markdown: args.markdown,
+      });
+      return { descriptorId, slug };
+    },
+    async withdrawSlice(kind, slug) {
+      guard();
+      registry.delete(
+        `urn:seed:offering:${who!.agent.toLowerCase()}:${kind}:${slug}`
+      );
+    },
+    async readPublic(shelf, path) {
+      const o = [...registry.values()].find(
+        (x) => x.shelf === shelf && x.markdownPath === path
+      );
+      if (!o) throw new BackendError("not public", "refused");
+      return o.markdown;
+    },
+    async contacts() {
+      guard();
+      return clone(this.contactList);
     },
   };
 }

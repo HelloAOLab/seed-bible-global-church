@@ -97,17 +97,29 @@ export const PUBLISH_SLICE: ToolSpec = {
 export const DISCOVER: ToolSpec = {
   id: "seed.workspace.discover",
   description:
-    "What Seed Bible agents released for a passage, from the Seed registry on seed-bible.svc (offerings, studies, published notes, playlists, plans). Args: passage (OSIS; a verse narrows to its chapter), kind (optional).",
+    "What Seed Bible agents released, from the Seed registry on seed-bible.svc (offerings, studies, published notes, playlists, plans). Args: passage (OSIS; a verse narrows to its chapter) and kind (optional) — or owners (agent addresses or shelf names) for their recent releases, newest first.",
   inputSchema: {
     type: "object",
-    properties: { passage: { type: "string" }, kind: { type: "string" } },
-    required: ["passage"],
+    properties: {
+      passage: { type: "string" },
+      kind: { type: "string" },
+      owners: { type: "array", items: { type: "string" } },
+    },
   },
   answers: [
     "what is there for this chapter",
     "discover John 3",
     "studies on this passage",
   ],
+  establishes: "lookup",
+};
+
+export const CONTACTS: ToolSpec = {
+  id: "seed.workspace.contacts",
+  description:
+    "The signed-in reader's contacts, read from their own agent (the Home's person.contact.list) over the ask-as-me wire — who their Today feed follows. No args.",
+  inputSchema: { type: "object", properties: {} },
+  answers: ["who are my friends here", "my contacts"],
   establishes: "lookup",
 };
 
@@ -120,6 +132,7 @@ export const TOOLS: ToolSpec[] = [
   BUCKET_MERGE,
   PUBLISH_SLICE,
   DISCOVER,
+  CONTACTS,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -207,7 +220,45 @@ export function invokers(
         });
       return publishSlice(deps.env, reader, args as unknown as PublishArgs);
     },
+    [CONTACTS.id]: async () => {
+      const reader = readerOf(asker);
+      const agent = await agentFor(deps.env, reader);
+      const out = await agent.run<{
+        contacts?: Array<{
+          contact: string;
+          name: string | null;
+          role?: string;
+          status?: string;
+          mutual?: boolean;
+          since?: string;
+        }>;
+        refused?: string;
+      }>([{ toolId: "person.contact.list", args: {} }], "who are my contacts");
+      const contacts = out.result.contacts ?? [];
+      return {
+        contacts,
+        count: contacts.length,
+        runRef: out.runRef,
+        text: contacts.length
+          ? `${contacts.length} contact(s): ${contacts.map((c) => c.name ?? c.contact).join(", ")}`
+          : "No contacts yet — add people at your Home.",
+      };
+    },
     [DISCOVER.id]: async (_t, args) => {
+      if (Array.isArray(args.owners) && args.owners.length) {
+        const owners = (args.owners as unknown[]).map(String).join(",");
+        const out = await platformGet<{
+          ok: boolean;
+          count: number;
+          offerings: Array<{ title: string; kind: string; shelf: string }>;
+        }>(deps.env, `/registry/recent?owners=${encodeURIComponent(owners)}`);
+        return {
+          ...out,
+          text: out.count
+            ? `${out.count} recent release(s): ${out.offerings.map((o) => `${o.title} (${o.kind}, ${o.shelf})`).join("; ")}`
+            : "Nothing released by them yet.",
+        };
+      }
       const passage = String(args.passage ?? "");
       const kind =
         typeof args.kind === "string"

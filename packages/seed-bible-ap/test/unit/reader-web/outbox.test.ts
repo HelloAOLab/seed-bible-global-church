@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { createDevBackend } from "../../../apps/reader-web/src/backend/dev";
 import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
 import { createOutbox } from "../../../apps/reader-web/src/backend/offline/outbox";
-import { createBucketStore } from "../../../apps/reader-web/src/state/records/buckets";
+import {
+  adoptBucket,
+  createBucketStore,
+} from "../../../apps/reader-web/src/state/records/buckets";
 import { createHighlights } from "../../../apps/reader-web/src/state/records/highlights";
 import { createBookmarks } from "../../../apps/reader-web/src/state/records/bookmarks";
 
@@ -125,5 +128,72 @@ describe("the offline outbox", () => {
     await d.buckets.put("highlights", "JHN.3", item);
     const twice = await d.stores.outbox.get("highlights:JHN.3");
     expect(twice).toEqual(once);
+  });
+});
+
+describe("adoption of anonymous marks", () => {
+  it("adopts marks kept from an earlier session (buckets not open now) at sign-in", async () => {
+    const backend = createDevBackend(null);
+    const online = { value: true };
+    const stores = memoryStores();
+    // An earlier session left a stranger's highlight on the device, with its outbox entry.
+    const d1 = device(backend, online);
+    const d1b = { ...d1, stores };
+    void d1b;
+    const first = device(backend, online);
+    await first.highlights.set("JHN.3", 16, 16, "yellow");
+    await tick();
+    // A new session on the same device: nothing opened yet, then the reader signs in.
+    const second = createBucketStore({
+      backend,
+      stores: first.stores,
+      outbox: first.outbox,
+      isOnline: () => true,
+    });
+    backend.setIdentity(READER);
+    await second.resync();
+    const lib = backend.buckets
+      .get("highlights:JHN.3")!
+      ["@graph"].filter((it) => !it.deleted);
+    expect(lib.map((it) => it.heldBy)).toEqual([READER.agent]);
+    expect(first.outbox.pending.value).toBe(0);
+  });
+
+  it("repairs and retries a bucket the workspace refuses for an anonymous item", async () => {
+    const backend = createDevBackend(READER);
+    const stores = memoryStores();
+    const outbox = createOutbox({
+      backend,
+      stores,
+      isOnline: () => true,
+      settleMs: 1,
+      repair: (_c, _ch, b) =>
+        adoptBucket(b, READER.agent, () => `fix-${Math.random()}`),
+    });
+    const buckets = createBucketStore({
+      backend,
+      stores,
+      outbox,
+      isOnline: () => true,
+    });
+    await buckets.get("highlights", "JHN.3").ready;
+    await buckets.put("highlights", "JHN.3", {
+      "@id": "urn:seed:highlight:JHN.3.1",
+      "@type": "seed:Highlight",
+      heldBy: "0x0000000000000000000000000000000000000000",
+      aboutPassage: "JHN.3.1",
+      highlightColor: "seed:highlightcolor-blue",
+      opId: "op-anon",
+    });
+    const r = await outbox.flush();
+    expect(r.error).toBeUndefined();
+    expect(r.merged).toEqual(["highlights:JHN.3"]);
+    const lib = backend.buckets.get("highlights:JHN.3")!["@graph"];
+    expect(lib.map((it) => it.heldBy)).toEqual([READER.agent]);
+    expect(
+      backend.calls
+        .filter((c) => c.op === "merge")
+        .map((c) => c.opId?.endsWith("-repaired"))
+    ).toEqual([false, true]);
   });
 });

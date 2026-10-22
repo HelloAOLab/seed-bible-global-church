@@ -11,6 +11,8 @@ import {
   listShelves,
   putShelf,
   queryByPassage,
+  queryRecent,
+  type OfferingRow,
   removeShelf,
   snapshot,
   wipe,
@@ -143,6 +145,21 @@ app.all(
 );
 
 /** The registry, by passage: `?passage=JHN.3` (a verse narrows to its chapter), `&kind=note`. Public: it lists what owners released. */
+const rowView = (r: OfferingRow) => ({
+  owner: r.owner,
+  shelf: r.shelf,
+  entryId: r.entry_id,
+  version: r.version,
+  releaseId: r.release_id,
+  passage: r.passage_ref,
+  kind: r.kind,
+  title: r.title,
+  descriptorId: r.descriptor_id,
+  descriptor: JSON.parse(r.descriptor_json) as unknown,
+  markdownPath: r.markdown_path,
+  indexedAt: r.indexed_at,
+});
+
 app.get("/registry/offerings", async (c) => {
   const passage = c.req.query("passage") ?? "";
   if (!isOsisRef(passage))
@@ -157,21 +174,20 @@ app.get("/registry/offerings", async (c) => {
     ok: true,
     passage: chapterOf(passage),
     count: rows.length,
-    offerings: rows.map((r) => ({
-      owner: r.owner,
-      shelf: r.shelf,
-      entryId: r.entry_id,
-      version: r.version,
-      releaseId: r.release_id,
-      passage: r.passage_ref,
-      kind: r.kind,
-      title: r.title,
-      descriptorId: r.descriptor_id,
-      descriptor: JSON.parse(r.descriptor_json) as unknown,
-      markdownPath: r.markdown_path,
-      indexedAt: r.indexed_at,
-    })),
+    offerings: rows.map(rowView),
   });
+});
+app.get("/registry/recent", async (c) => {
+  const owners = (c.req.query("owners") ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const rows = await queryRecent(
+    c.env.DB,
+    owners,
+    Number(c.req.query("max") ?? 50)
+  );
+  return c.json({ ok: true, count: rows.length, offerings: rows.map(rowView) });
 });
 app.get("/registry/shelves", async (c) =>
   c.json({ ok: true, shelves: await shelvesOf(c.env) })

@@ -31,3 +31,7 @@ export const newOpId = () =>
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 export const nowIso = () => new Date().toISOString();
+
+/** The bare lowercase address of an agent id (`eip155:34348:0xAb…` → `0xab…`), so marks compare by one form. */
+export const agentAddress = (agent: string) =>
+  agent.replace(/^eip155:\d+:/i, "").toLowerCase();

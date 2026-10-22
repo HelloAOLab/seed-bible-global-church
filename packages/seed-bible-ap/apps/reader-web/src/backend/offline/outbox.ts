@@ -28,6 +28,12 @@ export interface OutboxDeps {
   now?: () => string;
   /** How long to coalesce further local changes before the flush runs (ms). */
   settleMs?: number;
+  /** Given a bucket the workspace refused for an item not held by the reader, the bucket set right — or null. */
+  repair?: (
+    collection: Collection,
+    chapter: string | undefined,
+    bucket: BucketDocument
+  ) => BucketDocument | null;
 }
 
 export const storeKey = (collection: Collection, chapter?: string) =>
@@ -97,12 +103,28 @@ export function createOutbox(deps: OutboxDeps) {
         continue;
       }
       try {
-        const merged = await deps.backend.mergeBucket(
-          entry.collection,
-          entry.chapter,
-          local,
-          entry.batchId
-        );
+        let merged: BucketDocument;
+        try {
+          merged = await deps.backend.mergeBucket(
+            entry.collection,
+            entry.chapter,
+            local,
+            entry.batchId
+          );
+        } catch (e) {
+          const fixed =
+            e instanceof BackendError && /not held by/i.test(e.message)
+              ? deps.repair?.(entry.collection, entry.chapter, local)
+              : null;
+          if (!fixed) throw e;
+          await deps.stores.buckets.set(k, fixed);
+          merged = await deps.backend.mergeBucket(
+            entry.collection,
+            entry.chapter,
+            fixed,
+            `${entry.batchId}-repaired`
+          );
+        }
         await deps.stores.buckets.set(k, merged);
         // Changes queued while this run was in flight start a new batch; only this one is done.
         const again = await deps.stores.outbox.get(k);
