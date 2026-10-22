@@ -102,3 +102,52 @@ describe("a change to another bucket during a send", () => {
     await until(() => live.done >= 2);
   });
 });
+
+describe("what the reader did goes before reading history", () => {
+  it("sends a highlight before the history waiting beside it", async () => {
+    const { backend } = slow(60);
+    const order: string[] = [];
+    const merge = backend.mergeBucket.bind(backend);
+    backend.mergeBucket = async (collection, ...rest) => {
+      order.push(`start:${collection}`);
+      const out = await merge(collection, ...rest);
+      order.push(`done:${collection}`);
+      return out;
+    };
+    const stores = memoryStores();
+    const outbox = createOutbox({
+      backend,
+      stores,
+      isOnline: () => false,
+      settleMs: 1,
+    });
+    const buckets = createBucketStore({
+      backend,
+      stores,
+      outbox,
+      isOnline: () => false,
+    });
+    const highlights = createHighlights(buckets, () => backend.identity());
+    await buckets.put("history", "JHN.3", {
+      "@id": "urn:seed:read:1",
+      "@type": "seed:ReadingEvent",
+      heldBy: READER.agent,
+      aboutPassage: "JHN.3",
+      opId: "h1",
+      createdAt: "2026-10-22T00:00:00Z",
+      updatedAt: "2026-10-22T00:00:00Z",
+    } as never);
+    await highlights.set("JHN.3", 16, 16, "yellow");
+    await outbox.flush().catch(() => undefined);
+    const online = createOutbox({
+      backend,
+      stores,
+      isOnline: () => true,
+      settleMs: 1,
+    });
+    await online.flush();
+    expect(order.indexOf("done:highlights")).toBeLessThan(
+      order.indexOf("start:history")
+    );
+  });
+});

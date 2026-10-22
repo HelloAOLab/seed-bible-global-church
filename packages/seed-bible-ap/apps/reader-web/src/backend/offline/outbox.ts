@@ -127,67 +127,73 @@ export function createOutbox(deps: OutboxDeps) {
     // Buckets go up side by side (a few at a time): each is one merge at the reader's agent, seconds long, and one
     // bucket never waits for another's. A failure other than a refusal stops new sends (the network or the session).
     let stopped = false;
-    await eachLimited(
-      await deps.stores.outbox.keys(),
-      FLUSH_CONCURRENCY,
-      async (k) => {
-        // A bucket another pass is sending now is that pass's (its change queued meanwhile gets the pass after it).
-        if (stopped || sending.has(k)) return;
-        const entry = await deps.stores.outbox.get(k);
-        const local = await deps.stores.buckets.get(k);
-        if (!entry) return;
-        if (!local) {
-          await deps.stores.outbox.delete(k);
-          report.skipped.push(k);
-          return;
-        }
-        sending.add(k);
-        try {
-          let merged: BucketDocument;
-          try {
-            merged = await deps.backend.mergeBucket(
-              entry.collection,
-              entry.chapter,
-              local,
-              entry.batchId
-            );
-          } catch (e) {
-            const fixed =
-              e instanceof BackendError && /not held by/i.test(e.message)
-                ? deps.repair?.(entry.collection, entry.chapter, local)
-                : null;
-            if (!fixed) throw e;
-            await deps.stores.buckets.set(k, fixed);
-            merged = await deps.backend.mergeBucket(
-              entry.collection,
-              entry.chapter,
-              fixed,
-              `${entry.batchId}-repaired`
-            );
-          }
-          // Changes made on the device while this run was in flight are not in `merged`: fold them back on top,
-          // or the merged copy would overwrite them (they stay queued and go up with the next batch).
-          const latest = await deps.stores.buckets.get(k);
-          if (latest) merged = foldUnsent(merged, latest);
-          await deps.stores.buckets.set(k, merged);
-          // Changes queued while this run was in flight start a new batch; only this one is done.
-          const again = await deps.stores.outbox.get(k);
-          if (again && again.batchId === entry.batchId)
-            await deps.stores.outbox.delete(k);
-          deps.onMerged?.(entry.collection, entry.chapter, merged);
-          report.merged.push(k);
-          lastError.value = null;
-          lastErrorCode.value = null;
-        } catch (e) {
-          report.error = e instanceof Error ? e.message : String(e);
-          lastError.value = report.error;
-          lastErrorCode.value = e instanceof BackendError ? e.code : "error";
-          if (e instanceof BackendError && e.code !== "refused") stopped = true;
-        } finally {
-          sending.delete(k);
-        }
+    // WHAT THE READER DID GOES FIRST. A highlight, a note or a bookmark is what they wait to see kept; reading history
+    // is bookkeeping, and its save sharing the moment with theirs made the two wait on one another at the Library.
+    const keys = await deps.stores.outbox.keys();
+    const isHistory = (k: string) => k.startsWith("history:");
+    const send = async (k: string) => {
+      // A bucket another pass is sending now is that pass's (its change queued meanwhile gets the pass after it).
+      if (stopped || sending.has(k)) return;
+      const entry = await deps.stores.outbox.get(k);
+      const local = await deps.stores.buckets.get(k);
+      if (!entry) return;
+      if (!local) {
+        await deps.stores.outbox.delete(k);
+        report.skipped.push(k);
+        return;
       }
+      sending.add(k);
+      try {
+        let merged: BucketDocument;
+        try {
+          merged = await deps.backend.mergeBucket(
+            entry.collection,
+            entry.chapter,
+            local,
+            entry.batchId
+          );
+        } catch (e) {
+          const fixed =
+            e instanceof BackendError && /not held by/i.test(e.message)
+              ? deps.repair?.(entry.collection, entry.chapter, local)
+              : null;
+          if (!fixed) throw e;
+          await deps.stores.buckets.set(k, fixed);
+          merged = await deps.backend.mergeBucket(
+            entry.collection,
+            entry.chapter,
+            fixed,
+            `${entry.batchId}-repaired`
+          );
+        }
+        // Changes made on the device while this run was in flight are not in `merged`: fold them back on top,
+        // or the merged copy would overwrite them (they stay queued and go up with the next batch).
+        const latest = await deps.stores.buckets.get(k);
+        if (latest) merged = foldUnsent(merged, latest);
+        await deps.stores.buckets.set(k, merged);
+        // Changes queued while this run was in flight start a new batch; only this one is done.
+        const again = await deps.stores.outbox.get(k);
+        if (again && again.batchId === entry.batchId)
+          await deps.stores.outbox.delete(k);
+        deps.onMerged?.(entry.collection, entry.chapter, merged);
+        report.merged.push(k);
+        lastError.value = null;
+        lastErrorCode.value = null;
+      } catch (e) {
+        report.error = e instanceof Error ? e.message : String(e);
+        lastError.value = report.error;
+        lastErrorCode.value = e instanceof BackendError ? e.code : "error";
+        if (e instanceof BackendError && e.code !== "refused") stopped = true;
+      } finally {
+        sending.delete(k);
+      }
+    };
+    await eachLimited(
+      keys.filter((k) => !isHistory(k)),
+      FLUSH_CONCURRENCY,
+      send
     );
+    await eachLimited(keys.filter(isHistory), FLUSH_CONCURRENCY, send);
     await count();
     return report;
   }
