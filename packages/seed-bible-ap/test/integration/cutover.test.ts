@@ -137,7 +137,7 @@ describe("the cutover surface", () => {
     };
     vi.stubGlobal("location", {
       pathname: "/read/BSB/JHN/3",
-      search: "?embed=minimal&theme=dark&v=16-17",
+      search: "?embed=minimal&theme=dark&v=16-17&offering=urn:seed:offering:x",
     });
     vi.stubGlobal("history", { replaceState: () => {}, pushState: () => {} });
     const state = createReaderState({
@@ -156,6 +156,9 @@ describe("the cutover surface", () => {
     while (!state.selection.verses.value.length && Date.now() - t0 < 2000)
       await new Promise((r) => setTimeout(r, 5));
     expect(state.selection.verses.value).toEqual([16, 17]);
+    // The published note the link named is what Discover opens on.
+    expect(state.discover.focus.value).toBe("urn:seed:offering:x");
+    expect(state.ui.pane.value).toBe("discover");
     stop();
   });
 });

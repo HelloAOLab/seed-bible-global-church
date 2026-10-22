@@ -76,6 +76,16 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
   const ref = `${state.reading.bookName.value} ${state.reading.chapterNumber.value}:${note.start === note.end ? note.start : `${note.start}–${note.end}`}`;
   const published = state.publishing.isPublished(note.id);
   const publishing = state.publishing.busy.value === note.id;
+  const [copied, setCopied] = useState(false);
+  /** A link that opens this chapter with the verses selected and the published note shown in Discover. */
+  const shareLink = () => {
+    const rec = state.publishing.recordOf(note.id);
+    const r = state.reading;
+    const base = `${location.origin}/read/${encodeURIComponent(r.translationId.value)}/${encodeURIComponent(r.bookId.value)}/${r.chapterNumber.value}`;
+    const v =
+      note.start === note.end ? `${note.start}` : `${note.start}-${note.end}`;
+    return `${base}?v=${v}${rec ? `&offering=${encodeURIComponent(rec.descriptorId)}` : ""}`;
+  };
   const canPublish = !!state.session.value && state.session.value.wire;
   const hasConflictCopy = state.annotations
     .forChapter(chapterRef)
@@ -167,6 +177,27 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
                   : published
                     ? t("published", { defaultValue: "Published" })
                     : t("publish", { defaultValue: "Publish" })}
+              </button>
+            )}
+            {published && (
+              <button
+                className="sb-note-button"
+                title={t("note-link-hint", {
+                  defaultValue:
+                    "A link that opens these verses with your published note",
+                })}
+                onClick={() => {
+                  void navigator.clipboard?.writeText(shareLink());
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1800);
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  {copied ? "check" : "link"}
+                </span>{" "}
+                {copied
+                  ? t("link-copied", { defaultValue: "Copied" })
+                  : t("copy-link", { defaultValue: "Copy link" })}
               </button>
             )}
             <button

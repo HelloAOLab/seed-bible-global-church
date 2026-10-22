@@ -127,7 +127,7 @@ describe("chapter audio", () => {
     await audio.setReader("hays");
     expect(audio.reader.value).toBe("hays");
     expect(el.src).toContain("3-h.mp3");
-    expect(audio.controller.verseMarks().map((m) => m.position)).toEqual([
+    expect(audio.controller.verseMarks!().map((m) => m.position)).toEqual([
       0, 5,
     ]);
     // The next chapter opens on the chosen reader when they recorded it, else on whoever did.

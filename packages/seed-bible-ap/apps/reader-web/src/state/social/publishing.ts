@@ -38,6 +38,9 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
       published.value = v as Record<string, PublishedNote>;
   });
   const save = () => stores.prefs.set(KEY, published.value);
+  /** The published slice of a note (its descriptor id names it to the registry), or null. */
+  const recordOf = (noteId: string): PublishedNote | null =>
+    published.value[noteId] ?? null;
 
   const slugOf = (note: Note) =>
     `note-${note.id.split(":").pop()!.slice(0, 12).toLowerCase()}`;
@@ -208,6 +211,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
   }
 
   return {
+    recordOf,
     published,
     busy,
     error,

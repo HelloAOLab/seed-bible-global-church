@@ -1,11 +1,10 @@
 // DISCOVER — what Seed Bible agents released for the chapter on screen, from the Seed registry through the
 // workspace: published notes, studies, offerings. Dressed by the copied `discover.css` (`sb-discover-*`).
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
 import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
-import { useEffect } from "preact/hooks";
 
 const KIND_ICON: Record<string, string> = {
   note: "sticky_note_2",
@@ -20,7 +19,14 @@ const KIND_ICON: Record<string, string> = {
 
 function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
+  const focused = state.discover.focus.value === o.descriptorId;
+  const [open, setOpen] = useState(focused);
+  useEffect(() => {
+    if (focused) {
+      setOpen(true);
+      state.discover.focus.value = null;
+    }
+  }, [focused]);
   const body = open ? state.discover.body(o).value : null;
   const mine = state.backend.identity()?.agent === o.owner;
   return (

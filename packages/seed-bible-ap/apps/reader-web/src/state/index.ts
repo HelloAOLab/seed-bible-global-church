@@ -414,7 +414,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       fromUrl && typeof location !== "undefined"
         ? versesOf(location.search)
         : null;
-    if (fromUrl && (restored || shared))
+    // A link to a published note: Discover opens on it once the chapter is listed.
+    const offering =
+      fromUrl && typeof location !== "undefined"
+        ? new URLSearchParams(location.search).get("offering")
+        : null;
+    if (offering) {
+      discover.focus.value = offering;
+      ui.pane.value = "discover";
+    }
+    if (fromUrl && (restored || shared || offering))
       void tab.reading
         .goTo(fromUrl.translationId, fromUrl.bookId, fromUrl.chapterNumber)
         .then(() => shared && selection.select(shared[0], shared[1]));

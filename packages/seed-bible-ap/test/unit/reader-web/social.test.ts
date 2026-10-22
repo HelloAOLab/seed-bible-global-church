@@ -30,6 +30,11 @@ describe("publish and discover", () => {
     const discover = createDiscover(backend);
     await publishing.publishNote("JHN.3", note, "Ruth on John 3");
     expect(publishing.isPublished(note.id)).toBe(true);
+    expect(publishing.recordOf(note.id)).toMatchObject({
+      noteId: note.id,
+      passage: "JHN.3.16-JHN.3.17",
+    });
+    expect(publishing.recordOf(note.id)?.descriptorId).toBeTruthy();
     await discover.refresh("JHN.3");
     const list = discover.forChapter("JHN.3").value!.offerings;
     expect(list).toHaveLength(1);

@@ -31,6 +31,8 @@ export function createDiscover(backend: ReaderBackend) {
   >();
   const loading = signal(false);
   const error = signal<string | null>(null);
+  /** The offering a share link named: the pane opens it as soon as it is listed. */
+  const focus = signal<string | null>(null);
   const bodies = new Map<string, ReturnType<typeof signal<string | null>>>();
 
   function forChapter(chapterRef: string) {
@@ -81,7 +83,7 @@ export function createDiscover(backend: ReaderBackend) {
     return s;
   }
 
-  return { forChapter, refresh, body, loading, error };
+  return { forChapter, refresh, body, loading, error, focus };
 }
 
 export type Discover = ReturnType<typeof createDiscover>;
