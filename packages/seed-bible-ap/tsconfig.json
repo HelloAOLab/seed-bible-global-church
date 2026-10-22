@@ -29,5 +29,6 @@
     "scripts/smoke.ts",
     "scripts/smoke/**/*.ts",
     "test/**/*.ts"
-  ]
+  ],
+  "exclude": ["test/unit/reader-web", "scripts/smoke/reader-web.ts"]
 }

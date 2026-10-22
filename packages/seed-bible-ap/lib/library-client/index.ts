@@ -189,19 +189,27 @@ export function mergeBuckets(
       report.kept.push(inc["@id"]);
       continue;
     }
+    // A note edited from the copy the Library holds (`supersedes` names its opId) is a plain update; one edited
+    // from an older copy collided with a write it never saw and is kept beside it.
     if (
       cur["@type"] === "seed:Annotation" &&
       inc["@type"] === "seed:Annotation" &&
       cur.note !== inc.note &&
       !cur.deleted &&
-      !inc.deleted
+      !inc.deleted &&
+      inc.supersedes !== cur.opId &&
+      cur.supersedes !== inc.opId
     ) {
       const keptAs = `${inc["@id"]}~conflict-${inc.opId}`;
       byId.set(keptAs, { ...inc, "@id": keptAs, conflictOf: cur["@id"] });
       report.conflicts.push({ id: inc["@id"], keptAs });
       continue;
     }
-    if (later(inc.updatedAt, cur.updatedAt)) {
+    if (cur.supersedes === inc.opId) report.kept.push(inc["@id"]);
+    else if (
+      inc.supersedes === cur.opId ||
+      later(inc.updatedAt, cur.updatedAt)
+    ) {
       byId.set(inc["@id"], inc);
       report.replaced.push(inc["@id"]);
     } else report.kept.push(inc["@id"]);

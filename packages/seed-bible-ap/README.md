@@ -126,6 +126,18 @@ nothing ([ADR-0007](docs/adr/0007-seed-registry-over-public-shelves.md)). `apps/
 `seed.workspace.discover` (the registry over the `PLATFORM` binding). Proof: `pnpm smoke:svc` (publish → indexed →
 discover → wipe+reindex equal → withdraw → gone) and `pnpm smoke:rebuild`. Live at `seed-bible-a2a.faithnet.io`.
 
+### Core reading (step 4, first cut — core-reader, 2026-10-22)
+
+reader-web is the reader now, not a hello page: the chapter column, header, selector, verse toolbar, floating
+toolbar, footnote modal and notes pane are ported from `packages/seed-bible` with its stylesheets and theme tables
+copied unchanged (docs/porting/\*.md say what each manager became). Under it: `backend/ReaderBackend.ts` (the only
+seam), `backend/a2a.ts` (reader-a2a's harness, as the signed-in reader), `backend/dev.ts` (in memory, for tests),
+`backend/offline/` (IndexedDB buckets, chapters, prefs, and the outbox — one merge run per bucket), and
+`state/records` (highlights, notes with two-device conflicts, bookmarks) over `lib/library-client`
+([ADR-0008](docs/adr/0008-device-read-model-outbox-and-supersedes.md)). Proof: `pnpm test` and
+`A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`. Not yet: tabs/panes, saves, search, audio,
+TipTap, SSR, the service worker, the highlight ribbon.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |

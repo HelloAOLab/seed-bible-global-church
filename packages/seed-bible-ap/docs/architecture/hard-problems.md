@@ -6,7 +6,7 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 1. The vault is a file shelf, not a database
 
-**Settled 2026-10-21 — [ADR-0006](../adr/0006-chapter-buckets-and-the-vault-path.md):** chapter buckets + per-collection manifests, idempotent by `opId`, read/merge/re-save through the reader's own agent; the read lane is the person's playbook (`person-steward` carries `library.file.read`), not a vault credential. The text below is the original framing.
+**Settled 2026-10-21 — [ADR-0006](../adr/0006-chapter-buckets-and-the-vault-path.md):** chapter buckets + per-collection manifests, idempotent by `opId`, read/merge/re-save through the reader's own agent; the read lane is the person's playbook (`person-steward` carries `library.file.read`), not a vault credential. **The read model landed 2026-10-22 — [ADR-0008](../adr/0008-device-read-model-outbox-and-supersedes.md):** IndexedDB buckets + outbox in `reader-web/src/backend/offline`. The text below is the original framing.
 
 **Problem.** CasualOS gave `listDataByMarker` + address prefixes: "all highlights in John 3" was one indexed query. The Library is a catalog of documents with a 12k-char text cap, no query, no changed-since, and every write is a harness act on the person's agent. A reader opening a chapter needs highlights, notes, bookmarks, saves, position for that chapter in well under a second, offline too.
 
@@ -20,6 +20,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 2. Every private write is a harness run on someone else's agent
 
+**Settled 2026-10-22 — [ADR-0008](../adr/0008-device-read-model-outbox-and-supersedes.md):** the outbox is keyed by bucket; a flush is one `seed.bucket.merge` run per touched bucket, retried under the same batch id; the UI never waits on it. Open: the SSE receipt lane (runs are awaited today), wire-expired re-consent.
+
 **Problem.** A highlight used to be one `recordData` call. Now it is: reader-a2a verifies the id_token, finds the person's ask-as-me wire, calls `a2a.faithnet.io/harness/ask` with a plan, the person's harness admits the wire, checks the grant, runs `library.file.save`, writes the subject record, returns a receipt. Latency is seconds, not milliseconds, and the runtime's progress is long-poll.
 
 **Approach.** Never block the UI on it. The outbox (problem 1) makes writes asynchronous; the UI shows "saved locally / saved to your Library" states like today's `RecordSyncManager` already does for offline. **Coalesce**: an outbox flush sends one plan per touched bucket, not one per highlight. Receipts come back on the run's SSE and update the IDB row's `syncedVersion`. Failure modes to design for explicitly: wire expired (prompt re-consent, keep outbox), grant revoked (stop, show), bucket version conflict (problem 3), runtime down (retry with backoff; the outbox is durable).
@@ -27,6 +29,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 **Open.** The runtime's per-person harness is not a high-QPS surface. A reader who highlights 40 verses in a minute must become one or two runs. Measure before committing the coalescing window. Folders: `reader-web/src/backend/a2a.ts`, `reader-a2a/src/wires`, `reader-a2a/src/skills/ask-person.ts`.
 
 ## 3. Two devices, one Library, no CRDT
+
+**Settled 2026-10-22 — [ADR-0008](../adr/0008-device-read-model-outbox-and-supersedes.md):** the merge runs inside the reader's own agent (`skill:seed/bucket-merge` 0.2.0); `seed:supersedes` on every edit tells an update from a concurrent edit, so only a true collision keeps both (`conflictOf`), and the notes pane settles it. Proven by the two-device test and `pnpm smoke:reader-web`.
 
 **Problem.** CasualOS resolved multi-device edits with Yjs for sessions and last-write-wins plus an `AnnotationConflictModal` for records. Bucket documents make the unit of conflict a whole chapter: phone adds a highlight, laptop edits a note in the same chapter while offline, both flush.
 
@@ -119,6 +123,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 **Open.** Crawl budget against many shelves; whether the public tier's indexer (spec 413) can be the discovery feed instead of crawling. Folders: `seed-bible-a2a/src/registry`, `migrations/`.
 
 ## 13. Offline-first against a store with no change feed
+
+**First cut 2026-10-22 — [ADR-0008](../adr/0008-device-read-model-outbox-and-supersedes.md):** chapters, buckets and the outbox in IndexedDB; a chapter read once reads offline; open buckets re-read on sign-in. Open: the manifest as change feed, the service worker.
 
 **Problem.** Today's app is offline-first (`RecordSyncManager`, IDB stores, offline translations). The Library has no change feed and no changed-since list.
 

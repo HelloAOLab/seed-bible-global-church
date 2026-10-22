@@ -1,0 +1,147 @@
+// THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
+// the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
+// tests and local pages run on the in-memory one.
+import { signal } from "@preact/signals";
+import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
+import type { ReaderBackend } from "../backend/ReaderBackend";
+import { createA2aBackend } from "../backend/a2a";
+import { indexedDbStores, type ReaderStores } from "../backend/offline/db";
+import { createOutbox } from "../backend/offline/outbox";
+import { createBucketStore } from "./records/buckets";
+import { createHighlights } from "./records/highlights";
+import { createAnnotations } from "./records/annotations";
+import { createBookmarks } from "./records/bookmarks";
+import { createPosition } from "./records/position";
+import { createReading, type ReadingApi } from "./reading/reading";
+import { bindRoute, parseRoute, pushRoute } from "./reading/route";
+import { createSettings } from "./chrome/settings";
+import {
+  loadSession,
+  signOut as forgetSession,
+  type ReaderSession,
+} from "../session";
+
+export interface ReaderStateOptions {
+  backend?: ReaderBackend;
+  stores?: ReaderStores;
+  api?: ReadingApi;
+  session?: ReaderSession | null;
+  isOnline?: () => boolean;
+}
+
+export function createReaderState(opts: ReaderStateOptions = {}) {
+  const session = signal<ReaderSession | null>(
+    opts.session === undefined ? loadSession() : opts.session
+  );
+  const backend = opts.backend ?? createA2aBackend(() => session.value);
+  const stores = opts.stores ?? indexedDbStores();
+  const api = opts.api ?? new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+
+  const outbox = createOutbox({
+    backend,
+    stores,
+    ...(opts.isOnline ? { isOnline: opts.isOnline } : {}),
+    onMerged: (c, ch, b) => buckets.accept(c, ch, b),
+  });
+  const buckets = createBucketStore({
+    backend,
+    stores,
+    outbox,
+    ...(opts.isOnline ? { isOnline: opts.isOnline } : {}),
+  });
+  const identity = () => backend.identity();
+  const highlights = createHighlights(buckets, identity);
+  const annotations = createAnnotations(buckets, identity);
+  const bookmarks = createBookmarks(buckets, identity);
+  const position = createPosition(stores);
+  const settings = createSettings();
+
+  const reading = createReading({
+    api,
+    chapters: stores.chapters,
+    onChange: (p) => {
+      void position.save(p);
+      pushRoute(p);
+    },
+  });
+
+  const verses = signal<number[]>([]);
+  const selection = {
+    verses,
+    toggle(verse: number, extend = false) {
+      const cur = verses.value;
+      if (extend && cur.length) {
+        const lo = Math.min(...cur, verse);
+        const hi = Math.max(...cur, verse);
+        verses.value = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+      } else if (cur.length === 1 && cur[0] === verse) verses.value = [];
+      else if (
+        cur.length &&
+        (verse === Math.max(...cur) + 1 || verse === Math.min(...cur) - 1)
+      )
+        verses.value = [...cur, verse].sort((a, b) => a - b);
+      else verses.value = [verse];
+    },
+    select(start: number, end: number) {
+      verses.value = Array.from(
+        { length: end - start + 1 },
+        (_, i) => start + i
+      );
+    },
+    clear() {
+      if (verses.value.length) verses.value = [];
+    },
+  };
+
+  const ui = {
+    pane: signal<"none" | "notes" | "account">("none"),
+    selector: signal<"books" | "translations" | null>(null),
+    noteDraft: signal<{ start: number; end: number } | null>(null),
+    focusNoteVerse: signal<number | null>(null),
+  };
+
+  async function signIn(s: ReaderSession) {
+    session.value = s;
+    await buckets.resync();
+  }
+  async function signOut() {
+    forgetSession();
+    session.value = null;
+    buckets.reset();
+  }
+
+  /** Open the chapter the URL names, else where the reader left off, else John 1; wire history and the outbox. */
+  async function start(): Promise<() => void> {
+    const stops = [bindRoute(reading), outbox.start()];
+    const fromUrl =
+      typeof location !== "undefined" ? parseRoute(location.pathname) : null;
+    const target = fromUrl ?? (await position.load());
+    await reading.goTo(
+      target?.translationId ?? reading.translationId.value,
+      target?.bookId ?? reading.bookId.value,
+      target?.chapterNumber ?? reading.chapterNumber.value
+    );
+    return () => stops.forEach((s) => s());
+  }
+
+  return {
+    session,
+    backend,
+    stores,
+    outbox,
+    buckets,
+    highlights,
+    annotations,
+    bookmarks,
+    position,
+    settings,
+    reading,
+    selection,
+    ui,
+    signIn,
+    signOut,
+    start,
+  };
+}
+
+export type ReaderState = ReturnType<typeof createReaderState>;

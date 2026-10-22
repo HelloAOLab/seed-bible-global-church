@@ -1,8 +1,13 @@
 // The reader agent, reached through this page's `/a2a` proxy (dev) or the deployed agent origin (VITE_A2A_BASE).
 // Browser code never reaches reader-mcp directly (ADR-0044): the agent does.
 
+const viteEnv = (
+  import.meta as unknown as { env?: Record<string, string | undefined> }
+).env;
 export const A2A_BASE = (
-  (import.meta.env["VITE_A2A_BASE"] as string | undefined) ?? "/a2a"
+  viteEnv?.["VITE_A2A_BASE"] ??
+  (typeof process !== "undefined" ? process.env["A2A_BASE"] : undefined) ??
+  "/a2a"
 ).replace(/\/$/, "");
 
 export interface HelloResult {

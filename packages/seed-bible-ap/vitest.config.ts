@@ -8,6 +8,7 @@ export default defineConfig({
     // The same `@seed/*` → `lib/*` mapping as tsconfig `paths` and the Vite alias in apps/reader-web.
     alias: { "@seed": `${here}lib` },
   },
+  esbuild: { jsx: "automatic", jsxImportSource: "preact" },
   test: {
     include: ["test/**/*.test.{ts,tsx}"],
     environment: "node",

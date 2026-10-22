@@ -291,6 +291,8 @@ export async function mergeBucket(
       opId,
       changed: false,
       report,
+      // The device takes the merged bucket as its truth either way, so it is on the receipt even when unchanged.
+      bucket,
       file: current.file ?? null,
       runRefs: current.runRef ? [current.runRef] : [],
     };
@@ -308,6 +310,7 @@ export async function mergeBucket(
     opId,
     changed: true,
     report,
+    bucket,
     file: saved.file,
     runRefs: [...(current.runRef ? [current.runRef] : []), ...saved.runRefs],
   };

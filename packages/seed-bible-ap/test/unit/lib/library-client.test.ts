@@ -13,6 +13,7 @@ import {
   serialize,
 } from "@seed/library-client";
 import type { Annotation, Highlight } from "@seed/seed-schema";
+import { SEED_CONTEXT } from "@seed/seed-schema";
 
 const READER = "0xdbb41f779194d605e636f9bab64b105fd025b3db";
 const hl = (over: Partial<Highlight> = {}): Highlight => ({
@@ -223,5 +224,58 @@ describe("manifest", () => {
       updatedAt: "2026-10-21T21:05:00Z",
     });
     expect(m.updatedAt).toBe("2026-10-21T21:05:00Z");
+  });
+});
+
+describe("mergeBuckets with supersedes", () => {
+  const base = (note: string, opId: string, supersedes?: string) => ({
+    "@id": "an-1",
+    "@type": "seed:Annotation" as const,
+    heldBy: "0x" + "ab".repeat(20),
+    aboutPassage: "JHN.3.16",
+    note,
+    opId,
+    updatedAt: "2026-10-21T00:00:00Z",
+    ...(supersedes ? { supersedes } : {}),
+  });
+  const doc = (item: ReturnType<typeof base>) => ({
+    "@context": SEED_CONTEXT,
+    chapterRef: "JHN.3",
+    collection: "annotations" as const,
+    "@graph": [item],
+  });
+
+  it("takes a note edited from the copy the Library holds as a plain update", () => {
+    const { bucket, report } = mergeBuckets(
+      doc(base("first", "op-1")),
+      doc(base("first, longer", "op-2", "op-1"))
+    );
+    expect(report.conflicts).toEqual([]);
+    expect(report.replaced).toEqual(["an-1"]);
+    expect(bucket["@graph"]).toHaveLength(1);
+    expect((bucket["@graph"][0] as { note: string }).note).toBe(
+      "first, longer"
+    );
+  });
+
+  it("keeps the Library's newer copy when the incoming edit is what it superseded", () => {
+    const { bucket, report } = mergeBuckets(
+      doc(base("first, longer", "op-2", "op-1")),
+      doc(base("first", "op-1"))
+    );
+    expect(report.conflicts).toEqual([]);
+    expect(report.kept).toEqual(["an-1"]);
+    expect((bucket["@graph"][0] as { note: string }).note).toBe(
+      "first, longer"
+    );
+  });
+
+  it("still keeps both when each side edited from the same older copy", () => {
+    const { bucket, report } = mergeBuckets(
+      doc(base("mine", "op-2", "op-1")),
+      doc(base("yours", "op-3", "op-1"))
+    );
+    expect(report.conflicts).toHaveLength(1);
+    expect(bucket["@graph"]).toHaveLength(2);
   });
 });

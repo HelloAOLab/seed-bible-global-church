@@ -1,10 +1,10 @@
 {
-  "pinnedAt": "2026-10-22T00:32:02.897Z",
+  "pinnedAt": "2026-10-22T01:38:37.171Z",
   "registry": "https://skills-a2a-production.richardpedersen3.workers.dev",
   "domain": "seed",
   "archetypes": {
     "seed-reader": {
-      "digest": "0xb1ed02b8f9b402445a432d745422c62dcb3225bf8c296e8634811b650d8de94b",
+      "digest": "0x62111ac9bc9037e92a61b66f0fc32d8a917ee707e90d7080d2bebfd9eec02ff9",
       "tools": 7,
       "warnings": 4
     },
@@ -35,10 +35,10 @@
       "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
     },
     "skill:seed/bucket-merge": {
-      "version": "0.1.0",
-      "contractDigest": "0xf9d2060b7e038694f3ff5595fcc69ef4685fc408c2912ab1779647e3036bf0e6",
+      "version": "0.2.0",
+      "contractDigest": "0x49449643cb9626959ca31daef0156f2d45d3d1327782efde8e84f429d38f4170",
       "capability": "seed.bucket.merge",
-      "publishedVersion": 1,
+      "publishedVersion": 2,
       "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
     },
     "skill:seed/hello": {

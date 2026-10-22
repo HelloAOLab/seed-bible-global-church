@@ -1,0 +1,120 @@
+// THE LIVE BACKEND — one harness run on reader-a2a per call, as the signed-in reader (the id_token is the
+// session; the workspace plans the pinned `skill:seed/*` skill and the reader's own agent does the Library work).
+// reader-a2a never writes a person's record itself; a stranger is refused in words (BackendError "signed-out").
+import type { BucketDocument, Collection } from "@seed/library-client";
+import type { BucketItem } from "@seed/seed-schema";
+import { A2A_BASE } from "../api";
+import type { ReaderSession } from "../session";
+import {
+  BackendError,
+  type ReaderBackend,
+  type ReaderIdentity,
+} from "./ReaderBackend";
+
+interface HarnessReply {
+  ok: boolean;
+  runRef?: string;
+  reply?: {
+    kind: string;
+    text?: string;
+    error?: string;
+    results?: Array<{ toolId: string; result: unknown }>;
+  };
+  error?: string;
+}
+
+export function createA2aBackend(
+  getSession: () => ReaderSession | null,
+  fetchImpl: typeof fetch = (...a) => fetch(...a)
+): ReaderBackend {
+  const ask = async (
+    toolId: string,
+    args: Record<string, unknown>,
+    message: string
+  ): Promise<Record<string, unknown>> => {
+    const s = getSession();
+    if (!s) throw new BackendError("sign in to keep your marks", "signed-out");
+    let res: Response;
+    try {
+      res = await fetchImpl(`${A2A_BASE}/harness/ask`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          session: s.token,
+          message,
+          plan: { steps: [{ id: "s1", toolId, args }] },
+        }),
+      });
+    } catch {
+      throw new BackendError(
+        "the reader workspace could not be reached",
+        "offline"
+      );
+    }
+    const out = (await res.json().catch(() => null)) as HarnessReply | null;
+    if (res.status === 401)
+      throw new BackendError(
+        out?.error ?? "your session is no longer valid",
+        "signed-out"
+      );
+    if (!out)
+      throw new BackendError(
+        `the reader workspace answered HTTP ${res.status}`,
+        "unavailable"
+      );
+    if (!out.ok || !out.reply)
+      throw new BackendError(
+        out.error ?? "the reader workspace did not answer",
+        "unavailable"
+      );
+    if (out.reply.kind !== "answer")
+      throw new BackendError(
+        out.reply.error ??
+          out.reply.text ??
+          `the workspace replied ${out.reply.kind}`,
+        "refused"
+      );
+    const first = out.reply.results?.[0]?.result;
+    if (!first || typeof first !== "object")
+      throw new BackendError(
+        "the workspace answered without a result",
+        "unavailable"
+      );
+    return first as Record<string, unknown>;
+  };
+
+  return {
+    kind: "a2a",
+    identity(): ReaderIdentity | null {
+      const s = getSession();
+      return s ? { agent: s.sub, name: s.name, wire: s.wire } : null;
+    },
+    async readBucket(collection, chapter) {
+      const r = await ask(
+        "seed.bucket.read",
+        { collection, ...(chapter ? { chapter } : {}) },
+        `read my ${collection}${chapter ? ` for ${chapter}` : ""}`
+      );
+      return r.bucket as BucketDocument;
+    },
+    async putMark(collection, item: BucketItem) {
+      const r = await ask(
+        `seed.${collection.slice(0, -1)}.put`,
+        { item },
+        `keep my ${collection.slice(0, -1)} on ${item.aboutPassage}`
+      );
+      return { changed: r.changed === true };
+    },
+    async mergeBucket(collection, chapter, incoming, opId) {
+      const r = await ask(
+        "seed.bucket.merge",
+        { collection, ...(chapter ? { chapter } : {}), incoming, opId },
+        `merge my ${collection}${chapter ? ` for ${chapter}` : ""} from this device`
+      );
+      // A workspace from before the receipt carried the bucket: read it back.
+      return r.bucket && typeof r.bucket === "object"
+        ? (r.bucket as BucketDocument)
+        : this.readBucket(collection, chapter);
+    },
+  };
+}

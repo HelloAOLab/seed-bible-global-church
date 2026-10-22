@@ -28,6 +28,7 @@ export const SEED_CONTEXT = {
   visibility: { "@id": "seed:visibility", "@type": "@id" },
   replyTo: { "@id": "seed:replyTo", "@type": "@id" },
   conflictOf: { "@id": "seed:conflictOf", "@type": "@id" },
+  supersedes: "seed:supersedes",
   createdAt: { "@id": "seed:createdAt", "@type": "xsd:dateTime" },
   updatedAt: { "@id": "seed:updatedAt", "@type": "xsd:dateTime" },
   startedAt: { "@id": "seed:startedAt", "@type": "xsd:dateTime" },
@@ -84,6 +85,8 @@ const mark = {
   updatedAt: iso.optional(),
   /** A tombstone keeps its id and opId so a later merge can see the deletion (bucket-merge). */
   deleted: z.boolean().optional(),
+  /** The opId this write was edited from — a merge that finds the current opId here sees a plain update. */
+  supersedes: z.string().min(1).optional(),
 };
 
 export const Highlight = z.object({
