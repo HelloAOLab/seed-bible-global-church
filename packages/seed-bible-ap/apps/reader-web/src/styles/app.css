@@ -1085,3 +1085,128 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   font-size: 1rem;
   vertical-align: text-bottom;
 }
+
+/* Who is connected: the chip (sidebar footer, toolbar), the avatar, the tidied sign-in and signed-in cards */
+.sb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
+  color: var(--sb-primary-color);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.sb-avatar-s {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sb-avatar-m {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.1rem;
+}
+.sb-sidebar-footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--sb-divider-color, #00000014);
+}
+.sb-connected-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  position: relative;
+}
+.sb-connected-chip:hover,
+.sb-connected-chip-active {
+  background: color-mix(in srgb, var(--sb-font-color) 7%, transparent);
+}
+.sb-connected-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+.sb-connected-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-connected-sub {
+  font-size: 0.7rem;
+  opacity: 0.65;
+}
+.sb-connected-chip-out .material-symbols-outlined {
+  font-size: 1.2rem;
+  color: var(--sb-primary-color);
+}
+.sb-connected-dot {
+  position: absolute;
+  top: 0.35rem;
+  left: 1.5rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+.sb-tabs-sidebar-collapsed .sb-connected-chip {
+  justify-content: center;
+  padding: 0.35rem 0;
+}
+.sb-account-who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.sb-account-who-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sb-account-sub {
+  font-size: 0.75rem;
+}
+.sb-signin-title {
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+.sb-signin-button {
+  width: 100%;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+.sb-signin-estate {
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-signin-card details {
+  margin-top: 0.5rem;
+}
+.sb-signin-card summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+.sb-people li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.sb-reader-toolbar-button .sb-avatar {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.7rem;
+}

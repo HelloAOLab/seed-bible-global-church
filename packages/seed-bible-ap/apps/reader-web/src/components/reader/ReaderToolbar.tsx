@@ -5,6 +5,8 @@ import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
+import { Avatar } from "../chrome/ConnectedChip";
+import type { ComponentChildren } from "preact";
 
 interface ToolbarAction {
   id: string;
@@ -23,6 +25,8 @@ function Item(props: {
   active?: boolean;
   className?: string;
   badge?: number;
+  /** Drawn instead of the icon (the signed-in reader's avatar). */
+  render?: () => ComponentChildren;
 }) {
   return (
     <div
@@ -37,7 +41,11 @@ function Item(props: {
         disabled={props.disabled}
         onClick={props.onClick}
       >
-        <span className="material-symbols-outlined">{props.icon}</span>
+        {props.render ? (
+          props.render()
+        ) : (
+          <span className="material-symbols-outlined">{props.icon}</span>
+        )}
         {props.badge ? (
           <span className="sb-reader-toolbar-unread-indicator">
             {props.badge}
@@ -282,9 +290,16 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             ? "cloud_upload"
             : state.session.value
               ? "account_circle"
-              : "person"
+              : "login"
         }
-        label={t("account-settings", { defaultValue: "Account settings" })}
+        {...(state.session.value && !pending
+          ? { render: () => <Avatar state={state} /> }
+          : {})}
+        label={
+          state.session.value
+            ? t("account-settings", { defaultValue: "Account settings" })
+            : t("sign-in", { defaultValue: "Sign in" })
+        }
         active={ui.pane.value === "account"}
         badge={pending}
         onClick={() => togglePane("account")}

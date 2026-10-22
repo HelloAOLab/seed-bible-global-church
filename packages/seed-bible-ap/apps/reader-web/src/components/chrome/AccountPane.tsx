@@ -1,3 +1,4 @@
+import { Avatar } from "./ConnectedChip";
 import type { Connector, Org } from "../../backend/ReaderBackend";
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
 // plus where the reader's marks stand: on this device only, or in their Library through their own agent.
@@ -304,11 +305,18 @@ export function AccountPane({ state }: { state: ReaderState }) {
 
       {s ? (
         <div className="sb-account-card">
-          <p>
-            <strong>{s.name || s.sub}</strong>
-            <br />
-            <span className="sb-muted sb-small">{s.sub}</span>
-          </p>
+          <div className="sb-account-who">
+            <Avatar state={state} size="m" />
+            <div className="sb-account-who-text">
+              <strong>
+                {state.profile.mine.value?.displayName || s.name || s.sub}
+              </strong>
+              <span className="sb-muted sb-small sb-account-sub" title={s.sub}>
+                {s.sub.replace(/^eip155:\d+:/, "").slice(0, 10)}… ·{" "}
+                {estate.label}
+              </span>
+            </div>
+          </div>
           <p className="sb-small">
             {s.wire
               ? t("account-wire-held", {
@@ -367,19 +375,20 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </div>
         </div>
       ) : (
-        <div className="sb-account-card">
-          <p className="sb-small sb-muted">
-            {TOWN.label} · {estate.label} ·{" "}
-            <a href={estate.home}>{estate.homeHost}</a>
+        <div className="sb-account-card sb-signin-card">
+          <p className="sb-signin-title">
+            {t("account-signin-title", {
+              defaultValue: "Keep your marks in your Library",
+            })}
           </p>
-          <p className="sb-small">
+          <p className="sb-small sb-muted">
             {t("account-signin-blurb", {
               defaultValue:
-                "Sign in with your Home to keep your marks in your Library. This page holds no key; your Home does the ceremony.",
+                "Sign in with your Home. This page holds no key; your Home does the ceremony.",
             })}
           </p>
           <button
-            className="sb-note-button sb-note-button-primary"
+            className="sb-note-button sb-note-button-primary sb-signin-button"
             onClick={() => void onHome()}
             disabled={!HOME_SIGNIN_AVAILABLE}
           >
@@ -388,6 +397,10 @@ export function AccountPane({ state }: { state: ReaderState }) {
               defaultValue: `Sign in with ${estate.label}`,
             })}
           </button>
+          <p className="sb-small sb-muted sb-signin-estate">
+            {TOWN.label} · {estate.label} ·{" "}
+            <a href={estate.home}>{estate.homeHost}</a>
+          </p>
           {!HOME_SIGNIN_AVAILABLE && (
             <p className="sb-small sb-muted">
               Not registered yet: the Home needs the client{" "}

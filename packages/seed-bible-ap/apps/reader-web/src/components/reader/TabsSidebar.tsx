@@ -4,6 +4,7 @@
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { ConnectedChip } from "../chrome/ConnectedChip";
 import {
   LAYOUT_OPTIONS,
   slotCountOf,
@@ -221,6 +222,9 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           </button>
         </div>
       )}
+      <div className="sb-sidebar-footer">
+        <ConnectedChip state={state} compact={collapsed} />
+      </div>
     </aside>
   );
 }
