@@ -1306,7 +1306,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Transcript (read-only)",
     rows: ["Transcript (read-only)"],
     checks:
-      "Signed in: Account → Extensions → Transcript on; Transcript → choose a one-second recording; it is decoded on the device, sent as one piece and read back (silence gives an empty transcript, not an error)",
+      "Signed in: Account → Extensions → Transcript on; Transcript → choose a one-second recording; it is decoded on the device and marked done with an empty transcript — silence is never sent to the speech model, which would invent words for it",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -1318,10 +1318,13 @@ export const MORE_FLOWS: Flow[] = [
         mimeType: "audio/wav",
         buffer: silentWav(),
       });
-      await c.waitText(c.pane(), /1 of 1|transcript of/i, 120000);
+      await c.waitText(c.pane(), /silence\.wav · done/i, 120000);
       if (await c.pane().locator(".sb-pane-error").count())
         throw new Error((await c.paneText()).slice(0, 160));
-      return (await c.paneText()).slice(0, 120);
+      const lines = await c.pane().locator(".sb-transcript-text p").count();
+      if (lines)
+        throw new Error(`silence came back as ${lines} line(s) of text`);
+      return "silence.wav decoded on the device; done, with an empty transcript (silence is not sent)";
     },
   },
   // ── 13. Links, first visit, about ──────────────────────────────────────────────────────────────────────────
@@ -1825,7 +1828,7 @@ export const MORE_FLOWS: Flow[] = [
       const look = () =>
         c.page.evaluate(() => {
           const v = document.querySelector(".sb-verse-text, .sb-verse");
-          const h = document.querySelector(".sb-chapter-heading, h3");
+          const h = document.querySelector(".sb-chapter-heading");
           const vs = v ? getComputedStyle(v) : null;
           return {
             verse: vs

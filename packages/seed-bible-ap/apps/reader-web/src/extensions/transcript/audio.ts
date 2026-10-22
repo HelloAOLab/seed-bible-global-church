@@ -93,3 +93,14 @@ export const clock = (seconds: number) => {
   const s = Math.floor(seconds % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
 };
+
+/**
+ * Whether a chunk is silence (its loudness, RMS, under about -50 dBFS). A speech model given silence does not answer
+ * nothing — it invents a line ("Thank you very much", over and over) — so a silent chunk is never sent.
+ */
+export function isSilent(samples: Float32Array, threshold = 0.003): boolean {
+  if (!samples.length) return true;
+  let sum = 0;
+  for (let i = 0; i < samples.length; i++) sum += samples[i]! * samples[i]!;
+  return Math.sqrt(sum / samples.length) < threshold;
+}

@@ -11,6 +11,7 @@ import { A2A_BASE } from "../../api";
 import { scanVerseReferencesInText } from "@seed/scripture";
 import {
   chunkPcm,
+  isSilent,
   clock,
   mergeSegments,
   resample,
@@ -76,7 +77,9 @@ export async function runTranscription(file: File, token: string) {
   const parts: Array<{ startSeconds: number; text: string }> = [];
   for (const chunk of chunks) {
     try {
-      const text = await transcribeChunk(wavEncode(chunk.samples), token);
+      const text = isSilent(chunk.samples)
+        ? ""
+        : await transcribeChunk(wavEncode(chunk.samples), token);
       parts.push({ startSeconds: chunk.startSeconds, text });
       job.value = {
         ...job.value!,

@@ -398,7 +398,8 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   /** A typed reference ("John 3:16-18") as a scripture item in the open translation. */
   const scriptureFromText = (text: string): PlaylistItem | null => {
     const r = state.search.parseReference(text.trim(), reading.books.value);
-    if (!r) return null;
+    // The parser passes an unknown book name through as typed ("Nowhere 99"); only this Bible's books are readings.
+    if (!r || !reading.books.value.some((b) => b.id === r.book)) return null;
     const chapter = `${r.book}.${r.chapter}`;
     const passage = r.verse
       ? passageOf(

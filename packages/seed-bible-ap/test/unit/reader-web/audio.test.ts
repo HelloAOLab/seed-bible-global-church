@@ -152,3 +152,21 @@ describe("chapter audio", () => {
     expect(audio.controller.isPlaying.value).toBe(false);
   });
 });
+
+describe("silence", () => {
+  it("is not sent to the speech model, which would invent words for it", async () => {
+    const { isSilent } =
+      await import("../../../apps/reader-web/src/extensions/transcript/audio");
+    expect(isSilent(new Float32Array(16000))).toBe(true);
+    const hiss = Float32Array.from({ length: 16000 }, (_, i) =>
+      i % 2 ? 0.001 : -0.001
+    );
+    expect(isSilent(hiss)).toBe(true);
+    const voice = Float32Array.from(
+      { length: 16000 },
+      (_, i) => 0.2 * Math.sin(i / 8)
+    );
+    expect(isSilent(voice)).toBe(false);
+    expect(isSilent(new Float32Array(0))).toBe(true);
+  });
+});
