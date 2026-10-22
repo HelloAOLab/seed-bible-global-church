@@ -69,6 +69,7 @@
     "@vitest/coverage-v8": "4.1.8",
     "fake-indexeddb": "^6.0.0",
     "jsdom": "26.1.0",
+    "playwright": "1.59.1",
     "preact-render-to-string": "catalog:",
     "tsx": "^4.20.5",
     "typescript": "^5.9.3",

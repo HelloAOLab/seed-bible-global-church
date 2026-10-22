@@ -324,6 +324,29 @@ export function NotesPane({ state }: { state: ReaderState }) {
           )}
         </p>
       )}
+      {!draft && state.selection.verses.value.length > 0 && (
+        <button
+          type="button"
+          className="sb-note-button sb-note-button-primary sb-note-on-selection"
+          onClick={() => {
+            const v = state.selection.verses.value;
+            state.ui.noteDraft.value = {
+              start: Math.min(...v),
+              end: Math.max(...v),
+            };
+          }}
+        >
+          {t("note-on-selection", {
+            ref: `${state.reading.bookName.value} ${state.reading.chapterNumber.value}:${(() => {
+              const v = state.selection.verses.value;
+              const lo = Math.min(...v);
+              const hi = Math.max(...v);
+              return lo === hi ? `${lo}` : `${lo}–${hi}`;
+            })()}`,
+            defaultValue: "Write a note on {{ref}}",
+          })}
+        </button>
+      )}
       {!notes.length && !draft && (
         <p className="sb-pane-empty">
           {t("select-verses-to-note", {
