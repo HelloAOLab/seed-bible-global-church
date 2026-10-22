@@ -24,8 +24,10 @@ const TARGET = join(here, "..", "apps", "reader-web", "src", "i18n");
 
 if (!existsSync(SOURCE)) throw new Error(`locale source not found: ${SOURCE}`);
 mkdirSync(TARGET, { recursive: true });
+// en.json is this reader's own (its keys are exactly what its components name — test/unit/reader-web/i18n-keys.test.ts);
+// the other locale files are copied as the translators left them, and a key they lack falls back to English.
 const files = readdirSync(SOURCE)
-  .filter((f) => /^[a-z]{2,3}\.json$/.test(f))
+  .filter((f) => /^[a-z]{2,3}\.json$/.test(f) && f !== "en.json")
   .sort();
 let copied = 0,
   same = 0;
