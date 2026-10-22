@@ -8,6 +8,12 @@ import type { PlaylistItem } from "@seed/seed-schema";
 import { spanOf } from "../../state/records/marks";
 import { noteText, sanitizeNoteHtml } from "../records/noteHtml";
 import { NoteEditor } from "../records/NotesPane";
+import {
+  dayKind,
+  groupPlayHistoryByDay,
+  isComplete,
+  percentOf,
+} from "../../state/library/playHistory";
 import { passageOf } from "../../state/records/marks";
 import {
   EDITABLE_TEXT_VARIABLES,
@@ -274,6 +280,91 @@ function Player({ state }: { state: ReaderState }) {
         </button>
       </div>
     </div>
+  );
+}
+
+/** The playlists played on this device: one row each, by day, with how far through and Resume (the old PlaylistHistoryPane). */
+function PlayHistory({ state }: { state: ReaderState }) {
+  const { t, language } = useI18n();
+  const { playlists } = state;
+  const groups = groupPlayHistoryByDay(playlists.history.value);
+  if (!groups.length) return null;
+  const dayLabel = (day: string) => {
+    const k = dayKind(day);
+    if (k === "today") return t("today", { defaultValue: "Today" });
+    if (k === "yesterday") return t("yesterday", { defaultValue: "Yesterday" });
+    const [y, m, d] = day.split("-").map(Number);
+    return new Date(y!, m! - 1, d!).toLocaleDateString(language, {
+      dateStyle: "medium",
+    });
+  };
+  return (
+    <section className="sb-play-history">
+      <header className="sb-play-history-header">
+        <h3>
+          {t("my-playlist-history", { defaultValue: "My playlist history" })}
+        </h3>
+        <button
+          type="button"
+          className="sb-note-button"
+          onClick={() => playlists.clearHistory()}
+        >
+          {t("clear-history", { defaultValue: "Clear" })}
+        </button>
+      </header>
+      {groups.map((g) => (
+        <div key={g.day} className="sb-play-history-day">
+          <h4 className="sb-small sb-muted">{dayLabel(g.day)}</h4>
+          <ul>
+            {g.entries.map((e) => {
+              const exists = !!playlists.byId(e.playlistId);
+              return (
+                <li key={e.playlistId} className="sb-play-history-row">
+                  <span className="sb-play-history-title">{e.title}</span>
+                  <span className="sb-small sb-muted">
+                    {isComplete(e)
+                      ? t("playlist-history-finished", {
+                          defaultValue: "Finished",
+                        })
+                      : t("playlist-history-step", {
+                          step: e.currentStep + 1,
+                          total: e.totalSteps,
+                          percent: percentOf(e),
+                          defaultValue:
+                            "Step {{step}} of {{total}} ({{percent}}%)",
+                        })}
+                    {e.lastItem ? ` · ${e.lastItem}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className="sb-note-button"
+                    disabled={!exists}
+                    title={
+                      exists
+                        ? undefined
+                        : t("playlist-history-open-failed", {
+                            defaultValue:
+                              "This playlist is no longer in your Library.",
+                          })
+                    }
+                    onClick={() =>
+                      playlists.play(
+                        e.playlistId,
+                        isComplete(e) ? 0 : e.currentStep
+                      )
+                    }
+                  >
+                    {isComplete(e)
+                      ? t("play-again", { defaultValue: "Play again" })
+                      : t("resume", { defaultValue: "Resume" })}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -702,6 +793,7 @@ export function LibraryPane({ state }: { state: ReaderState }) {
               </article>
             );
           })}
+          <PlayHistory state={state} />
         </>
       )}
 

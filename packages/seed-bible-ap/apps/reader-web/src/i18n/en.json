@@ -308,5 +308,19 @@
   "apocrypha": "Apocrypha",
   "testament-missing": "{{translation}} has no {{name}}. Pick another translation to read it.",
   "keep-screen-awake": "Keep the screen on while the reader is open",
-  "copy-verse": "Copy"
+  "copy-verse": "Copy",
+  "offline-remove": "Remove {{name}} from this device",
+  "offline-download": "Download {{name}} to read offline",
+  "offline-on-device": "On this device: reads without a connection. Tap to remove.",
+  "offline-download-hint": "Download the whole translation to read it without a connection",
+  "offline-remove-confirm": "Remove {{name}} from this device? Chapters will need a connection again.",
+  "offline-failed": "The download did not finish: {{reason}}",
+  "my-playlist-history": "My playlist history",
+  "clear-history": "Clear",
+  "yesterday": "Yesterday",
+  "playlist-history-finished": "Finished",
+  "playlist-history-step": "Step {{step}} of {{total}} ({{percent}}%)",
+  "playlist-history-open-failed": "This playlist is no longer in your Library.",
+  "play-again": "Play again",
+  "resume": "Resume"
 }

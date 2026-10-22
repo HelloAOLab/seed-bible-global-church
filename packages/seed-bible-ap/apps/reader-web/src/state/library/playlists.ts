@@ -7,6 +7,9 @@ import type { ReaderStores } from "../../backend/offline/db";
 import { LOCAL_AGENT } from "../records/buckets";
 import { newOpId, nowIso } from "../records/marks";
 import { createWorks } from "./works";
+import { retainPlayHistory, type PlayHistoryEntry } from "./playHistory";
+
+const HISTORY_KEY = "playlists:history";
 
 export interface Playing {
   playlistId: string;
@@ -25,6 +28,12 @@ export function createPlaylists(
     (raw) => Playlist.parse(raw)
   );
   const playing = signal<Playing | null>(null);
+  /** One row per playlist played on this device (playHistory.ts). */
+  const history = signal<PlayHistoryEntry[]>([]);
+  void stores.prefs
+    .get(HISTORY_KEY)
+    .then((v) => (history.value = (v as PlayHistoryEntry[] | undefined) ?? []))
+    .catch(() => undefined);
   const current = computed(() => {
     const p = playing.value;
     if (!p) return null;
@@ -85,25 +94,83 @@ export function createPlaylists(
     return update(id, { hasItem: items });
   };
 
+  const itemLabel = (it: PlaylistItem | undefined): string => {
+    if (!it) return "";
+    const r = it as Record<string, unknown>;
+    if (typeof r["label"] === "string" && r["label"]) return r["label"];
+    if (typeof r["aboutPassage"] === "string") return r["aboutPassage"];
+    if (typeof r["html"] === "string")
+      return r["html"]
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 60);
+    if (typeof r["url"] === "string") return r["url"];
+    return "";
+  };
+  /** Write this play into the history: a new row when it starts, the step and the time as it goes, the end when it stops. */
+  function record(
+    id: string,
+    index: number,
+    opts: { start?: boolean; end?: boolean } = {}
+  ) {
+    const pl = works.byId(id);
+    if (!pl) return;
+    const now = Date.now();
+    const prev = history.value.find((h) => h.playlistId === id);
+    const startedAt = opts.start || !prev ? now : prev.startedAt;
+    const row: PlayHistoryEntry = {
+      playlistId: id,
+      title: pl.label,
+      totalSteps: pl.hasItem.length,
+      currentStep: index,
+      lastItem: itemLabel(pl.hasItem[index]),
+      startedAt,
+      ...(opts.end ? { endedAt: now } : {}),
+      durationMs: now - startedAt,
+    };
+    history.value = retainPlayHistory([
+      row,
+      ...history.value.filter((h) => h.playlistId !== id),
+    ]);
+    void stores.prefs.set(HISTORY_KEY, history.value).catch(() => undefined);
+  }
+
   function play(id: string, index = 0) {
     playing.value = works.byId(id) ? { playlistId: id, index } : null;
+    if (playing.value) record(id, index, { start: true });
   }
   function next() {
     const c = current.value;
-    if (c && c.index + 1 < c.count)
+    if (c && c.index + 1 < c.count) {
       playing.value = { playlistId: c.playlist["@id"], index: c.index + 1 };
+      record(c.playlist["@id"], c.index + 1);
+    }
   }
   function prev() {
     const c = current.value;
-    if (c && c.index > 0)
+    if (c && c.index > 0) {
       playing.value = { playlistId: c.playlist["@id"], index: c.index - 1 };
+      record(c.playlist["@id"], c.index - 1);
+    }
   }
-  const stop = () => (playing.value = null);
+  const stop = () => {
+    const p = playing.value;
+    if (p) record(p.playlistId, p.index, { end: true });
+    playing.value = null;
+  };
+  /** Forget the history on this device. */
+  const clearHistory = () => {
+    history.value = [];
+    void stores.prefs.set(HISTORY_KEY, []).catch(() => undefined);
+  };
 
   return {
     ...works,
     playing,
     current,
+    history,
+    clearHistory,
     create,
     update,
     addItem,

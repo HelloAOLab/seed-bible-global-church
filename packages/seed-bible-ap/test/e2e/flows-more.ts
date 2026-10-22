@@ -45,8 +45,13 @@ const btn = (
 
 /** A Library card opens on its title; leave it open if it already is. */
 async function ensureOpen(card: ReturnType<FlowContext["page"]["locator"]>) {
-  if (!(await card.locator("button", { hasText: /^\s*Delete\s*$/ }).count()))
+  const del = card.locator("button", { hasText: /^\s*Delete\s*$/ }).first();
+  try {
+    await del.waitFor({ timeout: 2500 });
+  } catch {
     await card.locator(".sb-note-card-ref").first().click();
+    await del.waitFor({ timeout: 5000 });
+  }
 }
 
 async function writeNote(c: FlowContext, verse: number, text: string) {
@@ -705,7 +710,7 @@ export const MORE_FLOWS: Flow[] = [
       await gp.locator("input, textarea").last().fill("hello from the flow");
       await gp.getByRole("button", { name: /^send$/i }).click();
       await c.waitText(c.pane(), /hello from the flow/, 20000);
-      return `record kept; roster shows the guest at verse 16; the guest saw verse 17 shown; chat reached the host (code ${code})`;
+      return `record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code ${code})`;
     },
   },
   // ── 10. Playlists and reading plans ────────────────────────────────────────────────────────────────────────

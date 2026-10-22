@@ -226,29 +226,97 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                   : t("loading", { defaultValue: "Loading…" })}
               </p>
             )}
-            {translations.map((tr) => (
-              <button
-                key={tr.id}
-                className={`sb-translation-row${tr.id === reading.translationId.value ? " sb-translation-row-current" : ""}`}
-                onClick={() => {
-                  void reading.setTranslation(tr.id);
-                  close();
-                }}
-              >
-                <span className="sb-translation-row-short">
-                  {tr.shortName ?? tr.id}
-                </span>
-                <span className="sb-translation-row-name">
-                  {tr.name}
-                  {tr.englishName && tr.englishName !== tr.name
-                    ? ` · ${tr.englishName}`
-                    : ""}
-                </span>
-                <span className="sb-translation-row-lang">
-                  {tr.languageEnglishName ?? tr.language}
-                </span>
-              </button>
-            ))}
+            {translations.map((tr) => {
+              const onDevice = state.offline.has(tr.id);
+              const going = state.offline.progress.value?.id === tr.id;
+              return (
+                <div key={tr.id} className="sb-translation-item">
+                  <button
+                    className={`sb-translation-row${tr.id === reading.translationId.value ? " sb-translation-row-current" : ""}`}
+                    onClick={() => {
+                      void reading.setTranslation(tr.id);
+                      close();
+                    }}
+                  >
+                    <span className="sb-translation-row-short">
+                      {tr.shortName ?? tr.id}
+                    </span>
+                    <span className="sb-translation-row-name">
+                      {tr.name}
+                      {tr.englishName && tr.englishName !== tr.name
+                        ? ` · ${tr.englishName}`
+                        : ""}
+                    </span>
+                    <span className="sb-translation-row-lang">
+                      {tr.languageEnglishName ?? tr.language}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`sb-translation-offline${onDevice ? " sb-translation-offline-on" : ""}`}
+                    disabled={!!state.offline.progress.value && !going}
+                    aria-label={
+                      onDevice
+                        ? t("offline-remove", {
+                            name: tr.shortName ?? tr.id,
+                            defaultValue: "Remove {{name}} from this device",
+                          })
+                        : t("offline-download", {
+                            name: tr.shortName ?? tr.id,
+                            defaultValue: "Download {{name}} to read offline",
+                          })
+                    }
+                    title={
+                      onDevice
+                        ? t("offline-on-device", {
+                            defaultValue:
+                              "On this device: reads without a connection. Tap to remove.",
+                          })
+                        : t("offline-download-hint", {
+                            defaultValue:
+                              "Download the whole translation to read it without a connection",
+                          })
+                    }
+                    onClick={() => {
+                      if (going) return;
+                      if (onDevice) {
+                        if (
+                          confirm(
+                            t("offline-remove-confirm", {
+                              name: tr.shortName ?? tr.id,
+                              defaultValue:
+                                "Remove {{name}} from this device? Chapters will need a connection again.",
+                            })
+                          )
+                        )
+                          void state.offline.remove(tr.id);
+                      } else void state.offline.download(tr).catch(() => {});
+                    }}
+                  >
+                    {going ? (
+                      <span className="sb-translation-offline-progress">
+                        {Math.round(
+                          (state.offline.progress.value?.fraction ?? 0) * 100
+                        )}
+                        %
+                      </span>
+                    ) : (
+                      <span className="material-symbols-outlined">
+                        {onDevice ? "offline_pin" : "download"}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+            {state.offline.error.value && (
+              <p className="sb-selector-section-title sb-pane-error">
+                {t("offline-failed", {
+                  reason: state.offline.error.value,
+                  defaultValue: "The download did not finish: {{reason}}",
+                })}
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -33,9 +33,9 @@ export interface ReadingDeps {
   }) => void;
 }
 
-const chapterKey = (t: string, b: string, c: number) =>
+export const chapterKey = (t: string, b: string, c: number) =>
   `chapter:${t}/${b}/${c}`;
-const booksKey = (t: string) => `books:${t}`;
+export const booksKey = (t: string) => `books:${t}`;
 
 export function createReading(deps: ReadingDeps) {
   const translationId = signal(DEFAULT_TRANSLATION);

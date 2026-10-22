@@ -1254,3 +1254,65 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-verse-toolbar-menu .sb-verse-toolbar-tools {
   flex-wrap: wrap;
 }
+
+/* A translation row with its download control beside it. */
+.sb-translation-item {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+.sb-translation-item .sb-translation-row {
+  flex: 1;
+  min-width: 0;
+}
+.sb-translation-offline {
+  flex: 0 0 2.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.sb-translation-offline:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  opacity: 1;
+}
+.sb-translation-offline-on {
+  color: var(--sb-primary-color, #e07a4a);
+  opacity: 1;
+}
+.sb-translation-offline-progress {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Playlist history under the Playlists tab: one row per playlist, grouped by day. */
+.sb-play-history {
+  margin-top: 1.25rem;
+}
+.sb-play-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sb-play-history ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.sb-play-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.125rem 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--sb-divider-color, #00000014);
+}
+.sb-play-history-row > .sb-note-button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+}
+.sb-play-history-title {
+  font-weight: 600;
+}

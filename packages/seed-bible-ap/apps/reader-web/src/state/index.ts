@@ -1,6 +1,7 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import { createOfflineTranslations } from "./reading/offlineTranslations";
 import { isTypingTarget, readerKeyAction } from "./chrome/keys";
 import { defaultTranslationFor } from "./reading/defaultTranslation";
 import { bindWakeLock } from "./chrome/wakeLock";
@@ -128,6 +129,18 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const today = createToday(backend, stores);
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
+  /** Whole translations kept on the device (the old OfflineTranslationsManager). */
+  const offline = createOfflineTranslations({
+    api:
+      "getCompleteTranslation" in api
+        ? (api as Pick<FreeUseBibleAPI, "getCompleteTranslation">)
+        : {
+            getCompleteTranslation: () =>
+              Promise.reject(new Error("this Bible source has no downloads")),
+          },
+    chapters: stores.chapters,
+    prefs: stores.prefs,
+  });
   /** Listening: the reader's chosen voice and whether the next chapter plays on its own (device preferences). */
   const listening = {
     autoContinue: signal(false),
@@ -574,6 +587,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       saveTabsNow,
     ];
     void customizations.refresh();
+    void offline.load();
     void extensions.bind(stateObject);
     // A share link: join the session (after sign-in when needed), and drop the query from the URL.
     if (typeof location !== "undefined") {
@@ -603,6 +617,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
 
   const stateObject = {
+    offline,
     session,
     backend,
     stores,
