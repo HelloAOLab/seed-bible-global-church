@@ -1273,4 +1273,313 @@ export const MORE_FLOWS: Flow[] = [
       return `"${hereTitle}" outlined; Romans 8 opened from its square`;
     },
   },
+  // ── Gap build (docs/architecture/gap-analysis.md) ─────────────────────────────────────────────────────────
+  {
+    id: "G1",
+    section: "3. Reading",
+    title: "Testament filter in the book picker",
+    rows: ["Testament filter in the book picker"],
+    checks:
+      "Open the book picker: All / Old / New Testament chips; New Testament starts at Matthew and has no Genesis; All shows both, titled",
+    run: async (c) => {
+      await c.open(CH);
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-title")
+        .click();
+      const picker = c.page.locator(".sb-selector-testament-picker");
+      await picker.waitFor({ timeout: 10000 });
+      const chips = (await picker.locator("button").allInnerTexts()).map((x) =>
+        x.trim()
+      );
+      await picker.getByRole("tab", { name: "New Testament" }).click();
+      const books = (
+        await c.page.locator(".sb-selector-book-button-name").allInnerTexts()
+      ).map((x) => x.trim());
+      if (books[0] !== "Matthew" || books.includes("Genesis"))
+        throw new Error(`New Testament lists ${books.slice(0, 3).join(", ")}`);
+      await picker.getByRole("tab", { name: "All books" }).click();
+      const titles = (
+        await c.page
+          .locator(".sb-selector-testament .sb-selector-section-title")
+          .allInnerTexts()
+      ).map((x) => x.trim());
+      if (
+        !titles.includes("Old Testament") ||
+        !titles.includes("New Testament")
+      )
+        throw new Error(`titles ${titles.join(", ")}`);
+      return `chips ${chips.join(" / ")}; New Testament: ${books.length} books from Matthew`;
+    },
+  },
+  {
+    id: "G2",
+    section: "3. Reading",
+    title: "Default translation by interface language",
+    rows: ["Default translation by interface language"],
+    checks:
+      "A first visit from a French-speaking browser opens a French Bible (fra_ncl); an English one opens the BSB",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        locale: "fr-FR",
+        viewport: { width: 1280, height: 900 },
+      });
+      const page = await ctx.newPage();
+      try {
+        await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+        await c.dismissWelcome(page);
+        await page.waitForURL(/\/read\/fra_ncl\//, { timeout: 20000 });
+        const fr = page.url().replace(BASE, "");
+        await c.open("/");
+        await c.page.waitForURL(/\/read\/BSB\//, { timeout: 20000 });
+        return `French browser → ${fr}; English → ${c.page.url().replace(BASE, "")}`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
+  {
+    id: "G3",
+    section: "3. Reading",
+    title: "Keyboard navigation",
+    rows: ["Keyboard navigation"],
+    checks:
+      "Right arrow opens John 4, Left goes back; Escape clears a selection and then closes the side pane; arrows move focus in the book picker",
+    run: async (c) => {
+      await c.open(CH);
+      await c.verse(16).waitFor({ timeout: 20000 });
+      await c.page.keyboard.press("ArrowRight");
+      await c.page.waitForURL(/\/JHN\/4$/, { timeout: 15000 });
+      await c.page.keyboard.press("ArrowLeft");
+      await c.page.waitForURL(/\/JHN\/3$/, { timeout: 15000 });
+      await c.verse(16).waitFor({ timeout: 20000 });
+      await c.selectVerse(16);
+      await c.pressToolbar("Notes");
+      await c.page.keyboard.press("Escape");
+      await c.page
+        .locator(".sb-verse-toolbar")
+        .waitFor({ state: "detached", timeout: 3000 });
+      await c.page.keyboard.press("Escape");
+      await c.page
+        .locator(".sb-app-pane")
+        .waitFor({ state: "detached", timeout: 3000 });
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-title")
+        .click();
+      await c.page.locator(".sb-selector-book-button").first().focus();
+      await c.page.keyboard.press("ArrowRight");
+      const focused = await c.page.evaluate(
+        () => (document.activeElement as HTMLElement | null)?.innerText ?? ""
+      );
+      if (!focused.trim())
+        throw new Error("arrow did not move focus in the book picker");
+      return `→ John 4, ← John 3; Escape cleared the selection then closed the pane; arrow focus moved to "${focused.trim().slice(0, 20)}"`;
+    },
+  },
+  {
+    id: "G4",
+    section: "4. Marking the text",
+    title: "Right-click menu on a verse, Copy",
+    rows: ["Right-click menu on a verse"],
+    checks:
+      "Right-click John 3:16: the verse toolbar opens at the pointer as a menu; Copy puts the verse's text and reference on the clipboard",
+    run: async (c) => {
+      await c.open(CH);
+      await c.verse(16).waitFor({ timeout: 20000 });
+      await c.verse(16).click({ button: "right", position: { x: 40, y: 8 } });
+      const menu = c.page.locator(".sb-verse-toolbar-menu");
+      await menu.waitFor({ timeout: 5000 });
+      await menu.locator(".sb-verse-toolbar-copy").click();
+      await c.page.waitForTimeout(300);
+      const clip = await c.page
+        .evaluate(() => navigator.clipboard.readText())
+        .catch(() => "");
+      if (!/For God so loved the world[\s\S]*— John 3:16 \(BSB\)/.test(clip))
+        throw new Error(`clipboard: ${clip.slice(0, 120)}`);
+      return clip.replace(/\s+/g, " ").slice(0, 90);
+    },
+  },
+  {
+    id: "G5",
+    section: "3. Reading",
+    title: "Download a whole translation for offline",
+    rows: ["Download a whole translation for offline"],
+    checks:
+      "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
+    run: async (c) => {
+      await c.open(CH);
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-translation")
+        .click();
+      await c.page.locator('input[type="search"]').first().fill("BSB");
+      const item = c.page
+        .locator(".sb-translation-item")
+        .filter({
+          has: c.page.locator(".sb-translation-row-short", {
+            hasText: /^BSB$/,
+          }),
+        })
+        .first();
+      await item.locator(".sb-translation-offline").click();
+      await item
+        .locator(".sb-translation-offline-on")
+        .waitFor({ timeout: 180000 });
+      await c.page.keyboard.press("Escape");
+      await c.context.setOffline(true);
+      try {
+        await c.page
+          .locator(".sb-bible-reader-active .sb-bible-reader-title")
+          .click();
+        await c.page.locator('input[type="search"]').first().fill("Obadiah");
+        await c.page
+          .getByRole("button", { name: /^Obadiah$/ })
+          .first()
+          .click();
+        await c.page.getByRole("button", { name: /^1$/ }).first().click();
+        await c.verse(1).waitFor({ timeout: 20000 });
+        const text = (await c.verse(1).innerText()).slice(0, 40);
+        return `BSB downloaded; offline, Obadiah 1 reads ("${text}")`;
+      } finally {
+        await c.context.setOffline(false);
+        await c.page
+          .locator(".sb-bible-reader-active .sb-bible-reader-translation")
+          .click()
+          .catch(() => undefined);
+        await c.page
+          .locator('input[type="search"]')
+          .first()
+          .fill("BSB")
+          .catch(() => undefined);
+        c.page.once("dialog", (d) => void d.accept());
+        await item
+          .locator(".sb-translation-offline")
+          .click()
+          .catch(() => undefined);
+      }
+    },
+  },
+  {
+    id: "G6",
+    section: "10. Playlists and reading plans",
+    title: "Playlist history",
+    rows: ["Playlist history"],
+    checks:
+      "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openLibrary("Playlists");
+      const title = `Flow history ${stamp()}`;
+      await pane.locator('input[placeholder^="New playlist"]').fill(title);
+      await pane.getByRole("button", { name: /^create$/i }).click();
+      const card = pane.locator(".sb-note-card", { hasText: title }).first();
+      await card.waitFor({ timeout: 10000 });
+      await ensureOpen(card);
+      await card
+        .locator(
+          'input[placeholder*="John 3:16" i], input[placeholder*="reference" i]'
+        )
+        .first()
+        .fill("Romans 8:28");
+      await card
+        .getByRole("button", { name: /^add item$/i })
+        .first()
+        .click();
+      await c.waitText(card, /Romans 8:28/);
+      await card.getByRole("button", { name: /play playlist/i }).click();
+      await c.page
+        .getByRole("button", { name: /^next$/i })
+        .first()
+        .click();
+      await c.page
+        .getByRole("button", { name: /^stop$/i })
+        .first()
+        .click();
+      const history = pane.locator(".sb-play-history");
+      await c.waitText(history, new RegExp(`${title}[\\s\\S]*Finished`));
+      await history
+        .locator(".sb-play-history-row", { hasText: title })
+        .getByRole("button", { name: /play again/i })
+        .click();
+      await c.page.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+      await c.page
+        .getByRole("button", { name: /^stop$/i })
+        .first()
+        .click()
+        .catch(() => undefined);
+      c.page.once("dialog", (d) => void d.accept());
+      await ensureOpen(card);
+      await card.getByRole("button", { name: /^delete$/i }).click();
+      return "history row Finished today; Play again started it at John 3";
+    },
+  },
+  {
+    id: "G7",
+    section: "9. Reading together",
+    title: "Session QR code",
+    rows: ["Session QR code"],
+    checks:
+      "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await startSession(c);
+      await c
+        .pane()
+        .getByRole("button", { name: /qr code/i })
+        .click();
+      const img = c.pane().locator(".sb-session-qr img");
+      await img.waitFor({ timeout: 10000 });
+      const src = (await img.getAttribute("src")) ?? "";
+      if (!src.startsWith("data:image/png"))
+        throw new Error(`img ${src.slice(0, 40)}`);
+      await c
+        .pane()
+        .getByRole("button", { name: /save image/i })
+        .waitFor({ timeout: 5000 });
+      return `QR ${Math.round(src.length / 1024)} KB PNG with Save image`;
+    },
+  },
+  {
+    id: "G8",
+    section: "3. Reading",
+    title: "Keep the screen on",
+    rows: ["Keep the screen on while listening or reading"],
+    checks:
+      "Account → 'Keep the screen on while the reader is open' (where the browser has a wake lock); the choice is kept after a reload",
+    run: async (c) => {
+      await c.open(CH);
+      const has = await c.page.evaluate(() => "wakeLock" in navigator);
+      if (!has)
+        return "this browser has no wake lock; the setting is hidden, as designed";
+      let pane = await c.openAccount();
+      await c.check(pane, /keep the screen on/i).check();
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      pane = await c.openAccount();
+      if (!(await c.check(pane, /keep the screen on/i).isChecked()))
+        throw new Error("not kept after a reload");
+      await c.check(pane, /keep the screen on/i).uncheck();
+      return "on, kept after a reload, turned off again";
+    },
+  },
+  {
+    id: "G9",
+    section: "8. Today, Discover and publishing",
+    title: "Friends pane",
+    rows: ["Friends pane"],
+    checks:
+      "Signed in: the people icon at the top of the sidebar opens the Friends pane with the friends list, Add a friend and Invite by email",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page
+        .locator('.sb-tabs-sidebar button[aria-label="Friends"]')
+        .click();
+      const pane = c.page.locator(".sb-friends-pane");
+      await pane.waitFor({ timeout: 5000 });
+      await c.waitText(pane, /add a friend|invite by email/i, 20000);
+      return (await pane.innerText()).replace(/\s+/g, " ").slice(0, 110);
+    },
+  },
 ];

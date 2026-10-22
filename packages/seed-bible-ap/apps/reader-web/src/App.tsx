@@ -1,5 +1,6 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
+import { FriendsPane } from "./components/social/FriendsPane";
 import { ShareDialog } from "./components/chrome/ShareDialog";
 import { useEffect, useRef } from "preact/hooks";
 import type { ReaderState } from "./state";
@@ -142,6 +143,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "map" && (
         <aside className="sb-app-pane">
           <ScriptureMapPane state={state} />
+        </aside>
+      )}
+      {pane === "friends" && (
+        <aside className="sb-app-pane">
+          <FriendsPane state={state} />
         </aside>
       )}
       {pane === "account" && (

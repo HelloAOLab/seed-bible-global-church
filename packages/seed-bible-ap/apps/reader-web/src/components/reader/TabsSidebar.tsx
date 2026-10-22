@@ -88,6 +88,19 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             <button
               type="button"
               className="sb-sidebar-top-icon-button"
+              aria-label={t("friends", { defaultValue: "Friends" })}
+              title={t("friends", { defaultValue: "Friends" })}
+              aria-pressed={state.ui.pane.value === "friends"}
+              onClick={() =>
+                (state.ui.pane.value =
+                  state.ui.pane.value === "friends" ? "none" : "friends")
+              }
+            >
+              <span className="material-symbols-outlined">group</span>
+            </button>
+            <button
+              type="button"
+              className="sb-sidebar-top-icon-button"
               aria-label={t("pane-layout", { defaultValue: "Pane layout" })}
               aria-expanded={layoutOpen}
               onClick={() => setLayoutOpen((o) => !o)}

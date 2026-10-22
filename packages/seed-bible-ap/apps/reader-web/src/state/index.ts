@@ -382,6 +382,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "library"
       | "about"
       | "map"
+      | "friends"
       | `ext:${string}`
     >("none"),
     selector: signal<"books" | "translations" | null>(null),

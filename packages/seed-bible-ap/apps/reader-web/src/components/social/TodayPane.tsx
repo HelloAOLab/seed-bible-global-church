@@ -23,20 +23,6 @@ export function TodayPane({ state }: { state: ReaderState }) {
   useEffect(() => {
     if (signedIn && !today.loadedFor.value) void today.refresh();
   }, [signedIn]);
-  // Friends' presence: read on open and every half minute while Today is open.
-  useEffect(() => {
-    if (!signedIn) return;
-    void state.presence.refresh();
-    const t = setInterval(() => void state.presence.refresh(), 30_000);
-    return () => clearInterval(t);
-  }, [signedIn]);
-  const presenceOf = (agent: string) =>
-    state.presence.friends.value.find(
-      (f) => f.agent.toLowerCase() === agent.toLowerCase()
-    )?.presence ?? [];
-  const openPresence = (scope: string | undefined) => {
-    if (scope && /^[1-4]?[A-Z]{2,3}\.\d+$/.test(scope)) open(scope);
-  };
   const [recent, setRecent] = useState<RecentReading[]>([]);
   const changed = state.buckets.changed.value;
   useEffect(() => {
@@ -191,164 +177,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
         ))}
       </div>
 
-      <div className="sb-content-section sb-friends-section">
-        <div className="sb-content-section-head">
-          <h3 className="sb-content-section-title">
-            {t("friends", { defaultValue: "Friends" })}
-          </h3>
-          {signedIn && (
-            <button
-              className="sb-content-see-all"
-              onClick={() => void today.refresh()}
-              disabled={today.contactsLoading.value}
-            >
-              {t("refresh", { defaultValue: "Refresh" })}
-            </button>
-          )}
-        </div>
-        {!signedIn && (
-          <p className="sb-content-empty">
-            {t("today-signed-out", {
-              defaultValue:
-                "Sign in to see your friends and what they released.",
-            })}
-          </p>
-        )}
-        {signedIn && today.contactsError.value && (
-          <p className="sb-pane-error">{today.contactsError.value}</p>
-        )}
-        {signedIn && today.requests.value.length > 0 && (
-          <div className="sb-friend-requests">
-            <p className="sb-small sb-muted">
-              {t("friend-requests", {
-                count: today.requests.value.length,
-                defaultValue: `${today.requests.value.length} added you — add them back to be friends:`,
-              })}
-            </p>
-            {today.requests.value.map((r) => (
-              <div key={r.agent} className="sb-friends-row">
-                <span className="sb-friends-person-text">
-                  <span className="sb-friends-person-name">
-                    {r.name ?? r.agent}
-                  </span>
-                </span>
-                <a
-                  className="sb-note-button"
-                  href={`${home}/contacts?add=${encodeURIComponent(r.name ?? r.agent)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t("friend-add-back", {
-                    defaultValue: "Add back at your Home",
-                  })}
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-        {signedIn &&
-          !today.contactsLoading.value &&
-          !today.friends.value.length &&
-          !today.contactsError.value && (
-            <p className="sb-content-empty">
-              {today.friendsView.value
-                ? t("today-no-friends", {
-                    defaultValue:
-                      "No friends yet. You are friends once you have added each other at your Home.",
-                  })
-                : t("today-no-contacts", {
-                    defaultValue:
-                      "No contacts yet. Friends are the contacts at your Home.",
-                  })}
-            </p>
-          )}
-        {signedIn && today.requested.value.length > 0 && (
-          <p className="sb-small sb-muted">
-            {t("friends-requested", {
-              defaultValue: "Not yet added you back:",
-            })}{" "}
-            {today.requested.value.map((r) => r.name ?? r.agent).join(", ")}
-          </p>
-        )}
-        {signedIn && (
-          <div className="sb-note-card-actions sb-friend-actions">
-            <a
-              className="sb-note-button"
-              href={`${home}/contacts`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t("friend-add", { defaultValue: "Add a friend" })}
-            </a>
-            <a
-              className="sb-note-button"
-              href={`${home}/contacts?invite=1`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t("friend-invite-email", { defaultValue: "Invite by email" })}
-            </a>
-          </div>
-        )}
-        {today.friends.value.map((c) => {
-          const here = presenceOf(c.contact);
-          const prof = today.profiles.value[c.contact.toLowerCase()];
-          return (
-            <div key={c.contact} className="sb-friends-row">
-              {prof?.picture ? (
-                <img className="sb-friends-avatar" src={prof.picture} alt="" />
-              ) : (
-                <span className="sb-friends-avatar sb-friends-avatar-empty material-symbols-outlined">
-                  person
-                </span>
-              )}
-              <span className="sb-friends-person-text">
-                <span className="sb-friends-person-name">
-                  {here.length > 0 && (
-                    <span
-                      className="sb-presence-dot"
-                      title={t("friend-here-now", { defaultValue: "Here now" })}
-                    />
-                  )}
-                  {prof?.displayName ?? c.name ?? c.contact}
-                </span>
-                {prof?.about && (
-                  <span className="sb-friends-person-about">{prof.about}</span>
-                )}
-                <span className="sb-friends-person-subtitle">
-                  {here.length
-                    ? here.map((p) => (
-                        <button
-                          key={p.app}
-                          type="button"
-                          className="sb-presence-where"
-                          onClick={() => openPresence(p.scope)}
-                          title={
-                            p.scope
-                              ? t("friend-open-where", {
-                                  defaultValue: "Open the same chapter",
-                                })
-                              : undefined
-                          }
-                        >
-                          {p.label ?? p.app}
-                        </button>
-                      ))
-                    : c.name
-                      ? c.contact
-                      : ""}
-                  {!here.length && c.mutual
-                    ? ` · ${t("friends-mutual", { defaultValue: "mutual" })}`
-                    : ""}
-                </span>
-              </span>
-            </div>
-          );
-        })}
-        {signedIn && state.presence.error.value && (
-          <p className="sb-small sb-muted">{state.presence.error.value}</p>
-        )}
-      </div>
+      <FriendsSection state={state} />
 
       <div className="sb-content-section">
         <div className="sb-content-section-head">
@@ -394,5 +223,195 @@ export function TodayPane({ state }: { state: ReaderState }) {
         {parseRoute(location.pathname) ? "" : ""}
       </p>
     </section>
+  );
+}
+
+/**
+ * FRIENDS — who you and they have added at your Homes, who is waiting for you to add them back, who has not yet,
+ * and who is here right now (the green dot, tap to open the same chapter). Shown in Today and as its own pane
+ * (the old FriendsPane); adding and inviting happen at your Home.
+ */
+export function FriendsSection({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { today, reading } = state;
+  const signedIn = !!state.session.value;
+  const home = estateById(DEFAULT_ESTATE)!.home;
+  useEffect(() => {
+    if (signedIn && !today.loadedFor.value) void today.refresh();
+  }, [signedIn]);
+  // Friends' presence: read on open and every half minute while the section is on screen.
+  useEffect(() => {
+    if (!signedIn) return;
+    void state.presence.refresh();
+    const id = setInterval(() => void state.presence.refresh(), 30_000);
+    return () => clearInterval(id);
+  }, [signedIn]);
+  const presenceOf = (agent: string) =>
+    state.presence.friends.value.find(
+      (f) => f.agent.toLowerCase() === agent.toLowerCase()
+    )?.presence ?? [];
+  const openPresence = (scope: string | undefined) => {
+    if (!scope || !/^[1-4]?[A-Z]{2,3}\.\d+$/.test(scope)) return;
+    const [book, ch] = scope.split(".");
+    void reading.goTo(reading.translationId.value, book!, Number(ch));
+  };
+  return (
+    <div className="sb-content-section sb-friends-section">
+      <div className="sb-content-section-head">
+        <h3 className="sb-content-section-title">
+          {t("friends", { defaultValue: "Friends" })}
+        </h3>
+        {signedIn && (
+          <button
+            className="sb-content-see-all"
+            onClick={() => void today.refresh()}
+            disabled={today.contactsLoading.value}
+          >
+            {t("refresh", { defaultValue: "Refresh" })}
+          </button>
+        )}
+      </div>
+      {!signedIn && (
+        <p className="sb-content-empty">
+          {t("today-signed-out", {
+            defaultValue: "Sign in to see your friends and what they released.",
+          })}
+        </p>
+      )}
+      {signedIn && today.contactsError.value && (
+        <p className="sb-pane-error">{today.contactsError.value}</p>
+      )}
+      {signedIn && today.requests.value.length > 0 && (
+        <div className="sb-friend-requests">
+          <p className="sb-small sb-muted">
+            {t("friend-requests", {
+              count: today.requests.value.length,
+              defaultValue: `${today.requests.value.length} added you — add them back to be friends:`,
+            })}
+          </p>
+          {today.requests.value.map((r) => (
+            <div key={r.agent} className="sb-friends-row">
+              <span className="sb-friends-person-text">
+                <span className="sb-friends-person-name">
+                  {r.name ?? r.agent}
+                </span>
+              </span>
+              <a
+                className="sb-note-button"
+                href={`${home}/contacts?add=${encodeURIComponent(r.name ?? r.agent)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("friend-add-back", {
+                  defaultValue: "Add back at your Home",
+                })}
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+      {signedIn &&
+        !today.contactsLoading.value &&
+        !today.friends.value.length &&
+        !today.contactsError.value && (
+          <p className="sb-content-empty">
+            {today.friendsView.value
+              ? t("today-no-friends", {
+                  defaultValue:
+                    "No friends yet. You are friends once you have added each other at your Home.",
+                })
+              : t("today-no-contacts", {
+                  defaultValue:
+                    "No contacts yet. Friends are the contacts at your Home.",
+                })}
+          </p>
+        )}
+      {signedIn && today.requested.value.length > 0 && (
+        <p className="sb-small sb-muted">
+          {t("friends-requested", {
+            defaultValue: "Not yet added you back:",
+          })}{" "}
+          {today.requested.value.map((r) => r.name ?? r.agent).join(", ")}
+        </p>
+      )}
+      {signedIn && (
+        <div className="sb-note-card-actions sb-friend-actions">
+          <a
+            className="sb-note-button"
+            href={`${home}/contacts`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("friend-add", { defaultValue: "Add a friend" })}
+          </a>
+          <a
+            className="sb-note-button"
+            href={`${home}/contacts?invite=1`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t("friend-invite-email", { defaultValue: "Invite by email" })}
+          </a>
+        </div>
+      )}
+      {today.friends.value.map((c) => {
+        const here = presenceOf(c.contact);
+        const prof = today.profiles.value[c.contact.toLowerCase()];
+        return (
+          <div key={c.contact} className="sb-friends-row">
+            {prof?.picture ? (
+              <img className="sb-friends-avatar" src={prof.picture} alt="" />
+            ) : (
+              <span className="sb-friends-avatar sb-friends-avatar-empty material-symbols-outlined">
+                person
+              </span>
+            )}
+            <span className="sb-friends-person-text">
+              <span className="sb-friends-person-name">
+                {here.length > 0 && (
+                  <span
+                    className="sb-presence-dot"
+                    title={t("friend-here-now", { defaultValue: "Here now" })}
+                  />
+                )}
+                {prof?.displayName ?? c.name ?? c.contact}
+              </span>
+              {prof?.about && (
+                <span className="sb-friends-person-about">{prof.about}</span>
+              )}
+              <span className="sb-friends-person-subtitle">
+                {here.length
+                  ? here.map((p) => (
+                      <button
+                        key={p.app}
+                        type="button"
+                        className="sb-presence-where"
+                        onClick={() => openPresence(p.scope)}
+                        title={
+                          p.scope
+                            ? t("friend-open-where", {
+                                defaultValue: "Open the same chapter",
+                              })
+                            : undefined
+                        }
+                      >
+                        {p.label ?? p.app}
+                      </button>
+                    ))
+                  : c.name
+                    ? c.contact
+                    : ""}
+                {!here.length && c.mutual
+                  ? ` · ${t("friends-mutual", { defaultValue: "mutual" })}`
+                  : ""}
+              </span>
+            </span>
+          </div>
+        );
+      })}
+      {signedIn && state.presence.error.value && (
+        <p className="sb-small sb-muted">{state.presence.error.value}</p>
+      )}
+    </div>
   );
 }
