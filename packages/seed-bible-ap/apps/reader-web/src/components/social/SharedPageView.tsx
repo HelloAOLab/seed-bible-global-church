@@ -15,7 +15,7 @@ import {
   type SharedRef,
 } from "../../state/social/sharedPage";
 import { spanOf } from "../../state/records/marks";
-import { pushRoute } from "../../state/reading/route";
+import { routeOf } from "../../state/reading/route";
 
 function seededPage(ref: SharedRef): SharedPage | null {
   const v = (globalThis as Record<string, unknown>)[SHARED_GLOBAL];
@@ -50,11 +50,16 @@ export function SharedPageView({ state }: { state: ReaderState }) {
   const close = () => {
     state.ui.shared.value = null;
     const r = state.reading;
-    pushRoute({
-      translationId: r.translationId.value,
-      bookId: r.bookId.value,
-      chapterNumber: r.chapterNumber.value,
-    });
+    // pushRoute leaves a /shared/ address alone (it is this page's), so leaving it is done here.
+    history.pushState(
+      null,
+      "",
+      routeOf({
+        translationId: r.translationId.value,
+        bookId: r.bookId.value,
+        chapterNumber: r.chapterNumber.value,
+      })
+    );
   };
   const readPassage = async (passage: string) => {
     const [bookId, chapter] = spanOf(passage).chapter.split(".");

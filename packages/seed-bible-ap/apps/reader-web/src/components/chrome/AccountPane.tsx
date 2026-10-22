@@ -454,6 +454,12 @@ export function AccountPane({ state }: { state: ReaderState }) {
   const estate = estateById(DEFAULT_ESTATE)!;
   const report = (e: unknown) =>
     (error.value = e instanceof Error ? e.message : String(e));
+  // The Church theme list is the registry's: read it again whenever the pane opens, so a theme published a moment ago
+  // (yours or anyone's) is there to pick without pressing refresh.
+  useEffect(
+    () => void state.customizations.refresh().catch(() => undefined),
+    []
+  );
 
   useEffect(() => {
     if (s) return;
