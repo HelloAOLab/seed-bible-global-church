@@ -46,6 +46,7 @@
     "test/unit/reader-a2a/publish-without-reads.test.ts",
     "test/unit/reader-a2a/bucket-doc-id.test.ts",
     "test/unit/reader-a2a/bucket-cache.test.ts",
+    "test/unit/reader-a2a/bucket-list.test.ts",
     "test/unit/reader-web"
   ]
 }

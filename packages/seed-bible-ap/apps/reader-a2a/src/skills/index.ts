@@ -401,7 +401,13 @@ export function invokers(
       const { manifest } = await readManifest(agent, collection);
       return {
         collection,
-        buckets: Object.values(manifest.buckets),
+        // Each entry named by its KEY — the chapter (PSA.1), or the collection for one-bucket collections — which is
+        // what a device reads it by; the manifest's own `bucket` field is the document's file name (1.jsonld).
+        buckets: Object.entries(manifest.buckets).map(([key, e]) => ({
+          ...e,
+          bucket: key,
+          name: e.bucket,
+        })),
         updatedAt: manifest.updatedAt,
       };
     },
