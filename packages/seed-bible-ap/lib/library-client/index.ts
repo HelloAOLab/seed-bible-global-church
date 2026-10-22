@@ -215,7 +215,9 @@ export function mergeBuckets(
     if (cur.supersedes === inc.opId) report.kept.push(inc["@id"]);
     else if (
       inc.supersedes === cur.opId ||
-      later(inc.updatedAt, cur.updatedAt)
+      // A tie goes to the incoming write: a device's edit-then-delete collapses into one tombstone that names the
+      // never-sent edit, and in the same millisecond as the Library's copy it would otherwise lose to it.
+      !later(cur.updatedAt, inc.updatedAt)
     ) {
       byId.set(inc["@id"], inc);
       report.replaced.push(inc["@id"]);

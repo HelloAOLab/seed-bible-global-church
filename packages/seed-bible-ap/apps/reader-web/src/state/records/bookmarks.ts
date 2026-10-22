@@ -100,6 +100,8 @@ export function createBookmarks(
     await buckets.put("bookmarks", undefined, {
       ...cur,
       deleted: true,
+      // The write this delete replaces: a plain update for the merge, whatever the clocks say.
+      supersedes: cur.opId,
       opId: newOpId(),
       updatedAt: nowIso(),
     });

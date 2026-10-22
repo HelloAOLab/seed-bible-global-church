@@ -459,4 +459,24 @@ describe("the sync matrix", () => {
     expect(liveNotes(d.backend)).toHaveLength(2);
     expect(d.outbox.pending.value).toBe(0);
   });
+
+  it("a change made while a flush is in flight is not lost when the flush's result comes back", async () => {
+    const d = device();
+    const id = await d.notes.add("JHN.3", 16, 16, "first");
+    await d.outbox.flush();
+    // Edit, and while that flush is on its way, delete another note made before it.
+    const other = await d.notes.add("JHN.3", 17, 17, "second");
+    await d.outbox.flush();
+    await d.notes.edit("JHN.3", id, "first, edited");
+    const inFlight = d.outbox.flush();
+    await d.notes.remove("JHN.3", other);
+    await inFlight;
+    await d.outbox.flush();
+    const live = liveNotes(d.backend);
+    expect(live.map((n) => n.note)).toEqual(["first, edited"]);
+    expect(d.notes.forChapter("JHN.3").value.map((n) => n.note)).toEqual([
+      "first, edited",
+    ]);
+    expect(d.outbox.pending.value).toBe(0);
+  });
 });

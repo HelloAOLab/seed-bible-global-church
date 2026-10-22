@@ -73,6 +73,8 @@ export function createHighlights(
       await buckets.put("highlights", chapterOf(chapterRef), {
         ...it,
         deleted: true,
+        // The write this delete replaces: a plain update for the merge, whatever the clocks say.
+        supersedes: it.opId,
         opId: newOpId(),
         updatedAt: nowIso(),
       });

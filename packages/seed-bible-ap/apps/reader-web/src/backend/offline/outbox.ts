@@ -4,7 +4,7 @@
 // id and is idempotent on the far side.
 import { signal } from "@preact/signals";
 import type { Collection } from "@seed/library-client";
-import { bucketKey, type BucketDocument } from "@seed/library-client";
+import { applyPut, bucketKey, type BucketDocument } from "@seed/library-client";
 import { BackendError, type ReaderBackend } from "../ReaderBackend";
 import type { OutboxEntry, ReaderStores } from "./db";
 
@@ -36,6 +36,18 @@ export interface OutboxDeps {
   ) => BucketDocument | null;
 }
 
+/** The merged bucket with every device item it does not carry yet (by opId) put back on top. */
+export function foldUnsent(
+  merged: BucketDocument,
+  device: BucketDocument
+): BucketDocument {
+  const sent = new Set(merged["@graph"].map((it) => it.opId));
+  let out = merged;
+  for (const it of device["@graph"])
+    if (!sent.has(it.opId)) out = applyPut(out, it).bucket;
+  return out;
+}
+
 export const storeKey = (collection: Collection, chapter?: string) =>
   `${collection}:${bucketKey(collection, chapter)}`;
 
@@ -53,6 +65,8 @@ export function createOutbox(deps: OutboxDeps) {
   /** The last error's kind (a BackendError code, else "error"); null once a flush goes through. */
   const lastErrorCode = signal<BackendError["code"] | "error" | null>(null);
   let inflight: Promise<FlushReport> | null = null;
+  /** The buckets whose batch a run is sending right now. */
+  const sending = new Set<string>();
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   const count = async () => {
@@ -66,8 +80,14 @@ export function createOutbox(deps: OutboxDeps) {
   ) {
     const k = storeKey(collection, chapter);
     const cur = await deps.stores.outbox.get(k);
+    // A bucket whose batch is on its way gets a NEW batch id: the run in flight will finish and drop its own
+    // entry by id, and this change must still go up after it.
     const entry: OutboxEntry = cur
-      ? { ...cur, opIds: [...cur.opIds, opId] }
+      ? {
+          ...cur,
+          ...(sending.has(k) ? { batchId: newId() } : {}),
+          opIds: [...cur.opIds, opId],
+        }
       : {
           collection,
           ...(chapter ? { chapter } : {}),
@@ -109,6 +129,7 @@ export function createOutbox(deps: OutboxDeps) {
         report.skipped.push(k);
         continue;
       }
+      sending.add(k);
       try {
         let merged: BucketDocument;
         try {
@@ -132,6 +153,10 @@ export function createOutbox(deps: OutboxDeps) {
             `${entry.batchId}-repaired`
           );
         }
+        // Changes made on the device while this run was in flight are not in `merged`: fold them back on top,
+        // or the merged copy would overwrite them (they stay queued and go up with the next batch).
+        const latest = await deps.stores.buckets.get(k);
+        if (latest) merged = foldUnsent(merged, latest);
         await deps.stores.buckets.set(k, merged);
         // Changes queued while this run was in flight start a new batch; only this one is done.
         const again = await deps.stores.outbox.get(k);
@@ -146,6 +171,8 @@ export function createOutbox(deps: OutboxDeps) {
         lastError.value = report.error;
         lastErrorCode.value = e instanceof BackendError ? e.code : "error";
         if (e instanceof BackendError && e.code !== "refused") break;
+      } finally {
+        sending.delete(k);
       }
     }
     await count();

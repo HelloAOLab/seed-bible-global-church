@@ -145,6 +145,16 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
                 {t("keep-this-version", { defaultValue: "Keep this version" })}
               </button>
             )}
+            {note.conflictOf && (
+              <button
+                className="sb-note-button"
+                onClick={() =>
+                  void state.annotations.merge(chapterRef, note.id)
+                }
+              >
+                {t("keep-both-merged", { defaultValue: "Keep both, merged" })}
+              </button>
+            )}
             <button className="sb-note-button" onClick={() => setEditing(true)}>
               {t("edit", { defaultValue: "Edit" })}
             </button>

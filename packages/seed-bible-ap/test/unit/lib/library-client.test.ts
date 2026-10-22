@@ -278,4 +278,42 @@ describe("mergeBuckets with supersedes", () => {
     expect(report.conflicts).toHaveLength(1);
     expect(bucket["@graph"]).toHaveLength(2);
   });
+
+  it("a tie on updatedAt goes to the incoming write (a device's collapsed edit-then-delete)", () => {
+    const at = "2026-10-22T10:00:00.000Z";
+    const base = {
+      "@id": "urn:seed:note:JHN.3:a",
+      "@type": "seed:Annotation",
+      heldBy: "0x" + "ab".repeat(20),
+      aboutPassage: "JHN.3.16",
+      note: "one",
+      opId: "B",
+      updatedAt: at,
+    };
+    const current = {
+      "@context": {},
+      collection: "annotations",
+      "@graph": [base],
+    } as never;
+    const incoming = {
+      "@context": {},
+      collection: "annotations",
+      "@graph": [
+        {
+          ...base,
+          note: "one, edited",
+          deleted: true,
+          opId: "D",
+          supersedes: "E",
+          updatedAt: at,
+        },
+      ],
+    } as never;
+    const { bucket } = mergeBuckets(current, incoming);
+    expect(
+      (bucket as { "@graph": Array<{ deleted?: boolean; opId: string }> })[
+        "@graph"
+      ]
+    ).toMatchObject([{ deleted: true, opId: "D" }]);
+  });
 });

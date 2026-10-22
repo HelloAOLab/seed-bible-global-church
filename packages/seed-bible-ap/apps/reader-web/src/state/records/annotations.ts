@@ -101,6 +101,8 @@ export function createAnnotations(
     await buckets.put("annotations", chapter, {
       ...cur,
       deleted: true,
+      // The write this delete replaces: a plain update for the merge, whatever the clocks say.
+      supersedes: cur.opId,
       opId: newOpId(),
       updatedAt: nowIso(),
     });
@@ -127,7 +129,25 @@ export function createAnnotations(
     for (const c of copies) await remove(chapter, c["@id"]);
   }
 
-  return { forChapter, add, edit, remove, resolve };
+  /**
+   * Keep both sides of a conflict as one note (the old conflict modal's Merge): the original takes its own text
+   * followed by the copy's, and the copy goes. Plain-text notes of the first cut are paragraphed first.
+   */
+  async function merge(chapterRef: string, copyId: string) {
+    const chapter = chapterOf(chapterRef);
+    const copy = find(chapter, copyId);
+    if (!copy?.conflictOf) return;
+    const original = find(chapter, copy.conflictOf);
+    if (!original) return;
+    const para = (n: string) =>
+      /^\s*</.test(n)
+        ? n
+        : `<p>${n.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>`;
+    await edit(chapter, original["@id"], para(original.note) + para(copy.note));
+    await remove(chapter, copyId);
+  }
+
+  return { forChapter, add, edit, remove, resolve, merge };
 }
 
 export type Annotations = ReturnType<typeof createAnnotations>;

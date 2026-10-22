@@ -91,4 +91,26 @@ describe("two devices on one chapter", () => {
     expect(after[0]!.id).toBe(id);
     expect(after[0]!.note).toBe(flagged.note);
   });
+
+  it("keep both sides of a conflict as one note", async () => {
+    const lib = createDevBackend(READER);
+    const a = device(lib);
+    const id = await a.notes.add("JHN.3", 16, 16, "<p>first</p>");
+    await a.outbox.flush();
+    const b = device(lib);
+    await b.buckets.get("annotations", "JHN.3").ready;
+    await a.notes.edit("JHN.3", id, "<p>from A</p>");
+    await b.notes.edit("JHN.3", id, "<p>from B</p>");
+    await a.outbox.flush();
+    await b.outbox.flush();
+    await a.buckets.resync();
+    const copy = a.notes.forChapter("JHN.3").value.find((n) => n.conflictOf)!;
+    await a.notes.merge("JHN.3", copy.id);
+    await a.outbox.flush();
+    const after = a.notes.forChapter("JHN.3").value;
+    expect(after).toHaveLength(1);
+    expect(after[0]!.id).toBe(id);
+    expect(after[0]!.note).toContain("from A");
+    expect(after[0]!.note).toContain("from B");
+  });
 });

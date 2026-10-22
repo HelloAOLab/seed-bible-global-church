@@ -413,13 +413,15 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Signed in on two browsers as Seed Reader: one note, edited differently on each while offline, comes back twice with Keep this version; keeping one leaves one",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/5");
+      // A chapter of its own each run: the sample person's Library keeps whatever an earlier run left.
+      const ch = `/read/BSB/PSA/${10 + Math.floor(Math.random() * 130)}`;
+      await c.open(ch);
       await c.signInAsSample();
       await deleteAllNotes(c);
-      await writeNote(c, 24, "base note from device A");
+      await writeNote(c, 1, "base note from device A");
       await synced(c);
       const b = await c.secondPage();
-      await c.open("/read/BSB/JHN/5", b);
+      await c.open(ch, b);
       await c.signInAsSample(/seed ?reader/i, b);
       await c.pressToolbar("Notes", b);
       await c.waitText(
