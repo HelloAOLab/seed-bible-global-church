@@ -24,23 +24,30 @@ const isChapterPassage = (p: string) =>
   p.split(".").length === 2 && !p.includes("-");
 
 export function toSaves(items: readonly unknown[]): SaveView[] {
-  return (items as Save[])
-    .filter((it) => it["@type"] === "seed:Save" && !it.deleted)
-    .map((it) => {
-      const whole = isChapterPassage(it.aboutPassage);
-      const span = spanOf(it.aboutPassage);
-      return {
-        id: it["@id"],
-        passage: it.aboutPassage,
-        chapter: chapterOf(it.aboutPassage),
-        start: whole ? null : span.start,
-        end: whole ? null : span.end,
-        ...(it.ofEdition ? { edition: it.ofEdition } : {}),
-        ...(it.label ? { label: it.label } : {}),
-        createdAt: it.createdAt ?? it.updatedAt ?? "",
-      };
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return (
+    (items as Save[])
+      .filter((it) => it["@type"] === "seed:Save" && !it.deleted)
+      .map((it, index) => {
+        const whole = isChapterPassage(it.aboutPassage);
+        const span = spanOf(it.aboutPassage);
+        return {
+          id: it["@id"],
+          passage: it.aboutPassage,
+          chapter: chapterOf(it.aboutPassage),
+          start: whole ? null : span.start,
+          end: whole ? null : span.end,
+          ...(it.ofEdition ? { edition: it.ofEdition } : {}),
+          ...(it.label ? { label: it.label } : {}),
+          createdAt: it.createdAt ?? it.updatedAt ?? "",
+          index,
+        };
+      })
+      // Newest first; two saves made in the same instant keep their order of making.
+      .sort(
+        (a, b) => b.createdAt.localeCompare(a.createdAt) || b.index - a.index
+      )
+      .map(({ index: _i, ...s }) => s)
+  );
 }
 
 export function createSaves(

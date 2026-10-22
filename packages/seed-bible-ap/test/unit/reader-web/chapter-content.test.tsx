@@ -78,10 +78,10 @@ describe("chapter content", () => {
       ],
     });
     expect(out).toContain(
-      'class="sb-highlight sb-highlight-yellow" data-highlight-key="16-17"'
+      'class="sb-highlight sb-highlight-yellow" data-highlight-fill="var(--sb-highlight-yellow-color, transparent)" data-highlight-key="16-17"'
     );
     expect(out).toContain(
-      'class="sb-highlight sb-highlight-green" data-highlight-key="1-1"'
+      'class="sb-highlight sb-highlight-green" data-highlight-fill="var(--sb-highlight-green-color, transparent)" data-highlight-key="1-1"'
     );
     const run = out.slice(out.indexOf('data-highlight-key="16-17"'));
     const runEnd = run.indexOf('data-verse-number="18"');

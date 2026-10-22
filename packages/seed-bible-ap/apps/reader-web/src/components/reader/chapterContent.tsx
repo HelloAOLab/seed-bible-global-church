@@ -1,8 +1,8 @@
 // THE CHAPTER'S MARKUP — ported from packages/seed-bible BibleReader.tsx (renderChapterContent and its helpers):
 // the same `sb-*` elements the copied stylesheets dress, so the text, headings, poetry, red letters, footnote
 // markers, verse numbers and highlight runs look as they do in the reader today. What was left out of this cut:
-// live-session decorations and presence, and the SVG ribbon layer — a highlight run paints its fill on the verse
-// text instead (`--sb-highlight-fill`, app.css) until the ribbon measurer is ported.
+// live-session decorations and presence. The highlight runs carry `data-highlight-fill` for the ribbon layer in
+// ChapterColumn.tsx, which draws each run as a rounded path behind the text.
 import { Fragment, type JSX } from "preact";
 import type { ChapterVerse, TranslationBookChapter } from "../../backend/bible";
 import type { ChapterHighlight } from "../../state/records/highlights";
@@ -464,6 +464,7 @@ export function renderChapterContent(
         <span
           key={`highlight-run-${i}`}
           className={`sb-highlight sb-highlight-${highlight.colorId}`}
+          data-highlight-fill={`var(--sb-highlight-${highlight.colorId}-color, transparent)`}
           data-highlight-key={`${firstVerse}-${lastVerse}`}
         >
           {runIndices.flatMap((idx, runIndex) => {

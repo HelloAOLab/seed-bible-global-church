@@ -6,6 +6,7 @@ import type { ChapterVerse } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { renderChapterContent } from "./chapterContent";
+import { ChapterColumn } from "./ChapterColumn";
 
 interface SelectedFootnote {
   noteId: number;
@@ -66,8 +67,9 @@ export function BibleReader({ state }: { state: ReaderState }) {
       );
     }
     return (
-      <div
-        className={`sb-chapter-content${reading.loading.value ? " sb-chapter-content-stale" : ""}`}
+      <ChapterColumn
+        chapterId={`${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`}
+        stale={reading.loading.value}
       >
         {renderChapterContent(chapter, {
           selectedVerses: selection.verses.value,
@@ -100,7 +102,7 @@ export function BibleReader({ state }: { state: ReaderState }) {
             </a>
           </p>
         )}
-      </div>
+      </ChapterColumn>
     );
   };
 

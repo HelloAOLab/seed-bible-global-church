@@ -11,5 +11,5 @@ component stylesheets.
 | the stylesheets                                                                                                            | copied unchanged into `src/styles/` (base, utilities, reader, selector, toolbar) + `app.css` for this app's layer |
 
 Dropped for now: customizations (org themes), UI scale, line height, margins, the full Settings page. The SVG
-highlight ribbon (`app/highlightRibbon.ts`, 390 lines + measurement in `ChapterContent`) is not ported: a run paints
-its fill on the verse text (`app.css`) until it is.
+highlight ribbon is ported (`components/reader/highlightRibbon.ts` verbatim, the measurement in `ChapterColumn.tsx`)
+without the original's fade in/out bookkeeping.

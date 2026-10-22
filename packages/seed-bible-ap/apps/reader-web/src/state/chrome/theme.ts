@@ -438,7 +438,7 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
   return Object.keys(theme.highlightColors)
     .map(
       (id) =>
-        `.sb-highlight-${id} { color: var(--sb-highlight-${id}-font-color); --sb-highlight-fill: var(--sb-highlight-${id}-color); }\n` +
+        `.sb-highlight-${id} { color: var(--sb-highlight-${id}-font-color);}\n` +
         `.sb-highlight-${id} .sb-words-of-jesus { color: var(--sb-highlight-${id}-words-of-jesus-font-color); }`
     )
     .join("\n");

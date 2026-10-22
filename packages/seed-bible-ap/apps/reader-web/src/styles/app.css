@@ -49,13 +49,9 @@ body {
   }
 }
 
-/* A highlight run paints its fill on the verse text (the SVG ribbon measurer is not ported yet). */
-.sb-highlight .sb-verse-decorator {
-  background: var(--sb-highlight-fill, transparent);
-  border-radius: 0.2em;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  padding: 0.05em 0.1em;
+/* The ribbon layer sits behind the text of this column. */
+.sb-chapter-content {
+  position: relative;
 }
 
 .sb-reader-from-device {
