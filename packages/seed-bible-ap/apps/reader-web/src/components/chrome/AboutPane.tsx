@@ -32,6 +32,13 @@ async function loadPolicy(
 
 export function AboutPane({ state }: { state: ReaderState }) {
   const { t, language } = useI18n();
+  // Literal keys, so the translation-key test sees them (a key held in a variable is invisible to it).
+  const policyTitle = (p: Policy) =>
+    p === "terms-of-service"
+      ? t("terms-of-service", { defaultValue: "Terms of service" })
+      : p === "privacy-policy"
+        ? t("privacy-policy", { defaultValue: "Privacy policy" })
+        : t("code-of-conduct", { defaultValue: "Code of conduct" });
   const [policy, setPolicy] = useState<Policy | null>(null);
   const [html, setHtml] = useState<string | null>(null);
   useEffect(() => {
@@ -48,7 +55,7 @@ export function AboutPane({ state }: { state: ReaderState }) {
       <header className="sb-pane-header">
         <h2>
           {policy
-            ? t(policy)
+            ? policyTitle(policy)
             : t("about-title", { defaultValue: "About Seed Bible" })}
         </h2>
         <div>
@@ -120,7 +127,7 @@ export function AboutPane({ state }: { state: ReaderState }) {
                 className="sb-note-button"
                 onClick={() => setPolicy(p)}
               >
-                {t(p)}
+                {policyTitle(p)}
               </button>
             ))}
           </div>

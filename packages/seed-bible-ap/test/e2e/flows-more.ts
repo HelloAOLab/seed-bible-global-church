@@ -1012,7 +1012,12 @@ export const MORE_FLOWS: Flow[] = [
       await c.signInAsSample();
       await c.selectVerse(16);
       await c.page
-        .locator(".sb-verse-toolbar-action", { hasText: /^\s*ask\s*$/i })
+        .locator(".sb-verse-toolbar-action")
+        .filter({
+          has: c.page.locator(".sb-verse-toolbar-action-label", {
+            hasText: /^Ask$/,
+          }),
+        })
         .first()
         .click();
       const pane = c.pane();
@@ -1089,7 +1094,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.open(CH);
       await c.signInAsSample();
       const acct = await c.openAccount();
-      await c.check(acct, /^\s*Transcript\s*$/).check();
+      await c.check(acct, "Transcript").check();
       await c.pressToolbar("Transcript");
       await c.pane().locator('input[type="file"]').first().setInputFiles({
         name: "silence.wav",

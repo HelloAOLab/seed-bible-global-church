@@ -41,16 +41,6 @@ function WatchPane({ state }: { state: ReaderState }) {
       className="sb-pane sb-watch"
       aria-label={t("watch", { defaultValue: "Watch" })}
     >
-      <header className="sb-pane-header">
-        <h2>{t("watch", { defaultValue: "Watch" })}</h2>
-        <button
-          className="sb-pane-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </header>
       <form
         className="sb-inline-form"
         onSubmit={(e) => {

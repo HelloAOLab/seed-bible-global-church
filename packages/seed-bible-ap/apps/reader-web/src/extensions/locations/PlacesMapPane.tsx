@@ -147,16 +147,6 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       className="sb-pane sb-places-map"
       aria-label={t("places-map", { defaultValue: "Places map" })}
     >
-      <header className="sb-pane-header">
-        <h2>{t("places-map", { defaultValue: "Places map" })}</h2>
-        <button
-          className="sb-pane-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </header>
       <div className="sb-places-map-canvas" ref={host} />
       {status && <p className="sb-small sb-muted">{status}</p>}
       {places.length > 0 && (

@@ -137,16 +137,6 @@ function TranscriptPane({ state }: { state: ReaderState }) {
       className="sb-pane sb-transcript"
       aria-label={t("transcript", { defaultValue: "Transcript" })}
     >
-      <header className="sb-pane-header">
-        <h2>{t("transcript", { defaultValue: "Transcript" })}</h2>
-        <button
-          className="sb-pane-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </header>
       {!token && (
         <p className="sb-small sb-muted">
           {t("transcript-sign-in", {

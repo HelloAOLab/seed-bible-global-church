@@ -46,6 +46,17 @@ describe("translation keys", () => {
   const used = usedKeys();
   const keys = new Set(Object.keys(en));
 
+  it("every t() call names its key literally (a variable key is invisible to these checks)", () => {
+    const dynamic: string[] = [];
+    for (const file of sources(SRC)) {
+      if (file.endsWith("/i18n/index.ts")) continue;
+      const src = readFileSync(file, "utf8");
+      for (const m of src.matchAll(/(?<![.\w])t\(\s*([A-Za-z_][\w.]*)\s*[,)]/g))
+        dynamic.push(`${file.slice(SRC.length + 1)}: t(${m[1]})`);
+    }
+    expect(dynamic).toEqual([]);
+  });
+
   it("finds the components' keys", () => {
     expect(used.size).toBeGreaterThan(100);
   });
