@@ -1,6 +1,6 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import type { ReaderState } from "./state";
 import { TabsSidebar } from "./components/reader/TabsSidebar";
 import { PanesLayout } from "./components/reader/PanesLayout";
@@ -32,10 +32,33 @@ export function App({ state }: { state: ReaderState }) {
   const pane = state.ui.pane.value;
   const collapsed = state.ui.sidebarCollapsed.value;
   const embed = state.ui.embed.value;
+  // The floating toolbars centre on the READER column, not the window: its left edge and width go on the root
+  // as CSS variables (app.css), re-measured when a pane opens, the sidebar changes or the window resizes.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const measure = () => {
+      const r = mainRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const root = document.documentElement.style;
+      root.setProperty("--sb-main-left", `${r.left}px`);
+      root.setProperty("--sb-main-width", `${r.width}px`);
+    };
+    measure();
+    const ro =
+      typeof ResizeObserver !== "undefined" && mainRef.current
+        ? new ResizeObserver(measure)
+        : null;
+    if (mainRef.current) ro?.observe(mainRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [pane, collapsed, embed]);
   if (embed)
     return (
       <div className="sb-app sb-app-embed">
-        <main className="sb-app-main">
+        <main className="sb-app-main" ref={mainRef}>
           <PanesLayout state={state} />
         </main>
         <VerseToolbar state={state} />
@@ -53,7 +76,7 @@ export function App({ state }: { state: ReaderState }) {
           onClick={() => (state.ui.sidebarDrawer.value = false)}
         />
       )}
-      <main className="sb-app-main">
+      <main className="sb-app-main" ref={mainRef}>
         <PanesLayout state={state} />
       </main>
       {pane === "notes" && (
