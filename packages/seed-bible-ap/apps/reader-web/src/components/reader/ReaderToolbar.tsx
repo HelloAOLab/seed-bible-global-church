@@ -348,6 +348,20 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             handleGridKeyNav(e as KeyboardEvent, e.currentTarget as HTMLElement)
           }
         >
+          {!state.session.value && (
+            <button
+              type="button"
+              role="menuitem"
+              className="sb-reader-toolbar-more-signin"
+              onClick={() => {
+                setMoreOpen(false);
+                ui.pane.value = "account";
+              }}
+            >
+              <span className="material-symbols-outlined">login</span>
+              <span>{t("sign-in", { defaultValue: "Sign in" })}</span>
+            </button>
+          )}
           {shown.map((a) => (
             <button
               key={a.id}
@@ -387,6 +401,10 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             : t("sign-in", { defaultValue: "Sign in" })
         }
         active={ui.pane.value === "account"}
+        // Signed out, the way in is filled in the accent colour, not one more outline icon.
+        {...(state.session.value
+          ? {}
+          : { className: "sb-reader-toolbar-signin" })}
         badge={pending}
         onClick={() => togglePane("account")}
       />

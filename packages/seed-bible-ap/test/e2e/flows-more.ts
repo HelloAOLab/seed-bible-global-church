@@ -2155,4 +2155,54 @@ export const MORE_FLOWS: Flow[] = [
       return `${link.replace(BASE, "")}: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers ${gone.status()}`;
     },
   },
+  {
+    id: "M1",
+    section: "13. Links and embedding",
+    title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
+    rows: ["Phone layout"],
+    checks:
+      "On an iPhone 13: the reader's bar sits at the top; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour, and More opens with a Sign in button first that opens the sign-in pane",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      });
+      const page = await ctx.newPage();
+      try {
+        await c.open(CH, page);
+        const bar = page.locator(".sb-reader-toolbar").first();
+        await bar.waitFor({ timeout: 20000 });
+        const top = (await bar.boundingBox())!.y;
+        if (top > 40) throw new Error(`the bar is at y=${top}, not the top`);
+        await page.mouse.wheel(0, 900);
+        await page
+          .waitForFunction(() => window.scrollY > 100, undefined, {
+            timeout: 5000,
+          })
+          .catch(() => {
+            throw new Error("reading down did not scroll the page");
+          });
+        const fill = await page
+          .locator(".sb-reader-toolbar-signin .sb-reader-toolbar-button")
+          .evaluate((b) => getComputedStyle(b).backgroundColor);
+        if (/rgba\(0, 0, 0, 0\)|transparent/.test(fill))
+          throw new Error("the sign-in button is not filled");
+        await page.locator(".sb-reader-toolbar-more-button button").click();
+        const first = page
+          .locator(".sb-reader-toolbar-more-menu > button")
+          .first();
+        if (!/sign in/i.test(await first.innerText()))
+          throw new Error(`More opens with "${await first.innerText()}"`);
+        await first.click();
+        await page
+          .getByRole("button", { name: /sign in with faithnet/i })
+          .waitFor({ timeout: 5000 });
+        return `bar at y=${Math.round(top)}; the page scrolled; sign-in filled (${fill}); More → Sign in opened the sign-in pane`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
 ];

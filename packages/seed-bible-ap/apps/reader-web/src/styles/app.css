@@ -559,6 +559,26 @@ body {
 .sb-reader-toolbar-more-item-active {
   color: var(--sb-primary-color);
 }
+.sb-reader-toolbar-more-signin {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sb-reader-toolbar-signin .sb-reader-toolbar-button {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-radius: 999px;
+}
 
 /* Discover + Today */
 .sb-discover-item-main {
