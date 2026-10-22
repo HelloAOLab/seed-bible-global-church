@@ -482,5 +482,6 @@
   "friends-need-permission": "To show your friends, the reader needs your permission to ask your agent. Sign in again to give it — nothing on this device is lost.",
   "friends-unreadable": "Your friends could not be read just now.",
   "try-again": "Try again",
-  "picture-drop-hint": "Choose a picture, or drop one here"
+  "picture-drop-hint": "Choose a picture, or drop one here",
+  "picture-not-image": "That file is not a picture — choose a JPEG, PNG, GIF or WebP."
 }

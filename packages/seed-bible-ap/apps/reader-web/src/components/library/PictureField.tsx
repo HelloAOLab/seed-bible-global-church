@@ -12,7 +12,6 @@ import {
 } from "../../state/library/crop";
 
 /** The pictures a field takes, by extension and type. */
-const PICTURE_TYPES = ".jpg,.jpeg,.png,.gif,.webp,.avif";
 
 export function CropDialog({
   file,
@@ -277,6 +276,7 @@ export function PictureField({
   const [file, setFile] = useState<File | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [notPicture, setNotPicture] = useState<string | null>(null);
   return (
     <>
       <label
@@ -301,16 +301,26 @@ export function PictureField({
         {state.files.uploading.value ? "…" : label}
         <input
           type="file"
-          // Named types, not "image/*": on Windows, Chrome resolves a wildcard against every image type the system
-          // knows before it shows the dialog, which took from seconds to minutes (the page looked frozen meanwhile).
-          accept={PICTURE_TYPES}
+          // NO TYPE FILTER: with one ("image/*", or even a list of extensions) Chrome on Windows looked the types up
+          // before showing the dialog — seconds to minutes, the page frozen meanwhile. The file is checked here instead.
           hidden
           disabled={disabled}
           onChange={(e) => {
             const input = e.target as HTMLInputElement;
             const f = input.files?.[0];
             input.value = "";
-            if (f) setFile(f);
+            if (!f) return;
+            if (!f.type.startsWith("image/"))
+              setNotPicture(
+                t("picture-not-image", {
+                  defaultValue:
+                    "That file is not a picture — choose a JPEG, PNG, GIF or WebP.",
+                })
+              );
+            else {
+              setNotPicture(null);
+              setFile(f);
+            }
           }}
         />
       </label>
@@ -322,6 +332,9 @@ export function PictureField({
       >
         {t("earlier-pictures", { defaultValue: "Earlier pictures" })}
       </button>
+      {notPicture && (
+        <span className="sb-small sb-pane-error">{notPicture}</span>
+      )}
       {file && (
         <CropDialog
           file={file}

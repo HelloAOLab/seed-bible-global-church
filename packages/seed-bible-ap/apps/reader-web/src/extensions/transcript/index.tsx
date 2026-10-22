@@ -151,8 +151,7 @@ function TranscriptPane({ state }: { state: ReaderState }) {
         {t("transcript-pick", { defaultValue: "Choose a recording" })}
         <input
           type="file"
-          // Named types, not "audio/*": a wildcard makes Chrome on Windows enumerate every audio type before the dialog shows.
-          accept=".mp3,.m4a,.wav,.ogg,.oga,.opus,.flac,.aac,.webm,.mp4,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/webm,video/mp4,video/webm"
+          // No type filter: Chrome on Windows looks a filter's types up before showing the dialog (seconds to minutes).
           hidden
           disabled={!token}
           onChange={(e) => {
