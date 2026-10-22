@@ -8,3 +8,5 @@ One file per manager in `packages/seed-bible/seed-bible/managers/` (read-only so
 - what was dropped, with the reason (e.g. legal acceptance never persisted; `publicRead` on private items)
 
 Template: `_template.md`. Order of porting follows [`feature-map.md`](../architecture/feature-map.md).
+
+Step 9: [`OnboardingAboutEmbedAndMap.md`](./OnboardingAboutEmbedAndMap.md).

@@ -177,6 +177,16 @@ study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers 
 the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
 transcripts and Twitch (the outbound allowlist, §10).
 
+### Cutover (step 9, first cut — cutover, 2026-10-22)
+
+The public surface a crawler, a shared link or an iframe host touches before anyone signs in: Open Graph and a
+canonical link on every chapter page, `/sitemap.xml` (every BSB chapter, from the Bible API's book list, cached a
+day) and `/robots.txt`, embed mode (`?embed=minimal`, `?theme=`, `?customization=`), the first-visit card (sign in,
+just read, install), the About pane with the terms, privacy and code-of-conduct texts per language, and a first
+Scripture map (the chapter grid shaded by your marks on the device). ADR-0010; `docs/runbooks/cutover-checklist.md`
+and `secrets.md`; `test/integration/cutover.test.ts`. Not yet: shared-slice pages rendered on the edge, reading
+history in the map, share links for a verse.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |

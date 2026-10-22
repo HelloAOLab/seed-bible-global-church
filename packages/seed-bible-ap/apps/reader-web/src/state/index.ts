@@ -223,12 +223,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "discover"
       | "session"
       | "library"
+      | "about"
+      | "map"
       | `ext:${string}`
     >("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
     sidebarCollapsed: signal(false),
+    /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
+    embed: signal(false),
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };
@@ -270,6 +274,21 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     // A share link: join the session (after sign-in when needed), and drop the query from the URL.
     if (typeof location !== "undefined") {
       const q = new URLSearchParams(location.search);
+      // Embed mode and a theme or customization named in the link (the old `?embed=`, `?theme=`, `?customization=`).
+      const embed = q.get("embed");
+      if (embed === "minimal" || embed === "true") ui.embed.value = true;
+      const theme = q.get("theme");
+      if (theme === "light" || theme === "dark") settings.theme.value = theme;
+      const cust = q.get("customization");
+      if (cust)
+        void customizations.refresh().then(() => {
+          const entry = customizations.available.value.find(
+            (a) =>
+              a.offering.descriptorId === cust ||
+              a.customization["@id"] === cust
+          );
+          if (entry) void customizations.select(entry);
+        });
       const sid = q.get("session");
       if (sid) {
         const code = q.get("code") ?? undefined;

@@ -11,3 +11,5 @@ Operator steps, one file each, in the order they are first needed:
 7. `rebuild-serving-plane.md` — wipe D1 and reindex from public shelves (proves ADR-0055; done 2026-10-21, R2 pending the operator enabling it)
 8. `town-listing.md` — name records, profile, `/project`, crawl lane
 9. `assign-playbook.md` — a reader's agent must carry a playbook with the Library reads (done for seedreader 2026-10-21)
+10. `secrets.md` — every secret per Worker, set and rotate
+11. `cutover-checklist.md` — the order to take traffic on seed-reader.faithnet.io, and the rollback

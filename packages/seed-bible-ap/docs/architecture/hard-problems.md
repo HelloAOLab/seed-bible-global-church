@@ -40,6 +40,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 4. Friends can see nothing unless something is public
 
+**Substrate asks (2026-10-22):** friends, invitations by email (ap-home's Cloudflare email), and app-wide presence are capabilities for the agenticprimitives repo, not this reader; the reader lists Home contacts until friends exist. Files are to move from the serving plane's R2 to the Home Library's own file handling.
+
 **Layer 1 landed 2026-10-22 (step 5):** a note published from the notes pane is a released public slice; Today shows the friends' recent releases by owner through the registry (`/registry/recent`), friends being the Home's contacts. Layers 2 (circle shelves) and 3 (share grants) are open.
 
 **Problem.** The old Today feed read friends' notes and reading history directly because every record was `publicRead:*`. The Library knows only `public` and `private`. There is no "my contacts", "my circle", or "this person" audience on a document. Yet the product promise is "see what your friends are reading," not "publish to the world."
@@ -145,6 +147,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 **Open.** Manifest write amplification (every act rewrites it); if that bites, a single `seed-bible/_manifest.jsonld` per person instead of per collection. Folders: `reader-web/src/backend/offline`, `src/sw`.
 
 ## 14. SSR on a Worker with per-reader state
+
+**First cut 2026-10-22 (ADR-0010):** chapter pages carry Open Graph and a canonical link from the same public render; `/sitemap.xml` and `/robots.txt` come from the Bible API's book list, cached a day in the Worker's Cache API; embed mode is client-side (`?embed=minimal`, `?theme=`, `?customization=`). Shared-slice pages are still client-rendered.
 
 **Problem.** Chapter pages are server-rendered for SEO and first paint; shared pages render another person's published slice; embed mode renders in an iframe with a customization. Rendering must not need the reader's private state, and a Worker has tight CPU time.
 

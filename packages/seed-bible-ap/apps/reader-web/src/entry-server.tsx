@@ -135,16 +135,36 @@ export async function renderChapterPage(
 }
 
 /** The index.html with the rendered chapter, title, description and seed in place. */
+/** Open Graph for a chapter page: what a shared link shows. */
+export function ogTags(
+  page: RenderedChapter,
+  url: string,
+  origin: string
+): string {
+  const e = escapeHtml;
+  return [
+    `<meta property="og:type" content="article" />`,
+    `<meta property="og:title" content="${e(page.title)}" />`,
+    `<meta property="og:description" content="${e(page.description)}" />`,
+    `<meta property="og:url" content="${e(url)}" />`,
+    `<meta property="og:site_name" content="Seed Bible" />`,
+    `<meta property="og:image" content="${e(origin)}/og.jpg" />`,
+    `<meta name="twitter:card" content="summary" />`,
+    `<link rel="canonical" href="${e(url)}" />`,
+  ].join("");
+}
+
 export function injectIntoIndex(
   indexHtml: string,
-  page: RenderedChapter
+  page: RenderedChapter,
+  url?: string
 ): string {
   const seedScript = `<script>window.${SEED_GLOBAL}=${JSON.stringify(page.seed).replace(/</g, "\\u003c")}</script>`;
   return indexHtml
     .replace(/<html lang="[^"]*"/, `<html lang="${escapeHtml(page.lang)}"`)
     .replace(
       /<title>[^<]*<\/title>/,
-      `<title>${escapeHtml(page.title)}</title><meta name="description" content="${escapeHtml(page.description)}" />`
+      `<title>${escapeHtml(page.title)}</title><meta name="description" content="${escapeHtml(page.description)}" />${url ? ogTags(page, url, new URL(url).origin) : ""}`
     )
     .replace(
       '<div id="root"></div>',

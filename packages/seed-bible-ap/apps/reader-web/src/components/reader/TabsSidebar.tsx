@@ -52,10 +52,27 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          {!collapsed && <span className="sb-sidebar-logo">Seed Bible</span>}
+          {!collapsed && (
+            <button
+              type="button"
+              className="sb-sidebar-logo sb-sidebar-logo-button"
+              onClick={() => (state.ui.pane.value = "about")}
+            >
+              Seed Bible
+            </button>
+          )}
         </div>
         {!collapsed && (
           <div className="sb-sidebar-top-actions sb-pane-layout-anchor">
+            <button
+              type="button"
+              className="sb-sidebar-top-icon-button"
+              aria-label={t("scripture-map", { defaultValue: "Scripture map" })}
+              title={t("scripture-map", { defaultValue: "Scripture map" })}
+              onClick={() => (state.ui.pane.value = "map")}
+            >
+              <span className="material-symbols-outlined">grid_view</span>
+            </button>
             <button
               type="button"
               className="sb-sidebar-top-icon-button"

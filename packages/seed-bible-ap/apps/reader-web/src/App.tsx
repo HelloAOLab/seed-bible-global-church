@@ -14,6 +14,9 @@ import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
 import { SessionPane } from "./components/sessions/SessionPane";
 import { LibraryPane } from "./components/library/LibraryPane";
+import { Onboarding } from "./components/chrome/Onboarding";
+import { AboutPane } from "./components/chrome/AboutPane";
+import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
 import { completeRedirectIfReturning } from "./session";
 
 export function App({ state }: { state: ReaderState }) {
@@ -28,6 +31,17 @@ export function App({ state }: { state: ReaderState }) {
 
   const pane = state.ui.pane.value;
   const collapsed = state.ui.sidebarCollapsed.value;
+  const embed = state.ui.embed.value;
+  if (embed)
+    return (
+      <div className="sb-app sb-app-embed">
+        <main className="sb-app-main">
+          <PanesLayout state={state} />
+        </main>
+        <VerseToolbar state={state} />
+        <BibleSelector state={state} />
+      </div>
+    );
   return (
     <div
       className={`sb-app${pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
@@ -90,6 +104,16 @@ export function App({ state }: { state: ReaderState }) {
           })()}
         </aside>
       )}
+      {pane === "about" && (
+        <aside className="sb-app-pane">
+          <AboutPane state={state} />
+        </aside>
+      )}
+      {pane === "map" && (
+        <aside className="sb-app-pane">
+          <ScriptureMapPane state={state} />
+        </aside>
+      )}
       {pane === "account" && (
         <aside className="sb-app-pane">
           <AccountPane state={state} />
@@ -98,6 +122,7 @@ export function App({ state }: { state: ReaderState }) {
       <VerseToolbar state={state} />
       <ReaderToolbar state={state} />
       <BibleSelector state={state} />
+      <Onboarding state={state} />
     </div>
   );
 }

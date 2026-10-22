@@ -27,6 +27,7 @@ import "./styles/discover.css";
 import "./styles/friends.css";
 import "./styles/playlists.css";
 import "./styles/plans.css";
+import "./styles/onboarding.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;
