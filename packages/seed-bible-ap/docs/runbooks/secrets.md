@@ -12,3 +12,17 @@ No key is in source. `.dev.vars` files are git-ignored; `.seed/svc-admin.local.j
 Rotate the upload token by setting the new value on the svc first, then on reader-a2a (a few seconds of refused
 uploads is the only effect; nothing is stored under the token). The Workers AI binding (`[ai]`) needs no secret.
 Bindings (not secrets): `FILES` (R2 `seed-bible-files`), `AI`, D1 for the registry — all in the `wrangler.toml`s.
+
+## The map's tile source
+
+`seed-bible-a2a` serves map tiles through a cached proxy. By default it reads OpenStreetMap's public tiles (light use
+only: cached a week, a real User-Agent, zoom capped at 12). For real traffic set a keyed provider on the svc Worker:
+
+```bash
+wrangler secret put TILE_KEY -c apps/seed-bible-a2a/wrangler.toml --env faithnet
+# and in [env.faithnet.vars]:
+#   TILE_SOURCE = "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}"
+#   TILE_ATTRIBUTION = "&copy; MapTiler &copy; OpenStreetMap contributors"
+```
+
+The key is substituted inside the Worker and never reaches a page; the map reads `/tiles/info` for the credit to show.

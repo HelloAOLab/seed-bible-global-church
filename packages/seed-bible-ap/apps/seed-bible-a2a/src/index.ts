@@ -24,6 +24,10 @@ import { fetchPreview } from "./preview";
 export { SvcRunDO };
 
 export interface Env {
+  /** The map tiles: a URL template with {z}/{x}/{y} (and {key}); OSM when unset. */
+  TILE_SOURCE?: string;
+  TILE_KEY?: string;
+  TILE_ATTRIBUTION?: string;
   DB: D1Database;
   RUNS: DurableObjectNamespace;
   MCP_URL?: string;
@@ -408,8 +412,28 @@ app.get("/preview", async (c) => {
 });
 
 // ── The places map: map tiles and place geometry, proxied and cached, so a page never calls a third party ─────
-const TILE_SOURCE = "https://tile.openstreetmap.org";
+/**
+ * The tile source is configuration: OSM's public tiles by default (light use, cached, a real User-Agent), or a keyed
+ * provider for real traffic — `TILE_SOURCE` a template with `{z}/{x}/{y}` and optionally `{key}`, `TILE_KEY` the
+ * secret it substitutes, `TILE_ATTRIBUTION` the credit the map shows. The key never leaves this Worker.
+ */
+const DEFAULT_TILE_SOURCE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const DEFAULT_TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const TILE_MAX_ZOOM = 12;
+export function tileUrl(
+  env: { TILE_SOURCE?: string; TILE_KEY?: string },
+  z: number,
+  x: number,
+  y: number
+): string {
+  const template = env.TILE_SOURCE?.trim() || DEFAULT_TILE_SOURCE;
+  return template
+    .replace("{z}", String(z))
+    .replace("{x}", String(x))
+    .replace("{y}", String(y))
+    .replace("{key}", encodeURIComponent(env.TILE_KEY ?? ""));
+}
 /** OSM's tile policy asks for a real User-Agent and caching; one Worker, a week in the cache, zoom capped. */
 const TILE_UA =
   "seed-bible.svc/1.0 (https://seed-reader.faithnet.io; a Bible reader's places map)";
@@ -430,10 +454,12 @@ app.get("/tiles/:z/:x/:y", async (c) => {
   if (!tileOk(z, x, y)) return c.text("not a tile", 400);
   const cache = (globalThis as unknown as { caches?: { default: Cache } })
     .caches?.default;
-  const key = new Request(`https://tiles.seed-bible.svc/${z}/${x}/${y}.png`);
+  const key = new Request(
+    `https://tiles.seed-bible.svc/${encodeURIComponent((c.env.TILE_SOURCE ?? "osm").slice(0, 40))}/${z}/${x}/${y}.png`
+  );
   const hit = await cache?.match(key);
   if (hit) return hit;
-  const up = await fetch(`${TILE_SOURCE}/${z}/${x}/${y}.png`, {
+  const up = await fetch(tileUrl(c.env, z, x, y), {
     headers: { "user-agent": TILE_UA, accept: "image/png" },
   });
   if (!up.ok) return c.text(`tile source answered ${up.status}`, 502);
@@ -447,6 +473,19 @@ app.get("/tiles/:z/:x/:y", async (c) => {
   if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, res.clone()));
   return res;
 });
+
+/** What the map should credit, and how far it may zoom — the page asks once. */
+app.get("/tiles/info", (c) =>
+  c.json({
+    ok: true,
+    attribution: c.env.TILE_ATTRIBUTION?.trim() || DEFAULT_TILE_ATTRIBUTION,
+    maxZoom: TILE_MAX_ZOOM,
+    source: (c.env.TILE_SOURCE?.trim() || DEFAULT_TILE_SOURCE).replace(
+      /[?&]key=\{key\}/,
+      ""
+    ),
+  })
+);
 
 /** Where a biblical place's geometry comes from: the open geocoding data the old locations extension read. */
 const PLACE_SOURCES = (name: string) => [

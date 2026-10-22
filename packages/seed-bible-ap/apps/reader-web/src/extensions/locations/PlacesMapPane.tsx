@@ -63,14 +63,20 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       const L: Leaflet = await import("leaflet");
       if (dead || !host.current) return;
       if (!mapRef.current) {
+        const info = (await fetch(`${A2A_BASE}/api/tiles-info`)
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)) as {
+          attribution?: string;
+          maxZoom?: number;
+        } | null;
+        if (dead || !host.current) return;
         const map = L.map(host.current, {
           zoomControl: true,
           attributionControl: true,
         }).setView([31.8, 35.2], 7);
         L.tileLayer(`${A2A_BASE}/api/tiles/{z}/{x}/{y}.png`, {
-          maxZoom: 12,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · places: OpenBible.info',
+          maxZoom: info?.maxZoom ?? 12,
+          attribution: `${info?.attribution ?? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'} · places: OpenBible.info`,
         }).addTo(map);
         mapRef.current = map;
         layerRef.current = L.layerGroup().addTo(map);

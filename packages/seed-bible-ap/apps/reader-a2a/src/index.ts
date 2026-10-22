@@ -250,6 +250,16 @@ app.get("/api/tiles/:z/:x/:y", async (c) => {
     },
   });
 });
+app.get("/api/tiles-info", async (c) => {
+  const res = await platformSend(c.env, "/tiles/info", { method: "GET" });
+  return new Response(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "public, max-age=3600",
+    },
+  });
+});
 app.get("/api/places/:name", async (c) => {
   const res = await platformSend(
     c.env,
