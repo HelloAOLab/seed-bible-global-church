@@ -496,7 +496,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (fromUrl && (restored || shared || offering))
       void tab.reading
         .goTo(fromUrl.translationId, fromUrl.bookId, fromUrl.chapterNumber)
-        .then(() => shared && selection.select(shared[0], shared[1]));
+        .then(() => {
+          if (!shared) return;
+          selection.select(shared[0], shared[1]);
+          // The pane brings the linked verse into view once the chapter is on screen (readerViewport.ts).
+          tab.reading.scrollToVerse.value = shared[0];
+        });
     // Coming back to the tab after a refusal that the Home can heal (the agent lacked the reader's behaviour):
     // try again by itself rather than waiting for a tap on Sync now.
     const onBack = () => {

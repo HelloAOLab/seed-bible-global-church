@@ -391,6 +391,8 @@ body {
   position: sticky;
   top: 0;
   box-sizing: border-box;
+  /* Above the reader panes, so the pane-layout menu that opens out of it is not drawn under them. */
+  z-index: 60;
 }
 .sb-app {
   grid-template-columns: auto minmax(0, 1fr);
@@ -453,6 +455,11 @@ body {
 .sb-pane-layout-anchor {
   position: relative;
 }
+/* The pane-layout menu opens out of the sidebar into the reader: it must sit above the panes, and in the phone
+   drawer it is positioned to the viewport so the drawer's own scroll clip cannot cut it off. */
+.sb-pane-layout-menu {
+  z-index: 130;
+}
 @media (max-width: 720px) {
   .sb-app,
   .sb-app-with-pane {
@@ -478,6 +485,12 @@ body {
     inset: 0;
     background: rgba(0, 0, 0, 0.35);
     z-index: 119;
+  }
+  .sb-tabs-sidebar.sb-tabs-sidebar-drawer .sb-pane-layout-menu {
+    position: fixed;
+    top: 3.5rem;
+    inset-inline-start: 0.5rem;
+    width: min(23.25rem, calc(100vw - 1rem));
   }
   .sb-reader-toolbar-phone-only {
     display: block;

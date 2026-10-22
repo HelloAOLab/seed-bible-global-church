@@ -2,7 +2,7 @@
 // translation, book and chapter is open, the chapter's content, the catalogue of translations and books, and
 // next/previous. Text comes from the Bible API straight into the browser (the one permitted third party) and every
 // chapter read is kept on the device, so a chapter read once reads again offline.
-import { computed, signal } from "@preact/signals";
+import { batch, computed, signal } from "@preact/signals";
 import type {
   FreeUseBibleAPI,
   Translation,
@@ -48,6 +48,10 @@ export function createReading(deps: ReadingDeps) {
   const error = signal<string | null>(null);
   /** True when the open chapter came from the device because the API was out of reach. */
   const fromDevice = signal(false);
+  /** Where the pane is scrolled in this chapter — the tab's, restored when the tab comes back (readerViewport.ts). */
+  const scrollPosition = signal(0);
+  /** A verse to bring into view once the chapter is on screen (a `?v=` link); cleared when done. */
+  const scrollToVerse = signal<number | null>(null);
   let generation = 0;
 
   const chapterRef = computed(() => `${bookId.value}.${chapterNumber.value}`);
@@ -95,11 +99,17 @@ export function createReading(deps: ReadingDeps) {
 
   async function goTo(t: string, b: string, c: number) {
     const gen = ++generation;
-    translationId.value = t;
-    bookId.value = b;
-    chapterNumber.value = c;
-    loading.value = true;
-    error.value = null;
+    // One change for whoever watches the position: a chapter opens at its top (a linked verse is asked for after
+    // this returns), and the pane must never see the new chapter with the old offset.
+    batch(() => {
+      scrollPosition.value = 0;
+      scrollToVerse.value = null;
+      translationId.value = t;
+      bookId.value = b;
+      chapterNumber.value = c;
+      loading.value = true;
+      error.value = null;
+    });
     deps.onChange?.({ translationId: t, bookId: b, chapterNumber: c });
     try {
       if (
@@ -175,6 +185,8 @@ export function createReading(deps: ReadingDeps) {
     loading,
     error,
     fromDevice,
+    scrollPosition,
+    scrollToVerse,
     hasNext,
     hasPrev,
     goTo,

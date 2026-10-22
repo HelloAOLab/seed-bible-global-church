@@ -2,13 +2,14 @@
 // title and the translation button, the chapter column, the footnote modal, the skeleton and error states), over
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import type { Reading } from "../../state/reading/reading";
 import { useI18n } from "../../i18n";
 import { renderChapterContent } from "./chapterContent";
 import { ChapterColumn } from "./ChapterColumn";
+import { attachReaderViewport } from "./readerViewport";
 
 interface SelectedFootnote {
   noteId: number;
@@ -31,6 +32,14 @@ export function BibleReader({
   const highlights = state.highlights.forChapter(chapterRef).value;
   const notes = state.annotations.forChapter(chapterRef).value;
   const [footnote, setFootnote] = useState<SelectedFootnote | null>(null);
+  const root = useRef<HTMLDivElement>(null);
+  // Scroll memory, the linked verse and the swipe, for this pane on this tab's reading.
+  useEffect(() => {
+    if (!root.current) return;
+    return attachReaderViewport(root.current, reading, {
+      onNavigate: () => selection.clear(),
+    });
+  }, [reading]);
   const translationLabel =
     reading.translation.value?.shortName ?? reading.translationId.value;
   const saved = state.saves.forPassage(chapterRef).length > 0;
@@ -137,6 +146,7 @@ export function BibleReader({
 
   return (
     <div
+      ref={root}
       className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
       onClick={() => selection.clear()}
     >
