@@ -15,8 +15,11 @@ export const SEED_CONTEXT = {
   at: "https://agentictrustlabs.dev/ns/agentic-trust#",
   prov: "http://www.w3.org/ns/prov#",
   rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+  schema: "https://schema.org/",
   xsd: "http://www.w3.org/2001/XMLSchema#",
   label: "rdfs:label",
+  description: "schema:description",
+  url: { "@id": "schema:url", "@type": "@id" },
   wasAssociatedWith: { "@id": "prov:wasAssociatedWith", "@type": "@id" },
   heldBy: { "@id": "seed:heldBy", "@type": "@id" },
   publishedBy: { "@id": "seed:publishedBy", "@type": "@id" },
@@ -29,6 +32,11 @@ export const SEED_CONTEXT = {
   replyTo: { "@id": "seed:replyTo", "@type": "@id" },
   conflictOf: { "@id": "seed:conflictOf", "@type": "@id" },
   supersedes: "seed:supersedes",
+  hasItem: "seed:hasItem",
+  hasSession: "seed:hasSession",
+  progressOf: { "@id": "seed:progressOf", "@type": "@id" },
+  heroImage: { "@id": "seed:heroImage", "@type": "@id" },
+  completedAt: { "@id": "seed:completedAt", "@type": "xsd:dateTime" },
   createdAt: { "@id": "seed:createdAt", "@type": "xsd:dateTime" },
   updatedAt: { "@id": "seed:updatedAt", "@type": "xsd:dateTime" },
   startedAt: { "@id": "seed:startedAt", "@type": "xsd:dateTime" },
@@ -38,6 +46,8 @@ export const SEED_CONTEXT = {
 /** Keys that are NOT `seed:` properties — mapped by the context; the TTL test allows exactly these. */
 export const NON_SEED_KEYS: Readonly<Record<string, string>> = {
   label: "rdfs:label",
+  description: "schema:description",
+  url: "schema:url",
   wasAssociatedWith: "prov:wasAssociatedWith",
 };
 
@@ -146,6 +156,95 @@ export const ReadingEvent = z.object({
 });
 export type ReadingEvent = z.infer<typeof ReadingEvent>;
 
+// ── Works: playlists and reading plans (Library documents, not bucket items) and plan progress (a bucket item) ──
+export const ScriptureItem = z.object({
+  "@type": z.literal("seed:ScriptureItem"),
+  aboutPassage: osisRef,
+  ofEdition: z.string().min(1).optional(),
+  note: z.string().optional(),
+  noteTitle: z.string().optional(),
+});
+export const HtmlItem = z.object({
+  "@type": z.literal("seed:HtmlItem"),
+  label: z.string().optional(),
+  html: z.string().min(1),
+});
+export const LinkItem = z.object({
+  "@type": z.literal("seed:LinkItem"),
+  label: z.string().optional(),
+  url: z.string().url(),
+  embed: z.boolean().optional(),
+});
+export const PlaylistItem = z.discriminatedUnion("@type", [
+  ScriptureItem,
+  HtmlItem,
+  LinkItem,
+]);
+export type PlaylistItem = z.infer<typeof PlaylistItem>;
+
+const work = {
+  "@id": z.string().min(1),
+  publishedBy: agentRef,
+  label: z.string().min(1),
+  description: z.string().optional(),
+  heroImage: z.string().url().optional(),
+  createdAt: iso.optional(),
+  updatedAt: iso.optional(),
+  deleted: z.boolean().optional(),
+};
+
+export const Playlist = z.object({
+  ...work,
+  "@type": z.literal("seed:Playlist"),
+  hasItem: z.array(PlaylistItem),
+});
+export type Playlist = z.infer<typeof Playlist>;
+
+export const PlanReading = z.object({
+  "@type": z.literal("seed:PlanReading"),
+  "@id": z.string().min(1),
+  item: PlaylistItem,
+});
+export const PlanSession = z.object({
+  "@type": z.literal("seed:PlanSession"),
+  "@id": z.string().min(1),
+  label: z.string().optional(),
+  note: z.string().optional(),
+  readings: z.array(PlanReading),
+});
+export const CadenceOption = z.object({
+  "@type": z.literal("seed:CadenceOption"),
+  "@id": z.string().min(1),
+  label: z.string().min(1),
+  /** How many days each session takes at this cadence (1 = daily). 0 = self-paced. */
+  daysPerSession: z.number().int().nonnegative(),
+});
+export const ReadingPlan = z.object({
+  ...work,
+  "@type": z.literal("seed:ReadingPlan"),
+  hasSession: z.array(PlanSession),
+  cadenceOptions: z.array(CadenceOption).min(1),
+  defaultCadence: z.string().optional(),
+});
+export type ReadingPlan = z.infer<typeof ReadingPlan>;
+
+export const SessionProgress = z.object({
+  "@type": z.literal("seed:SessionProgress"),
+  session: z.string().min(1),
+  completed: z.array(z.string()),
+  completedAt: iso.optional(),
+});
+export const PlanProgress = z.object({
+  ...mark,
+  "@type": z.literal("seed:PlanProgress"),
+  progressOf: z.string().min(1),
+  selectedCadence: z.string().optional(),
+  selfPaced: z.boolean().optional(),
+  startedAt: iso,
+  sessions: z.array(SessionProgress),
+});
+export type PlanProgress = z.infer<typeof PlanProgress>;
+
 export const Offering = z.object({
   "@id": z.string().min(1),
   "@type": z.literal("seed:Offering"),
@@ -171,6 +270,7 @@ export type Offering = z.infer<typeof Offering>;
 
 /** Every record a bucket may hold, discriminated by `@type`. */
 export const BucketItem = z.discriminatedUnion("@type", [
+  PlanProgress,
   Highlight,
   Annotation,
   Bookmark,
@@ -187,5 +287,8 @@ export const SCHEMAS = {
   ReadingPosition,
   ReadingEvent,
   Offering,
+  Playlist,
+  ReadingPlan,
+  PlanProgress,
 } as const;
 export type SeedClass = keyof typeof SCHEMAS;

@@ -1,0 +1,220 @@
+/* Play-playlist view: scrollable queue above a pinned controls bar. */
+.sb-play-playlist {
+  padding-bottom: 0;
+}
+
+.sb-play-playlist-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The cover must not shrink when the queue is long; the body scrolls instead. */
+.sb-play-playlist-body > .sb-hero-banner {
+  flex-shrink: 0;
+}
+
+.sb-play-playlist-about {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-play-playlist-author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-play-playlist-description {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.8;
+  white-space: pre-line;
+}
+
+.sb-play-playlist-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so the whole row is clickable. There's
+   * no sibling button in this row, so all four edges can extend evenly. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline: 10px;
+  margin-block: -8px;
+  margin-inline: -10px;
+}
+
+.sb-play-playlist-item--current {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+}
+
+.sb-play-playlist-item--current .sb-discover-item-title {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-play-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sb-play-controls-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-play-controls-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.sb-play-controls-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-play-controls-button:hover:not(:disabled) {
+  background: var(--sb-divider-color);
+}
+
+.sb-play-controls-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Lets an expanded item's preview wrap onto its own line under the row. */
+.sb-playlist-editor-item {
+  flex-wrap: wrap;
+}
+
+/* Clickable item label that opens the item for editing. */
+.sb-discover-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so more of the row is clickable. Only
+   * the leading edge (and top/bottom) extend into the row's padding — the
+   * trailing edge stays put so the negative margin can't encroach on the
+   * sibling delete button or the gap before it. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline-start: 10px;
+  margin-block: -8px;
+  margin-inline-start: -10px;
+}
+
+.sb-discover-item--editing {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-discover-item--editing .sb-discover-item-title {
+  color: var(--sb-primary-color);
+}
+
+.sb-playlist-description-input {
+  min-height: 4.5rem;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* Unsaved-changes modal: same primary/secondary pair as other app dialogs
+ * (photo crop, profile picture). Secondary is filled so it isn't a ghost
+ * button; primary uses the theme color, never the red "end session" style. */
+.sb-unsaved-changes-actions
+  .sb-photo-modal-button:not(.sb-photo-modal-button-primary) {
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  border-color: var(--sb-secondary-color);
+}
+
+.sb-unsaved-changes-actions
+  .sb-photo-modal-button:not(.sb-photo-modal-button-primary):hover:not(
+    :disabled
+  ) {
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    var(--sb-primary-color) 16%
+  );
+}
+.sb-playlist-add-mode-select {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+/* The native option popup ignores the select's transparent background and
+   renders white, so options need an explicit theme background to keep the
+   inherited font color readable in dark mode. */
+.sb-playlist-add-mode-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+
+.sb-playlist-add-mode-select:hover {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-playlist-item-input {
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Cancel button shown while editing an existing item. */
+.sb-playlist-cancel-edit {
+  margin-top: 8px;
+}

@@ -83,16 +83,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
-  const live = createLiveSession({
-    backend,
-    reading: () => readingOf(),
-    identity: () => backend.identity(),
-  });
-  // The leader's navigation moves the room.
-  effect(() => {
-    readingOf().chapterRef.value;
-    live.leaderMoved();
-  });
   const audio = createChapterAudio({ api });
   const tts = createTextToSpeechManager();
 
@@ -148,6 +138,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     tts.speak(verses, { lang: speechLang() });
   }
 
+  const live = createLiveSession({
+    backend,
+    reading: () => readingOf(),
+    identity: () => backend.identity(),
+  });
+  // The leader's navigation moves the room.
+  effect(() => {
+    readingOf().chapterRef.value;
+    live.leaderMoved();
+  });
   const verses = signal<number[]>([]);
   effect(() => {
     readingOf().chapterRef.value;
