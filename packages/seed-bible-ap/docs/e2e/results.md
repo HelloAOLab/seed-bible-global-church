@@ -1,5 +1,5 @@
-# Flow results — 2026-10-22 18:42 UTC — https://seed-reader.faithnet.io
+# Flow results — 2026-10-22 21:07 UTC — https://seed-reader.faithnet.io
 
 | Flow | Feature | Mark | What was checked | Result |
 | --- | --- | --- | --- | --- |
-| G11 | Guided tour | ✅ | A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it | 5 steps walked to Done; a link with tutorialStep=2 opened on 3 of 5; Escape closed it |
+| G19 | Today in the side pane; friends that need a new sign-in | ✅ | Signed in, with the workspace refusing the friends read for want of permission: Today's sections stack in one column inside the pane; Friends says what is wrong in words with Sign in again, which opens Account — never the raw refusal | 5 sections in one column; the notice asked to sign in again, and its button opened Account |

@@ -483,5 +483,14 @@
   "friends-unreadable": "Your friends could not be read just now.",
   "try-again": "Try again",
   "picture-drop-hint": "Choose a picture, or drop one here",
-  "picture-not-image": "That file is not a picture — choose a JPEG, PNG, GIF or WebP."
+  "picture-not-image": "That file is not a picture — choose a JPEG, PNG, GIF or WebP.",
+  "full-screen-title": "Use the whole screen",
+  "full-screen-install-body": "Install Seed Bible and it opens on its own, without the browser's bars.",
+  "full-screen-ios-1": "Tap Share (the square with an arrow) in Safari's bar.",
+  "full-screen-ios-2": "Choose Add to Home Screen, then Add.",
+  "full-screen-ios-3": "Open Seed Bible from your home screen: it fills the screen, without Safari's bars.",
+  "full-screen-other": "Use your browser's menu: Install app or Add to Home screen, or its full-screen mode (F11 on a computer).",
+  "full-screen-scroll": "In the browser, scrolling down the chapter also folds its bars away.",
+  "full-screen-exit": "Exit full screen",
+  "full-screen": "Full screen"
 }

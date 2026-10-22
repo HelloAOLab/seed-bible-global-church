@@ -1,6 +1,12 @@
 // THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
 // when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
 // then play or listen, notes, Your Content, theme, and the account.
+import {
+  canFullScreen,
+  fullScreen,
+  runningAsApp,
+  toggleFullScreen,
+} from "../../state/chrome/fullScreen";
 import { arrange } from "../../state/chrome/toolbarLayout";
 import { handleGridKeyNav } from "../keyboardNav";
 import { useEffect, useState } from "preact/hooks";
@@ -132,6 +138,23 @@ export function toolbarActions(
       active: ui.pane.value === (`ext:${it.id}` as never),
       onClick: () => it.onSelect(),
     })),
+    // The whole screen: hidden when opened from the home screen (no browser bars to hide).
+    ...(runningAsApp()
+      ? []
+      : [
+          {
+            id: "fullscreen",
+            icon: fullScreen.value ? "fullscreen_exit" : "fullscreen",
+            label: fullScreen.value
+              ? t("full-screen-exit", { defaultValue: "Exit full screen" })
+              : t("full-screen", { defaultValue: "Full screen" }),
+            active: fullScreen.value,
+            onClick: () =>
+              canFullScreen()
+                ? void toggleFullScreen()
+                : (ui.fullScreenHelp.value = true),
+          },
+        ]),
     {
       id: "theme",
       icon: dark ? "light_mode" : "dark_mode",

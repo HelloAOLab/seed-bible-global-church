@@ -44,6 +44,8 @@ export default defineConfig({
         description: "Read, mark and keep Scripture in your own Library.",
         start_url: "/",
         display: "standalone",
+        // Installed on Android: the whole screen where the system allows it, else an app window without browser bars.
+        display_override: ["fullscreen", "standalone"],
         background_color: "#f8fafc",
         theme_color: "#f8fafc",
         icons: [

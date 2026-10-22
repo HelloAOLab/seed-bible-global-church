@@ -10,6 +10,9 @@
   padding: 1rem;
   box-sizing: border-box;
   font-family: var(--sb-font-family);
+  /* A card taller than a small phone scrolls rather than losing its top. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sb-onboarding-card {
@@ -25,6 +28,7 @@
   align-items: center;
   text-align: center;
   gap: 1rem;
+  margin: auto;
 }
 
 .sb-onboarding-logo {
@@ -129,4 +133,20 @@
 
 .sb-onboarding-btn-tertiary:hover {
   opacity: 1;
+}
+
+/* A phone: the card is the whole screen, clear of the notch and home bar. */
+@media (max-width: 720px) {
+  .sb-onboarding-overlay {
+    padding: 0;
+  }
+  .sb-onboarding-card {
+    width: 100%;
+    min-height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    justify-content: center;
+    padding: calc(1.5rem + env(safe-area-inset-top)) 1.5rem
+      calc(1.5rem + env(safe-area-inset-bottom));
+  }
 }

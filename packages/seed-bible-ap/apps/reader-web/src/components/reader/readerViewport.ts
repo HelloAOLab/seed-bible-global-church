@@ -36,6 +36,10 @@ export function swipeOutcome(input: SwipeInput): "next" | "prev" | null {
 }
 
 /** The nearest ancestor that scrolls, else the pane the reader sits in, else the root itself. */
+/** Whether the page itself scrolls the reader (a phone-width layout). */
+export const pageScrolls = () =>
+  typeof matchMedia !== "undefined" && matchMedia("(max-width: 720px)").matches;
+
 export function scrollerOf(root: HTMLElement): HTMLElement {
   for (
     let node = root.parentElement;
@@ -45,6 +49,8 @@ export function scrollerOf(root: HTMLElement): HTMLElement {
     const { overflowY } = getComputedStyle(node);
     if (overflowY === "auto" || overflowY === "scroll") return node;
   }
+  // A phone scrolls the PAGE (styles/app.css), so the browser can fold its own bars away as the reader reads.
+  if (pageScrolls()) return document.scrollingElement as HTMLElement;
   return root.closest<HTMLElement>(".sb-pane-reader") ?? root;
 }
 
@@ -82,8 +88,13 @@ export function attachReaderViewport(
     if (contentMatches(reading))
       reading.scrollPosition.value = scroller.scrollTop;
   };
-  scroller.addEventListener("scroll", onScroll, { passive: true });
-  stops.push(() => scroller.removeEventListener("scroll", onScroll));
+  // The page's scroll is reported on the window, not on its scrolling element.
+  const scrollEvents: EventTarget =
+    typeof document !== "undefined" && scroller === document.scrollingElement
+      ? window
+      : scroller;
+  scrollEvents.addEventListener("scroll", onScroll, { passive: true });
+  stops.push(() => scrollEvents.removeEventListener("scroll", onScroll));
 
   // Restore on a position change (the tab coming back, a navigation: zero), once more when matching content
   // arrives (the first write was clamped against the skeleton), never on later content identity changes. A linked

@@ -419,6 +419,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         ? parseSharedPath(location.pathname)
         : null
     ),
+    /** How to use the whole screen (Safari on an iPhone: add to the home screen); see FullScreenHelp. */
+    fullScreenHelp: signal(false),
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };

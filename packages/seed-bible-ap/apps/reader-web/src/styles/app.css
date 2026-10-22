@@ -197,6 +197,7 @@ body {
 }
 .sb-account-card select {
   font: inherit;
+  max-width: 100%;
 }
 
 /* The verse toolbar, docked above the reader toolbar in this cut (the old one is positioned at the selection). */
@@ -486,9 +487,12 @@ body {
     inset: 0 auto 0 0;
     width: min(20rem, 85vw);
     z-index: 120;
-    background: var(--sb-background-color, #fff);
+    background: var(--sb-background, #fff);
+    color: var(--sb-font-color);
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
     overflow-y: auto;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .sb-drawer-backdrop {
     position: fixed;
@@ -1838,4 +1842,117 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-picture-drop {
   outline: 2px dashed var(--sb-primary-color, #e07a4a);
   outline-offset: 2px;
+}
+
+/* A PHONE USES THE WHOLE SCREEN. The page itself scrolls (not a box inside it), so Safari and Chrome fold their own
+   bars away as the reader reads; the reader runs edge to edge without the desktop frame; a pane is a full screen of
+   its own with its close button, clear of the notch and the home bar; the menu button opens the sidebar drawer. */
+@media (max-width: 720px) {
+  .sb-app-main {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .sb-pane-shell,
+  .sb-pane-reader-outer,
+  .sb-pane-reader,
+  .sb-pane-reader > .sb-bible-reader {
+    overflow: visible;
+    flex: none;
+    min-height: 0;
+  }
+  .sb-pane-shell,
+  .sb-pane-shell-active {
+    border-color: transparent;
+  }
+  .sb-bible-reader {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  .sb-app-pane {
+    inset: 0;
+    max-height: none;
+    border-top: none;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 105;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overscroll-behavior: contain;
+  }
+  .sb-reader-toolbar-phone-only {
+    display: block;
+  }
+}
+
+.sb-fullscreen-steps {
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+/* The phone's top bar holds the menu, the chapter and its arrows, play, More and the account: tight spacing, and the
+   chapter label takes what room is left (shortened with an ellipsis rather than pushing the account off the edge). */
+@media (max-width: 720px) {
+  .sb-reader-toolbar {
+    --sb-reader-toolbar-gap: 0;
+    padding: 0.125rem 0.25rem;
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-button {
+    padding-inline: 0.4rem;
+    min-width: 0;
+  }
+  /* Block, not the buttons' centered flex: a centered flex row clips a long name at both ends ("›hn") instead of
+     ending it with an ellipsis. */
+  .sb-reader-toolbar .sb-reader-toolbar-center-button {
+    display: block;
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sb-selector-overlay {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* The old reader locked the document in place on a phone (base.css: html, body fixed, overflow hidden) so a pull past
+   its bottom toolbar showed no white gap — but a page that never scrolls never lets Safari or Chrome fold their own
+   bars away. The page scrolls now; the gap is closed by giving the page the reader's colour and no overscroll bounce. */
+@media (max-width: 720px) {
+  html,
+  body {
+    position: static;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    overscroll-behavior-y: none;
+    background: var(--sb-reader-background, var(--sb-background));
+  }
+}
+/* The smallest phones (an iPhone SE is 320 px wide): smaller buttons so the account stays on the bar. */
+@media (max-width: 360px) {
+  .sb-reader-toolbar .sb-reader-toolbar-button {
+    padding-inline: 0.2rem;
+  }
+  .sb-reader-toolbar .material-symbols-outlined {
+    font-size: 1.25rem;
+  }
+  .sb-reader-toolbar-divider {
+    display: none;
+  }
+  .sb-reader-toolbar > .sb-reader-toolbar-item {
+    flex: 0 0 2.25rem;
+    min-width: 2.25rem;
+  }
+  .sb-reader-toolbar
+    > .sb-reader-toolbar-item:has(.sb-reader-toolbar-center-button) {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
 }

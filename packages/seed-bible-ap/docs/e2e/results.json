@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-22 18:42 UTC",
+  "when": "2026-10-22 21:07 UTC",
   "results": [
     {
-      "id": "G11",
-      "section": "13. Getting started",
-      "title": "Guided tour",
-      "checks": "A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it",
+      "id": "G19",
+      "section": "8. Today, Discover and publishing",
+      "title": "Today in the side pane; friends that need a new sign-in",
+      "checks": "Signed in, with the workspace refusing the friends read for want of permission: Today's sections stack in one column inside the pane; Friends says what is wrong in words with Sign in again, which opens Account — never the raw refusal",
       "mark": "✅",
-      "note": "5 steps walked to Done; a link with tutorialStep=2 opened on 3 of 5; Escape closed it",
-      "ms": 5822
+      "note": "5 sections in one column; the notice asked to sign in again, and its button opened Account",
+      "ms": 2270
     }
   ]
 }

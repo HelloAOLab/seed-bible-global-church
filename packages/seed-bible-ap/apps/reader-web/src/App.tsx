@@ -1,5 +1,6 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
+import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
 import { FriendsPane } from "./components/social/FriendsPane";
@@ -163,6 +164,7 @@ export function App({ state }: { state: ReaderState }) {
       <ShareDialog state={state} />
       {state.ui.shared.value && <SharedPageView state={state} />}
       <Tour state={state} />
+      <FullScreenHelp state={state} />
       <Onboarding state={state} />
     </div>
   );

@@ -1,6 +1,7 @@
 // FIRST VISIT — ported in shape from packages/seed-bible Onboarding: one card over the reader on the first visit of
 // a device: what this is, sign in with the Home or just read, and install the app where the browser offers it.
 // Dismissed once; the flag is a device preference.
+import { installPrompt } from "../../state/chrome/fullScreen";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -10,18 +11,6 @@ import {
   connectViaHome,
 } from "../../session";
 import { estateById } from "../../../../../estate/faithnet";
-
-interface InstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-let deferredInstall: InstallPromptEvent | null = null;
-if (typeof window !== "undefined")
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredInstall = e as InstallPromptEvent;
-  });
 
 export const ONBOARDING_KEY = "onboarding:done";
 
@@ -113,12 +102,12 @@ export function Onboarding({ state }: { state: ReaderState }) {
           >
             {t("onboarding-tour", { defaultValue: "Take the tour" })}
           </button>
-          {deferredInstall && !standalone && (
+          {installPrompt.value && !standalone && (
             <button
               className="sb-onboarding-btn sb-onboarding-btn-tertiary"
               onClick={() => {
-                const p = deferredInstall;
-                deferredInstall = null;
+                const p = installPrompt.value;
+                installPrompt.value = null;
                 void p?.prompt().then(() => done());
               }}
             >
