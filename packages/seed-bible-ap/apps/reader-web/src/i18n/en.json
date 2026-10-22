@@ -472,5 +472,11 @@
   "customization-preview-verse-god": "God",
   "customization-preview-verse-end": ", and the Word was God.",
   "customization-primaryColor": "Primary",
-  "customization-secondaryColor": "Secondary"
+  "customization-secondaryColor": "Secondary",
+  "theographic-empty": "Open a person, place or event from Discover.",
+  "theographic-unreadable": "This record could not be read.",
+  "theographic-also": "Also called",
+  "show-less": "Show less",
+  "show-more": "Show more",
+  "theographic-passages": "In {{count}} passages"
 }

@@ -1,0 +1,26 @@
+/* A Theographic card: the name, a line of facts, the description, then relations and passages as rows of chips. */
+.sb-theo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-theo-name {
+  margin: 0.25rem 0 0;
+}
+.sb-theo-description p {
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+.sb-theo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+.sb-theo-back {
+  align-self: flex-start;
+}
+.sb-theo-credit {
+  margin-top: 0.5rem;
+}

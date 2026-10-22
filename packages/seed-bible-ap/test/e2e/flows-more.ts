@@ -1864,6 +1864,77 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "G17",
+    section: "12. Extensions",
+    title: "Videos and articles in Discover",
+    rows: ["Videos and articles"],
+    checks:
+      "On Matthew 26, Discover → Videos and articles lists Expedition Bible's Upper Room video and BibleProject's Matthew overview; tapping one opens its own page in a new tab",
+    run: async (c) => {
+      await c.open("/read/BSB/MAT/26");
+      await c.pressToolbar("Discover");
+      const section = c
+        .pane()
+        .locator(".sb-content-section", { hasText: "Videos and articles" });
+      await c.waitText(section, /Upper Room|Last Supper/i, 20000);
+      await c.waitText(section, /BibleProject/, 5000);
+      const count = await section.locator(".sb-discover-item").count();
+      const [popup] = await Promise.all([
+        c.page.waitForEvent("popup", { timeout: 10000 }),
+        section
+          .locator(".sb-discover-item", { hasText: /Last Supper/i })
+          .first()
+          .locator("button")
+          .click(),
+      ]);
+      const url = popup.url();
+      await popup.close();
+      if (!/youtube\.com/.test(url)) throw new Error(`opened ${url}`);
+      return `${count} items for Matthew 26; the Upper Room video opened ${url.slice(0, 50)}`;
+    },
+  },
+  {
+    id: "G18",
+    section: "12. Extensions",
+    title: "People, places and events",
+    rows: ["People, places and events"],
+    checks:
+      "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan; Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/12");
+      await c.pressToolbar("Discover");
+      const section = c
+        .pane()
+        .locator(".sb-content-section", {
+          hasText: "People, places and events",
+        });
+      await c.waitText(section, /Abraham enters Canaan/, 20000);
+      await c.waitText(section, /Haran/, 5000);
+      await section
+        .locator(".sb-discover-item", { hasText: /^\s*person\s*Abraham/ })
+        .first()
+        .locator("button")
+        .click();
+      const card = c.page.locator(".sb-theo-card");
+      await c.waitText(card, /BC/, 20000);
+      const name = (await card.locator(".sb-theo-name").innerText()).trim();
+      if (name !== "Abraham") throw new Error(`card for ${name}`);
+      const firstRelation = card
+        .locator(".sb-theo-relation .sb-note-button")
+        .first();
+      const other = (await firstRelation.innerText()).trim();
+      await firstRelation.click();
+      await c.waitText(card.locator(".sb-theo-name"), new RegExp(other), 20000);
+      await card.locator(".sb-theo-back").click();
+      await c.waitText(card.locator(".sb-theo-name"), /Abraham/, 10000);
+      const ref = card.locator(".sb-theo-ref").nth(1);
+      const label = (await ref.innerText()).trim();
+      await ref.click();
+      await c.page.waitForURL(/\/read\//, { timeout: 10000 });
+      return `Abraham's card; ${other}'s card and Back; ${label} opened at ${new URL(c.page.url()).pathname}`;
+    },
+  },
+  {
     id: "G10",
     section: "3. Reading",
     title: "Customize the bottom toolbar",
