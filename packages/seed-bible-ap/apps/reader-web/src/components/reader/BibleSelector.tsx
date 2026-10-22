@@ -1,9 +1,17 @@
 // THE SELECTOR — the old BibleSelector's overlay panel (`sb-selector-overlay` / `sb-selector-panel` and the books,
-// chapters and translation lists its stylesheet dresses), with the search box; without the apocrypha info,
-// offline downloads and tutorial tour of the full component.
+// chapters and translation lists its stylesheet dresses), with the search box and the testament filter (All / Old /
+// New, and the Apocrypha when the translation carries it).
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { handleGridKeyNav, handleVerticalListKeyNav } from "../keyboardNav";
+import {
+  groupByTestament,
+  testamentChoices,
+  type Testament,
+  type TestamentFilter,
+} from "../../state/reading/testaments";
+import type { TranslationBook } from "../../backend/bible";
 
 export function BibleSelector({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -11,6 +19,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   const { reading } = state;
   const [search, setSearch] = useState("");
   const [bookPick, setBookPick] = useState<string | null>(null);
+  const [testament, setTestament] = useState<TestamentFilter>("all");
 
   useEffect(() => {
     if (mode === "translations") void reading.loadTranslations();
@@ -24,6 +33,15 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   const close = () => (state.ui.selector.value = null);
   const q = search.trim().toLowerCase();
 
+  const choices = testamentChoices(reading.books.value);
+  const testamentLabel = (x: TestamentFilter) =>
+    x === "all"
+      ? t("allBooks", { defaultValue: "All books" })
+      : x === "old"
+        ? t("old-testament", { defaultValue: "Old Testament" })
+        : x === "new"
+          ? t("new-testament", { defaultValue: "New Testament" })
+          : t("apocrypha", { defaultValue: "Apocrypha" });
   const books = reading.books.value.filter(
     (b) =>
       !q ||
@@ -41,6 +59,40 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   );
   const picked = bookPick ?? (q ? null : reading.bookId.value);
   const pickedBook = reading.books.value.find((b) => b.id === picked) ?? null;
+
+  const BookRows = ({ books: list }: { books: TranslationBook[] }) => (
+    <div className="sb-selector-books-grid">
+      {list.map((b) => (
+        <div key={b.id} className="sb-selector-books-row">
+          <button
+            className={`sb-selector-book-button${b.id === reading.bookId.value ? " sb-selector-book-button-current" : ""}`}
+            onClick={() => setBookPick(b.id === bookPick ? null : b.id)}
+            aria-expanded={picked === b.id}
+          >
+            <span className="sb-selector-book-button-name">{b.name}</span>
+          </button>
+          {picked === b.id && (
+            <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
+              {Array.from({ length: b.numberOfChapters }, (_, i) => i + 1).map(
+                (c) => (
+                  <button
+                    key={c}
+                    className={`sb-selector-chapter-button${b.id === reading.bookId.value && c === reading.chapterNumber.value ? " sb-selector-chapter-button-current" : ""}`}
+                    onClick={() => {
+                      void reading.goTo(reading.translationId.value, b.id, c);
+                      close();
+                    }}
+                  >
+                    {c}
+                  </button>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="sb-selector-overlay open" onClick={close}>
@@ -95,56 +147,78 @@ export function BibleSelector({ state }: { state: ReaderState }) {
         </div>
 
         {mode === "books" ? (
-          <div className="sb-selector-grid">
-            <div className="sb-selector-books-grid">
-              {books.map((b) => (
-                <div key={b.id} className="sb-selector-books-row">
-                  <button
-                    className={`sb-selector-book-button${b.id === reading.bookId.value ? " sb-selector-book-button-current" : ""}`}
-                    onClick={() => setBookPick(b.id === bookPick ? null : b.id)}
-                    aria-expanded={picked === b.id}
-                  >
-                    <span className="sb-selector-book-button-name">
-                      {b.name}
-                    </span>
-                  </button>
-                  {picked === b.id && (
-                    <div className="sb-selector-chapter-grid sb-selector-chapter-grid-inline">
-                      {Array.from(
-                        { length: b.numberOfChapters },
-                        (_, i) => i + 1
-                      ).map((c) => (
-                        <button
-                          key={c}
-                          className={`sb-selector-chapter-button${b.id === reading.bookId.value && c === reading.chapterNumber.value ? " sb-selector-chapter-button-current" : ""}`}
-                          onClick={() => {
-                            void reading.goTo(
-                              reading.translationId.value,
-                              b.id,
-                              c
-                            );
-                            close();
-                          }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          <div
+            className="sb-selector-grid"
+            onKeyDown={(e) =>
+              handleGridKeyNav(
+                e as KeyboardEvent,
+                e.currentTarget as HTMLElement
+              )
+            }
+          >
+            <div className="sb-selector-testament-picker" role="tablist">
+              {choices.map((x) => (
+                <button
+                  key={x}
+                  role="tab"
+                  aria-selected={testament === x}
+                  className={`sb-selector-pane-chip${testament === x ? " sb-selector-pane-chip-selected" : ""}`}
+                  onClick={() => setTestament(x)}
+                >
+                  {testamentLabel(x)}
+                </button>
               ))}
-              {!books.length && (
-                <p className="sb-selector-section-title">
-                  {t("no-search-results", { defaultValue: "Nothing matches." })}
-                </p>
-              )}
             </div>
+            {(() => {
+              const groups = groupByTestament(books);
+              const shown: Testament[] =
+                testament === "all"
+                  ? (["old", "new", "apocrypha"] as const).filter(
+                      (g) => groups[g].length
+                    )
+                  : [testament];
+              return shown.map((g) => (
+                <section key={g} className="sb-selector-testament">
+                  {testament === "all" && (
+                    <h3 className="sb-selector-section-title">
+                      {testamentLabel(g)}
+                    </h3>
+                  )}
+                  {!groups[g].length && !q && (
+                    <p className="sb-selector-section-title sb-muted">
+                      {t("testament-missing", {
+                        name: testamentLabel(g),
+                        translation:
+                          reading.translation.value?.shortName ??
+                          reading.translationId.value,
+                        defaultValue:
+                          "{{translation}} has no {{name}}. Pick another translation to read it.",
+                      })}
+                    </p>
+                  )}
+                  <BookRows books={groups[g]} />
+                </section>
+              ));
+            })()}
+            {!books.length && (
+              <p className="sb-selector-section-title">
+                {t("no-search-results", { defaultValue: "Nothing matches." })}
+              </p>
+            )}
             {pickedBook && !q && (
               <div className="sb-selector-column-divider" aria-hidden="true" />
             )}
           </div>
         ) : (
-          <div className="sb-selector-grid sb-translation-list">
+          <div
+            className="sb-selector-grid sb-translation-list"
+            onKeyDown={(e) =>
+              handleVerticalListKeyNav(
+                e as KeyboardEvent,
+                e.currentTarget as HTMLElement
+              )
+            }
+          >
             {!translations.length && (
               <p className="sb-selector-section-title">
                 {reading.translations.value.length

@@ -11,8 +11,9 @@ This folder is the architecture for Seed Bible on the agenticprimitives substrat
 | [realtime-collaboration.md](./realtime-collaboration.md) | Live sessions, discussion board, huddles, and integrations — A2A control plane, Agents SDK room on the reader-a2a origin                                                                                                                             |
 | [repo-layout.md](./repo-layout.md)                       | Every folder under `packages/seed-bible-ap` and what goes in it                                                                                                                                                                                      |
 | [hard-problems.md](./hard-problems.md)                   | The difficult design problems (vault as file shelf, async writes, merge, friends-only visibility, first-run consent, session state, streaming hops, secrets, org acts, registry, offline, SSR, skew, testing), each with approach and open questions |
+| [gap-analysis.md](./gap-analysis.md)                     | Second scan: every old capability vs what ships, plus the test-rig comparison (old quality approaches → same or better here, and what is still open)                                                                                              |
 
-Quality: [`../test-plan.md`](../test-plan.md) — where each old testing approach went, the harness build order, and the run procedure.
+Quality: [`../test-plan.md`](../test-plan.md) — harness build and run procedure. Gaps between the old suite and this package: [gap-analysis.md §10](./gap-analysis.md).
 
 **Scope rule.** Only `packages/seed-bible-ap/` changes in this repository (see [`AGENTS.md`](../../AGENTS.md), [ADR-0001](../adr/0001-only-this-folder-changes.md)). Other packages are read-only sources to port from; the only permitted side effect is the regenerated root `pnpm-lock.yaml`.
 

@@ -147,6 +147,17 @@ export function BibleReader({
   return (
     <div
       ref={root}
+      onContextMenu={(e: MouseEvent) => {
+        // A right-click on a verse opens the verse toolbar as a menu at the pointer (the old ContextMenu).
+        const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+          "[data-verse-number]"
+        );
+        if (!el || !active) return;
+        e.preventDefault();
+        const n = Number(el.dataset["verseNumber"]);
+        if (!selection.verses.value.includes(n)) selection.select(n, n);
+        ui.verseMenuAt.value = { x: e.clientX, y: e.clientY };
+      }}
       className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
       onClick={() => selection.clear()}
     >

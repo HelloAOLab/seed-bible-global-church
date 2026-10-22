@@ -2,6 +2,8 @@
 
 Coverage means the new stack must do the thing. `packages/seed-bible` stays on CasualOS at seedbible.org until the row works on the triad.
 
+Honest depth (parity vs thin vs missing, including the test rig): [gap-analysis.md](./gap-analysis.md). A ✓ here is “the happy path exists”; that file says whether the old sub-capabilities are there.
+
 Columns:
 
 - **Today** — where it lives in this repository now

@@ -2,10 +2,11 @@
 // observable result. Signed-out flows first (device-only marks), then the sample person (the vault), then two
 // devices in a session. Add a flow for every new feature row; the runner writes the marks the manual carries.
 import type { Flow } from "./harness";
+import { MORE_FLOWS } from "./flows-more";
 
 const CH = "/read/BSB/JHN/3";
 
-export const FLOWS: Flow[] = [
+const BASE_FLOWS: Flow[] = [
   // ── 3. Reading ─────────────────────────────────────────────────────────────────────────────────────────────
   {
     id: "R1",
@@ -608,3 +609,5 @@ export const FLOWS: Flow[] = [
     },
   },
 ];
+
+export const FLOWS: Flow[] = [...BASE_FLOWS, ...MORE_FLOWS];

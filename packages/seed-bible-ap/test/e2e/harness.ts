@@ -141,6 +141,35 @@ export class FlowContext {
       .click();
   }
 
+  /** The account pane, signed in or not (the toolbar item is "Sign in" or "Account settings"). */
+  async openAccount(page: Page = this.page): Promise<Locator> {
+    const signedIn = await page
+      .locator('.sb-reader-toolbar button[aria-label="Account settings"]')
+      .count();
+    await this.pressToolbar(signedIn ? "Account settings" : "Sign in", page);
+    await this.pane(page).waitFor({ timeout: 5000 });
+    return this.pane(page);
+  }
+
+  /** The Library pane on one of its tabs. */
+  async openLibrary(
+    tab: "Playlists" | "Reading plans" | "Customizations",
+    page: Page = this.page
+  ): Promise<Locator> {
+    await this.pressToolbar("Library", page);
+    await this.pane(page).waitFor({ timeout: 5000 });
+    await this.pane(page).getByRole("tab", { name: tab }).click();
+    return this.pane(page);
+  }
+
+  /** A checkbox in a pane by the text of its label. */
+  check(scope: Locator, label: string | RegExp): Locator {
+    return scope
+      .locator("label", { hasText: label })
+      .locator('input[type="checkbox"]')
+      .first();
+  }
+
   pane(page: Page = this.page): Locator {
     return page.locator(".sb-app-pane").first();
   }

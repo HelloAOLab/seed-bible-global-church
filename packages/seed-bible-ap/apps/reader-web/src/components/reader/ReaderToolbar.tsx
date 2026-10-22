@@ -1,6 +1,7 @@
 // THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
 // when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
 // then play or listen, notes, Your Content, theme, and the account.
+import { handleGridKeyNav } from "../keyboardNav";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -261,7 +262,13 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         onClick={() => setMoreOpen((o) => !o)}
       />
       {moreOpen && (
-        <div className="sb-reader-toolbar-more-menu" role="menu">
+        <div
+          className="sb-reader-toolbar-more-menu"
+          role="menu"
+          onKeyDown={(e) =>
+            handleGridKeyNav(e as KeyboardEvent, e.currentTarget as HTMLElement)
+          }
+        >
           {secondary.map((a) => (
             <button
               key={a.id}

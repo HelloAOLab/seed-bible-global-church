@@ -1,10 +1,12 @@
 // THE VERSE TOOLBAR — what the old BibleReaderToolbar shows over a selection: the reference, the highlight
 // swatches, note, clear and close (`sb-verse-toolbar-*` from the copied stylesheet).
+import { handleHorizontalListKeyNav } from "../keyboardNav";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { passageOf } from "../../state/records/marks";
 import { shareUrl } from "../../state/reading/route";
+import { getVersePlainText } from "./chapterContent";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -16,6 +18,12 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const end = Math.max(...verses);
   const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
   const [shared, setShared] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(t);
+  }, [copied]);
   useEffect(() => {
     if (!shared) return;
     const t = setTimeout(() => setShared(false), 1800);
@@ -51,16 +59,60 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       : verses.some((n) => n >= v[0] && n <= v[1]);
   });
 
+  /** The verses' text with their reference — what Copy puts on the clipboard. */
+  const copyText = async () => {
+    const chapter = reading.chapterData.value;
+    if (!chapter) return;
+    const text = chapter.chapter.content
+      .flatMap((c) =>
+        c &&
+        typeof c === "object" &&
+        c.type === "verse" &&
+        c.number >= start &&
+        c.number <= end
+          ? [getVersePlainText(c.content)]
+          : []
+      )
+      .join(" ");
+    const label =
+      reading.translation.value?.shortName ?? reading.translationId.value;
+    try {
+      await navigator.clipboard.writeText(`${text}\n— ${ref} (${label})`);
+      setCopied(true);
+    } catch {
+      /* the clipboard refused */
+    }
+  };
+  const menuAt = state.ui.verseMenuAt.value;
+  // As a right-click menu the toolbar opens at the pointer, kept on screen.
+  const menuStyle = menuAt
+    ? {
+        left: `${Math.max(8, Math.min(menuAt.x, window.innerWidth - 380))}px`,
+        top: `${Math.max(8, Math.min(menuAt.y, window.innerHeight - 140))}px`,
+        bottom: "auto",
+        transform: "none",
+      }
+    : undefined;
+
   return (
     <div
-      className="sb-verse-toolbar sb-verse-toolbar-docked"
-      role="toolbar"
+      className={`sb-verse-toolbar ${menuAt ? "sb-verse-toolbar-menu" : "sb-verse-toolbar-docked"}`}
+      role={menuAt ? "menu" : "toolbar"}
+      style={menuStyle}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
       <div className="sb-verse-toolbar-ref">
         <span className="sb-verse-toolbar-ref-text">{ref}</span>
       </div>
-      <div className="sb-verse-toolbar-tools">
+      <div
+        className="sb-verse-toolbar-tools"
+        onKeyDown={(e) =>
+          handleHorizontalListKeyNav(
+            e as KeyboardEvent,
+            e.currentTarget as HTMLElement
+          )
+        }
+      >
         <div className="sb-verse-toolbar-swatches">
           {state.highlights.colors.map((c) => (
             <button
@@ -170,6 +222,19 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             {shared
               ? t("link-copied", { defaultValue: "Copied" })
               : t("share-verses", { defaultValue: "Share" })}
+          </span>
+        </button>
+        <button
+          className="sb-verse-toolbar-action sb-verse-toolbar-copy"
+          onClick={() => void copyText()}
+        >
+          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
+            {copied ? "check" : "content_copy"}
+          </span>
+          <span className="sb-verse-toolbar-action-label">
+            {copied
+              ? t("link-copied", { defaultValue: "Copied" })
+              : t("copy-verse", { defaultValue: "Copy" })}
           </span>
         </button>
         <button

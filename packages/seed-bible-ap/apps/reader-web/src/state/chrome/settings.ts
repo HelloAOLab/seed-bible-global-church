@@ -50,6 +50,7 @@ interface Persisted {
   margins?: Margins;
   uiScale?: UiScale;
   scripture?: Partial<ScriptureElementsBehavior>;
+  keepScreenAwake?: boolean;
 }
 
 function read(): Persisted {
@@ -72,6 +73,8 @@ export function createSettings(deps: SettingsDeps = {}) {
   const lineHeight = signal<LineHeight>(saved.lineHeight ?? "normal");
   const margins = signal<Margins>(saved.margins ?? "normal");
   const uiScale = signal<UiScale>(saved.uiScale ?? "m");
+  /** Keep the screen on while the reader is open (state/chrome/wakeLock.ts). */
+  const keepScreenAwake = signal(saved.keepScreenAwake === true);
   const scripture = signal<ScriptureElementsBehavior>({
     showVerseNumbers: true,
     showHeadings: true,
@@ -138,6 +141,7 @@ export function createSettings(deps: SettingsDeps = {}) {
         margins: margins.value,
         uiScale: uiScale.value,
         scripture: scripture.value,
+        keepScreenAwake: keepScreenAwake.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
     } catch {
@@ -156,6 +160,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     margins,
     uiScale,
     scripture,
+    keepScreenAwake,
     resolvedTheme,
     toggleTheme,
     dispose,

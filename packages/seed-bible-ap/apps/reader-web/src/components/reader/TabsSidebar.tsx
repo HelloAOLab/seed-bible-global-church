@@ -1,6 +1,7 @@
 // THE TABS SIDEBAR — the old reader's left rail (`sb-tabs-sidebar`): the tab list with each tab's title and
 // translation, the add button, and the pane-layout picker with its little previews. Dressed by the copied
 // `tabs.css` / `pane-layout.css`.
+import { handleGridKeyNav } from "../keyboardNav";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -94,7 +95,16 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               <span className="material-symbols-outlined">view_column</span>
             </button>
             {layoutOpen && (
-              <div className="sb-pane-layout-menu" role="menu">
+              <div
+                className="sb-pane-layout-menu"
+                role="menu"
+                onKeyDown={(e) =>
+                  handleGridKeyNav(
+                    e as KeyboardEvent,
+                    e.currentTarget as HTMLElement
+                  )
+                }
+              >
                 <div className="sb-pane-layout-menu-title">
                   {t("pane-layout", { defaultValue: "Pane layout" })}
                 </div>

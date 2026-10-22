@@ -301,5 +301,12 @@
   "setting-uiScale-s": "Small",
   "setting-uiScale-m": "Normal",
   "setting-uiScale-l": "Large",
-  "note-on-selection": "Write a note on {{ref}}"
+  "note-on-selection": "Write a note on {{ref}}",
+  "allBooks": "All books",
+  "old-testament": "Old Testament",
+  "new-testament": "New Testament",
+  "apocrypha": "Apocrypha",
+  "testament-missing": "{{translation}} has no {{name}}. Pick another translation to read it.",
+  "keep-screen-awake": "Keep the screen on while the reader is open",
+  "copy-verse": "Copy"
 }

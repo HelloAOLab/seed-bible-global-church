@@ -1,6 +1,6 @@
 // DISCOVER — what Seed Bible agents released for the chapter on screen, from the Seed registry through the
 // workspace: published notes, studies, offerings. Dressed by the copied `discover.css` (`sb-discover-*`).
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState, useRef } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
@@ -21,16 +21,22 @@ function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
   const { t } = useI18n();
   const focused = state.discover.focus.value === o.descriptorId;
   const [open, setOpen] = useState(focused);
+  const item = useRef<HTMLLIElement>(null);
+  // A link to one published note (`?offering=`) opens Discover on it: expanded and scrolled into view.
   useEffect(() => {
     if (focused) {
       setOpen(true);
       state.discover.focus.value = null;
+      requestAnimationFrame(() =>
+        item.current?.scrollIntoView({ block: "center", behavior: "smooth" })
+      );
     }
   }, [focused]);
   const body = open ? state.discover.body(o).value : null;
   const mine = state.backend.identity()?.agent === o.owner;
   return (
     <li
+      ref={item}
       className={`sb-discover-item sb-discover-item--row sb-discover-item--clickable${open ? " sb-discover-item--open" : ""}`}
     >
       <button

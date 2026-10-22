@@ -1,4 +1,5 @@
 import { Avatar } from "./ConnectedChip";
+import { wakeLockSupported } from "../../state/chrome/wakeLock";
 import type { Connector, Org } from "../../backend/ReaderBackend";
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
 // plus where the reader's marks stand: on this device only, or in their Library through their own agent.
@@ -648,6 +649,23 @@ export function AccountPane({ state }: { state: ReaderState }) {
         <p className="sb-small">
           <strong>{t("listening", { defaultValue: "Listening" })}</strong>
         </p>
+        {wakeLockSupported() && (
+          <label className="sb-small sb-check">
+            <input
+              type="checkbox"
+              checked={state.settings.keepScreenAwake.value}
+              onChange={(e) =>
+                (state.settings.keepScreenAwake.value = (
+                  e.target as HTMLInputElement
+                ).checked)
+              }
+            />{" "}
+            {t("keep-screen-awake", {
+              defaultValue: "Keep the screen on while the reader is open",
+            })}
+          </label>
+        )}
+        <p className="sb-small"></p>
         <label className="sb-small sb-check">
           <input
             type="checkbox"

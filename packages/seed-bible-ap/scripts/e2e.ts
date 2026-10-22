@@ -74,10 +74,19 @@ for (const flow of FLOWS) {
       ms: Date.now() - t0,
     });
     console.log(`✗ ${flow.id} ${flow.title} — ${err}${extra}`);
-    if (shots)
+    if (shots) {
+      const dir = process.env["E2E_ARTIFACTS"] ?? outDir;
+      mkdirSync(dir, { recursive: true });
       await ctx.page
-        .screenshot({ path: `${outDir}/${flow.id}.png` })
+        .screenshot({ path: `${dir}/${flow.id}.png` })
         .catch(() => undefined);
+      const pane = await ctx.page
+        .locator(".sb-app-pane")
+        .first()
+        .innerHTML()
+        .catch(() => "");
+      if (pane) writeFileSync(`${dir}/${flow.id}.pane.html`, pane);
+    }
   } finally {
     await ctx.context.close().catch(() => undefined);
   }

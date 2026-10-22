@@ -1,6 +1,10 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import { isTypingTarget, readerKeyAction } from "./chrome/keys";
+import { defaultTranslationFor } from "./reading/defaultTranslation";
+import { bindWakeLock } from "./chrome/wakeLock";
+import { language } from "../i18n";
 import { signal } from "@preact/signals";
 import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
 import type { ReaderBackend } from "../backend/ReaderBackend";
@@ -375,6 +379,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarDrawer: signal(false),
     /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
     embed: signal(false),
+    /** The verse toolbar opened as a menu at the pointer (a right-click on a verse); null when docked. */
+    verseMenuAt: signal<{ x: number; y: number } | null>(null),
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };
@@ -395,6 +401,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     )
       return "wire";
     return null;
+  });
+  // The right-click menu closes with the selection.
+  effect(() => {
+    if (!verses.value.length) ui.verseMenuAt.value = null;
   });
   // A device's selected verse is its presence in the room.
   effect(() => {
@@ -488,7 +498,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     const target = fromUrl ?? (await position.load());
     const saved = (await stores.prefs.get(TABS_KEY)) as SavedTabs | undefined;
     const restored = restoreTabs(saved);
-    const tab = restored ?? tabs.addTab(target ?? {});
+    // A device's very first visit opens a Bible in its interface language (the old DEFAULT_TRANSLATIONS_BY_LANGUAGE).
+    const tab =
+      restored ??
+      tabs.addTab(
+        target ?? { translationId: defaultTranslationFor(language.value) }
+      );
     tabsRestored = true;
     if (offering) {
       discover.focus.value = offering;
@@ -516,7 +531,39 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     };
     if (typeof document !== "undefined")
       document.addEventListener("visibilitychange", onBack);
+    // The reader's keys (state/chrome/keys.ts), on the selected tab.
+    const onKey = (e: KeyboardEvent) => {
+      const r = readingOf();
+      const action = readerKeyAction(e.key, {
+        rtl: r.translation.value?.textDirection === "rtl",
+        hasNext: r.hasNext.value,
+        hasPrev: r.hasPrev.value,
+        typing: isTypingTarget(e.target),
+        modifier: e.altKey || e.ctrlKey || e.metaKey || e.shiftKey,
+      });
+      if (!action) return;
+      if (action === "escape") {
+        if (ui.selector.value) ui.selector.value = null;
+        else if (ui.sidebarDrawer.value) ui.sidebarDrawer.value = false;
+        else if (verses.value.length) selection.clear();
+        else if (ui.pane.value !== "none") ui.pane.value = "none";
+        else return;
+        e.preventDefault();
+        return;
+      }
+      e.preventDefault();
+      if (action === "search") {
+        ui.pane.value = "content";
+        return;
+      }
+      selection.clear();
+      void (action === "next" ? r.next() : r.prev());
+    };
+    const keysOn = typeof window !== "undefined";
+    if (keysOn) window.addEventListener("keydown", onKey);
     const stops = [
+      () => keysOn && window.removeEventListener("keydown", onKey),
+      bindWakeLock(settings.keepScreenAwake),
       bindRoute(readingOf),
       outbox.start(),
       presence.start(),
