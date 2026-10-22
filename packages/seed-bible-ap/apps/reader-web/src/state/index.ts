@@ -11,6 +11,7 @@ import { createBucketStore, separateForeign } from "./records/buckets";
 import { createDiscover } from "./social/discover";
 import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
+import { createPresence } from "./social/presence";
 import { createLiveSession } from "./sessions/live";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
@@ -49,6 +50,8 @@ export interface ReaderStateOptions {
   isOnline?: () => boolean;
   /** How long a chapter stays open before it counts as read (tests shorten it). */
   readDwellMs?: number;
+  /** How often the device tells friends where it is reading (tests shorten it). */
+  presenceBeatMs?: number;
 }
 
 /** How long a chapter stays open before it counts as read. */
@@ -169,6 +172,26 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     tts.speak(verses, { lang: speechLang() });
   }
 
+  const presence = createPresence({
+    backend,
+    stores,
+    here: () => {
+      const r = readingOf();
+      if (!r.chapterData.value) return null;
+      const edition = r.translation.value?.shortName ?? r.translationId.value;
+      return {
+        scope: r.chapterRef.value,
+        label: `reading ${r.bookName.value} ${r.chapterNumber.value} · ${edition}`,
+      };
+    },
+    ...(opts.presenceBeatMs ? { beatMs: opts.presenceBeatMs } : {}),
+  });
+  // Moving to another chapter tells friends at once rather than at the next beat.
+  effect(() => {
+    readingOf().chapterRef.value;
+    readingOf().chapterData.value;
+    if (session.value) void presence.beat();
+  });
   const live = createLiveSession({
     backend,
     reading: () => readingOf(),
@@ -288,6 +311,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     }
   }
   async function signOut() {
+    await presence.gone();
     forgetSession();
     session.value = null;
     buckets.reset();
@@ -361,6 +385,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     const stops = [
       bindRoute(readingOf),
       outbox.start(),
+      presence.start(),
       // Leaving writes the last tab change at once rather than losing it to the debounce.
       saveTabsNow,
     ];
@@ -420,6 +445,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     discover,
     publishing,
     today,
+    presence,
     live,
     audio,
     tts,

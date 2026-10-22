@@ -22,6 +22,7 @@ import {
   type ReaderBackend,
   type ReaderIdentity,
   type FriendsView,
+  type FriendPresence,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -209,6 +210,37 @@ export function createA2aBackend(
     async contacts() {
       const r = await ask("seed.workspace.contacts", {}, "who are my contacts");
       return (r.contacts as Contact[] | undefined) ?? [];
+    },
+    async presenceBeat(beat) {
+      const s = getSession();
+      if (!s) return;
+      await fetchImpl(`${A2A_BASE}/api/presence/beat`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${s.token}`,
+        },
+        body: JSON.stringify(beat),
+        keepalive: true,
+      }).catch(() => undefined);
+    },
+    async presenceFriends() {
+      const s = getSession();
+      if (!s) return [];
+      const res = await fetchImpl(`${A2A_BASE}/api/presence/friends`, {
+        headers: { authorization: `Bearer ${s.token}` },
+      });
+      const out = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        friends?: FriendPresence[];
+      } | null;
+      if (!res.ok || !out?.ok)
+        throw new BackendError(
+          out?.error ?? `presence answered ${res.status}`,
+          res.status === 401 ? "signed-out" : "unavailable"
+        );
+      return out.friends ?? [];
     },
     async friends() {
       const r = await ask("seed.workspace.friends", {}, "who are my friends");

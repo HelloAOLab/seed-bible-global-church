@@ -326,6 +326,31 @@ export function AccountPane({ state }: { state: ReaderState }) {
         ))}
       </div>
 
+      {state.session.value && (
+        <div className="sb-account-card">
+          <label className="sb-small sb-check">
+            <input
+              type="checkbox"
+              checked={state.presence.share.value}
+              onChange={(e) =>
+                void state.presence.setShare(
+                  (e.target as HTMLInputElement).checked
+                )
+              }
+            />{" "}
+            {t("presence-share", {
+              defaultValue: "Let friends see what I am reading right now",
+            })}
+          </label>
+          <p className="sb-small sb-muted">
+            {t("presence-share-note", {
+              defaultValue:
+                "Only people who have added you back see it, and only while this tab is open; it fades by itself.",
+            })}
+          </p>
+        </div>
+      )}
+
       <div className="sb-account-card">
         <p className="sb-small">
           <strong>{t("extensions", { defaultValue: "Extensions" })}</strong>

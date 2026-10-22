@@ -177,6 +177,15 @@ study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers 
 the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
 transcripts and Twitch (the outbound allowlist, §10).
 
+### Presence (social, third cut, 2026-10-22)
+
+Where the reader is now, for their mutual friends. Substrate (ap-home): a `PresenceDO` per person, `POST
+/presence/beat` and `GET /presence/friends` under the person's own token (a Home session or a relying app's
+id_token, so no harness run and no act), `person.presence.list` for the Ask; a beat lapses in 90 s. Here: reader-a2a
+forwards `/api/presence/*` under the reader's bearer (the browser still talks to one origin); the reader beats the
+chapter on screen every 30 s while signed in, visible and sharing (Account pane toggle, on by default); Today shows
+a friend's dot and where they are, tap to open the chapter.
+
 ### Friends (social, second cut, 2026-10-22)
 
 The substrate side lives in ap-home: `person.friend.list` on the person agent (a view over contacts and the inbox —

@@ -22,6 +22,7 @@ import {
   type LinkPreview,
   type ReaderIdentity,
   type FriendsView,
+  type PresenceEntry,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -29,7 +30,7 @@ import { chapterOf } from "@seed/seed-protocol";
 import { agentAddress } from "../state/records/marks";
 
 export interface DevCall {
-  op: "read" | "put" | "merge" | "list";
+  op: "read" | "put" | "merge" | "list" | "beat";
   key: string;
   opId?: string;
 }
@@ -43,6 +44,8 @@ export interface DevBackend extends ReaderBackend {
   contactList: Contact[];
   /** Friends the fake Home reports; when null, derived from the contacts (mutual ones are friends). */
   friendsView: FriendsView | null;
+  /** Live presence by agent, as the fake runtime holds it (the reader's own beats land here too). */
+  readonly presence: Map<string, PresenceEntry[]>;
   /** The reader's works as the fake Library holds them, by `folder/name`. */
   readonly works: Map<string, unknown>;
   setIdentity(identity: ReaderIdentity | null): void;
@@ -60,6 +63,7 @@ export function createDevBackend(
   const calls: DevCall[] = [];
   const registry = new Map<string, Offering & { markdown: string }>();
   const works = new Map<string, unknown>();
+  const presence = new Map<string, PresenceEntry[]>();
   let who = identity;
   let offline = false;
   const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -79,6 +83,7 @@ export function createDevBackend(
     registry,
     contactList: [],
     friendsView: null,
+    presence,
     works,
     setIdentity: (i) => (who = i),
     setOffline: (o) => (offline = o),
@@ -197,6 +202,36 @@ export function createDevBackend(
     async contacts() {
       guard();
       return clone(this.contactList);
+    },
+    async presenceBeat(beat) {
+      guard();
+      const me = who!.agent.toLowerCase();
+      calls.push({ op: "beat", key: me });
+      if ("gone" in beat) {
+        presence.set(
+          me,
+          (presence.get(me) ?? []).filter((e) => e.app !== "seed-bible-reader")
+        );
+        return;
+      }
+      const now = Date.now();
+      presence.set(me, [
+        ...(presence.get(me) ?? []).filter(
+          (e) => e.app !== "seed-bible-reader"
+        ),
+        { app: "seed-bible-reader", ...beat, at: now, until: now + 90_000 },
+      ]);
+    },
+    async presenceFriends() {
+      guard();
+      const now = Date.now();
+      const { friends } = await this.friends();
+      return friends.map((f) => ({
+        ...f,
+        presence: (presence.get(f.agent.toLowerCase()) ?? []).filter(
+          (e) => e.until > now
+        ),
+      }));
     },
     async friends() {
       guard();

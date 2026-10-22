@@ -192,6 +192,49 @@ app.post("/companion/ask", async (c) => {
   });
 });
 
+/**
+ * PRESENCE — where the reader is now, for their friends, and where their friends are (the runtime's `/presence/*`
+ * under the reader's own token, forwarded: the browser talks to this origin only). A beat is no act and no record;
+ * it lapses on its own. The reader's agent is not run for it.
+ */
+async function presenceForward(
+  c: { req: { raw: Request }; env: Env },
+  path: string,
+  init: RequestInit
+): Promise<Response> {
+  const bearer = bearerOf(c.req.raw);
+  const reader = await readerFromToken(c.env, bearer);
+  if (!reader || !bearer || bearer.startsWith("dev:"))
+    return Response.json(
+      { ok: false, error: "sign in to share where you are reading" },
+      { status: 401 }
+    );
+  if (!c.env.A2A_URL)
+    return Response.json(
+      { ok: false, error: "A2A_URL is not configured" },
+      { status: 503 }
+    );
+  const res = await fetch(`${c.env.A2A_URL.replace(/\/+$/, "")}${path}`, {
+    ...init,
+    headers: { ...(init.headers ?? {}), authorization: `Bearer ${bearer}` },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { "content-type": "application/json" },
+  });
+}
+app.post("/api/presence/beat", async (c) =>
+  presenceForward(c, "/presence/beat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: await c.req.text(),
+  })
+);
+app.get("/api/presence/friends", async (c) =>
+  presenceForward(c, "/presence/friends", { method: "GET" })
+);
+
 /** The plain lane: hello for anyone; the reader's own name when a session token is presented. */
 app.post("/hello", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as {

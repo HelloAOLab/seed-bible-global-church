@@ -23,6 +23,20 @@ export function TodayPane({ state }: { state: ReaderState }) {
   useEffect(() => {
     if (signedIn && !today.loadedFor.value) void today.refresh();
   }, [signedIn]);
+  // Friends' presence: read on open and every half minute while Today is open.
+  useEffect(() => {
+    if (!signedIn) return;
+    void state.presence.refresh();
+    const t = setInterval(() => void state.presence.refresh(), 30_000);
+    return () => clearInterval(t);
+  }, [signedIn]);
+  const presenceOf = (agent: string) =>
+    state.presence.friends.value.find(
+      (f) => f.agent.toLowerCase() === agent.toLowerCase()
+    )?.presence ?? [];
+  const openPresence = (scope: string | undefined) => {
+    if (scope && /^[1-4]?[A-Z]{2,3}\.\d+$/.test(scope)) open(scope);
+  };
   const [recent, setRecent] = useState<RecentReading[]>([]);
   const changed = state.buckets.changed.value;
   useEffect(() => {
@@ -269,21 +283,53 @@ export function TodayPane({ state }: { state: ReaderState }) {
             </a>
           </div>
         )}
-        {today.friends.value.map((c) => (
-          <div key={c.contact} className="sb-friends-row">
-            <span className="sb-friends-person-text">
-              <span className="sb-friends-person-name">
-                {c.name ?? c.contact}
+        {today.friends.value.map((c) => {
+          const here = presenceOf(c.contact);
+          return (
+            <div key={c.contact} className="sb-friends-row">
+              <span className="sb-friends-person-text">
+                <span className="sb-friends-person-name">
+                  {here.length > 0 && (
+                    <span
+                      className="sb-presence-dot"
+                      title={t("friend-here-now", { defaultValue: "Here now" })}
+                    />
+                  )}
+                  {c.name ?? c.contact}
+                </span>
+                <span className="sb-friends-person-subtitle">
+                  {here.length
+                    ? here.map((p) => (
+                        <button
+                          key={p.app}
+                          type="button"
+                          className="sb-presence-where"
+                          onClick={() => openPresence(p.scope)}
+                          title={
+                            p.scope
+                              ? t("friend-open-where", {
+                                  defaultValue: "Open the same chapter",
+                                })
+                              : undefined
+                          }
+                        >
+                          {p.label ?? p.app}
+                        </button>
+                      ))
+                    : c.name
+                      ? c.contact
+                      : ""}
+                  {!here.length && c.mutual
+                    ? ` · ${t("friends-mutual", { defaultValue: "mutual" })}`
+                    : ""}
+                </span>
               </span>
-              <span className="sb-friends-person-subtitle">
-                {c.name ? c.contact : ""}
-                {c.mutual
-                  ? ` · ${t("friends-mutual", { defaultValue: "mutual" })}`
-                  : ""}
-              </span>
-            </span>
-          </div>
-        ))}
+            </div>
+          );
+        })}
+        {signedIn && state.presence.error.value && (
+          <p className="sb-small sb-muted">{state.presence.error.value}</p>
+        )}
       </div>
 
       <div className="sb-content-section">

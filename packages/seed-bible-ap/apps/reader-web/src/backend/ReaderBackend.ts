@@ -78,6 +78,18 @@ export interface FriendsView {
   requested: Friend[];
 }
 
+export interface PresenceEntry {
+  app: string;
+  scope?: string;
+  label?: string;
+  at: number;
+  until: number;
+}
+export interface FriendPresence extends Friend {
+  /** Live entries, newest first; empty when the friend is not here now. */
+  presence: PresenceEntry[];
+}
+
 export interface ReaderIdentity {
   /** The reader's agent address — what `heldBy` on every one of their marks is. */
   agent: string;
@@ -125,6 +137,12 @@ export interface ReaderBackend {
   contacts(): Promise<Contact[]>;
   /** The reader's friends and who is waiting on whom (their agent's `person.friend.list`). */
   friends(): Promise<FriendsView>;
+  /** Where the reader is now, for their friends: a beat that lapses on its own; `gone` ends it. No act, no record. */
+  presenceBeat(
+    beat: { scope?: string; label?: string } | { gone: true }
+  ): Promise<void>;
+  /** The reader's mutual friends with where each is now. */
+  presenceFriends(): Promise<FriendPresence[]>;
   /** Open a live reading session on a passage (the reader hosts); the record goes to their Library. */
   sessionStart(passage: SessionPassageArgs): Promise<SessionTicket>;
   /** Join a session with its share code (the host needs none). A stranger is refused. */

@@ -888,3 +888,24 @@ body {
 .sb-friend-actions {
   margin-top: 0.5rem;
 }
+
+/* Presence: a friend here now, and where */
+.sb-presence-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #2e9e5b;
+  margin-inline-end: 0.35rem;
+  vertical-align: middle;
+}
+.sb-presence-where {
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
