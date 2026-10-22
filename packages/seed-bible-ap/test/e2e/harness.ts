@@ -32,6 +32,8 @@ export interface Flow {
   checks: string;
   /** The training manual's feature rows this flow tests (their first cell, exactly); the runner writes its mark there. */
   rows?: string[];
+  /** The flow's budget in ms (default 120 s); publishing, two-device sync and transcription take longer. */
+  timeoutMs?: number;
   /** Skip with a reason (a feature that cannot be driven headless, say). */
   skip?: string;
   run: (ctx: FlowContext) => Promise<string | void>;

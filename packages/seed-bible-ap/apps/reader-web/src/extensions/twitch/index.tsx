@@ -31,7 +31,11 @@ export const channel = signal<string>("");
 function WatchPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [draft, setDraft] = useState(channel.value);
-  useEffect(() => setDraft(channel.value), [channel.value]);
+  // The saved channel arrives from the device a moment after the pane opens; it fills the field only if the
+  // reader has not started typing.
+  useEffect(() => {
+    if (!draft) setDraft(channel.value);
+  }, [channel.value]);
   const theme = state.settings.resolvedTheme().variables["twitchChannel"] ?? "";
   const name = channel.value || theme;
   const host = typeof location !== "undefined" ? location.hostname : "";

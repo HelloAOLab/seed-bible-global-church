@@ -407,6 +407,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "M8",
+    timeoutMs: 360_000,
     section: "4. Marking the text",
     title: "A note edited on two devices",
     rows: ["A note edited on two devices"],
@@ -534,6 +535,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "S4",
+    timeoutMs: 360_000,
     section: "8. Today, Discover and publishing",
     title: "Your profile",
     rows: ["Your profile"],
@@ -622,6 +624,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "S7",
+    timeoutMs: 360_000,
     section: "8. Today, Discover and publishing",
     title: "Publish a note",
     rows: ["Publish a note"],
@@ -677,6 +680,7 @@ export const MORE_FLOWS: Flow[] = [
   // ── 9. Reading together ────────────────────────────────────────────────────────────────────────────────────
   {
     id: "L2",
+    timeoutMs: 360_000,
     section: "9. Reading together",
     title: "Show everyone, the roster, chat, the record",
     rows: [
@@ -819,6 +823,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "P3",
+    timeoutMs: 360_000,
     section: "10. Playlists and reading plans",
     title: "Publish a playlist, keep it in the Library, give it a cover",
     rows: [
@@ -875,6 +880,7 @@ export const MORE_FLOWS: Flow[] = [
   // ── 11. Church themes ──────────────────────────────────────────────────────────────────────────────────────
   {
     id: "T1",
+    timeoutMs: 360_000,
     section: "11. Church themes",
     title: "Make, publish and use a church theme",
     rows: [
@@ -1004,6 +1010,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "X4",
+    timeoutMs: 360_000,
     section: "12. Extensions",
     title: "Study companion and Ask from a selection",
     rows: ["Study companion", "Ask from a selection"],
@@ -1087,6 +1094,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "X7",
+    timeoutMs: 360_000,
     section: "12. Extensions",
     title: "Transcript (read-only)",
     rows: ["Transcript (read-only)"],
@@ -1402,6 +1410,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "G5",
+    timeoutMs: 360_000,
     section: "3. Reading",
     title: "Download a whole translation for offline",
     rows: ["Download a whole translation for offline"],
@@ -1515,6 +1524,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "G7",
+    timeoutMs: 360_000,
     section: "9. Reading together",
     title: "Session QR code",
     rows: ["Session QR code"],

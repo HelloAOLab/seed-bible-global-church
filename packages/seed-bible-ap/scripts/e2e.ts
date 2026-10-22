@@ -46,7 +46,15 @@ for (const flow of FLOWS) {
       (await Promise.race([
         flow.run(ctx),
         new Promise<never>((_, rej) =>
-          setTimeout(() => rej(new Error("flow timed out (120 s)")), 120_000)
+          setTimeout(
+            () =>
+              rej(
+                new Error(
+                  `flow timed out (${Math.round((flow.timeoutMs ?? 120_000) / 1000)} s)`
+                )
+              ),
+            flow.timeoutMs ?? 120_000
+          )
         ),
       ])) ?? "ok";
     results.push({
