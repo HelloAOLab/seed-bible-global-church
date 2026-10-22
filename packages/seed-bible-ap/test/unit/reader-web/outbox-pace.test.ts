@@ -88,3 +88,17 @@ describe("the outbox's pace", () => {
     expect(live.max).toBeGreaterThan(1);
   });
 });
+
+describe("a change to another bucket during a send", () => {
+  it("goes up beside the send in flight, not after it", async () => {
+    const { backend, live } = slow(300);
+    const d = device(backend);
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await until(() => live.now === 1);
+    const t0 = Date.now();
+    await d.highlights.set("ROM.8", 28, 28, "green");
+    await until(() => live.now === 2, 250);
+    expect(Date.now() - t0).toBeLessThan(250);
+    await until(() => live.done >= 2);
+  });
+});

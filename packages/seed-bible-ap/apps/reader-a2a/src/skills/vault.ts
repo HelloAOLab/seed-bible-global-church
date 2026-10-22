@@ -56,6 +56,63 @@ export interface PutReceipt {
   runRefs: string[];
 }
 
+/**
+ * WHICH DOCUMENT HOLDS A BUCKET — the Library id behind a reader's folder/name, remembered so the next read names it and
+ * the agent fetches the body beside the index (one vault round trip fewer). An id is a pointer, never content: what it
+ * points at is read from the reader's own Library each time. In this isolate, and in the colo's cache for a day.
+ */
+const docIds = new Map<string, string>();
+const docKey = (reader: string, folder: string, name: string) =>
+  `https://doc-id.reader-a2a.internal/${encodeURIComponent(reader.toLowerCase())}/${encodeURIComponent(`${folder}/${name}`)}`;
+const colo = (): Cache | null => {
+  try {
+    return (
+      (globalThis as { caches?: { default?: Cache } }).caches?.default ?? null
+    );
+  } catch {
+    return null;
+  }
+};
+async function knownDocId(
+  reader: string,
+  folder: string,
+  name: string
+): Promise<string | null> {
+  const k = docKey(reader, folder, name);
+  const hit = docIds.get(k);
+  if (hit) return hit;
+  try {
+    const res = await colo()?.match(k);
+    const id = res ? await res.text() : null;
+    if (id) docIds.set(k, id);
+    return id || null;
+  } catch {
+    return null;
+  }
+}
+async function rememberDocId(
+  reader: string,
+  folder: string,
+  name: string,
+  id: string
+) {
+  const k = docKey(reader, folder, name);
+  docIds.set(k, id);
+  await colo()
+    ?.put(
+      k,
+      new Response(id, { headers: { "cache-control": "max-age=86400" } })
+    )
+    .catch(() => undefined);
+}
+async function forgetDocId(reader: string, folder: string, name: string) {
+  const k = docKey(reader, folder, name);
+  docIds.delete(k);
+  await colo()
+    ?.delete(k)
+    .catch(() => undefined);
+}
+
 /** The reader's agent, asked as them — refused in words when this workspace holds no wire for them. */
 export async function agentFor(
   env: VaultEnv,
@@ -82,13 +139,26 @@ export async function readBucket(
 ): Promise<BucketRead & { runRef: string | null }> {
   const folder = bucketFolder(collection, chapterRef);
   const name = bucketName(collection, chapterRef);
-  let out: Awaited<ReturnType<typeof agent.run<LibraryRead>>>;
-  try {
-    out = await agent.run<LibraryRead>(
-      [readStep(folder, name)],
+  const known = await knownDocId(agent.reader, folder, name);
+  const read = (id?: string) =>
+    agent.run<LibraryRead>(
+      [readStep(folder, name, id)],
       `read my ${collection} for ${chapterRef ?? collection}`
     );
+  let out: Awaited<ReturnType<typeof agent.run<LibraryRead>>>;
+  try {
+    out = await read(known ?? undefined);
+    // A remembered id that names nothing (the document was removed and made again) is forgotten and the read is made
+    // by name — a stale id must never make a bucket look empty.
+    if (known && !out.result.read && isMissing(out.result)) {
+      await forgetDocId(agent.reader, folder, name);
+      out = await read();
+    }
   } catch (e) {
+    if (known && missingShelf(e)) {
+      await forgetDocId(agent.reader, folder, name);
+      return readBucket(agent, collection, chapterRef);
+    }
     if (missingShelf(e))
       return { bucket: emptyBucket(collection, chapterRef), runRef: null };
     throw e;
@@ -113,6 +183,8 @@ export async function readBucket(
   const file = r.file?.id
     ? { id: r.file.id, version: Number(r.file.version ?? 1) }
     : undefined;
+  if (file && file.id !== known)
+    await rememberDocId(agent.reader, folder, name, file.id);
   return {
     bucket: parseBucket(r.text ?? "", collection, chapterRef),
     ...(file ? { file } : {}),
@@ -172,6 +244,8 @@ async function saveDoc(
       502,
       r.refused ?? `your agent did not save ${folder}/${name}`
     );
+  if (r.file.id !== id)
+    await rememberDocId(agent.reader, folder, name, r.file.id);
   return {
     file: { id: r.file.id, version: Number(r.file.version ?? 1) },
     runRef: out.runRef,

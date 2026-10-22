@@ -261,9 +261,14 @@ export const LIBRARY_FILE_SAVE = "library.file.save";
 export const LIBRARY_FILE_VISIBILITY = "library.file.visibility";
 export const LIBRARY_FILE_PUBLISH = "library.file.publish";
 
-export const readStep = (folder: string, name: string): PlanStep => ({
+/** A read by folder and name; with the document's `id` too, the agent fetches its body beside the index. */
+export const readStep = (
+  folder: string,
+  name: string,
+  id?: string
+): PlanStep => ({
   toolId: LIBRARY_FILE_READ,
-  args: { folder, name },
+  args: { folder, name, ...(id ? { id } : {}) },
 });
 export const listStep = (folder: string): PlanStep => ({
   toolId: LIBRARY_FILES_LIST,

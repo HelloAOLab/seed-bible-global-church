@@ -67,6 +67,8 @@ export function createOutbox(deps: OutboxDeps) {
   let inflight: Promise<FlushReport> | null = null;
   /** A flush was asked for while one was in flight. */
   let again = false;
+  /** The pass started beside a flush in flight, for the buckets it is not sending. */
+  let beside: Promise<unknown> | null = null;
   /** The buckets whose batch a run is sending right now. */
   const sending = new Set<string>();
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -129,7 +131,8 @@ export function createOutbox(deps: OutboxDeps) {
       await deps.stores.outbox.keys(),
       FLUSH_CONCURRENCY,
       async (k) => {
-        if (stopped) return;
+        // A bucket another pass is sending now is that pass's (its change queued meanwhile gets the pass after it).
+        if (stopped || sending.has(k)) return;
         const entry = await deps.stores.outbox.get(k);
         const local = await deps.stores.buckets.get(k);
         if (!entry) return;
@@ -191,8 +194,15 @@ export function createOutbox(deps: OutboxDeps) {
 
   function flush(): Promise<FlushReport> {
     if (inflight) {
-      // A change queued while a flush is on its way is not in it: one more pass when this one ends.
+      // A change queued while a flush is on its way is not in it: one more pass when this one ends — and a change to
+      // ANOTHER bucket goes up now, beside it, rather than waiting for a pass that may take seconds.
       again = true;
+      if (!beside)
+        beside = flushOnce()
+          .catch(() => undefined)
+          .finally(() => {
+            beside = null;
+          });
       return inflight;
     }
     flushing.value = true;

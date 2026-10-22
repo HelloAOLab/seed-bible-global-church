@@ -46,7 +46,7 @@ export class PersonAgent {
 
   constructor(
     env: PersonAgentEnv,
-    private readonly reader: string,
+    readonly reader: string,
     private readonly wire: DelegationWire,
     fetchImpl: typeof fetch = fetch
   ) {
