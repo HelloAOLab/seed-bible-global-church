@@ -1066,3 +1066,12 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   font-size: 0.85rem;
   opacity: 0.8;
 }
+
+/* Watch: the chat embed under the player */
+.sb-watch-chat {
+  width: 100%;
+  height: 22rem;
+  border: none;
+  border-radius: 0.75rem;
+  margin-top: 0.5rem;
+}

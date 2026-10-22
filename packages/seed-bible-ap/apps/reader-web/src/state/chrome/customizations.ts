@@ -285,6 +285,7 @@ export const EDITABLE_TEXT_VARIABLES: Array<[string, string, string]> = [
   ["readerLineHeight", "Reader line height", "1.7"],
   ["readerMaxWidth", "Reader column width", "42rem"],
   ["uiFontSize", "Interface size", "100%"],
+  ["twitchChannel", "Twitch channel (read-only embed)", "yourchurch"],
 ];
 
 /** The variables a church editor exposes, in order, with plain names. */
