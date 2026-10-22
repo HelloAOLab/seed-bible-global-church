@@ -105,6 +105,14 @@ export function Onboarding({ state }: { state: ReaderState }) {
           >
             {t("onboarding-just-read", { defaultValue: "Just read" })}
           </button>
+          <button
+            className="sb-onboarding-btn sb-onboarding-btn-tertiary"
+            onClick={() =>
+              void done().then(() => state.tours.start("introduction"))
+            }
+          >
+            {t("onboarding-tour", { defaultValue: "Take the tour" })}
+          </button>
           {deferredInstall && !standalone && (
             <button
               className="sb-onboarding-btn sb-onboarding-btn-tertiary"

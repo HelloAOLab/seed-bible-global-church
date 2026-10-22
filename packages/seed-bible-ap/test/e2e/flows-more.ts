@@ -1637,4 +1637,37 @@ export const MORE_FLOWS: Flow[] = [
       return `${before.length} buttons; Today hidden and Notes before Discover, kept after a reload; Reset restored`;
     },
   },
+  {
+    id: "G11",
+    section: "13. Getting started",
+    title: "Guided tour",
+    rows: ["Guided tour"],
+    checks:
+      "A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it",
+    run: async (c) => {
+      const card = c.page.locator(".sb-tour-card");
+      await c.open(`${CH}?tutorial=introduction`);
+      await card.waitFor({ timeout: 8000 });
+      let steps = 1;
+      for (; steps < 12; steps++) {
+        const done = card.getByRole("button", { name: /^done$/i });
+        if (await done.count()) {
+          await done.click();
+          break;
+        }
+        await card.getByRole("button", { name: /^next$/i }).click();
+      }
+      await card.waitFor({ state: "detached", timeout: 3000 });
+      await c.open(`${CH}?tutorial=introduction&tutorialStep=2`);
+      await card.waitFor({ timeout: 8000 });
+      const progress = (await card.innerText()).match(
+        /(\d+)\s*(?:of|\/)\s*(\d+)/
+      );
+      if (!progress || progress[1] !== "3")
+        throw new Error(`started at: ${progress?.[0] ?? "no progress text"}`);
+      await c.page.keyboard.press("Escape");
+      await card.waitFor({ state: "detached", timeout: 3000 });
+      return `${steps} steps walked to Done; a link with tutorialStep=2 opened on ${progress[0]}; Escape closed it`;
+    },
+  },
 ];

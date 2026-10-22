@@ -107,6 +107,17 @@ export function AboutPane({ state }: { state: ReaderState }) {
           <p>{t("about-playlist-body")}</p>
           <h3>{t("about-mission-title")}</h3>
           <p>{t("about-mission-body")}</p>
+          <p>
+            <button
+              className="sb-note-button"
+              onClick={() => {
+                state.ui.pane.value = "none";
+                state.tours.start("introduction");
+              }}
+            >
+              {t("onboarding-tour", { defaultValue: "Take the tour" })}
+            </button>
+          </p>
           <h3>{t("on-this-estate", { defaultValue: "On this estate" })}</h3>
           <p className="sb-small">
             {t("about-estate", {

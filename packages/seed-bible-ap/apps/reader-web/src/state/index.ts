@@ -1,6 +1,7 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import { createTours, parseTutorialLink } from "./chrome/tours";
 import { createToolbarLayout } from "./chrome/toolbarLayout";
 import { createOfflineTranslations } from "./reading/offlineTranslations";
 import { isTypingTarget, readerKeyAction } from "./chrome/keys";
@@ -130,6 +131,17 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const today = createToday(backend, stores);
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
+  /** Guided tours (the old TutorialManager): the introduction, contextual tours, `?tutorial=` links. */
+  const tours = createTours({
+    prefs: stores.prefs,
+    isPhone: () =>
+      typeof matchMedia !== "undefined" &&
+      matchMedia("(max-width: 720px)").matches,
+    prepare: (id) => {
+      // The search tour points into Your Content: open it first.
+      if (id === "search") ui.pane.value = "content";
+    },
+  });
   /** The bottom toolbar's order and hidden buttons (the old toolbar customizer). */
   const toolbar = createToolbarLayout(stores.prefs);
   /** Whole translations kept on the device (the old OfflineTranslationsManager). */
@@ -562,7 +574,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       });
       if (!action) return;
       if (action === "escape") {
-        if (ui.share.value) ui.share.value = null;
+        if (tours.active.value) tours.done();
+        else if (ui.share.value) ui.share.value = null;
         else if (ui.selector.value) ui.selector.value = null;
         else if (ui.sidebarDrawer.value) ui.sidebarDrawer.value = false;
         else if (verses.value.length) selection.clear();
@@ -611,6 +624,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
           const entry = customizations.findByRef(cust);
           if (entry) void customizations.select(entry);
         });
+      // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.
+      const tour = parseTutorialLink(q);
+      if (tour) setTimeout(() => tours.start(tour.id, tour.step), 800);
       const sid = q.get("session");
       if (sid) {
         const code = q.get("code") ?? undefined;
@@ -627,6 +643,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const stateObject = {
     offline,
     toolbar,
+    tours,
     session,
     backend,
     stores,

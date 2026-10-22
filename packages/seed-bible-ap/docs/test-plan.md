@@ -1,6 +1,6 @@
 # Test plan — build the harness, then run the tests
 
-Work order for the developer who owns quality on the new reader. Part A builds the test harness; Part B is the procedure to run before every PR and every faithnet deploy. The old CasualOS backend is **not** tested; its testing *approaches* are, each with a same-or-better equivalent here (§1).
+Work order for the developer who owns quality on the new reader. Part A builds the test harness; Part B is the procedure to run before every PR and every faithnet deploy. The old CasualOS backend is **not** tested; its testing *approaches* are, each with a same-or-better equivalent here (§1). Product gaps and the remaining test-rig holes: [architecture/gap-analysis.md](./architecture/gap-analysis.md).
 
 Scope rule applies ([`AGENTS.md`](../AGENTS.md)): everything lives in `packages/seed-bible-ap/`. Root CI, root ESLint, and `packages/seed-bible` are not touched. Root CI does not run this package yet; until that exception is approved, the gate runs by hand and its log goes on the PR.
 

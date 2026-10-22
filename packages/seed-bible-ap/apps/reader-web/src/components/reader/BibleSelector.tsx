@@ -23,6 +23,15 @@ export function BibleSelector({ state }: { state: ReaderState }) {
 
   useEffect(() => {
     if (mode === "translations") void reading.loadTranslations();
+    // The first time each list opens, its short tour (once; never if tutorials are off).
+    if (mode)
+      setTimeout(
+        () =>
+          state.tours.startContextual(
+            mode === "books" ? "selector" : "offline-download"
+          ),
+        400
+      );
     if (mode) {
       setSearch("");
       setBookPick(null);

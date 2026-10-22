@@ -815,6 +815,37 @@ export function AccountPane({ state }: { state: ReaderState }) {
 
       <div className="sb-account-card">
         <p className="sb-small">
+          <strong>{t("tutorials", { defaultValue: "Tutorials" })}</strong>{" "}
+          <span className="sb-muted">
+            {state.tours.off.value
+              ? t("tutorials-off", { defaultValue: "Turned off." })
+              : t("tutorials-on", {
+                  defaultValue:
+                    "Short tours show the first time you use a feature.",
+                })}
+          </span>
+        </p>
+        <div className="sb-note-card-actions">
+          <button
+            className="sb-note-button"
+            onClick={() => {
+              state.ui.pane.value = "none";
+              state.tours.start("introduction");
+            }}
+          >
+            {t("onboarding-tour", { defaultValue: "Take the tour" })}
+          </button>
+          <button
+            className="sb-note-button"
+            onClick={() => state.tours.turnOn()}
+          >
+            {t("tutorials-again", { defaultValue: "Show tutorials again" })}
+          </button>
+        </div>
+      </div>
+
+      <div className="sb-account-card">
+        <p className="sb-small">
           <strong>{t("extensions", { defaultValue: "Extensions" })}</strong>
         </p>
         {state.extensions.registered.value.map((ext) => (
