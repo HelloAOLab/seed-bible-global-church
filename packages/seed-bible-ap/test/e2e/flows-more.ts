@@ -1941,6 +1941,56 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "G19",
+    timeoutMs: 240_000,
+    section: "8. Today, Discover and publishing",
+    title: "Today in the side pane; friends that need a new sign-in",
+    rows: ["Today pane"],
+    checks:
+      "Signed in, with the workspace refusing the friends read for want of permission: Today's sections stack in one column inside the pane; Friends says what is wrong in words with Sign in again, which opens Account — never the raw refusal",
+    run: async (c) => {
+      await c.page.route("**/harness/ask", async (route) => {
+        const body = route.request().postData() ?? "";
+        if (/seed\.workspace\.(friends|contacts)/.test(body))
+          return route.fulfill({
+            json: {
+              ok: true,
+              reply: {
+                kind: "refused",
+                error:
+                  "this workspace holds no permission to ask your agent — sign in again to let it keep your Library",
+              },
+            },
+          });
+        return route.continue();
+      });
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.pressToolbar("Today");
+      const notice = c.pane().locator(".sb-friends-notice");
+      await notice.waitFor({ timeout: 30000 });
+      if (/holds no permission/.test(await c.paneText()))
+        throw new Error("the raw refusal is on screen");
+      const tops = await c
+        .pane()
+        .locator(":scope .sb-content-section")
+        .evaluateAll((els) => els.map((e) => e.getBoundingClientRect()));
+      const pane = await c.pane().boundingBox();
+      for (let k = 1; k < tops.length; k++)
+        if (tops[k]!.top <= tops[k - 1]!.top)
+          throw new Error(
+            `sections side by side: ${tops.map((r) => Math.round(r.left)).join(", ")}`
+          );
+      if (tops.some((r) => r.right > pane!.x + pane!.width + 1))
+        throw new Error("a section runs past the pane");
+      await notice.getByRole("button", { name: /sign in again/i }).click();
+      await c.page
+        .locator(".sb-app-pane", { hasText: /church theme/i })
+        .waitFor({ timeout: 10000 });
+      return `${tops.length} sections in one column; the notice asked to sign in again, and its button opened Account`;
+    },
+  },
+  {
     id: "G10",
     section: "3. Reading",
     title: "Customize the bottom toolbar",

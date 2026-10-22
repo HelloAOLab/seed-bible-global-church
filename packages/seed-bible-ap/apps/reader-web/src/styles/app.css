@@ -46,6 +46,11 @@ body {
     border-inline-start: none;
     border-top: 1px solid var(--sb-divider-color, #00000024);
     z-index: 98;
+    /* Over the reader the pane needs a solid sheet: the theme's sidebar background is often transparent (on a wide
+       screen the pane sits on the page, which shows through). */
+    background: var(--sb-background, #fff);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 0.875rem 0.875rem 0 0;
   }
 }
 
@@ -1741,4 +1746,45 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-customization-variant-name {
   flex: 1;
   min-width: 8rem;
+}
+
+/* Today as a side pane: the copied today.css lays its container out as a ROW (the old full-page Today wrapped one
+   centred column); here the header and every section are its children, so it is a plain column like any pane. */
+.sb-pane.sb-today-container {
+  display: block;
+  height: auto;
+  overflow-y: visible;
+  padding-bottom: 6rem;
+}
+/* A notice in a pane section: what is wrong in words, and the one thing to do about it. */
+.sb-pane-notice {
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e07a4a),
+    transparent 90%
+  );
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.sb-pane-notice p {
+  margin: 0 0 0.5rem;
+}
+
+/* Today and Friends in the side pane: section titles at the pane's scale (the copied Your Content size is for a full
+   page), and room between sections so a section's buttons never touch the next title. */
+.sb-pane.sb-today-container .sb-content-section,
+.sb-friends-pane .sb-content-section {
+  margin-bottom: 1.5rem;
+}
+.sb-pane.sb-today-container .sb-content-section-title,
+.sb-friends-pane .sb-content-section-title {
+  font-size: 1.0625rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.sb-friend-actions {
+  margin-top: 0.5rem;
 }

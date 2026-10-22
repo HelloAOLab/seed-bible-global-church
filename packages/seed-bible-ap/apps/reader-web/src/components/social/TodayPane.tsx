@@ -231,6 +231,12 @@ export function TodayPane({ state }: { state: ReaderState }) {
  * and who is here right now (the green dot, tap to open the same chapter). Shown in Today and as its own pane
  * (the old FriendsPane); adding and inviting happen at your Home.
  */
+/** A refusal that only signing in again heals: the workspace holds no (or no longer a valid) wire for this reader. */
+export const needsSignInAgain = (message: string) =>
+  /no permission to ask your agent|sign in again|no longer accepts|no wire/i.test(
+    message
+  );
+
 export function FriendsSection({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { today, reading } = state;
@@ -278,9 +284,39 @@ export function FriendsSection({ state }: { state: ReaderState }) {
           })}
         </p>
       )}
-      {signedIn && today.contactsError.value && (
-        <p className="sb-pane-error">{today.contactsError.value}</p>
-      )}
+      {signedIn &&
+        today.contactsError.value &&
+        (needsSignInAgain(today.contactsError.value) ? (
+          <div className="sb-pane-notice sb-friends-notice">
+            <p>
+              {t("friends-need-permission", {
+                defaultValue:
+                  "To show your friends, the reader needs your permission to ask your agent. Sign in again to give it — nothing on this device is lost.",
+              })}
+            </p>
+            <button
+              className="sb-note-button sb-note-button-primary"
+              onClick={() => (state.ui.pane.value = "account")}
+            >
+              {t("connect-again", { defaultValue: "Sign in again" })}
+            </button>
+          </div>
+        ) : (
+          <div className="sb-pane-notice sb-friends-notice">
+            <p>
+              {t("friends-unreadable", {
+                defaultValue: "Your friends could not be read just now.",
+              })}
+            </p>
+            <p className="sb-small sb-muted">{today.contactsError.value}</p>
+            <button
+              className="sb-note-button"
+              onClick={() => void today.refresh()}
+            >
+              {t("try-again", { defaultValue: "Try again" })}
+            </button>
+          </div>
+        ))}
       {signedIn && today.requests.value.length > 0 && (
         <div className="sb-friend-requests">
           <p className="sb-small sb-muted">

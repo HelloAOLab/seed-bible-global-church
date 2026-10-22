@@ -73,7 +73,7 @@
   "note": "Note",
   "chapter-notes-count": "{{count}} notes for this chapter",
   "today-search-verses": "Search books, chapters, verses...",
-  "resume-reading": "CONTINUE WHERE YOU LEFT OFF",
+  "resume-reading": "Continue where you left off",
   "your-content": "Your content",
   "see-all": "See all",
   "highlights": "Highlights",
@@ -478,5 +478,8 @@
   "theographic-also": "Also called",
   "show-less": "Show less",
   "show-more": "Show more",
-  "theographic-passages": "In {{count}} passages"
+  "theographic-passages": "In {{count}} passages",
+  "friends-need-permission": "To show your friends, the reader needs your permission to ask your agent. Sign in again to give it — nothing on this device is lost.",
+  "friends-unreadable": "Your friends could not be read just now.",
+  "try-again": "Try again"
 }
