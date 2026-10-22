@@ -45,8 +45,9 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     .length;
   const pending = state.outbox.pending.value;
   const dark = settings.resolvedTheme().id === "dark";
-  const togglePane = (p: "notes" | "account" | "content") =>
-    (ui.pane.value = ui.pane.value === p ? "none" : p);
+  const togglePane = (
+    p: "notes" | "account" | "content" | "today" | "discover"
+  ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
   const audioPlaying = audio.controller.isPlaying.value;
   const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
   const speaking = tts.isSpeaking.value;
@@ -127,6 +128,18 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => (speaking ? tts.stop() : state.listen())}
         />
       )}
+      <Item
+        icon="today"
+        label={t("today", { defaultValue: "Today" })}
+        active={ui.pane.value === "today"}
+        onClick={() => togglePane("today")}
+      />
+      <Item
+        icon="explore"
+        label={t("discover", { defaultValue: "Discover" })}
+        active={ui.pane.value === "discover"}
+        onClick={() => togglePane("discover")}
+      />
       <Item
         icon="sticky_note_2"
         label={t("notes", { defaultValue: "Notes" })}

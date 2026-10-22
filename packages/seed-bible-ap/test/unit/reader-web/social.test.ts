@@ -1,0 +1,89 @@
+// Publishing and discovering over the dev backend: a note published becomes an offering Discover lists for its
+// chapter and friends' Today feeds carry; withdrawn, it is gone. Markdown of a note is what goes on the shelf.
+import { describe, expect, it } from "vitest";
+import { createDevBackend } from "../../../apps/reader-web/src/backend/dev";
+import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
+import { createDiscover } from "../../../apps/reader-web/src/state/social/discover";
+import { createPublishing } from "../../../apps/reader-web/src/state/social/publishing";
+import { createToday } from "../../../apps/reader-web/src/state/social/today";
+import { noteHtmlToMarkdown } from "../../../apps/reader-web/src/components/records/noteMarkdown";
+import type { Note } from "../../../apps/reader-web/src/state/records/annotations";
+
+const RUTH = { agent: "0x" + "11".repeat(20), name: "Ruth", wire: true };
+const SEED = { agent: "0x" + "22".repeat(20), name: "Seed Reader", wire: true };
+
+const note: Note = {
+  id: "urn:seed:note:JHN.3:abcdef123456",
+  start: 16,
+  end: 17,
+  note: "<p>For <strong>God</strong> so loved</p><ul><li>the world</li></ul>",
+  updatedAt: "2026-10-22T00:00:00Z",
+};
+
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+describe("publish and discover", () => {
+  it("a published note is listed for its chapter with its markdown, and withdrawing removes it", async () => {
+    const backend = createDevBackend(RUTH);
+    const stores = memoryStores();
+    const publishing = createPublishing(backend, stores);
+    const discover = createDiscover(backend);
+    await publishing.publishNote("JHN.3", note, "Ruth on John 3");
+    expect(publishing.isPublished(note.id)).toBe(true);
+    await discover.refresh("JHN.3");
+    const list = discover.forChapter("JHN.3").value!.offerings;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({
+      kind: "note",
+      title: "Ruth on John 3",
+      passage: "JHN.3.16-JHN.3.17",
+      owner: RUTH.agent,
+    });
+    const body = discover.body(list[0]!);
+    await settle();
+    expect(body.value).toContain("# Ruth on John 3");
+    expect(body.value).toContain("For **God** so loved");
+    expect(body.value).toContain("- the world");
+    await discover.refresh("JHN.4");
+    expect(discover.forChapter("JHN.4").value!.offerings).toHaveLength(0);
+
+    await publishing.withdrawNote(note);
+    expect(publishing.isPublished(note.id)).toBe(false);
+    await discover.refresh("JHN.3");
+    expect(discover.forChapter("JHN.3").value!.offerings).toHaveLength(0);
+  });
+
+  it("a friend's Today feed carries what contacts released and nothing else", async () => {
+    const backend = createDevBackend(RUTH);
+    const stores = memoryStores();
+    await createPublishing(backend, stores).publishNote(
+      "JHN.3",
+      note,
+      "Ruth's note"
+    );
+    backend.setIdentity({
+      agent: "0x" + "33".repeat(20),
+      name: "Stranger",
+      wire: true,
+    });
+    await createPublishing(backend, memoryStores()).publishNote(
+      "JHN.3",
+      { ...note, id: "urn:seed:note:JHN.3:stranger" },
+      "A stranger's note"
+    );
+    backend.setIdentity(SEED);
+    backend.contactList = [{ contact: RUTH.agent, name: "Ruth", mutual: true }];
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(today.friends.value.map((c) => c.name)).toEqual(["Ruth"]);
+    expect(today.feed.value.map((o) => o.title)).toEqual(["Ruth's note"]);
+  });
+
+  it("notes become shelf markdown", () => {
+    expect(
+      noteHtmlToMarkdown(
+        '<h2>Title</h2><p class="text-center">A <em>b</em> <a href="/read/BSB/JHN/3" data-verse="16">John 3:16</a></p><ol><li>x</li><li>y</li></ol>'
+      )
+    ).toBe("## Title\n\nA _b_ [John 3:16](/read/BSB/JHN/3)\n\n1. x\n2. y");
+  });
+});

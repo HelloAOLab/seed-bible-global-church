@@ -10,6 +10,8 @@ import { ReaderToolbar } from "./components/reader/ReaderToolbar";
 import { NotesPane } from "./components/records/NotesPane";
 import { AccountPane } from "./components/chrome/AccountPane";
 import { YourContentPane } from "./components/records/YourContentPane";
+import { TodayPane } from "./components/social/TodayPane";
+import { DiscoverPane } from "./components/social/DiscoverPane";
 import { completeRedirectIfReturning } from "./session";
 
 export function App({ state }: { state: ReaderState }) {
@@ -40,6 +42,16 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "content" && (
         <aside className="sb-app-pane">
           <YourContentPane state={state} />
+        </aside>
+      )}
+      {pane === "today" && (
+        <aside className="sb-app-pane">
+          <TodayPane state={state} />
+        </aside>
+      )}
+      {pane === "discover" && (
+        <aside className="sb-app-pane">
+          <DiscoverPane state={state} />
         </aside>
       )}
       {pane === "account" && (

@@ -104,6 +104,20 @@ export function AccountPane({ state }: { state: ReaderState }) {
               <> · {state.outbox.lastError.value}</>
             )}
           </p>
+          {state.outbox.lastError.value &&
+            /does not offer|playbook|assign|archetype/i.test(
+              state.outbox.lastError.value
+            ) && (
+              <p className="sb-small">
+                {t("first-run-playbook", {
+                  defaultValue:
+                    "Your agent has not been given the Seed Bible reader behaviour yet. Assign it at your Home, then tap Sync now.",
+                })}{" "}
+                <a href={`${estate.home}/you`} target="_blank" rel="noreferrer">
+                  {t("open-home", { defaultValue: "Open your Home" })}
+                </a>
+              </p>
+            )}
           <div className="sb-note-card-actions">
             {pending > 0 && (
               <button

@@ -148,7 +148,18 @@ hides below 720 px). ⬜
 
 Not yet: choosing between readers, auto-continue to the next chapter, the phone layout of the player. ⬜
 
-## 8. Coming next (not working yet)
+## 8. Today, Discover and publishing
+
+| Feature                 | Mark | How                                                                                                                                                                                                                                  |
+| ----------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Today pane              | ✅   | The **calendar** icon in the bottom toolbar: continue reading, your recent bookmarks and saves, your friends, and what they released.                                                                                                |
+| Friends                 | 🟡   | Your friends are your **contacts at your Home** (www.faithnet.me → You → contacts). The pane lists them; adding someone is done at the Home, not in the app.                                                                         |
+| Publish a note          | ✅   | Notes pane → **Publish** on a note (signed in with a wire). It goes to your public shelf as a released slice; **Published** again makes it private.                                                                                  |
+| Discover                | ✅   | The **compass** icon: everything released for the chapter on screen (published notes, studies, offerings). Tap one to read its text. The registry re-crawls every 15 minutes, so a fresh publish can take up to that long to appear. |
+| Friends' notes in Today | ✅   | Once a contact has published something, it lists under "What your friends released"; tap to open the passage.                                                                                                                        |
+| First-run help          | 🟡   | If your agent refuses because it lacks the reader behaviour, the account pane says so with a link to your Home; the assignment itself is a Home screen.                                                                              |
+
+## 9. Coming next (not working yet)
 
 | Feature                                                                | Step |
 | ---------------------------------------------------------------------- | ---- |
@@ -162,7 +173,7 @@ Not yet: choosing between readers, auto-continue to the next chapter, the phone 
 | Extensions (audio reader, references, transcript, Twitch …), AI        | 8    |
 | Sitemap, embed mode, onboarding tour, legal modals                     | 9    |
 
-## 9. For testers: how to check it yourself
+## 10. For testers: how to check it yourself
 
 - **The live gate** (needs the repo): `cd packages/seed-bible-ap && A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`
   signs in as `seedreader`, makes marks on one "device", reads them on a second, edits a note and cleans up.

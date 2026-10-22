@@ -40,6 +40,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 4. Friends can see nothing unless something is public
 
+**Layer 1 landed 2026-10-22 (step 5):** a note published from the notes pane is a released public slice; Today shows the friends' recent releases by owner through the registry (`/registry/recent`), friends being the Home's contacts. Layers 2 (circle shelves) and 3 (share grants) are open.
+
 **Problem.** The old Today feed read friends' notes and reading history directly because every record was `publicRead:*`. The Library knows only `public` and `private`. There is no "my contacts", "my circle", or "this person" audience on a document. Yet the product promise is "see what your friends are reading," not "publish to the world."
 
 **Approach, in layers.**
@@ -51,6 +53,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 **Open.** Whether ap-home will grow an audience on `library.file.visibility` (then layer 2 collapses into a flag). Until then the copy-into-circle approach is what ships, and the UX must say "shared with the circle" rather than "friends can see this." Reading-history heatmaps of friends are **not** carried over unless the person publishes a monthly slice. Folders: `reader-web/src/state/social`, `seed-bible-a2a/src/registry`, `~/skills/skills/seed/publish-slice`, `share-circle`.
 
 ## 5. First run: a brand-new faithnet person has no grants
+
+**First cut 2026-10-22:** sign-in asks for the ask-as-me template; a sign-in that mints no new wire asks the workspace whether it already holds one; a refusal naming a missing behaviour shows the Home link in the account pane. The Home's own screen does the assignment — the one-step ceremony is still an ap-home question.
 
 **Problem.** The app assumes the reader's agent accepts `skill:seed/*` under the `seed-reader` archetype and that reader-a2a holds an ask-as-me wire. A person who just signed in at the Home has neither. CasualOS needed nothing but an email code.
 

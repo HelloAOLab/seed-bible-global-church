@@ -141,6 +141,14 @@ seam), `backend/a2a.ts` (reader-a2a's harness, as the signed-in reader), `backen
 `A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`. Not yet: tabs/panes, saves, search, audio,
 TipTap, SSR, the service worker, the highlight ribbon.
 
+### Social (step 5, first cut — social, 2026-10-22)
+
+Today (resume, bookmarks, saves, the Home's contacts as friends, what they released), Discover (the registry's
+offerings for the chapter, bodies read through the workspace's public read lane), publishing a note from the notes
+pane (`seed.publish.slice`, withdraw to make it private), first-run guidance when the agent lacks the reader
+behaviour. reader-a2a gained `seed.workspace.contacts` and owner-based discover; the svc `GET /registry/recent`.
+Not yet: circle shelves, share links, reading history, profile photos.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |

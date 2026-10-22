@@ -22,6 +22,9 @@ import "./styles/tabs-inline.css";
 import "./styles/tabs.css";
 import "./styles/pane-layout-inline.css";
 import "./styles/pane-layout.css";
+import "./styles/today.css";
+import "./styles/discover.css";
+import "./styles/friends.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;

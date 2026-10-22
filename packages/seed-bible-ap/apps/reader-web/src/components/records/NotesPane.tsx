@@ -74,6 +74,9 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
   const chapterRef = state.reading.chapterRef.value;
   const [editing, setEditing] = useState(false);
   const ref = `${state.reading.bookName.value} ${state.reading.chapterNumber.value}:${note.start === note.end ? note.start : `${note.start}–${note.end}`}`;
+  const published = state.publishing.isPublished(note.id);
+  const publishing = state.publishing.busy.value === note.id;
+  const canPublish = !!state.session.value && state.session.value.wire;
   const hasConflictCopy = state.annotations
     .forChapter(chapterRef)
     .value.some((n) => n.conflictOf === note.id);
@@ -130,6 +133,42 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
             <button className="sb-note-button" onClick={() => setEditing(true)}>
               {t("edit", { defaultValue: "Edit" })}
             </button>
+            {canPublish && !note.conflictOf && (
+              <button
+                className={`sb-note-button${published ? " sb-note-button-published" : ""}`}
+                disabled={publishing}
+                title={
+                  published
+                    ? t("withdraw-note", { defaultValue: "Make private again" })
+                    : t("publish-note", {
+                        defaultValue: "Publish to your public shelf",
+                      })
+                }
+                onClick={() =>
+                  void (
+                    published
+                      ? state.publishing.withdrawNote(note)
+                      : state.publishing.publishNote(
+                          chapterRef,
+                          note,
+                          `${ref} — ${state.session.value?.name ?? ""}`.replace(
+                            / — $/,
+                            ""
+                          )
+                        )
+                  ).catch(() => {})
+                }
+              >
+                <span className="material-symbols-outlined">
+                  {published ? "public_off" : "public"}
+                </span>{" "}
+                {publishing
+                  ? "…"
+                  : published
+                    ? t("published", { defaultValue: "Published" })
+                    : t("publish", { defaultValue: "Publish" })}
+              </button>
+            )}
             <button
               className="sb-note-button sb-note-button-danger"
               onClick={() => void state.annotations.remove(chapterRef, note.id)}
@@ -227,6 +266,9 @@ export function NotesPane({ state }: { state: ReaderState }) {
             onCancel={() => (state.ui.noteDraft.value = null)}
           />
         </div>
+      )}
+      {state.publishing.error.value && (
+        <p className="sb-pane-error">{state.publishing.error.value}</p>
       )}
       {!notes.length && !draft && (
         <p className="sb-pane-empty">

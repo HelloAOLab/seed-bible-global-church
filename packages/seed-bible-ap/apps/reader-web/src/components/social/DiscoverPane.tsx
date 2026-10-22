@@ -1,0 +1,133 @@
+// DISCOVER — what Seed Bible agents released for the chapter on screen, from the Seed registry through the
+// workspace: published notes, studies, offerings. Dressed by the copied `discover.css` (`sb-discover-*`).
+import { useState } from "preact/hooks";
+import type { ReaderState } from "../../state";
+import { useI18n } from "../../i18n";
+import type { Offering } from "../../state/social/discover";
+
+const KIND_ICON: Record<string, string> = {
+  note: "sticky_note_2",
+  study: "school",
+  article: "article",
+  video: "play_circle",
+  episode: "podcasts",
+  playlist: "queue_music",
+  plan: "event_note",
+  image: "image",
+};
+
+function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const body = open ? state.discover.body(o).value : null;
+  const mine = state.backend.identity()?.agent === o.owner;
+  return (
+    <li
+      className={`sb-discover-item sb-discover-item--row sb-discover-item--clickable${open ? " sb-discover-item--open" : ""}`}
+    >
+      <button
+        type="button"
+        className="sb-discover-item-main"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className="material-symbols-outlined sb-discover-item-icon">
+          {KIND_ICON[o.kind] ?? "auto_stories"}
+        </span>
+        <span className="sb-discover-item-content">
+          <span className="sb-discover-item-title">{o.title}</span>
+          <span className="sb-discover-item-description">
+            {o.shelf}
+            {mine
+              ? ` · ${t("discover-yours", { defaultValue: "yours" })}`
+              : ""}{" "}
+            · {o.passage} · {o.indexedAt.slice(0, 10)}
+          </span>
+        </span>
+      </button>
+      {open && (
+        <div className="sb-discover-item-body">
+          {body === null ? (
+            <p className="sb-muted sb-small">
+              {t("loading", { defaultValue: "Loading…" })}
+            </p>
+          ) : body === "" ? (
+            <p className="sb-muted sb-small">
+              {t("discover-no-body", {
+                defaultValue: "This release has no text beside it.",
+              })}
+            </p>
+          ) : (
+            <pre className="sb-discover-markdown">{body}</pre>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+export function DiscoverPane({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const chapterRef = state.reading.chapterRef.value;
+  const result = state.discover.forChapter(chapterRef).value;
+  const loading = state.discover.loading.value;
+  return (
+    <section
+      className="sb-pane sb-discover-pane"
+      aria-label={t("discover", { defaultValue: "Discover" })}
+    >
+      <header className="sb-pane-header">
+        <h2 className="sb-discover-title">
+          {t("discover", { defaultValue: "Discover" })} ·{" "}
+          {state.reading.bookName.value} {state.reading.chapterNumber.value}
+        </h2>
+        <div>
+          <button
+            className="sb-pane-close"
+            aria-label={t("refresh", { defaultValue: "Refresh" })}
+            title={t("refresh", { defaultValue: "Refresh" })}
+            onClick={() => void state.discover.refresh(chapterRef)}
+          >
+            <span className="material-symbols-outlined">refresh</span>
+          </button>
+          <button
+            className="sb-pane-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={() => (state.ui.pane.value = "none")}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </header>
+      {state.discover.error.value && (
+        <p className="sb-pane-error">{state.discover.error.value}</p>
+      )}
+      {loading && !result && (
+        <p className="sb-muted sb-small">
+          {t("loading", { defaultValue: "Loading…" })}
+        </p>
+      )}
+      {result && !result.offerings.length && (
+        <p className="sb-pane-empty">
+          {t("discover-empty", {
+            defaultValue:
+              "Nothing released for this chapter yet. Publish one of your notes to be the first.",
+          })}
+        </p>
+      )}
+      {result && result.offerings.length > 0 && (
+        <ul className="sb-discover-list">
+          {result.offerings.map((o) => (
+            <OfferingItem key={o.descriptorId} state={state} o={o} />
+          ))}
+        </ul>
+      )}
+      <p className="sb-small sb-muted">
+        {t("discover-how", {
+          defaultValue:
+            "The Seed registry indexes what people and churches release on their public shelves; it re-crawls every 15 minutes.",
+        })}
+      </p>
+    </section>
+  );
+}
