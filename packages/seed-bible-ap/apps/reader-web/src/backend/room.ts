@@ -26,7 +26,19 @@ export interface PresenceFrame {
   verse: number | null;
   at: number;
 }
-export type RoomFrame = ChatFrame | PresenceFrame;
+export interface VoiceFrame {
+  t: "voice";
+  by: string;
+  name: string;
+  on: boolean;
+}
+export interface RtcFrame {
+  t: "rtc";
+  from: string;
+  to: string;
+  payload: unknown;
+}
+export type RoomFrame = ChatFrame | PresenceFrame | VoiceFrame | RtcFrame;
 
 export interface RoomHandlers {
   onState: (s: SessionState) => void;
@@ -43,6 +55,9 @@ export interface Room {
   chatPage(afterSeq?: number): Promise<ChatFrame[]>;
   presence(verse: number | null): Promise<void>;
   setRole(agent: string, role: SessionRole): Promise<number>;
+  setGuests(allow: boolean): Promise<number>;
+  voice(on: boolean): Promise<void>;
+  signal(to: string, payload: unknown): Promise<void>;
   end(): Promise<void>;
   close(): void;
 }
@@ -93,6 +108,9 @@ export function openRoom(
     chatPage: (afterSeq = 0) => call<ChatFrame[]>("chatPage", [afterSeq]),
     presence: (verse) => call<void>("presence", [{ verse }]),
     setRole: (agent, role) => call<number>("setRole", [agent, role]),
+    setGuests: (allow) => call<number>("setGuests", [allow]),
+    voice: (on) => call<void>("voice", [on]),
+    signal: (to, payload) => call<void>("signal", [to, payload]),
     end: () => call<void>("end"),
     close: () => client.close(),
   };

@@ -65,7 +65,8 @@ export class PersonAgent {
   /** ONE supplied plan at the reader's agent, as them. The first step's result, or a refusal in their agent's words. */
   async run<T>(
     steps: PlanStep[],
-    message: string
+    message: string,
+    opts: { addressee?: string } = {}
   ): Promise<PersonAgentOutcome<T>> {
     const nonce = [...crypto.getRandomValues(new Uint8Array(8))]
       .map((b) => b.toString(16).padStart(2, "0"))
@@ -73,7 +74,9 @@ export class PersonAgent {
     const raw = JSON.stringify({
       method: STANDARD_SURFACE_SKILL,
       nonce,
-      addressee: this.reader,
+      // An organization the reader stewards may be the addressee: the ask is still as the reader (the assertion and
+      // the wire are theirs); the runtime derives their standing at the organization.
+      addressee: (opts.addressee ?? this.reader).toLowerCase(),
       message,
       plan: { steps },
     });

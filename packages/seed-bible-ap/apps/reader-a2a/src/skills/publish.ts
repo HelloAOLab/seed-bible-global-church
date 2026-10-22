@@ -35,6 +35,8 @@ export interface PublishArgs {
   descriptor?: Record<string, unknown>;
   /** The shelf name of the slice; defaults to a slug of the title. Re-publishing the same slug is a new version. */
   slug?: string;
+  /** Publish AS an organization the reader stewards (its address): the slice lands on the organization's shelf. */
+  as?: string;
 }
 
 const slugOf = (s: string) =>
@@ -47,7 +49,12 @@ const slugOf = (s: string) =>
 type Existing = { id: string; version: number } | undefined;
 
 async function existingId(
-  agent: Awaited<ReturnType<typeof agentFor>>,
+  agent: {
+    run: <T>(
+      steps: Parameters<Awaited<ReturnType<typeof agentFor>>["run"]>[0],
+      message: string
+    ) => Promise<{ result: T; runRef: string | null }>;
+  },
   folder: string,
   name: string
 ): Promise<Existing> {
@@ -93,15 +100,30 @@ export async function publishSlice(
   const descriptor = Offering.parse({
     "@context": SEED_CONTEXT,
     ...(raw.descriptor ?? {}),
-    "@id": `urn:seed:offering:${reader}:${kind}:${slug}`,
+    "@id": `urn:seed:offering:${raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as) ? raw.as.toLowerCase() : reader}:${kind}:${slug}`,
     "@type": "seed:Offering",
     label: raw.title.trim(),
-    publishedBy: reader,
+    publishedBy:
+      raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as)
+        ? raw.as.toLowerCase()
+        : reader,
     ...(raw.passage ? { offeredForPassage: raw.passage } : {}),
     offeringKind: conceptIri("offeringkind", kind),
     visibility: conceptIri("visibility", "world"),
   });
-  const agent = await agentFor(env, reader);
+  const person = await agentFor(env, reader);
+  // AS AN ORGANIZATION: every step is addressed to the organization, asked as the reader who stewards it; the
+  // descriptor names the organization as the publisher and the slice lands on ITS shelf.
+  const publisher =
+    raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as) ? raw.as.toLowerCase() : reader;
+  const agent = {
+    run: <T>(steps: Parameters<typeof person.run>[0], message: string) =>
+      person.run<T>(
+        steps,
+        message,
+        publisher === reader ? {} : { addressee: publisher }
+      ),
+  };
   const runRefs: string[] = [];
   const save = async (
     name: string,
@@ -201,12 +223,22 @@ export async function publishSlice(
 export async function withdrawSlice(
   env: VaultEnv,
   reader: string,
-  raw: { kind: string; slug: string }
+  raw: { kind: string; slug: string; as?: string }
 ) {
   const kind = String(raw.kind ?? "");
   const slug = slugOf(String(raw.slug ?? ""));
   const folder = `${PUBLIC_FOLDER}/${kind}`;
-  const agent = await agentFor(env, reader);
+  const person = await agentFor(env, reader);
+  const publisher =
+    raw.as && /^0x[0-9a-f]{40}$/i.test(raw.as) ? raw.as.toLowerCase() : reader;
+  const agent = {
+    run: <T>(steps: Parameters<typeof person.run>[0], message: string) =>
+      person.run<T>(
+        steps,
+        message,
+        publisher === reader ? {} : { addressee: publisher }
+      ),
+  };
   const runRefs: string[] = [];
   const made: string[] = [];
   for (const name of [`${slug}.jsonld`, `${slug}.md`]) {

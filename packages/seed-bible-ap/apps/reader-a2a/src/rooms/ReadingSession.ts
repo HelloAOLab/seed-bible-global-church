@@ -95,21 +95,37 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
     }
     if (request.method === "POST" && path === "/invite") {
       const b = (await request.json()) as {
-        agent: string;
+        agent?: string;
         name: string;
         code?: string;
+        /** A guest: no Home, the share code alone; the room mints a guest identity for this session. */
+        guest?: boolean;
       };
       if (!this.state.startedAt || this.state.endedAt)
         return Response.json(
           { ok: false, error: "no such session" },
           { status: 404 }
         );
-      const isHost = this.state.host?.agent === b.agent;
       const codeOk = b.code
         ? this.sql<{
             code: string;
           }>`SELECT code FROM codes WHERE code = ${b.code}`.length > 0
         : false;
+      let agent = String(b.agent ?? "").toLowerCase();
+      if (b.guest) {
+        if (this.state.allowGuests === false)
+          return Response.json(
+            { ok: false, error: "this session does not take guests" },
+            { status: 403 }
+          );
+        if (!codeOk)
+          return Response.json(
+            { ok: false, error: "no standing in this session" },
+            { status: 404 }
+          );
+        agent = `guest:${crypto.randomUUID().slice(0, 8)}`;
+      }
+      const isHost = !b.guest && this.state.host?.agent === agent;
       if (!isHost && !codeOk)
         return Response.json(
           { ok: false, error: "no standing in this session" },
@@ -117,12 +133,19 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
         );
       const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
       const role: SessionRole = isHost ? "leader" : "reader";
+      const name =
+        String(b.name ?? "")
+          .trim()
+          .slice(0, 60) || (b.guest ? "Guest" : agent);
       this
-        .sql`INSERT INTO invites (token, agent, name, role, exp, used) VALUES (${token}, ${b.agent}, ${b.name}, ${role}, ${Date.now() + INVITE_TTL_MS}, 0)`;
+        .sql`INSERT INTO invites (token, agent, name, role, exp, used) VALUES (${token}, ${agent}, ${name}, ${role}, ${Date.now() + INVITE_TTL_MS}, 0)`;
       return Response.json({
         ok: true,
         token,
         role,
+        agent,
+        name,
+        ...(b.guest ? { guest: true } : {}),
         expiresInMs: INVITE_TTL_MS,
       });
     }
@@ -201,6 +224,7 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
         name: inv.name,
         role: inv.role,
         connections: 1,
+        ...(inv.agent.startsWith("guest:") ? { guest: true } : {}),
       });
     this.setState({ ...this.state, participants });
     this.log(inv.agent, "join", { name: inv.name });
@@ -296,6 +320,9 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
     const who = this.actor(this.currentConnection());
     if (who.agent !== this.state.host?.agent)
       throw new Error("only the host assigns roles");
+    // A guest may navigate or decorate for the room, but never lead it: leading is standing, and a guest has none.
+    if (agent.startsWith("guest:") && role === "leader")
+      throw new Error("a guest cannot lead the session");
     const participants = this.state.participants.map((p) =>
       p.agent === agent ? { ...p, role } : p
     );
@@ -305,6 +332,46 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
       leader: role === "leader" ? agent : this.state.leader,
     });
     return this.log(who.agent, "role", { agent, role });
+  }
+
+  /** The host decides whether guests may come in with the share code. */
+  @callable()
+  setGuests(allow: boolean) {
+    const who = this.actor(this.currentConnection());
+    if (who.agent !== this.state.host?.agent)
+      throw new Error("only the host decides about guests");
+    this.setState({ ...this.state, allowGuests: allow !== false });
+    return this.log(who.agent, "guests", { allow: allow !== false });
+  }
+
+  /** On or off the session's voice: a flag on the participant, so the others know whom to call. */
+  @callable()
+  voice(on: boolean) {
+    const who = this.actor(this.currentConnection());
+    const participants = this.state.participants.map((p) =>
+      p.agent === who.agent ? { ...p, voice: on === true } : p
+    );
+    this.setState({ ...this.state, participants });
+    this.broadcast(
+      JSON.stringify({
+        t: "voice",
+        by: who.agent,
+        name: who.name,
+        on: on === true,
+      })
+    );
+  }
+
+  /**
+   * WebRTC signalling for the session's voice (peer to peer; the room only relays): an offer, answer or ICE
+   * candidate from one participant to another. Never stored, never read by the room, nothing of the audio here.
+   */
+  @callable()
+  signal(to: string, payload: unknown) {
+    const who = this.actor(this.currentConnection());
+    const frame = JSON.stringify({ t: "rtc", from: who.agent, to, payload });
+    for (const c of this.getConnections<ConnState>())
+      if (c.state?.agent === to) c.send(frame);
   }
 
   /** A chat line: kept in the op log (the scope's messaging topic is a later cut), fanned out as a frame. */

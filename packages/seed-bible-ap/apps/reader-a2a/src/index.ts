@@ -1,3 +1,5 @@
+import { WireRefusal } from "./wires";
+import { joinSessionAsGuest } from "./skills/session";
 // reader-a2a — the Seed Bible reader workspace agent (hello world). Browser → A2A → MCP, the same triad shape as
 // verifiable-content-demo's scripture agent. The service host answers the card, `/api/a2a` and `/harness/*`;
 // the routes below are the app's own: a plain `/hello`, `/me` (who the token says you are), and the dev-reader list.
@@ -234,6 +236,42 @@ app.post("/api/presence/beat", async (c) =>
 app.get("/api/presence/friends", async (c) =>
   presenceForward(c, "/presence/friends", { method: "GET" })
 );
+
+/**
+ * A GUEST joins a live session: no Home, no sign-in — the share code alone, and a name. The room mints a guest
+ * identity good for this session; a guest follows, chats, is on voice, may navigate or decorate when the host
+ * says so, and never leads. Nothing of a guest's is kept anywhere: there is no Library to keep it in.
+ */
+app.post("/api/session/guest", async (c) => {
+  const b = (await c.req.json().catch(() => ({}))) as {
+    sessionId?: string;
+    code?: string;
+    name?: string;
+  };
+  const sessionId = String(b.sessionId ?? "");
+  const code = String(b.code ?? "")
+    .trim()
+    .toUpperCase();
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !code)
+    return c.json(
+      { ok: false, error: "a session id and its share code are required" },
+      400
+    );
+  try {
+    const out = await joinSessionAsGuest(
+      c.env,
+      sessionId,
+      code,
+      String(b.name ?? "")
+    );
+    return c.json({ ok: true, ...out });
+  } catch (e) {
+    return c.json(
+      { ok: false, error: e instanceof Error ? e.message : String(e) },
+      e instanceof WireRefusal ? (e.status as 404) : 500
+    );
+  }
+});
 
 /** The places map: tiles and geometry from the serving plane (cached there), so the page talks to this origin only. */
 app.get("/api/tiles/:z/:x/:y", async (c) => {

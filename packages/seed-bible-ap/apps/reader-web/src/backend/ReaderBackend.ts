@@ -20,6 +20,8 @@ export interface PublishSliceArgs {
   markdown: string;
   slug?: string;
   descriptor?: Record<string, unknown>;
+  /** Publish as an organization the reader stewards (its address). */
+  as?: string;
 }
 
 export interface SessionPassageArgs {
@@ -59,6 +61,12 @@ export class BackendError extends Error {
     super(message);
     this.name = "BackendError";
   }
+}
+
+export interface Org {
+  agent: string;
+  name: string | null;
+  relationship: string;
 }
 
 export interface Connector {
@@ -139,7 +147,7 @@ export interface ReaderBackend {
   /** A slice of the reader's own to their public shelf, released (`seed.publish.slice`). */
   publishSlice(args: PublishSliceArgs): Promise<PublishReceipt>;
   /** The slice made private again; the next crawl drops it. */
-  withdrawSlice(kind: string, slug: string): Promise<void>;
+  withdrawSlice(kind: string, slug: string, as?: string): Promise<void>;
   /** A public shelf document's text, read for the browser by the workspace. */
   readPublic(shelf: string, path: string): Promise<string>;
   /** The reader's contacts from their Home (their agent's `person.contact.list`). */
@@ -148,6 +156,8 @@ export interface ReaderBackend {
   friends(): Promise<FriendsView>;
   /** The MCP servers the reader attached to their agent at the Home, read-only (never invoked here). */
   connectors(): Promise<Connector[]>;
+  /** The organizations the reader stewards — what they may publish as. */
+  orgs(): Promise<Org[]>;
   /** Where the reader is now, for their friends: a beat that lapses on its own; `gone` ends it. No act, no record. */
   presenceBeat(
     beat: { scope?: string; label?: string } | { gone: true }
@@ -158,6 +168,12 @@ export interface ReaderBackend {
   sessionStart(passage: SessionPassageArgs): Promise<SessionTicket>;
   /** Join a session with its share code (the host needs none). A stranger is refused. */
   sessionJoin(sessionId: string, code?: string): Promise<SessionTicket>;
+  /** Join as a guest — no Home, the share code and a name; the identity is the session's own. */
+  sessionJoinAsGuest(
+    sessionId: string,
+    code: string,
+    name: string
+  ): Promise<SessionTicket & { agent: string; name: string }>;
   /** The reader's works (playlists, plans) in their Library: list a folder, read one, save one (private). */
   listWorks(folder: WorkFolder): Promise<WorkEntry[]>;
   readWork(folder: WorkFolder, name: string): Promise<unknown>;

@@ -40,7 +40,13 @@ export function createLiveSession(deps: LiveDeps) {
   let room: Room | null = null;
   let lastSeenPassage = "";
 
-  const me = computed(() => deps.identity()?.agent ?? null);
+  /** A guest's identity for this session (`guest:<id>`), when joined without a Home. */
+  const guest = signal<{ agent: string; name: string } | null>(null);
+  const me = computed(
+    () => guest.value?.agent ?? deps.identity()?.agent ?? null
+  );
+  const voiceFrames = signal<Array<{ from: string; payload: unknown }>>([]);
+  let onRtc: ((from: string, payload: unknown) => void) | null = null;
   const myRole = computed(
     () =>
       state.value?.participants.find((p) => p.agent === me.value)?.role ??
@@ -106,7 +112,11 @@ export function createLiveSession(deps: LiveDeps) {
       },
       onFrame: (f) => {
         if (f.t === "chat") chat.value = [...chat.value, f];
-        else if (f.t === "presence")
+        else if (f.t === "rtc") {
+          if (f.to === me.value) onRtc?.(f.from, f.payload);
+        } else if (f.t === "voice") {
+          /* the participant flag arrives with the state; the frame is a nudge */
+        } else if (f.t === "presence")
           presence.value = {
             ...presence.value,
             [f.by]: { agent: f.by, name: f.name, verse: f.verse, at: f.at },
@@ -135,8 +145,24 @@ export function createLiveSession(deps: LiveDeps) {
     error.value = null;
     try {
       const out = await deps.backend.sessionJoin(id, shareCode);
+      guest.value = null;
       sessionId.value = out.sessionId;
       code.value = shareCode ?? null;
+      attach(out.sessionId, out.token);
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      throw e;
+    }
+  }
+
+  /** Join without a Home: the share code and a name; the room's guest identity is this device's for the session. */
+  async function joinAsGuest(id: string, shareCode: string, name: string) {
+    error.value = null;
+    try {
+      const out = await deps.backend.sessionJoinAsGuest(id, shareCode, name);
+      guest.value = { agent: out.agent, name: out.name };
+      sessionId.value = out.sessionId;
+      code.value = shareCode;
       attach(out.sessionId, out.token);
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
@@ -162,6 +188,7 @@ export function createLiveSession(deps: LiveDeps) {
   function leave() {
     room?.close();
     room = null;
+    guest.value = null;
     sessionId.value = null;
     code.value = null;
     state.value = null;
@@ -194,7 +221,18 @@ export function createLiveSession(deps: LiveDeps) {
     shareLink,
     start,
     join,
+    joinAsGuest,
+    guest,
     leave,
+    /** Voice plumbing: the flag on the room, signalling to one participant, and the frames coming back. */
+    setVoice: (on: boolean) => room?.voice(on) ?? Promise.resolve(),
+    signal: (to: string, payload: unknown) =>
+      room?.signal(to, payload) ?? Promise.resolve(),
+    onSignal: (f: ((from: string, payload: unknown) => void) | null) => {
+      onRtc = f;
+    },
+    setGuests: (allow: boolean) => room?.setGuests(allow) ?? Promise.resolve(0),
+    voiceFrames,
     leaderMoved,
     say: (text: string) => room?.chat(text) ?? Promise.resolve(0),
     decorate: (start: number, end: number, colorId: string) =>

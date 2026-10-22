@@ -14,6 +14,7 @@ import { createToday } from "./social/today";
 import { createPresence } from "./social/presence";
 import { createProfile } from "./social/profile";
 import { createLiveSession } from "./sessions/live";
+import { browserPeerFactory, createVoice } from "./sessions/voice";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
 import { createFiles } from "./library/files";
@@ -234,6 +235,46 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     backend,
     reading: () => readingOf(),
     identity: () => backend.identity(),
+  });
+  // Voice in the session: the microphone once, one peer connection per other device on voice, the room relaying.
+  let mic: MediaStream | null = null;
+  const voiceMuted = signal(false);
+  const voice = createVoice({
+    me: () => live.me.value,
+    onVoice: () =>
+      (live.state.value?.participants ?? [])
+        .filter((p) => p.voice)
+        .map((p) => p.agent),
+    signal: (to, payload) => live.signal(to, payload),
+    onSignal: (f) => live.onSignal(f),
+    setVoice: (on) => live.setVoice(on),
+    openPeer: browserPeerFactory(
+      (to, payload) => live.signal(to, payload),
+      async () => {
+        if (!mic)
+          mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+        return mic;
+      },
+      () => voiceMuted.value
+    ),
+    closeMic: () => {
+      mic?.getTracks().forEach((t) => t.stop());
+      mic = null;
+    },
+  });
+  const setVoiceMuted = (m: boolean) => {
+    voiceMuted.value = m;
+    voice.muted.value = m;
+    mic?.getAudioTracks().forEach((t) => (t.enabled = !m));
+  };
+  // Who is on voice changes with the room's state; the mesh follows.
+  effect(() => {
+    live.state.value?.participants;
+    void voice.reconcile();
+  });
+  // Leaving the session leaves voice.
+  effect(() => {
+    if (!live.active.value && voice.on.value) void voice.leave();
   });
   // The leader's navigation moves the room.
   effect(() => {
@@ -507,6 +548,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     profile,
     presence,
     live,
+    voice,
+    setVoiceMuted,
     audio,
     listening,
     tts,

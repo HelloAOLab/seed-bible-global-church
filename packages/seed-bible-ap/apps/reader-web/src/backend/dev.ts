@@ -24,6 +24,7 @@ import {
   type FriendsView,
   type PresenceEntry,
   type Connector,
+  type Org,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -47,6 +48,8 @@ export interface DevBackend extends ReaderBackend {
   friendsView: FriendsView | null;
   /** The MCP connectors the fake Home reports. */
   connectorList: Connector[];
+  /** The organizations the fake Home says the reader stewards. */
+  orgList: Org[];
   /** Live presence by agent, as the fake runtime holds it (the reader's own beats land here too). */
   readonly presence: Map<string, PresenceEntry[]>;
   /** The reader's works as the fake Library holds them, by `folder/name`. */
@@ -87,6 +90,7 @@ export function createDevBackend(
     contactList: [],
     friendsView: null,
     connectorList: [],
+    orgList: [],
     presence,
     works,
     setIdentity: (i) => (who = i),
@@ -175,7 +179,7 @@ export function createDevBackend(
         args.slug ?? args.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       const descriptorId = `urn:seed:offering:${who!.agent.toLowerCase()}:${args.kind}:${slug}`;
       registry.set(descriptorId, {
-        owner: who!.agent.toLowerCase(),
+        owner: (args.as ?? who!.agent).toLowerCase(),
         shelf: `${who!.name.toLowerCase().replace(/\s+/g, "")}.me`,
         entryId: `e-${slug}`,
         version: (registry.get(descriptorId)?.version ?? 0) + 1,
@@ -210,6 +214,10 @@ export function createDevBackend(
     async connectors() {
       guard();
       return clone(this.connectorList);
+    },
+    async orgs() {
+      guard();
+      return clone(this.orgList);
     },
     async presenceBeat(beat) {
       guard();
@@ -312,6 +320,17 @@ export function createDevBackend(
         role: "leader",
         code: "DEVCODE",
         recordRef: null,
+      };
+    },
+    async sessionJoinAsGuest(sessionId, code, name) {
+      if (code !== "DEVCODE")
+        throw new BackendError("no standing in this session", "refused");
+      return {
+        sessionId,
+        token: "dev-guest-token",
+        role: "reader",
+        agent: "guest:dev",
+        name: name || "Guest",
       };
     },
     async sessionJoin(sessionId, code): Promise<SessionTicket> {

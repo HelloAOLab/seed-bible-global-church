@@ -11,6 +11,7 @@ export function SessionPane({ state }: { state: ReaderState }) {
   const [text, setText] = useState("");
   const [joinId, setJoinId] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [guestName, setGuestName] = useState("");
   const [copied, setCopied] = useState(false);
   const log = useRef<HTMLDivElement>(null);
   const s = live.state.value;
@@ -70,6 +71,71 @@ export function SessionPane({ state }: { state: ReaderState }) {
           >
             {t("session-start", { defaultValue: "Start a session here" })}
           </button>
+          {!signedIn && (
+            <form
+              className="sb-session-join"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const id =
+                  (joinId.trim() || state.ui.pendingJoin.value?.sessionId) ??
+                  "";
+                const code =
+                  (joinCode.trim() || state.ui.pendingJoin.value?.code) ?? "";
+                if (id && code)
+                  void live
+                    .joinAsGuest(id, code, guestName.trim() || "Guest")
+                    .then(() => (state.ui.pendingJoin.value = null))
+                    .catch(() => {});
+              }}
+            >
+              <p className="sb-small">
+                {t("session-guest-blurb", {
+                  defaultValue:
+                    "No Home? Join as a guest with the share code: you follow along and chat; nothing of yours is kept.",
+                })}
+              </p>
+              <input
+                className="sb-note-editor"
+                placeholder={t("session-guest-name", {
+                  defaultValue: "Your name",
+                })}
+                value={guestName}
+                onInput={(e) =>
+                  setGuestName((e.target as HTMLInputElement).value)
+                }
+              />
+              {!state.ui.pendingJoin.value && (
+                <>
+                  <input
+                    className="sb-note-editor"
+                    placeholder={t("session-id", {
+                      defaultValue: "Session id",
+                    })}
+                    value={joinId}
+                    onInput={(e) =>
+                      setJoinId((e.target as HTMLInputElement).value)
+                    }
+                  />
+                  <input
+                    className="sb-note-editor"
+                    placeholder={t("session-code", {
+                      defaultValue: "Share code",
+                    })}
+                    value={joinCode}
+                    onInput={(e) =>
+                      setJoinCode((e.target as HTMLInputElement).value)
+                    }
+                  />
+                </>
+              )}
+              <button
+                type="submit"
+                className="sb-note-button sb-note-button-primary"
+              >
+                {t("session-join-guest", { defaultValue: "Join as a guest" })}
+              </button>
+            </form>
+          )}
           <form
             className="sb-session-join"
             onSubmit={(e) => {
@@ -145,6 +211,71 @@ export function SessionPane({ state }: { state: ReaderState }) {
                 {live.recordRef.value}
               </p>
             )}
+            <div className="sb-note-card-actions sb-voice-controls">
+              {!state.voice.on.value ? (
+                <button
+                  className="sb-note-button"
+                  onClick={() => void state.voice.join().catch(() => {})}
+                >
+                  <span className="material-symbols-outlined">mic</span>{" "}
+                  {t("voice-join", { defaultValue: "Join voice" })}
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="sb-note-button"
+                    onClick={() =>
+                      state.setVoiceMuted(!state.voice.muted.value)
+                    }
+                  >
+                    <span className="material-symbols-outlined">
+                      {state.voice.muted.value ? "mic_off" : "mic"}
+                    </span>{" "}
+                    {state.voice.muted.value
+                      ? t("voice-unmute", { defaultValue: "Unmute" })
+                      : t("voice-mute", { defaultValue: "Mute" })}
+                  </button>
+                  <button
+                    className="sb-note-button"
+                    onClick={() => void state.voice.leave()}
+                  >
+                    {t("voice-leave", { defaultValue: "Leave voice" })}
+                  </button>
+                </>
+              )}
+            </div>
+            {state.voice.on.value && (
+              <p className="sb-small sb-muted">
+                {t("voice-note", {
+                  count: state.voice.connected.value.length,
+                  defaultValue: `Voice is peer to peer between the devices on it (${state.voice.connected.value.length} connected); no server hears it. Some networks will not connect without a relay.`,
+                })}
+                {state.voice.error.value ? ` · ${state.voice.error.value}` : ""}
+              </p>
+            )}
+            {Object.entries(state.voice.remote.value).map(([agent, stream]) => (
+              <audio
+                key={agent}
+                autoPlay
+                ref={(el) => {
+                  if (el && el.srcObject !== stream) el.srcObject = stream;
+                }}
+              />
+            ))}
+            {live.isHost.value && (
+              <label className="sb-small sb-check">
+                <input
+                  type="checkbox"
+                  checked={s.allowGuests !== false}
+                  onChange={(e) =>
+                    void live.setGuests((e.target as HTMLInputElement).checked)
+                  }
+                />{" "}
+                {t("session-allow-guests", {
+                  defaultValue: "Let guests (no Home) join with the share code",
+                })}
+              </label>
+            )}
             <div className="sb-note-card-actions">
               {live.isHost.value ? (
                 <button
@@ -180,6 +311,12 @@ export function SessionPane({ state }: { state: ReaderState }) {
                     </span>
                     <span className="sb-friends-person-subtitle">
                       {p.role}
+                      {p.guest
+                        ? ` · ${t("session-guest", { defaultValue: "guest" })}`
+                        : ""}
+                      {p.voice
+                        ? ` · ${t("session-on-voice", { defaultValue: "on voice" })}`
+                        : ""}
                       {where
                         ? ` · ${t("session-at-verse", { verse: where, defaultValue: `at verse ${where}` })}`
                         : ""}
@@ -200,13 +337,16 @@ export function SessionPane({ state }: { state: ReaderState }) {
                         )
                       }
                     >
-                      {["reader", "navigator", "decorator", "leader"].map(
-                        (r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        )
-                      )}
+                      {[
+                        "reader",
+                        "navigator",
+                        "decorator",
+                        ...(p.guest ? [] : ["leader"]),
+                      ].map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
                     </select>
                   )}
                 </div>

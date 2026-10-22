@@ -39,6 +39,24 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
       published.value = v as Record<string, PublishedNote>;
   });
   const save = () => stores.prefs.set(KEY, published.value);
+  /** Whom to publish as: the reader (null) or an organization they steward — a device preference. */
+  const publishAs = signal<{ agent: string; name: string | null } | null>(null);
+  void stores.prefs.get("publish:as").then((v) => {
+    if (
+      v &&
+      typeof v === "object" &&
+      typeof (v as { agent?: unknown }).agent === "string"
+    )
+      publishAs.value = v as { agent: string; name: string | null };
+  });
+  async function setPublishAs(
+    org: { agent: string; name: string | null } | null
+  ) {
+    publishAs.value = org;
+    if (org) await stores.prefs.set("publish:as", org);
+    else await stores.prefs.delete("publish:as");
+  }
+  const asArg = () => (publishAs.value ? { as: publishAs.value.agent } : {});
   /** The published slice of a note (its descriptor id names it to the registry), or null. */
   const recordOf = (noteId: string): PublishedNote | null =>
     published.value[noteId] ?? null;
@@ -53,6 +71,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
       const passage = passageOf(chapterRef, note.start, note.end);
       const markdown = `# ${title}\n\n${isHtmlNote(note.note) ? noteHtmlToMarkdown(note.note) : plainToMarkdown(note.note)}`;
       const r = await backend.publishSlice({
+        ...asArg(),
         kind: "note",
         passage,
         title,
@@ -85,7 +104,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     busy.value = note.id;
     error.value = null;
     try {
-      await backend.withdrawSlice("note", p.slug);
+      await backend.withdrawSlice("note", p.slug, publishAs.value?.agent);
       const next = { ...published.value };
       delete next[note.id];
       published.value = next;
@@ -133,6 +152,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     error.value = null;
     try {
       const r = await backend.publishSlice({
+        ...asArg(),
         kind,
         passage,
         title: work.label,
@@ -165,6 +185,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     error.value = null;
     try {
       const r = await backend.publishSlice({
+        ...asArg(),
         kind: "profile",
         title: profile.displayName ?? "Profile",
         slug: "profile",
@@ -196,6 +217,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     error.value = null;
     try {
       const r = await backend.publishSlice({
+        ...asArg(),
         kind: "customization",
         title: work.label,
         slug,
@@ -229,7 +251,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     if (!p) return;
     busy.value = id;
     try {
-      await backend.withdrawSlice(kind, p.slug);
+      await backend.withdrawSlice(kind, p.slug, publishAs.value?.agent);
       const next = { ...published.value };
       delete next[id];
       published.value = next;
@@ -244,6 +266,8 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
 
   return {
     recordOf,
+    publishAs,
+    setPublishAs,
     publishProfile,
     published,
     busy,

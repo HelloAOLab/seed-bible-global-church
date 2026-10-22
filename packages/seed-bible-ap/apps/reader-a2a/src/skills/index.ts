@@ -111,7 +111,7 @@ export const BUCKET_MERGE: ToolSpec = {
 export const PUBLISH_SLICE: ToolSpec = {
   id: "seed.publish.slice",
   description:
-    "Makes ONE slice of the signed-in reader's Library public on their shelf as a seed:Offering — a note on a chapter, a playlist, a plan — by saving the descriptor and a markdown rendering public and minting a signed release of each; the Seed registry indexes it by passage. Args: kind (note · study · playlist · plan · …), passage (OSIS), title, markdown, slug (optional), descriptor (optional extras); or { withdraw: { kind, slug } } to take it off the shelf.",
+    "Makes ONE slice of the signed-in reader's Library public on their shelf as a seed:Offering — a note on a chapter, a playlist, a plan — by saving the descriptor and a markdown rendering public and minting a signed release of each; the Seed registry indexes it by passage. Args: kind (note · study · playlist · plan · …), passage (OSIS), title, markdown, slug (optional), descriptor (optional extras), as (optional: an organization the reader stewards — the slice lands on ITS shelf, published by it); or { withdraw: { kind, slug, as? } } to take it off the shelf.",
   inputSchema: {
     type: "object",
     properties: {
@@ -272,6 +272,15 @@ export const FRIENDS: ToolSpec = {
   establishes: "lookup",
 };
 
+export const ORGS: ToolSpec = {
+  id: "seed.workspace.orgs",
+  description:
+    "The organizations the signed-in reader stewards (a church, a group), read from their own agent (person.roles.list) — what they may publish AS. No args.",
+  inputSchema: { type: "object", properties: {} },
+  answers: ["which churches do I steward", "what can I publish as"],
+  establishes: "lookup",
+};
+
 export const CONNECTORS: ToolSpec = {
   id: "seed.workspace.connectors",
   description:
@@ -294,6 +303,7 @@ export const TOOLS: ToolSpec[] = [
   CONTACTS,
   FRIENDS,
   CONNECTORS,
+  ORGS,
   SESSION_START,
   SESSION_JOIN,
   SESSION_RECORD,
@@ -397,11 +407,14 @@ export function invokers(
     },
     [PUBLISH_SLICE.id]: async (_t, args) => {
       const reader = readerOf(asker);
-      const w = args.withdraw as { kind?: string; slug?: string } | undefined;
+      const w = args.withdraw as
+        | { kind?: string; slug?: string; as?: string }
+        | undefined;
       if (w && typeof w === "object")
         return withdrawSlice(deps.env, reader, {
           kind: String(w.kind ?? ""),
           slug: String(w.slug ?? ""),
+          ...(typeof w.as === "string" ? { as: w.as } : {}),
         });
       return publishSlice(deps.env, reader, args as unknown as PublishArgs);
     },
@@ -668,6 +681,53 @@ export function invokers(
           : requests.length
             ? `${requests.length} person(s) added you — add them back at your Home.`
             : "No friends yet — add people at your Home; you are friends once they add you back.",
+      };
+    },
+    [ORGS.id]: async () => {
+      const reader = readerOf(asker);
+      const agent = await agentFor(deps.env, reader);
+      const out = await agent.run<Record<string, unknown>>(
+        [{ toolId: "person.roles.list", args: {} }],
+        "which organizations do I steward"
+      );
+      const r = out.result as { refused?: string } & Record<string, unknown>;
+      if (r.refused) throw new WireRefusal(403, r.refused);
+      // The roles read lists every organization with the person's standing there; stewards are who may publish as it.
+      const rows: Array<Record<string, unknown>> = [];
+      for (const k of [
+        "roles",
+        "organizations",
+        "memberships",
+        "orgs",
+        "rows",
+      ]) {
+        const v = r[k];
+        if (Array.isArray(v))
+          rows.push(...(v as Array<Record<string, unknown>>));
+      }
+      const orgs = rows
+        .map((row) => ({
+          agent: String(
+            row.org ?? row.organization ?? row.agent ?? row.address ?? ""
+          ).toLowerCase(),
+          name: String(row.orgName ?? row.name ?? row.label ?? "") || null,
+          relationship: String(
+            row.relationship ?? row.role ?? row.standing ?? ""
+          ),
+        }))
+        .filter((o) => /^0x[0-9a-f]{40}$/.test(o.agent));
+      const stewarded = orgs.filter((o) =>
+        /steward|custodian|owner|admin/i.test(o.relationship)
+      );
+      return {
+        orgs: stewarded.length ? stewarded : orgs,
+        all: orgs,
+        raw: stewarded.length ? undefined : r,
+        count: (stewarded.length ? stewarded : orgs).length,
+        runRef: out.runRef,
+        text: stewarded.length
+          ? `You steward ${stewarded.map((o) => o.name ?? o.agent).join(", ")}.`
+          : "You steward no organization yet.",
       };
     },
     [CONNECTORS.id]: async () => {

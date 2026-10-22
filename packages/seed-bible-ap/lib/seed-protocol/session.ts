@@ -13,6 +13,10 @@ export interface Participant {
   name: string;
   role: SessionRole;
   connections: number;
+  /** A guest came in with the share code and no Home; `agent` is `guest:<id>`, good for this session only. */
+  guest?: boolean;
+  /** On the session's voice right now (peer-to-peer audio, signalled through the room). */
+  voice?: boolean;
 }
 
 export interface Decoration {
@@ -32,6 +36,8 @@ export interface SessionState {
   passage: SessionPassage | null;
   participants: Participant[];
   decorations: Decoration[];
+  /** Whether the host lets guests (people without a Home) in with the share code. */
+  allowGuests?: boolean;
   seq: number;
   startedAt: string | null;
   endedAt: string | null;

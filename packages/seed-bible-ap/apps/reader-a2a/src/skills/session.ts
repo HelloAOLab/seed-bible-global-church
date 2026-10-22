@@ -195,6 +195,31 @@ export async function joinSession(
   };
 }
 
+/** A guest's admission: the share code is the standing; the room mints a `guest:` identity for this session. */
+export async function joinSessionAsGuest(
+  env: RoomsEnv,
+  sessionId: string,
+  code: string,
+  name: string
+) {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId))
+    throw new WireRefusal(404, "no such session");
+  const inv = await room(env, sessionId, "/invite", {
+    method: "POST",
+    body: JSON.stringify({ guest: true, name, code: code.toUpperCase() }),
+  });
+  return {
+    sessionId,
+    token: inv.token,
+    role: inv.role,
+    agent: inv.agent,
+    name: inv.name,
+    guest: true,
+    expiresInMs: inv.expiresInMs,
+    text: `Joined session ${sessionId} as a guest.`,
+  };
+}
+
 export async function sessionRecord(
   env: VaultEnv,
   reader: string,

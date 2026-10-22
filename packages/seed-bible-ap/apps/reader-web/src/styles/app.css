@@ -1080,3 +1080,8 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   padding: 0.35rem 0;
   border-top: 1px solid var(--sb-divider-color, #00000014);
 }
+
+.sb-voice-controls .material-symbols-outlined {
+  font-size: 1rem;
+  vertical-align: text-bottom;
+}

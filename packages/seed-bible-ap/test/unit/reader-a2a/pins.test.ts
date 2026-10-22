@@ -13,6 +13,7 @@ const WORKSPACE_LOCAL = new Set([
   "seed.workspace.contacts",
   "seed.workspace.friends",
   "seed.workspace.connectors",
+  "seed.workspace.orgs",
   "seed.session.start",
   "seed.session.join",
   "seed.session.record",

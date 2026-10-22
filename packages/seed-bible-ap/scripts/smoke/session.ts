@@ -176,8 +176,11 @@ check(
 );
 check(
   "…with the passage and the host as leader",
-  a.latest()?.passage?.bookId === "JHN" &&
-    !!a.latest()?.participants.some((p) => p.role === "leader"),
+  await until(
+    () =>
+      a.latest()?.passage?.bookId === "JHN" &&
+      !!a.latest()?.participants.some((p) => p.role === "leader")
+  ),
   a.latest()
 );
 
@@ -195,6 +198,62 @@ check(
   await until(() => b.states.length > 0 && !!b.latest()?.passage),
   b.closed
 );
+
+// 3b. a guest — no Home — joins with the share code and a name, as a reader
+const guestJoin = (await (
+  await fetch(`${A2A}/api/session/guest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      sessionId: started.sessionId,
+      code: started.code,
+      name: "Visitor",
+    }),
+  })
+).json()) as {
+  ok?: boolean;
+  token?: string;
+  agent?: string;
+  role?: string;
+  error?: string;
+};
+check(
+  "a guest joined with the share code alone",
+  guestJoin.ok === true &&
+    !!guestJoin.token &&
+    /^guest:/.test(guestJoin.agent ?? ""),
+  guestJoin
+);
+const g = device(started.sessionId, guestJoin.token ?? "");
+check(
+  "the roster lists the guest as a reader",
+  await until(
+    () =>
+      !!g
+        .latest()
+        ?.participants.some(
+          (p) => p.agent === guestJoin.agent && p.role === "reader"
+        )
+  ),
+  g.latest()?.participants
+);
+const guestNoCode = (await (
+  await fetch(`${A2A}/api/session/guest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      sessionId: started.sessionId,
+      code: "NOPE",
+      name: "Stranger",
+    }),
+  })
+).json()) as { ok?: boolean };
+check(
+  "a guest with a wrong code is refused",
+  guestNoCode.ok !== true,
+  guestNoCode
+);
+g.client.close();
 
 // 4. follow: the leader moves, the other device sees it, under 500 ms
 let t0 = Date.now();

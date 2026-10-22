@@ -1,4 +1,4 @@
-import type { Connector } from "../../backend/ReaderBackend";
+import type { Connector, Org } from "../../backend/ReaderBackend";
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
 // plus where the reader's marks stand: on this device only, or in their Library through their own agent.
 import { useEffect, useState } from "preact/hooks";
@@ -201,6 +201,54 @@ function ConnectorsCard({ state }: { state: ReaderState }) {
         <a href={`${estate.home}/apps`} target="_blank" rel="noreferrer">
           {t("manage-at-home", { defaultValue: "Manage at your Home" })}
         </a>
+      </p>
+    </div>
+  );
+}
+
+/** Whom the reader publishes as: themselves, or a church they steward (the slice lands on the church's shelf). */
+function PublishAsCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const [orgs, setOrgs] = useState<Org[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    state.backend
+      .orgs()
+      .then((o) => live && setOrgs(o))
+      .catch(() => live && setOrgs([]));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!orgs || !orgs.length) return null;
+  const current = state.publishing.publishAs.value?.agent ?? "";
+  return (
+    <div className="sb-account-card">
+      <label className="sb-small sb-account-row">
+        <span>{t("publish-as", { defaultValue: "Publish as" })}</span>
+        <select
+          value={current}
+          onChange={(e) => {
+            const v = (e.target as HTMLSelectElement).value;
+            const org = orgs.find((o) => o.agent === v);
+            void state.publishing.setPublishAs(
+              org ? { agent: org.agent, name: org.name } : null
+            );
+          }}
+        >
+          <option value="">{t("publish-as-me", { defaultValue: "Me" })}</option>
+          {orgs.map((o) => (
+            <option key={o.agent} value={o.agent}>
+              {o.name ?? o.agent}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="sb-small sb-muted">
+        {t("publish-as-note", {
+          defaultValue:
+            "As a church you steward, what you publish — notes, playlists, plans, themes — lands on the church's shelf and reaches everyone who follows it.",
+        })}
       </p>
     </div>
   );
@@ -560,6 +608,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
       </div>
 
       {state.session.value && <ProfileCard state={state} />}
+      {state.session.value && <PublishAsCard state={state} />}
       {state.session.value && <ConnectorsCard state={state} />}
 
       <div className="sb-account-card">

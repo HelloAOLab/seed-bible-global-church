@@ -24,6 +24,7 @@ import {
   type FriendsView,
   type FriendPresence,
   type Connector,
+  type Org,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -172,10 +173,10 @@ export function createA2aBackend(
         slug: String(r.slug ?? args.slug ?? ""),
       };
     },
-    async withdrawSlice(kind, slug) {
+    async withdrawSlice(kind, slug, as?: string) {
       const r = await ask(
         "seed.publish.slice",
-        { withdraw: { kind, slug } },
+        { withdraw: { kind, slug, ...(as ? { as } : {}) } },
         `take my ${kind} ${slug} off my shelf`
       );
       if (r.withdrawn !== true)
@@ -243,6 +244,14 @@ export function createA2aBackend(
         );
       return out.friends ?? [];
     },
+    async orgs() {
+      const r = await ask(
+        "seed.workspace.orgs",
+        {},
+        "which organizations do I steward"
+      );
+      return (r.orgs as Org[] | undefined) ?? [];
+    },
     async connectors() {
       const r = await ask(
         "seed.workspace.connectors",
@@ -266,6 +275,27 @@ export function createA2aBackend(
         `start a reading session on ${passage.bookId} ${passage.chapterNumber}`
       );
       return r as unknown as SessionTicket;
+    },
+    async sessionJoinAsGuest(sessionId, code, name) {
+      const res = await fetchImpl(`${A2A_BASE}/api/session/guest`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId, code, name }),
+      });
+      const out = (await res.json().catch(() => null)) as
+        | (SessionTicket & {
+            ok?: boolean;
+            error?: string;
+            agent: string;
+            name: string;
+          })
+        | null;
+      if (!res.ok || !out?.ok)
+        throw new BackendError(
+          out?.error ?? `the room answered ${res.status}`,
+          "refused"
+        );
+      return out;
     },
     async listWorks(folder: WorkFolder): Promise<WorkEntry[]> {
       const r = await ask("seed.work.list", { folder }, `list my ${folder}`);
