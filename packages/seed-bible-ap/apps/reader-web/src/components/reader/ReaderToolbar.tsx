@@ -1,6 +1,7 @@
 // THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
 // when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
 // then play or listen, notes, Your Content, theme, and the account.
+import { arrange } from "../../state/chrome/toolbarLayout";
 import { handleGridKeyNav } from "../keyboardNav";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
@@ -57,32 +58,27 @@ function Item(props: {
   );
 }
 
-export function ReaderToolbar({ state }: { state: ReaderState }) {
-  const { t } = useI18n();
-  const { reading, ui, settings, audio, tts } = state;
-  const notes = state.annotations.forChapter(reading.chapterRef.value).value
-    .length;
-  const pending = state.outbox.pending.value;
-  const dark = settings.resolvedTheme().id === "dark";
-  const togglePane = (
-    p:
-      | "notes"
-      | "account"
-      | "content"
-      | "today"
-      | "discover"
-      | "session"
-      | "library"
-  ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
-  const audioPlaying = audio.controller.isPlaying.value;
-  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
-  const speaking = tts.isSpeaking.value;
-  const canListen =
-    !audio.available.value && tts.canSpeakLanguage(state.speechLang());
-  const [moreOpen, setMoreOpen] = useState(false);
+type PaneId =
+  | "notes"
+  | "account"
+  | "content"
+  | "today"
+  | "discover"
+  | "session"
+  | "library";
 
-  // Everything after the chapter controls: inline on a wide screen, under "More" on a narrow phone.
-  const secondary: ToolbarAction[] = [
+/**
+ * Every button that can sit after the chapter controls, in the default order — what the toolbar shows (arranged by
+ * the reader's layout) and what Account → Toolbar lists for the reader to order and hide.
+ */
+export function toolbarActions(
+  state: ReaderState,
+  t: ReturnType<typeof useI18n>["t"],
+  h: { togglePane: (p: PaneId) => void; dark: boolean; notes: number }
+): ToolbarAction[] {
+  const { ui, settings } = state;
+  const { togglePane, dark, notes } = h;
+  return [
     {
       id: "session",
       icon: state.live.active.value ? "groups" : "group_add",
@@ -143,6 +139,40 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       onClick: () => settings.toggleTheme(),
     },
   ];
+}
+
+export function ReaderToolbar({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { reading, ui, settings, audio, tts } = state;
+  const notes = state.annotations.forChapter(reading.chapterRef.value).value
+    .length;
+  const pending = state.outbox.pending.value;
+  const dark = settings.resolvedTheme().id === "dark";
+  const togglePane = (
+    p:
+      | "notes"
+      | "account"
+      | "content"
+      | "today"
+      | "discover"
+      | "session"
+      | "library"
+  ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
+  const audioPlaying = audio.controller.isPlaying.value;
+  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
+  const speaking = tts.isSpeaking.value;
+  const canListen =
+    !audio.available.value && tts.canSpeakLanguage(state.speechLang());
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // Everything after the chapter controls: inline on a wide screen, under "More" on a narrow phone; in the order
+  // and with the buttons the reader chose (Account → Toolbar).
+  const secondary: ToolbarAction[] = toolbarActions(state, t, {
+    togglePane,
+    dark,
+    notes,
+  });
+  const shown = arrange(secondary, state.toolbar.layout.value);
 
   return (
     <nav
@@ -243,7 +273,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => (speaking ? tts.stop() : state.listen())}
         />
       )}
-      {secondary.map((a) => (
+      {shown.map((a) => (
         <Item
           key={a.id}
           icon={a.icon}
@@ -269,7 +299,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             handleGridKeyNav(e as KeyboardEvent, e.currentTarget as HTMLElement)
           }
         >
-          {secondary.map((a) => (
+          {shown.map((a) => (
             <button
               key={a.id}
               type="button"

@@ -1,6 +1,7 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import { createToolbarLayout } from "./chrome/toolbarLayout";
 import { createOfflineTranslations } from "./reading/offlineTranslations";
 import { isTypingTarget, readerKeyAction } from "./chrome/keys";
 import { defaultTranslationFor } from "./reading/defaultTranslation";
@@ -129,6 +130,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const today = createToday(backend, stores);
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
+  /** The bottom toolbar's order and hidden buttons (the old toolbar customizer). */
+  const toolbar = createToolbarLayout(stores.prefs);
   /** Whole translations kept on the device (the old OfflineTranslationsManager). */
   const offline = createOfflineTranslations({
     api:
@@ -623,6 +626,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   const stateObject = {
     offline,
+    toolbar,
     session,
     backend,
     stores,

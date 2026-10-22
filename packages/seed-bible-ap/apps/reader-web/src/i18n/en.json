@@ -342,5 +342,9 @@
   "terms-of-service": "Terms of service",
   "privacy-policy": "Privacy policy",
   "code-of-conduct": "Code of conduct",
-  "keep-both-merged": "Keep both, merged"
+  "keep-both-merged": "Keep both, merged",
+  "toolbar-customize": "Toolbar",
+  "toolbar-customize-hint": "Choose the buttons after the chapter controls, and their order.",
+  "move-down": "Move down",
+  "toolbar-reset": "Reset"
 }

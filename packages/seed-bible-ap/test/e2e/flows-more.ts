@@ -1594,4 +1594,47 @@ export const MORE_FLOWS: Flow[] = [
       return (await pane.innerText()).replace(/\s+/g, " ").slice(0, 110);
     },
   },
+  {
+    id: "G10",
+    section: "3. Reading",
+    title: "Customize the bottom toolbar",
+    rows: ["Customize the bottom toolbar"],
+    checks:
+      "Account → Toolbar: untick Today and move Notes up; the bottom toolbar drops Today and shows Notes before Discover; kept after a reload; Reset restores it",
+    run: async (c) => {
+      await c.open(CH);
+      const labels = () =>
+        c.page
+          .locator(".sb-reader-toolbar .sb-reader-toolbar-secondary button")
+          .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+      const before = await labels();
+      let pane = await c.openAccount();
+      const card = pane.locator(".sb-toolbar-card");
+      await c.check(card, "Today").uncheck();
+      await card.locator('button[aria-label="Move up Notes"]').click();
+      await card.locator('button[aria-label="Move up Notes"]').click();
+      const after = await labels();
+      if (
+        after.includes("Today") ||
+        after.indexOf("Notes") > after.indexOf("Discover")
+      )
+        throw new Error(`toolbar: ${after.join(", ")}`);
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await c.page.waitForTimeout(500);
+      const kept = await labels();
+      if (kept.includes("Today")) throw new Error("not kept after a reload");
+      pane = await c.openAccount();
+      await pane
+        .locator(".sb-toolbar-card")
+        .getByRole("button", { name: /^reset$/i })
+        .click();
+      const reset = await labels();
+      if (reset.join() !== before.join())
+        throw new Error(`after reset: ${reset.join(", ")}`);
+      return `${before.length} buttons; Today hidden and Notes before Discover, kept after a reload; Reset restored`;
+    },
+  },
 ];

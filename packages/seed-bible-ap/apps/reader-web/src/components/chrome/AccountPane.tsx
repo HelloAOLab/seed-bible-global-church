@@ -1,4 +1,6 @@
 import { Avatar } from "./ConnectedChip";
+import { toolbarActions } from "../reader/ReaderToolbar";
+import { ordered } from "../../state/chrome/toolbarLayout";
 import { wakeLockSupported } from "../../state/chrome/wakeLock";
 import type { Connector, Org } from "../../backend/ReaderBackend";
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
@@ -252,6 +254,88 @@ function PublishAsCard({ state }: { state: ReaderState }) {
             "As a church you steward, what you publish — notes, playlists, plans, themes — lands on the church's shelf and reaches everyone who follows it.",
         })}
       </p>
+    </div>
+  );
+}
+
+/** Account → Toolbar: which buttons the bottom toolbar shows, and in what order (the old toolbar customizer). */
+function ToolbarCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const actions = toolbarActions(state, t, {
+    togglePane: () => undefined,
+    dark: state.settings.resolvedTheme().id === "dark",
+    notes: 0,
+  });
+  const ids = actions.map((a) => a.id);
+  const layout = state.toolbar.layout.value;
+  const list = ordered(ids, layout);
+  return (
+    <div className="sb-account-card sb-toolbar-card">
+      <p className="sb-small">
+        <strong>{t("toolbar-customize", { defaultValue: "Toolbar" })}</strong>{" "}
+        <span className="sb-muted">
+          {t("toolbar-customize-hint", {
+            defaultValue:
+              "Choose the buttons after the chapter controls, and their order.",
+          })}
+        </span>
+      </p>
+      <ul className="sb-toolbar-list">
+        {list.map((id, i) => {
+          const a = actions.find((x) => x.id === id)!;
+          return (
+            <li key={id} className="sb-toolbar-list-row">
+              <label className="sb-small sb-check">
+                <input
+                  type="checkbox"
+                  checked={!layout.hidden.includes(id)}
+                  onChange={(e) =>
+                    state.toolbar.setHidden(
+                      id,
+                      !(e.target as HTMLInputElement).checked
+                    )
+                  }
+                />{" "}
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {a.icon}
+                </span>{" "}
+                {a.label}
+              </label>
+              <button
+                type="button"
+                className="sb-pane-close"
+                aria-label={
+                  t("move-up", { defaultValue: "Move up" }) + ` ${a.label}`
+                }
+                disabled={i === 0}
+                onClick={() => state.toolbar.move(ids, id, -1)}
+              >
+                <span className="material-symbols-outlined">arrow_upward</span>
+              </button>
+              <button
+                type="button"
+                className="sb-pane-close"
+                aria-label={
+                  t("move-down", { defaultValue: "Move down" }) + ` ${a.label}`
+                }
+                disabled={i === list.length - 1}
+                onClick={() => state.toolbar.move(ids, id, 1)}
+              >
+                <span className="material-symbols-outlined">
+                  arrow_downward
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <button
+        type="button"
+        className="sb-note-button"
+        onClick={() => state.toolbar.reset()}
+      >
+        {t("toolbar-reset", { defaultValue: "Reset" })}
+      </button>
     </div>
   );
 }
@@ -726,6 +810,8 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </p>
         </div>
       )}
+
+      <ToolbarCard state={state} />
 
       <div className="sb-account-card">
         <p className="sb-small">
