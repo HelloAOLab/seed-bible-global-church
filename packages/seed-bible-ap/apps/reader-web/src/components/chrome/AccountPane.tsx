@@ -325,6 +325,36 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </label>
         ))}
       </div>
+
+      <div className="sb-account-card">
+        <p className="sb-small">
+          <strong>{t("extensions", { defaultValue: "Extensions" })}</strong>
+        </p>
+        {state.extensions.registered.value.map((ext) => (
+          <label key={ext.id} className="sb-small sb-check">
+            <input
+              type="checkbox"
+              checked={state.extensions.enabled.value.has(ext.id)}
+              onChange={(e) =>
+                void state.extensions.setEnabled(
+                  ext.id,
+                  (e.target as HTMLInputElement).checked
+                )
+              }
+            />{" "}
+            {ext.label}
+            {ext.description ? (
+              <span className="sb-muted"> — {ext.description}</span>
+            ) : null}
+            {state.extensions.errors.value[ext.id] ? (
+              <span className="sb-pane-error">
+                {" "}
+                ({state.extensions.errors.value[ext.id]})
+              </span>
+            ) : null}
+          </label>
+        ))}
+      </div>
     </section>
   );
 }

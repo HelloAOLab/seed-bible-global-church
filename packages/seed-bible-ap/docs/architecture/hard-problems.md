@@ -98,6 +98,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 9. Streaming across three hops that do not all stream
 
+**First form 2026-10-22 (step 8):** the study companion streams from Workers AI on the svc through reader-a2a to the pane as SSE (`event: who` names the answerer). The person-agent long-poll → SSE conversion for `/harness/ask` is still open.
+
 **Problem.** The user wants one live stream in the browser. The chain is browser ⇐ reader-a2a (SSE) ⇐ person agent (`/harness/progress` **long-poll**; A2A streaming implemented but cards say `streaming: false`) ⇐ study companion. Workers have request-time limits; SSE needs reconnect/resume; task ids must correlate across hops.
 
 **Approach.** reader-a2a owns the stream. It runs the long-poll loop against the person agent inside the run DO (`ReaderRunDO`), converts `ProgressLineV1` into SSE events with `id: <seq>` so the browser can resume with `Last-Event-ID`, and ends with the `AnswerDraft`. Where the far agent **does** advertise `streaming: true`, reader-a2a uses `SendStreamingMessage` instead; the browser contract is the same either way. The DO, not the Worker request, holds the long-lived upstream poll, so Worker limits do not apply.

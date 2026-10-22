@@ -671,3 +671,14 @@ body {
   max-width: 6rem;
   object-fit: contain;
 }
+
+/* Extensions */
+.sb-companion-log {
+  max-height: 24rem;
+}
+.sb-companion-text {
+  white-space: pre-wrap;
+}
+.sb-compare-pane .sb-translation-list {
+  max-height: 14rem;
+}

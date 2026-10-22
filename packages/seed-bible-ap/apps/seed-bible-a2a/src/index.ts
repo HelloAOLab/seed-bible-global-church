@@ -41,8 +41,12 @@ export interface Env {
   SHELF_FOLDER?: string;
   /** Public file bytes (hero images, photos). The vault holds the catalog; these are re-puttable (ADR-0004). */
   FILES?: R2Bucket;
-  /** What a workspace presents to put a file — a shared secret with reader-a2a, not a grant. */
+  /** What a workspace presents to put a file or ask the companion — a shared secret with reader-a2a, not a grant. */
   UPLOAD_TOKEN?: string;
+  /** Workers AI: the study companion's model. */
+  AI?: {
+    run: (model: string, input: Record<string, unknown>) => Promise<unknown>;
+  };
 }
 
 const DEV_AGENT: Address = "0x0000000000000000000000000000000000000002";
@@ -288,6 +292,79 @@ app.get("/files/:owner/:name", async (c) => {
   headers.set("cache-control", "public, max-age=31536000, immutable");
   headers.set("access-control-allow-origin", "*");
   return new Response(obj.body, { headers });
+});
+
+// ── The study companion: a question about a chapter, answered by Workers AI and streamed back ─────────────────
+export const COMPANION_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
+export const COMPANION_WHO = `seed-bible.svc · ${COMPANION_MODEL.replace("@cf/", "")}`;
+// Headers are ASCII; the SSE `who` event carries the full name.
+const COMPANION_WHO_HEADER = COMPANION_WHO.replace(" · ", " / ");
+const COMPANION_SYSTEM =
+  "You are a study companion inside a Bible reader. The reader has a chapter open; its text is given. Answer the reader's question about that passage: literary context, meaning of words, what to notice, connections within Scripture. Be concise (under 200 words), plain, and honest about uncertainty; cite verses by number. Do not invent quotations. If the question is not about the passage, say so briefly and offer to help with the passage.";
+
+app.post("/companion", async (c) => {
+  if (
+    !c.env.UPLOAD_TOKEN ||
+    c.req.header("x-sb-upload-token") !== c.env.UPLOAD_TOKEN
+  )
+    return c.json({ ok: false, error: "not allowed" }, 403);
+  if (!c.env.AI)
+    return c.json({ ok: false, error: "the companion is not configured" }, 503);
+  const b = (await c.req.json().catch(() => ({}))) as {
+    passage?: string;
+    text?: string;
+    question?: string;
+    history?: Array<{ role: "user" | "assistant"; text: string }>;
+  };
+  const question = String(b.question ?? "")
+    .trim()
+    .slice(0, 2000);
+  if (!question) return c.json({ ok: false, error: "question required" }, 400);
+  const messages: Array<{ role: string; content: string }> = [
+    { role: "system", content: COMPANION_SYSTEM },
+    {
+      role: "user",
+      content: `The chapter on screen: ${String(b.passage ?? "")}\n\n${String(b.text ?? "").slice(0, 12_000)}`,
+    },
+    {
+      role: "assistant",
+      content: "I have the passage. What would you like to know?",
+    },
+    ...(Array.isArray(b.history)
+      ? b.history.slice(-6).map((h) => ({
+          role: h.role,
+          content: String(h.text).slice(0, 2000),
+        }))
+      : []),
+    { role: "user", content: question },
+  ];
+  const stream = (await c.env.AI.run(COMPANION_MODEL, {
+    messages,
+    stream: true,
+    max_tokens: 600,
+  })) as ReadableStream<Uint8Array>;
+  const head = new TextEncoder().encode(
+    `event: who\ndata: ${COMPANION_WHO}\n\n`
+  );
+  const out = new ReadableStream<Uint8Array>({
+    async start(ctl) {
+      ctl.enqueue(head);
+      const r = stream.getReader();
+      for (;;) {
+        const { value, done } = await r.read();
+        if (done) break;
+        if (value) ctl.enqueue(value);
+      }
+      ctl.close();
+    },
+  });
+  return new Response(out, {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      "x-sb-who": COMPANION_WHO_HEADER,
+    },
+  });
 });
 
 // ── Link previews: the page's head, read here with a cap, cached at the edge for a day ───────────────────────

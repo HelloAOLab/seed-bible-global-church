@@ -16,6 +16,8 @@ import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
 import { createFiles } from "./library/files";
 import { createCustomizations } from "./chrome/customizations";
+import { createExtensionHost } from "../extensions/host";
+import { registerBuiltInExtensions } from "../extensions";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -84,6 +86,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const playlists = createPlaylists(backend, stores, identity);
   const plans = createPlans(backend, stores, buckets, identity);
   const files = createFiles(backend, stores, identity);
+  const extensions = createExtensionHost(stores);
+  registerBuiltInExtensions(extensions);
   const search = createVerseSearch();
   const position = createPosition(stores);
   const customizations = createCustomizations(backend, stores, identity);
@@ -219,6 +223,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "discover"
       | "session"
       | "library"
+      | `ext:${string}`
     >("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
@@ -261,6 +266,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     tabs.addTab(target ?? {});
     const stops = [bindRoute(readingOf), outbox.start()];
     void customizations.refresh();
+    void extensions.bind(stateObject);
     // A share link: join the session (after sign-in when needed), and drop the query from the URL.
     if (typeof location !== "undefined") {
       const q = new URLSearchParams(location.search);
@@ -277,10 +283,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     return () => stops.forEach((s) => s());
   }
 
-  return {
+  const stateObject = {
     session,
     backend,
     stores,
+    api,
+    extensions,
     outbox,
     buckets,
     highlights,
@@ -312,6 +320,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     signOut,
     start,
   };
+  return stateObject;
 }
 
 export type ReaderState = ReturnType<typeof createReaderState>;

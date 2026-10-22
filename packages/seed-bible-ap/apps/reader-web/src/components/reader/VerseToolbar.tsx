@@ -73,6 +73,30 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
               </span>
             </button>
           )}
+        {[...state.extensions.verseTools.value]
+          .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+          .filter(
+            (tool) =>
+              !tool.isVisible ||
+              tool.isVisible({ chapterRef, start, end, verses })
+          )
+          .map((tool) => (
+            <button
+              key={tool.id}
+              className="sb-verse-toolbar-action"
+              onClick={() => {
+                tool.onSelect({ chapterRef, start, end, verses });
+                state.selection.clear();
+              }}
+            >
+              <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
+                {tool.icon}
+              </span>
+              <span className="sb-verse-toolbar-action-label">
+                {tool.label}
+              </span>
+            </button>
+          ))}
         {current && (
           <button
             className="sb-verse-toolbar-action sb-verse-toolbar-clear"

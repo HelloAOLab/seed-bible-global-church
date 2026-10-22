@@ -1,6 +1,6 @@
 # Seed Bible on faithnet — training manual
 
-_Last updated 2026-10-22, after the Step 4 (core reading) cuts. The app is at **https://seed-reader.faithnet.io**._
+_Last updated 2026-10-22, after the Step 8 (extensions) first cut. The app is at **https://seed-reader.faithnet.io**._
 
 This manual is for anyone trying the new reader: what it is, how to use each feature, and which features should
 work today. Every feature carries a mark:
@@ -195,7 +195,19 @@ The **music-list** icon in the bottom toolbar opens the Library pane.
 | Use one                       | ✅   | Account pane → **Church theme** → pick one (↻ refreshes the list). The reader takes its colours in light and dark; **None** goes back to Seed Bible's. |
 | Fonts, recommended extensions | ⬜   | [later]                                                                                                                                                |
 
-## 12. Coming next (not working yet)
+## 12. Extensions and the study companion
+
+Account pane → **Extensions** turns each one on or off. All four are on to start.
+
+| Feature              | Mark | How                                                                                                                                                                                                                 |
+| -------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compare translations | ✅   | Select verses → **Compare** in the verse toolbar. The pane shows them in the open translation and others; **Add translation** picks more; a block's header switches the reader to it.                               |
+| Cross-references     | ✅   | Discover pane → **Cross-references**: related passages for the verses you selected (or the chapter's best). Tap one to open it with the verse selected.                                                             |
+| Places               | 🟡   | Discover pane → **Places**: the places the chapter names; tap to select the verse. The map is not back yet.                                                                                                         |
+| Study companion      | ✅   | The **flame** icon (signed in): ask about the chapter or your selection; the answer streams in and the pane says who answered (the estate's model on seed-bible.svc). It is a model, not a person; it can be wrong. |
+| Ask from a selection | ✅   | Select verses → **Ask** in the verse toolbar.                                                                                                                                                                       |
+
+## 13. Coming next (not working yet)
 
 | Feature                                                                | Step |
 | ---------------------------------------------------------------------- | ---- |
@@ -209,7 +221,7 @@ The **music-list** icon in the bottom toolbar opens the Library pane.
 | Extensions (audio reader, references, transcript, Twitch …), AI        | 8    |
 | Sitemap, embed mode, onboarding tour, legal modals                     | 9    |
 
-## 13. For testers: how to check it yourself
+## 14. For testers: how to check it yourself
 
 - **The live gate** (needs the repo): `cd packages/seed-bible-ap && A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`
   signs in as `seedreader`, makes marks on one "device", reads them on a second, edits a note and cleans up.

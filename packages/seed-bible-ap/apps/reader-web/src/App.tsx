@@ -66,6 +66,30 @@ export function App({ state }: { state: ReaderState }) {
           <LibraryPane state={state} />
         </aside>
       )}
+      {typeof pane === "string" && pane.startsWith("ext:") && (
+        <aside className="sb-app-pane">
+          {(() => {
+            const p = state.extensions.panes.value.find(
+              (x) => `ext:${x.id}` === pane
+            );
+            return (
+              <section className="sb-pane" aria-label={p?.title ?? "Extension"}>
+                <header className="sb-pane-header">
+                  <h2>{p?.title ?? "Extension"}</h2>
+                  <button
+                    className="sb-pane-close"
+                    aria-label="Close"
+                    onClick={() => (state.ui.pane.value = "none")}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </header>
+                {p ? p.render() : null}
+              </section>
+            );
+          })()}
+        </aside>
+      )}
       {pane === "account" && (
         <aside className="sb-app-pane">
           <AccountPane state={state} />

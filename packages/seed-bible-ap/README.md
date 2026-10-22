@@ -168,6 +168,15 @@ lists). Files: `seed.file.put` → `PUT /files/<owner>/<sha256>.<ext>` on the sv
 published as a slice of kind `customization`, listed by the registry by kind, picked under **Church theme** in the
 account pane and applied over the built-in themes. Not yet: the organization as publisher (`seed.workspace.ask.org`, §11).
 
+### Extensions, the companion (step 8, first cut — extensions-proxy, 2026-10-22)
+
+The extension host (`reader-web/src/extensions/host`: `registerExtension({ id, init })`, `init` yields cleanups;
+verse tools, Discover providers, toolbar items, panes; the enabled set on the device) with four built-ins: compare
+translations, cross-references (the Bible API host's dataset, cached), places (the gazetteer, in Discover), and the
+study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers AI on `seed-bible.svc`, streamed back,
+the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
+transcripts and Twitch (the outbound allowlist, §10).
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |

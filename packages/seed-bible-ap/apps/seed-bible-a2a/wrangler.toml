@@ -42,6 +42,9 @@ new_sqlite_classes = ["SvcRunDO"]
 [triggers]
 crons = ["*/15 * * * *"]
 
+[ai]
+binding = "AI"
+
 # ─────────────────────────────────────────────────────────────────────────────────────────────
 # FAITHNET — the host the name record `seed-bible.svc` → atl:a2aEndpoint names. Secrets:
 #   wrangler secret put A2A_INTERNAL_MARKER -c apps/seed-bible-a2a/wrangler.toml --env faithnet
@@ -83,3 +86,6 @@ bucket_name = "seed-bible-files"
 
 [env.faithnet.triggers]
 crons = ["*/15 * * * *"]
+
+[env.faithnet.ai]
+binding = "AI"

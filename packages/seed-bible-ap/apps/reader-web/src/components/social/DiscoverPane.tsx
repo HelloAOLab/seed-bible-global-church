@@ -4,6 +4,8 @@ import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
+import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
+import { useEffect } from "preact/hooks";
 
 const KIND_ICON: Record<string, string> = {
   note: "sticky_note_2",
@@ -66,6 +68,80 @@ function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
   );
 }
 
+function ProviderSection({
+  state,
+  provider,
+}: {
+  state: ReaderState;
+  provider: DiscoverProvider;
+}) {
+  const { t } = useI18n();
+  const [items, setItems] = useState<DiscoverItem[] | null>(null);
+  const chapterRef = state.reading.chapterRef.value;
+  const chapter = state.reading.chapterData.value;
+  const selected = state.selection.verses.value.join(",");
+  useEffect(() => {
+    let live = true;
+    setItems(null);
+    provider
+      .discover({
+        chapterRef,
+        chapter,
+        books: state.reading.books.value,
+        selectedVerses: state.selection.verses.value,
+      })
+      .then((r) => live && setItems(r))
+      .catch(() => live && setItems([]));
+    return () => {
+      live = false;
+    };
+  }, [provider.id, chapterRef, chapter, selected]);
+  return (
+    <div className="sb-content-section">
+      <div className="sb-content-section-head">
+        <h3 className="sb-content-section-title">{provider.label}</h3>
+      </div>
+      {items === null && (
+        <p className="sb-muted sb-small">
+          {t("loading", { defaultValue: "Loading…" })}
+        </p>
+      )}
+      {items && !items.length && (
+        <p className="sb-content-empty">
+          {t("discover-provider-empty", {
+            defaultValue: "Nothing for this chapter.",
+          })}
+        </p>
+      )}
+      {items && items.length > 0 && (
+        <ul className="sb-discover-list">
+          {items.map((it) => (
+            <li key={it.id} className="sb-discover-item sb-discover-item--row">
+              <button
+                type="button"
+                className="sb-discover-item-main"
+                onClick={() => it.onOpen?.()}
+              >
+                <span className="material-symbols-outlined sb-discover-item-icon">
+                  {it.icon ?? "auto_stories"}
+                </span>
+                <span className="sb-discover-item-content">
+                  <span className="sb-discover-item-title">{it.title}</span>
+                  {it.description && (
+                    <span className="sb-discover-item-description">
+                      {it.description}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function DiscoverPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const chapterRef = state.reading.chapterRef.value;
@@ -122,6 +198,9 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
           ))}
         </ul>
       )}
+      {state.extensions.providers.value.map((p) => (
+        <ProviderSection key={p.id} state={state} provider={p} />
+      ))}
       <p className="sb-small sb-muted">
         {t("discover-how", {
           defaultValue:

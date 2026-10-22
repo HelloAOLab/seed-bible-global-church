@@ -19,7 +19,7 @@ import { routeAgentRequest } from "agents";
 import { ReadingSession } from "./rooms/ReadingSession";
 export { ReadingSession };
 import { askingKeyAddress, type WireEnv } from "./wires";
-import type { PlatformEnv } from "./clients/platform";
+import { platformSend, type PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
 
 export interface Env extends SessionEnv, WireEnv, PlatformEnv {
@@ -156,6 +156,41 @@ app.all(
     (await readerHost(c).fetch(c.req.raw)) ??
     c.json({ ok: false, error: "no such route" }, 404)
 );
+
+/** The study companion: a signed-in reader's question, streamed from the serving plane (hard-problems §9). */
+app.post("/companion/ask", async (c) => {
+  const reader = await readerFromToken(c.env, bearerOf(c.req.raw));
+  if (!reader)
+    return c.json({ ok: false, error: "sign in to ask the companion" }, 401);
+  const body = await c.req.text();
+  const res = await platformSend(c.env, "/companion", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-sb-upload-token": c.env.PLATFORM_UPLOAD_TOKEN ?? "",
+    },
+    body,
+  });
+  if (!res.ok || !res.body) {
+    const j = (await res.json().catch(() => null)) as { error?: string } | null;
+    return c.json(
+      {
+        ok: false,
+        error: j?.error ?? `the serving plane answered ${res.status}`,
+      },
+      res.status === 403 ? 502 : (res.status as 400)
+    );
+  }
+  return new Response(res.body, {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      ...(res.headers.get("x-sb-who")
+        ? { "x-sb-who": res.headers.get("x-sb-who")! }
+        : {}),
+    },
+  });
+});
 
 /** The plain lane: hello for anyone; the reader's own name when a session token is presented. */
 app.post("/hello", async (c) => {

@@ -177,6 +177,15 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         active={ui.pane.value === "content"}
         onClick={() => togglePane("content")}
       />
+      {state.extensions.toolbarItems.value.map((it) => (
+        <Item
+          key={it.id}
+          icon={it.icon}
+          label={it.label}
+          active={ui.pane.value === (`ext:${it.id}` as never)}
+          onClick={() => it.onSelect()}
+        />
+      ))}
       <Item
         icon={dark ? "light_mode" : "dark_mode"}
         label={t("themes", { defaultValue: "Themes" })}
