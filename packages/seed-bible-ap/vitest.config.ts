@@ -7,7 +7,7 @@ const here = fileURLToPath(new URL(".", import.meta.url));
 // carry the `@seed` alias, Preact's JSX and the two guards (no real sockets, no real network beyond the Bible API).
 const shared = {
   resolve: { alias: { "@seed": `${here}lib` } },
-  esbuild: { jsx: "automatic" as const, jsxImportSource: "preact" },
+  oxc: { jsx: { runtime: "automatic", importSource: "preact" } },
 };
 const setupFiles = [
   "test/setup/blockRealSockets.ts",
@@ -26,6 +26,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary"],
       include: ["apps/**/src/**", "lib/**"],
+      exclude: ["**/*.md", "**/*.json", "**/*.d.ts"],
     },
     projects: [
       {
