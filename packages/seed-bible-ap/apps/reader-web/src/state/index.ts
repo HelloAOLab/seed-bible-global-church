@@ -474,12 +474,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   async function start(): Promise<() => void> {
     const fromUrl =
       typeof location !== "undefined" ? parseRoute(location.pathname) : null;
-    const target = fromUrl ?? (await position.load());
-    const saved = (await stores.prefs.get(TABS_KEY)) as SavedTabs | undefined;
-    const restored = restoreTabs(saved);
-    const tab = restored ?? tabs.addTab(target ?? {});
-    tabsRestored = true;
-    // A share link's verses: selected once the chapter it named is open.
+    // Read everything the link carries BEFORE the first navigation: opening the tab rewrites the URL (pushRoute),
+    // and a `?v=` or `?offering=` read after that is gone.
     const shared =
       fromUrl && typeof location !== "undefined"
         ? versesOf(location.search)
@@ -489,6 +485,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       fromUrl && typeof location !== "undefined"
         ? new URLSearchParams(location.search).get("offering")
         : null;
+    const target = fromUrl ?? (await position.load());
+    const saved = (await stores.prefs.get(TABS_KEY)) as SavedTabs | undefined;
+    const restored = restoreTabs(saved);
+    const tab = restored ?? tabs.addTab(target ?? {});
+    tabsRestored = true;
     if (offering) {
       discover.focus.value = offering;
       ui.pane.value = "discover";

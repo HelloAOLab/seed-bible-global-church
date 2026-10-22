@@ -86,10 +86,13 @@ export function openRoom(
       : {}),
     query: { token },
     onStateUpdate: (s: SessionState) => h.onState(s),
-    onOpen: () => h.onOpen?.(),
-    onClose: (e: { code: number; reason: string }) =>
-      h.onClose?.(e.code, e.reason),
   } as ConstructorParameters<typeof AgentClient>[0]);
+  // The Agents client takes no onOpen/onClose option: the socket's own events say when the room is reached.
+  client.addEventListener("open", () => h.onOpen?.());
+  client.addEventListener("close", (ev: Event) => {
+    const e = ev as CloseEvent;
+    h.onClose?.(e.code, e.reason);
+  });
   client.addEventListener("message", (ev: MessageEvent) => {
     if (typeof ev.data !== "string" || !ev.data.startsWith('{"t":')) return;
     try {

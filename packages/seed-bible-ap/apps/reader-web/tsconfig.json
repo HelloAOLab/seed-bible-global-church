@@ -32,6 +32,9 @@
     "../../test/helpers/**/*",
     "../../test/integration/**/*",
     "../../test/unit/reader-a2a/log-hygiene.test.ts",
-    "../../test/unit/reader-a2a/publish-without-reads.test.ts"
+    "../../test/unit/reader-a2a/publish-without-reads.test.ts",
+    "../../test/e2e/**/*",
+    "../../scripts/e2e.ts",
+    "../../scripts/manual-tests.ts"
   ]
 }

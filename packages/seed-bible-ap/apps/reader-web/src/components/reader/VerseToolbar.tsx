@@ -145,7 +145,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           </button>
         )}
         <button
-          className="sb-verse-toolbar-action sb-verse-toolbar-annotations"
+          className="sb-verse-toolbar-action sb-verse-toolbar-note"
           onClick={() => {
             state.ui.pane.value = "notes";
             state.ui.noteDraft.value = { start, end };

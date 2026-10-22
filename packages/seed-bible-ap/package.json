@@ -33,7 +33,9 @@
     "test:coverage": "vitest run --coverage",
     "smoke:ssr": "tsx scripts/check-ssr-bundle.ts",
     "size": "node scripts/build-size.mjs",
-    "gate": "pnpm typecheck && pnpm test && pnpm build:web && pnpm smoke:ssr && pnpm size"
+    "gate": "pnpm typecheck && pnpm test && pnpm build:web && pnpm smoke:ssr && pnpm size",
+    "e2e": "tsx scripts/e2e.ts",
+    "manual:tests": "tsx scripts/manual-tests.ts"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",

@@ -1,2 +1,3 @@
 // The Worker entry: the app plus the Durable Object class wrangler binds.
-export { default, ReaderRunDO, ReadingSession } from "./index";
+export { default, ReaderRunDO } from "./index";
+export { ReadingSession } from "./rooms/ReadingSession";

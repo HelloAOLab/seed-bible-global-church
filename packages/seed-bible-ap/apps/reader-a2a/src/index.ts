@@ -17,9 +17,9 @@ import {
 import { servedEstates, TOWN } from "../../../estate/faithnet";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
-import { routeAgentRequest } from "agents";
-import { ReadingSession } from "./rooms/ReadingSession";
-export { ReadingSession };
+// The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
+// the Worker runtime has, and this app is also imported by the in-process smoke (scripts/smoke.ts). The room class
+// itself is exported from worker.ts, the deploy entry.
 import { askingKeyAddress, type WireEnv } from "./wires";
 import { platformSend, type PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
@@ -53,6 +53,7 @@ app.route("/", connectRoutes);
 app.route("/", publicRoutes);
 // The rooms: people's devices join a session on this origin (realtime-collaboration.md rule 2).
 app.all("/agents/*", async (c) => {
+  const { routeAgentRequest } = await import("agents");
   const r = await routeAgentRequest(
     c.req.raw,
     c.env as unknown as Record<string, unknown>,

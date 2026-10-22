@@ -33,6 +33,7 @@
   "exclude": [
     "scripts/smoke/reader-web.ts",
     "scripts/smoke/session.ts",
+    "test/e2e",
     "test/helpers/TestHost.tsx",
     "test/helpers/bibleResponses.ts",
     "test/helpers/createTestReaderState.ts",

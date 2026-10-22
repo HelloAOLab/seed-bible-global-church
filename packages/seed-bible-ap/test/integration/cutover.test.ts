@@ -135,11 +135,20 @@ describe("the cutover surface", () => {
         throw new Error("none");
       },
     };
-    vi.stubGlobal("location", {
+    // A real history rewrites the URL on the first navigation (the route is pushed without the query), so the
+    // link's parameters must be read before that: the stub does what the browser does.
+    const loc = {
       pathname: "/read/BSB/JHN/3",
       search: "?embed=minimal&theme=dark&v=16-17&offering=urn:seed:offering:x",
-    });
-    vi.stubGlobal("history", { replaceState: () => {}, pushState: () => {} });
+    };
+    const navigate = (_s: unknown, _t: string, url?: string | URL | null) => {
+      if (!url) return;
+      const u = new URL(String(url), "https://seed-reader.faithnet.io");
+      loc.pathname = u.pathname;
+      loc.search = u.search;
+    };
+    vi.stubGlobal("location", loc);
+    vi.stubGlobal("history", { replaceState: navigate, pushState: navigate });
     const state = createReaderState({
       backend: createDevBackend(null),
       stores: memoryStores(),

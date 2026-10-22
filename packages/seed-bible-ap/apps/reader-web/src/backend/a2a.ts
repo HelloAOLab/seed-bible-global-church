@@ -46,20 +46,27 @@ export function createA2aBackend(
   getSession: () => ReaderSession | null,
   fetchImpl: typeof fetch = (...a) => fetch(...a)
 ): ReaderBackend {
+  // Reads a stranger may make: the workspace answers them from the registry (the host admits the public for reads).
+  const PUBLIC_TOOLS = new Set([
+    "seed.workspace.discover",
+    "seed.workspace.preview",
+    "seed.hello",
+  ]);
   const ask = async (
     toolId: string,
     args: Record<string, unknown>,
     message: string
   ): Promise<Record<string, unknown>> => {
     const s = getSession();
-    if (!s) throw new BackendError("sign in to keep your marks", "signed-out");
+    if (!s && !PUBLIC_TOOLS.has(toolId))
+      throw new BackendError("sign in to keep your marks", "signed-out");
     let res: Response;
     try {
       res = await fetchImpl(`${A2A_BASE}/harness/ask`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          session: s.token,
+          ...(s ? { session: s.token } : {}),
           message,
           plan: { steps: [{ id: "s1", toolId, args }] },
         }),

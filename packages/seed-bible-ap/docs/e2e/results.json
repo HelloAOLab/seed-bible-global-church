@@ -1,0 +1,204 @@
+{
+  "base": "https://seed-reader.faithnet.io",
+  "when": "2026-10-22 17:43 UTC",
+  "results": [
+    {
+      "id": "R1",
+      "section": "3. Reading",
+      "title": "Open a chapter",
+      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
+      "mark": "✅",
+      "note": "edge-rendered, then live; header \"John3\"",
+      "ms": 1225
+    },
+    {
+      "id": "R2",
+      "section": "3. Reading",
+      "title": "Next / previous chapter",
+      "checks": "The toolbar arrows move to John 4 and back; the URL follows",
+      "mark": "✅",
+      "note": "John 3 → 4 → 3, and browser back → 4",
+      "ms": 927
+    },
+    {
+      "id": "R3",
+      "section": "3. Reading",
+      "title": "Pick a book and chapter",
+      "checks": "Tap the header title, search 'Psalms', pick the book and chapter 23; the chapter opens",
+      "mark": "✅",
+      "note": "Psalm 23 opened from the selector",
+      "ms": 974
+    },
+    {
+      "id": "R4",
+      "section": "3. Reading",
+      "title": "Change translation",
+      "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
+      "mark": "✅",
+      "note": "switched to AAB Accessible Ancients Bible English",
+      "ms": 1059
+    },
+    {
+      "id": "R5",
+      "section": "3. Reading",
+      "title": "Share link selects verses",
+      "checks": "?v=16-18 opens with John 3:16–18 selected and the verse toolbar naming them",
+      "mark": "✅",
+      "note": "toolbar \"John 3:16–18\", 3 verses selected",
+      "ms": 629
+    },
+    {
+      "id": "R6",
+      "section": "13. Links and embedding",
+      "title": "Embed and theme parameters",
+      "checks": "?embed=minimal hides the sidebar and toolbars; ?theme=dark applies the dark theme",
+      "mark": "✅",
+      "note": "embed hides the chrome; data-sb-theme=\"dark\"",
+      "ms": 4728
+    },
+    {
+      "id": "R7",
+      "section": "3. Reading",
+      "title": "Light / dark theme toggle",
+      "checks": "The Themes button in the toolbar flips the theme marker",
+      "mark": "✅",
+      "note": "data-sb-theme \"light\" → \"dark\"",
+      "ms": 2092
+    },
+    {
+      "id": "R8",
+      "section": "3. Reading",
+      "title": "Text size",
+      "checks": "Account pane → size XL; the reader carries sb-font-size-xl",
+      "mark": "✅",
+      "note": "reader class sb-font-size-xl",
+      "ms": 1057
+    },
+    {
+      "id": "R9",
+      "section": "3. Reading",
+      "title": "Interface language",
+      "checks": "Account pane → Language → français; the sidebar heading changes from 'Tabs'",
+      "mark": "✅",
+      "note": "\"menu Seed Bible grid…\" → \"menu Seed Bible grid…\"",
+      "ms": 2609
+    },
+    {
+      "id": "R10",
+      "section": "6. Tabs and panes",
+      "title": "Tabs",
+      "checks": "New tab adds a second tab on the same chapter; closing it leaves one",
+      "mark": "✅",
+      "note": "tabs 1 → 2 → 1",
+      "ms": 2009
+    },
+    {
+      "id": "M1",
+      "section": "4. Marking the text",
+      "title": "Highlight and clear",
+      "checks": "Select 3:16, tap a colour → a ribbon appears; select again → Clear highlight → gone",
+      "mark": "✅",
+      "note": "ribbon drawn, then cleared",
+      "ms": 1576
+    },
+    {
+      "id": "M2",
+      "section": "4. Marking the text",
+      "title": "Write, edit and delete a note",
+      "checks": "Select 3:16 → Note → type → Save → the card lists it; Edit changes it; Delete removes it",
+      "mark": "✅",
+      "note": "created, edited, deleted; the pane counts 0 notes",
+      "ms": 1212
+    },
+    {
+      "id": "M3",
+      "section": "4. Marking the text",
+      "title": "Bookmark and save a chapter; see them in Your Content",
+      "checks": "Header bookmark and archive icons toggle; Your Content → All chapters lists John 3 under both",
+      "mark": "✅",
+      "note": "John 3 listed under bookmarks and saves",
+      "ms": 1510
+    },
+    {
+      "id": "M4",
+      "section": "4. Marking the text",
+      "title": "Share a verse (copy link)",
+      "checks": "Select 3:16 → Share copies a link ending in ?v=16",
+      "mark": "✅",
+      "note": "https://seed-reader.faithnet.io/read/BSB/JHN/3?v=16",
+      "ms": 1348
+    },
+    {
+      "id": "M5",
+      "section": "4. Marking the text",
+      "title": "Save a verse range",
+      "checks": "Select 3:15–16 → Save in the verse toolbar; Your Content lists John 3:15–16",
+      "mark": "✅",
+      "note": "John 3:15–16 saved",
+      "ms": 1102
+    },
+    {
+      "id": "C1",
+      "section": "5. Your Content and search",
+      "title": "Search verses",
+      "checks": "Your Content → search 'so loved the world' → John 3:16 among the results",
+      "mark": "✅",
+      "note": "John 3:16 found",
+      "ms": 1480
+    },
+    {
+      "id": "S1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Discover for a chapter",
+      "checks": "The Discover pane opens for John 3 and lists what was published (or says nothing yet) without an error",
+      "mark": "✅",
+      "note": "Discover · John 3 refresh close Nothing released for this chapter yet. Publish one of your notes to ",
+      "ms": 3161
+    },
+    {
+      "id": "S2",
+      "section": "8. Today, Discover and publishing",
+      "title": "Today, signed out",
+      "checks": "The Today pane opens and asks for sign-in rather than failing",
+      "mark": "✅",
+      "note": "Today close CONTINUE WHERE YOU LEFT OFF menu_book John 3 · BSB Bookmarks No bookmarks yet. Saves No ",
+      "ms": 681
+    },
+    {
+      "id": "X1",
+      "section": "12. Extensions",
+      "title": "Places map",
+      "checks": "On Genesis 12 the Places map pane shows a Leaflet map with at least one place marker",
+      "mark": "✅",
+      "note": "map with 6 marker(s)",
+      "ms": 2902
+    },
+    {
+      "id": "X2",
+      "section": "12. Extensions",
+      "title": "Compare translations",
+      "checks": "Select 3:16 → Compare in the verse toolbar; the pane shows the verse in other translations",
+      "mark": "✅",
+      "note": "Compare close John 3:16 add Add translation BSB Berean Standard Bible 16 For God",
+      "ms": 1270
+    },
+    {
+      "id": "A1",
+      "section": "2. Getting in",
+      "title": "Sign in as a sample person, mark, sync, sign out",
+      "checks": "Account pane → a sample person → the chip shows their name; a highlight reaches the Library ('Everything is in your Library'); Sign out clears the chip",
+      "mark": "✅",
+      "note": "signed in as Seed Reader; the highlight reached the Library; signed out",
+      "ms": 52814
+    },
+    {
+      "id": "L1",
+      "section": "9. Reading together",
+      "title": "Start a session; a guest joins and follows",
+      "checks": "Signed in: Start a session → share code; a second browser joins as a guest with id and code; the host moves to John 4 and the guest follows",
+      "mark": "✅",
+      "note": "code B79ZTX; the guest followed to John 4",
+      "ms": 44734
+    }
+  ]
+}
