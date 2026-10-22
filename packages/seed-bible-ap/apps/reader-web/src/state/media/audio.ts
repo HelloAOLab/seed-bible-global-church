@@ -104,6 +104,11 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
       (typeof Audio === "undefined" ? null : new Audio()) as AudioLike | null);
   const available = signal(false);
   const reader = signal<string | null>(null);
+  /** Every reader with a recording of this chapter, as the API names them. */
+  const readers = signal<string[]>([]);
+  /** The reader to prefer when a chapter offers several (the person's choice, kept by the caller). */
+  let preferred: string | null = null;
+  let links: Record<string, string> = {};
   const isPlaying = signal(false);
   const currentTime = signal(0);
   const duration = signal<number | null>(null);
@@ -146,17 +151,32 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
     timings.value = null;
     duration.value = null;
     error.value = null;
-    const links = next?.thisChapterAudioLinks ?? {};
-    const first = Object.keys(links)[0] ?? null;
-    reader.value = first;
+    links = next?.thisChapterAudioLinks ?? {};
+    readers.value = Object.keys(links);
+    const first =
+      (preferred && links[preferred] ? preferred : null) ??
+      readers.value[0] ??
+      null;
     available.value = !!first;
-    if (!next || !first) return;
+    if (!next || !first) {
+      reader.value = null;
+      return;
+    }
+    await point(first, gen);
+  }
+
+  /** The player on one reader's recording of the loaded chapter, with that reader's timings. */
+  async function point(name: string, gen = generation) {
+    const src = links[name];
+    if (!src) return;
+    reader.value = name;
+    timings.value = null;
     const audio = ensureElement();
     if (audio) {
-      audio.src = links[first]!;
+      audio.src = src;
       audio.load?.();
     }
-    const timingLink = next.thisChapterAudioTimings?.[first];
+    const timingLink = chapter?.thisChapterAudioTimings?.[name];
     if (!timingLink) return;
     try {
       const t = await deps.api.getAudioTimings(timingLink);
@@ -165,6 +185,19 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
       /* no timings: the scrubber works by time alone */
     }
   }
+
+  /** Choose a reader for this and later chapters; a chapter they did not record falls back to whoever did. */
+  async function setReader(name: string) {
+    preferred = name;
+    if (!links[name] || reader.value === name) return;
+    const wasPlaying = isPlaying.value;
+    stop();
+    await point(name);
+    if (wasPlaying) play();
+  }
+  const setPreferredReader = (name: string | null) => {
+    preferred = name;
+  };
 
   /** Where each verse starts, in seconds, from the timings file (cumulative). */
   const verseStarts = computed<number[]>(() => timings.value?.verses ?? []);
@@ -250,6 +283,9 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
   return {
     available,
     reader,
+    readers,
+    setReader,
+    setPreferredReader,
     error,
     controller,
     currentVerse,

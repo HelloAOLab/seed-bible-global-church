@@ -1000,3 +1000,35 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   gap: 0.5rem;
   margin: 0.25rem 0;
 }
+
+/* Pane dividers: a thin draggable strip on each column boundary */
+.sb-pane-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  margin-left: -5px;
+  cursor: col-resize;
+  z-index: 5;
+  touch-action: none;
+}
+.sb-pane-divider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--sb-divider-color, #00000024);
+  transition: background 0.15s;
+}
+.sb-pane-divider:hover::after,
+.sb-pane-divider:active::after {
+  background: var(--sb-primary-color);
+}
+.sb-reader-toolbar-reader {
+  font: inherit;
+  font-size: 0.75rem;
+  max-width: 7rem;
+  margin-inline-start: 0.35rem;
+}

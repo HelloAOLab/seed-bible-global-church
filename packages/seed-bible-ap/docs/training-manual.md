@@ -1,6 +1,6 @@
 # Seed Bible on faithnet — training manual
 
-_Last updated 2026-10-22, after theme typography and reader layout settings. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**._
+_Last updated 2026-10-22, after pane dividers, the audio reader picker and auto-continue. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**._
 
 This manual is for anyone trying the new reader: what it is, how to use each feature, and which features should
 work today. Every feature carries a mark:
@@ -149,8 +149,8 @@ chapter link opens in the selected tab. ✅ On a phone (under 720 px) the sideba
 the left of the bottom toolbar opens it over the reader; picking a tab closes it. On a narrow phone (under 480 px)
 the actions after the chapter controls sit under **⋯ More**. ✅
 
-Not yet: dragging the divider between panes. ⬜ _Why · when:_ the resize handles are UI work carried over from the old
-`TabsLayoutManager` and were cut for time. Next core-reader cut.
+Drag the divider between two panes to resize them; double-click it to reset. The widths are remembered per layout
+on the device. ✅
 
 ## 7. Listening — ✅
 
@@ -160,9 +160,9 @@ Not yet: dragging the divider between panes. ⬜ _Why · when:_ the resize handl
 - When there is no recording and your browser has a voice for the language, a **Listen** icon reads the chapter aloud
   with the device's own voice instead.
 
-Not yet: choosing between readers, auto-continue to the next chapter, the phone layout of the player. ⬜ _Why ·
-when:_ the Bible API lists one reader per translation today; auto-continue and the phone layout are UI work. Next
-core-reader cut.
+When a chapter has more than one reader, a **Reader** picker sits beside the scrubber (and in Account → Listening);
+the choice carries to later chapters. Account → Listening → **When a chapter's recording ends, play the next
+chapter** keeps the reading going. ✅ The player's phone layout is the same bar, under ⋯ More on narrow screens.
 
 ## 8. Today, Discover and publishing
 

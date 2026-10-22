@@ -151,6 +151,24 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         <>
           <div className="sb-reader-toolbar-audio">
             <AudioScrubber playback={audio.controller} showTimeRemaining />
+            {audio.readers.value.length > 1 && (
+              <select
+                className="sb-reader-toolbar-reader"
+                aria-label={t("audio-reader", { defaultValue: "Reader" })}
+                value={audio.reader.value ?? ""}
+                onChange={(e) =>
+                  void state.listening.chooseReader(
+                    (e.target as HTMLSelectElement).value
+                  )
+                }
+              >
+                {audio.readers.value.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <Item
             icon={audioPlaying ? "pause" : "play_arrow"}

@@ -376,6 +376,46 @@ export function AccountPane({ state }: { state: ReaderState }) {
         ))}
       </div>
 
+      <div className="sb-account-card">
+        <p className="sb-small">
+          <strong>{t("listening", { defaultValue: "Listening" })}</strong>
+        </p>
+        <label className="sb-small sb-check">
+          <input
+            type="checkbox"
+            checked={state.listening.autoContinue.value}
+            onChange={(e) =>
+              void state.listening.setAutoContinue(
+                (e.target as HTMLInputElement).checked
+              )
+            }
+          />{" "}
+          {t("audio-auto-continue", {
+            defaultValue:
+              "When a chapter's recording ends, play the next chapter",
+          })}
+        </label>
+        {state.audio.readers.value.length > 1 && (
+          <label className="sb-small sb-account-row">
+            <span>{t("audio-reader", { defaultValue: "Reader" })}</span>
+            <select
+              value={state.audio.reader.value ?? ""}
+              onChange={(e) =>
+                void state.listening.chooseReader(
+                  (e.target as HTMLSelectElement).value
+                )
+              }
+            >
+              {state.audio.readers.value.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
       {state.session.value && (
         <div className="sb-account-card">
           <label className="sb-small sb-check">

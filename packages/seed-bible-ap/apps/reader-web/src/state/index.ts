@@ -121,6 +121,39 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
   const audio = createChapterAudio({ api });
+  /** Listening: the reader's chosen voice and whether the next chapter plays on its own (device preferences). */
+  const listening = {
+    autoContinue: signal(false),
+    preferredReader: signal<string | null>(null),
+    async chooseReader(name: string) {
+      listening.preferredReader.value = name;
+      await stores.prefs.set("audio:reader", name);
+      await audio.setReader(name);
+    },
+    async setAutoContinue(on: boolean) {
+      listening.autoContinue.value = on;
+      await stores.prefs.set("audio:autoContinue", on);
+    },
+  };
+  void stores.prefs.get("audio:reader").then((v) => {
+    if (typeof v === "string") {
+      listening.preferredReader.value = v;
+      audio.setPreferredReader(v);
+    }
+  });
+  void stores.prefs.get("audio:autoContinue").then((v) => {
+    if (typeof v === "boolean") listening.autoContinue.value = v;
+  });
+  // The recording ends: the next chapter opens and plays when the person asked for that.
+  audio.setOnEnded(() => {
+    if (!listening.autoContinue.value) return;
+    const r = readingOf();
+    if (!r.hasNext.value) return;
+    void r.next().then(async () => {
+      await audio.load(r.chapterData.value);
+      audio.play();
+    });
+  });
   const tts = createTextToSpeechManager();
 
   // Every tab has its own reading state; the device position and the URL follow the selected tab only.
@@ -463,6 +496,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     presence,
     live,
     audio,
+    listening,
     tts,
     speechLang,
     listen,

@@ -100,6 +100,43 @@ describe("chapter audio", () => {
     expect(audio.currentVerse.value).toBeNull();
   });
 
+  it("lists every reader of a chapter, switches between them, and keeps the choice for later chapters", async () => {
+    const two = {
+      ...chapter,
+      thisChapterAudioLinks: {
+        gilbert: "https://audio.test/JHN/3-g.mp3",
+        hays: "https://audio.test/JHN/3-h.mp3",
+      },
+      thisChapterAudioTimings: {
+        gilbert: "https://audio.test/JHN/3-g.json",
+        hays: "https://audio.test/JHN/3-h.json",
+      },
+    } as typeof chapter;
+    const el = fakeAudio();
+    const audio = createChapterAudio({
+      api: {
+        getAudioTimings: async (link: string) =>
+          ({ verses: link.includes("-h") ? [0, 5] : [0, 2] }) as never,
+      },
+      createAudio: () => el,
+    });
+    await audio.load(two as never);
+    expect(audio.readers.value).toEqual(["gilbert", "hays"]);
+    expect(audio.reader.value).toBe("gilbert");
+    expect(el.src).toContain("3-g.mp3");
+    await audio.setReader("hays");
+    expect(audio.reader.value).toBe("hays");
+    expect(el.src).toContain("3-h.mp3");
+    expect(audio.controller.verseMarks().map((m) => m.position)).toEqual([
+      0, 5,
+    ]);
+    // The next chapter opens on the chosen reader when they recorded it, else on whoever did.
+    await audio.load(two as never);
+    expect(audio.reader.value).toBe("hays");
+    await audio.load(chapter as never);
+    expect(audio.reader.value).toBe("gilbert");
+  });
+
   it("reports no recording for a chapter without audio links", async () => {
     const audio = createChapterAudio({
       api: { getAudioTimings: async () => ({}) as never },
