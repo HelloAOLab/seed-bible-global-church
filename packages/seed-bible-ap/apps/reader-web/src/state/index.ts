@@ -459,6 +459,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     void playlists.refresh();
     void plans.refresh();
     void customizations.mine.refresh();
+    void profile.refresh();
     const pj = ui.pendingJoin.value;
     if (pj) {
       ui.pendingJoin.value = null;
@@ -562,12 +563,14 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     // try again by itself rather than waiting for a tap on Sync now.
     const onBack = () => {
       if (
-        typeof document !== "undefined" &&
-        document.visibilityState === "visible" &&
-        session.value &&
-        NEEDS_HOME.test(outbox.lastError.value ?? "")
+        typeof document === "undefined" ||
+        document.visibilityState !== "visible" ||
+        !session.value
       )
-        void buckets.resync();
+        return;
+      if (NEEDS_HOME.test(outbox.lastError.value ?? "")) void buckets.resync();
+      // A picture or name changed on another device shows when you come back here.
+      void profile.refresh();
     };
     if (typeof document !== "undefined")
       document.addEventListener("visibilitychange", onBack);

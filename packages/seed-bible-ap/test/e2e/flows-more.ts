@@ -897,7 +897,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Crop a picture; use an earlier one",
     rows: ["Your profile"],
     checks:
-      "Signed in: Account → Picture → a 600×300 picture opens the round crop window; zoom in, drag, Use picture — the profile shows a 256×256 picture; Earlier pictures lists it and picking it sets it again",
+      "Signed in: Account → Picture → a 600×300 picture opens the round crop window; zoom in, drag, Use picture — the profile shows a 256×256 picture; another device signed in as the same person shows it too; Earlier pictures lists it and picking it sets it again",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -954,6 +954,18 @@ export const MORE_FLOWS: Flow[] = [
       );
       if (size !== "256x256") throw new Error(`stored picture is ${size}`);
       const src = await pic.getAttribute("src");
+      // Another device, signed in as the same person, shows the same picture (the profile comes from the Library).
+      const other = await c.secondPage();
+      await c.open(CH, other);
+      await c.signInAsSample(undefined, other);
+      await c.openAccount(other);
+      await other
+        .locator(`img.sb-profile-picture[src="${src}"]`)
+        .waitFor({ timeout: 30000 })
+        .catch(() => {
+          throw new Error("the picture is not shown on another device");
+        });
+      await other.context().close();
       await pane.locator(".sb-profile-card .sb-picture-earlier").click();
       const grid = c.page.locator(".sb-gallery-dialog");
       const item = grid.locator(`.sb-gallery-item img[src="${src}"]`);
@@ -961,7 +973,7 @@ export const MORE_FLOWS: Flow[] = [
       const count = await grid.locator(".sb-gallery-item").count();
       await item.click();
       await grid.waitFor({ state: "detached", timeout: 5000 });
-      return `cropped to ${size}; Earlier pictures listed ${count}, the new one among them, and picking it kept it`;
+      return `cropped to ${size}, shown on a second device; Earlier pictures listed ${count}, the new one among them, and picking it kept it`;
     },
   },
   {
