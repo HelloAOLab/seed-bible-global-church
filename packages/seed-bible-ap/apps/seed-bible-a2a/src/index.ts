@@ -7,6 +7,7 @@ import type { Address } from "@agenticprimitives/types";
 import { createSvcHost, SvcRunDO } from "./host";
 import { crawlAll, crawlImages, refillImages } from "./registry/crawl";
 import {
+  knownOfferings,
   applyCrawl,
   listShelves,
   putShelf,
@@ -92,13 +93,15 @@ async function shelvesOf(env: Env) {
 export async function reindex(
   env: Env,
   fetchImpl: typeof fetch = fetch,
-  only?: (s: { name: string }) => boolean
+  only?: (s: { name: string }) => boolean,
+  opts: { images?: boolean } = {}
 ) {
   const shelves = (await shelvesOf(env)).filter((s) => !only || only(s));
   const crawls = await crawlAll(
     (u, i) => fetchImpl(u, i),
     shelves,
-    env.SHELF_FOLDER ?? "seed-bible/public"
+    env.SHELF_FOLDER ?? "seed-bible/public",
+    (shelf) => knownOfferings(env.DB, shelf)
   );
   const report = [];
   for (const c of crawls) {
@@ -106,7 +109,7 @@ export async function reindex(
     // The pictures a shelf publishes: the bucket's copy re-put from the shelf where it is missing.
     const shelf = shelves.find((s) => s.name === c.shelf);
     let files: Record<string, unknown> = {};
-    if (shelf && env.FILES) {
+    if (shelf && env.FILES && opts.images !== false) {
       const { images, error } = await crawlImages(
         (u, i) => fetchImpl(u, i),
         shelf
@@ -262,10 +265,12 @@ app.post("/registry/crawl", async (c) => {
   if (now - (lastCrawl.get(key) ?? 0) < (names.size ? 5_000 : 60_000))
     return c.json({ ok: true, throttled: true });
   lastCrawl.set(key, now);
+  // Releases only: the pictures' re-put is the cron's (it is the slow part, and a nudge must answer quickly).
   const shelves = await reindex(
     c.env,
     fetch,
-    names.size ? (s) => names.has(s.name) : undefined
+    names.size ? (s) => names.has(s.name) : undefined,
+    { images: false }
   );
   return c.json({
     ok: true,

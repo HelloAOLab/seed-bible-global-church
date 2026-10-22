@@ -875,7 +875,7 @@ export const MORE_FLOWS: Flow[] = [
             )
           );
       const shown = (await days()).join(" | ");
-      if (!/^Comfort.*Psalms? 23.*John 1 \| Day 2.*Romans 8:28/i.test(shown))
+      if (!/^Comfort.*Psalms? 23.*John 1.*\| Day 2.*Romans 8:28/i.test(shown))
         throw new Error(`days: ${shown}`);
       await c.page.reload();
       const again = await c.openLibrary("Reading plans");

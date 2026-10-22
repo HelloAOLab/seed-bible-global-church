@@ -65,7 +65,10 @@ const sameAgent = (a: string, b: string) =>
 export async function crawlShelf(
   fetchImpl: Fetch,
   shelf: Shelf,
-  folder: string
+  folder: string,
+  /** What the index already holds for this shelf, by entry id: a document listed at the same version under the same
+   *  signed release is the same document (the release signs its content), so it is carried over without a read. */
+  known: Map<string, IndexedOffering> = new Map()
 ): Promise<ShelfCrawl> {
   const out: ShelfCrawl = {
     shelf: shelf.name,
@@ -111,6 +114,21 @@ export async function crawlShelf(
         entry: label,
         reason: `release ${f.release.releaseId} is not signed`,
       });
+      continue;
+    }
+    const markdownPath =
+      markdownByStem.get(
+        `${f.folder ?? ""}/${f.name.replace(/\.jsonld$/i, "")}`
+      )?.path ?? null;
+    const held = known.get(f.id);
+    if (
+      held &&
+      held.version === Number(f.version ?? 1) &&
+      held.releaseId === f.release.releaseId &&
+      listing.owner &&
+      sameAgent(held.owner, listing.owner)
+    ) {
+      out.offerings.push({ ...held, shelf: shelf.name, markdownPath });
       continue;
     }
     let read;
@@ -173,10 +191,7 @@ export async function crawlShelf(
       title: o.label,
       descriptorId: o["@id"],
       descriptor: doc as Record<string, unknown>,
-      markdownPath:
-        markdownByStem.get(
-          `${f.folder ?? ""}/${f.name.replace(/\.jsonld$/i, "")}`
-        )?.path ?? null,
+      markdownPath,
     });
   }
   out.ok = true;
@@ -288,9 +303,18 @@ export async function refillImages(
 export async function crawlAll(
   fetchImpl: Fetch,
   shelves: Shelf[],
-  folder: string
+  folder: string,
+  knownFor?: (shelf: string) => Promise<Map<string, IndexedOffering>>
 ): Promise<ShelfCrawl[]> {
   const out: ShelfCrawl[] = [];
-  for (const s of shelves) out.push(await crawlShelf(fetchImpl, s, folder));
+  for (const s of shelves)
+    out.push(
+      await crawlShelf(
+        fetchImpl,
+        s,
+        folder,
+        (await knownFor?.(s.name)) ?? new Map()
+      )
+    );
   return out;
 }

@@ -46,6 +46,42 @@ export async function removeShelf(db: D1Database, name: string): Promise<void> {
 }
 
 /** Apply one shelf's crawl: upsert what it found, tombstone what it no longer lists, log the run. */
+/** The live rows of a shelf as offerings, by entry id — what a crawl may carry over without re-reading. */
+export async function knownOfferings(
+  db: D1Database,
+  shelf: string
+): Promise<Map<string, IndexedOffering>> {
+  const r = await db
+    .prepare("SELECT * FROM offerings WHERE shelf = ? AND withdrawn_at IS NULL")
+    .bind(shelf)
+    .all<OfferingRow>();
+  const out = new Map<string, IndexedOffering>();
+  for (const row of r.results ?? []) {
+    let descriptor: Record<string, unknown>;
+    try {
+      descriptor = JSON.parse(row.descriptor_json) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    out.set(row.entry_id, {
+      owner: row.owner,
+      entryId: row.entry_id,
+      shelf: row.shelf,
+      version: row.version,
+      releaseId: row.release_id,
+      releaseSigned: row.release_signed === 1,
+      passage: row.passage,
+      passageRef: row.passage_ref,
+      kind: row.kind,
+      title: row.title,
+      descriptorId: row.descriptor_id,
+      descriptor,
+      markdownPath: row.markdown_path,
+    });
+  }
+  return out;
+}
+
 export async function applyCrawl(
   db: D1Database,
   c: ShelfCrawl,
