@@ -8,6 +8,7 @@ import type {
   FriendsView,
   ReaderBackend,
 } from "../../backend/ReaderBackend";
+import type { FriendProfile } from "./profile";
 import type { ReaderStores } from "../../backend/offline/db";
 import type { Offering } from "./discover";
 
@@ -61,6 +62,26 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   /** People the reader added who have not added them back. */
   const requested = computed<Friend[]>(
     () => friendsView.value?.requested ?? []
+  );
+  /** Friends' published profiles (kind profile in their recent releases), by agent address. */
+  const profiles = computed<Record<string, FriendProfile>>(() => {
+    const out: Record<string, FriendProfile> = {};
+    for (const o of feed.value) {
+      if (o.kind !== "profile") continue;
+      const w = (o.descriptor as { work?: FriendProfile }).work ?? {};
+      const key = o.owner.toLowerCase();
+      if (!out[key])
+        out[key] = {
+          ...(w.displayName ? { displayName: w.displayName } : {}),
+          ...(w.about ? { about: w.about } : {}),
+          ...(w.picture ? { picture: w.picture } : {}),
+        };
+    }
+    return out;
+  });
+  /** What friends released, profiles aside (those are shown with the friend, not as releases). */
+  const releases = computed(() =>
+    feed.value.filter((o) => o.kind !== "profile")
   );
 
   async function refreshContacts() {
@@ -117,6 +138,8 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
     friendsView,
     requests,
     requested,
+    profiles,
+    releases,
     contactsError,
     contactsLoading,
     feed,

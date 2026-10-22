@@ -29,6 +29,9 @@ export const SEED_CONTEXT = {
   highlightColor: { "@id": "seed:highlightColor", "@type": "@id" },
   bookmarkColor: { "@id": "seed:bookmarkColor", "@type": "@id" },
   folder: "seed:folder",
+  displayName: "seed:displayName",
+  about: "seed:about",
+  picture: { "@id": "seed:picture", "@type": "xsd:anyURI" },
   offeringKind: { "@id": "seed:offeringKind", "@type": "@id" },
   visibility: { "@id": "seed:visibility", "@type": "@id" },
   replyTo: { "@id": "seed:replyTo", "@type": "@id" },
@@ -74,6 +77,7 @@ export const OFFERING_KINDS = [
   "plan",
   "image",
   "customization",
+  "profile",
 ] as const;
 export const VISIBILITIES = ["world", "friends", "private"] as const;
 
@@ -279,6 +283,22 @@ export const Customization = z.object({
 });
 export type Customization = z.infer<typeof Customization>;
 
+/** The reader's profile as the app keeps it — a display name, a line, a picture — extra to the Home's; one per reader. */
+export const Profile = z.object({
+  "@id": z.string().min(1),
+  "@type": z.literal("seed:Profile"),
+  heldBy: agentRef,
+  /** The work's label: the display name, or "Profile". */
+  label: z.string().min(1),
+  displayName: z.string().min(1).optional(),
+  about: z.string().optional(),
+  picture: z.string().url().optional(),
+  createdAt: iso.optional(),
+  updatedAt: iso.optional(),
+  deleted: z.boolean().optional(),
+});
+export type Profile = z.infer<typeof Profile>;
+
 export const GalleryImage = z.object({
   "@id": z.string().min(1),
   "@type": z.literal("seed:GalleryImage"),
@@ -344,5 +364,6 @@ export const SCHEMAS = {
   PlanProgress,
   GalleryImage,
   Customization,
+  Profile,
 } as const;
 export type SeedClass = keyof typeof SCHEMAS;

@@ -154,3 +154,41 @@ describe("publish and discover", () => {
     ).toBe("## Title\n\nA _b_ [John 3:16](/read/BSB/JHN/3)\n\n1. x\n2. y");
   });
 });
+
+describe("profiles", () => {
+  it("a published profile reaches a friend's Today as their name, line and picture", async () => {
+    const { createProfile } =
+      await import("../../../apps/reader-web/src/state/social/profile");
+    const backend = createDevBackend(RUTH);
+    const ruthStores = memoryStores();
+    const profile = createProfile(backend, ruthStores, () => RUTH);
+    await profile.save({
+      displayName: "Ruth of Moab",
+      about: "Where you go, I will go.",
+    });
+    await profile.save({ picture: "https://files.test/ruth.jpg" });
+    expect(profile.mine.value).toMatchObject({
+      displayName: "Ruth of Moab",
+      about: "Where you go, I will go.",
+      picture: "https://files.test/ruth.jpg",
+    });
+    const publishing = createPublishing(backend, ruthStores);
+    await publishing.publishProfile(profile.mine.value!);
+    expect(publishing.isPublished(profile.mine.value!["@id"])).toBe(true);
+    // A friend's Today, over the registry.
+    backend.setIdentity(SEED);
+    backend.friendsView = {
+      friends: [{ agent: RUTH.agent, name: "ruth.me" }],
+      requests: [],
+      requested: [],
+    };
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(today.profiles.value[RUTH.agent.toLowerCase()]).toMatchObject({
+      displayName: "Ruth of Moab",
+      picture: "https://files.test/ruth.jpg",
+    });
+    // The profile is shown with the friend, not among their releases.
+    expect(today.releases.value.map((o) => o.kind)).not.toContain("profile");
+  });
+});

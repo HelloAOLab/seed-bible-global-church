@@ -1,6 +1,6 @@
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
 // plus where the reader's marks stand: on this device only, or in their Library through their own agent.
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { QuickConnectIdentity } from "@agenticprimitives/connect-client";
 import type { ReaderState } from "../../state";
@@ -22,6 +22,118 @@ const progress = signal("");
 const samplePeople = signal<QuickConnectIdentity[]>([]);
 const devReaders = signal<DevReader[]>([]);
 const error = signal("");
+
+/** The reader's profile: a name, a line, a picture from the gallery; published to the public shelf for friends. */
+function ProfileCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const p = state.profile.mine.value;
+  const [name, setName] = useState(p?.displayName ?? "");
+  const [about, setAbout] = useState(p?.about ?? "");
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty) {
+      setName(p?.displayName ?? "");
+      setAbout(p?.about ?? "");
+    }
+  }, [p?.displayName, p?.about]);
+  const published = !!p && state.publishing.isPublished(p["@id"]);
+  const canPublish = !!state.session.value?.wire;
+  return (
+    <div className="sb-account-card sb-profile-card">
+      <p className="sb-small">
+        <strong>{t("your-profile", { defaultValue: "Your profile" })}</strong>
+      </p>
+      <div className="sb-profile-row">
+        {p?.picture ? (
+          <img className="sb-profile-picture" src={p.picture} alt="" />
+        ) : (
+          <span className="sb-profile-picture sb-profile-picture-empty material-symbols-outlined">
+            person
+          </span>
+        )}
+        <label className="sb-note-button">
+          {state.files.uploading.value
+            ? "…"
+            : t("profile-picture", { defaultValue: "Picture" })}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = (e.target as HTMLInputElement).files?.[0];
+              if (f)
+                void state.files
+                  .upload(f)
+                  .then((img) => state.profile.save({ picture: img.url }))
+                  .catch(() => {});
+            }}
+          />
+        </label>
+      </div>
+      <form
+        className="sb-item-editor"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void state.profile
+            .save({ displayName: name, about })
+            .then(() => setDirty(false));
+        }}
+      >
+        <input
+          className="sb-note-editor"
+          placeholder={t("profile-name", { defaultValue: "Display name" })}
+          value={name}
+          onInput={(e) => {
+            setName((e.target as HTMLInputElement).value);
+            setDirty(true);
+          }}
+        />
+        <input
+          className="sb-note-editor"
+          placeholder={t("profile-about", { defaultValue: "A line about you" })}
+          value={about}
+          onInput={(e) => {
+            setAbout((e.target as HTMLInputElement).value);
+            setDirty(true);
+          }}
+        />
+        <div className="sb-note-card-actions">
+          <button
+            type="submit"
+            className="sb-note-button sb-note-button-primary"
+            disabled={!dirty}
+          >
+            {t("save", { defaultValue: "Save" })}
+          </button>
+          {canPublish && p && (
+            <button
+              type="button"
+              className={`sb-note-button${published ? " sb-note-button-published" : ""}`}
+              disabled={state.publishing.busy.value === p["@id"]}
+              onClick={() =>
+                void (
+                  published
+                    ? state.publishing.withdrawWork(p["@id"], "profile")
+                    : state.publishing.publishProfile(p)
+                ).catch(() => {})
+              }
+            >
+              {published
+                ? t("published", { defaultValue: "Published" })
+                : t("publish", { defaultValue: "Publish" })}
+            </button>
+          )}
+        </div>
+      </form>
+      <p className="sb-small sb-muted">
+        {t("profile-note", {
+          defaultValue:
+            "Private until you publish it; published, your friends see the name, line and picture in their Today.",
+        })}
+      </p>
+    </div>
+  );
+}
 
 export function AccountPane({ state }: { state: ReaderState }) {
   const { t, language } = useI18n();
@@ -375,6 +487,8 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </label>
         ))}
       </div>
+
+      {state.session.value && <ProfileCard state={state} />}
 
       <div className="sb-account-card">
         <p className="sb-small">

@@ -171,7 +171,8 @@ export type WorkFolder =
   | "seed-bible/playlists"
   | "seed-bible/plans"
   | "seed-bible/files"
-  | "seed-bible/customizations";
+  | "seed-bible/customizations"
+  | "seed-bible/profile";
 
 export interface UploadedFile {
   url: string;

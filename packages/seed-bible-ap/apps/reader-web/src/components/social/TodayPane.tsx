@@ -292,8 +292,16 @@ export function TodayPane({ state }: { state: ReaderState }) {
         )}
         {today.friends.value.map((c) => {
           const here = presenceOf(c.contact);
+          const prof = today.profiles.value[c.contact.toLowerCase()];
           return (
             <div key={c.contact} className="sb-friends-row">
+              {prof?.picture ? (
+                <img className="sb-friends-avatar" src={prof.picture} alt="" />
+              ) : (
+                <span className="sb-friends-avatar sb-friends-avatar-empty material-symbols-outlined">
+                  person
+                </span>
+              )}
               <span className="sb-friends-person-text">
                 <span className="sb-friends-person-name">
                   {here.length > 0 && (
@@ -302,8 +310,11 @@ export function TodayPane({ state }: { state: ReaderState }) {
                       title={t("friend-here-now", { defaultValue: "Here now" })}
                     />
                   )}
-                  {c.name ?? c.contact}
+                  {prof?.displayName ?? c.name ?? c.contact}
                 </span>
+                {prof?.about && (
+                  <span className="sb-friends-person-about">{prof.about}</span>
+                )}
                 <span className="sb-friends-person-subtitle">
                   {here.length
                     ? here.map((p) => (
@@ -352,7 +363,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
         )}
         {signedIn &&
           today.friends.value.length > 0 &&
-          !today.feed.value.length &&
+          !today.releases.value.length &&
           !today.feedLoading.value && (
             <p className="sb-content-empty">
               {t("today-feed-empty", {
@@ -360,7 +371,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
               })}
             </p>
           )}
-        {today.feed.value.map((o) => (
+        {today.releases.value.map((o) => (
           <button
             key={o.descriptorId}
             className="sb-content-quote"

@@ -158,6 +158,7 @@ const WORK_FOLDERS: ReadonlySet<string> = new Set([
   "seed-bible/plans",
   "seed-bible/files",
   "seed-bible/customizations",
+  "seed-bible/profile",
 ]);
 const workFolderOf = (raw: unknown): string => {
   const f = String(raw ?? "");

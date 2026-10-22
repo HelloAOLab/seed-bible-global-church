@@ -1032,3 +1032,37 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   max-width: 7rem;
   margin-inline-start: 0.35rem;
 }
+
+/* Profiles: yours in Account, friends' in Today */
+.sb-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-profile-picture,
+.sb-friends-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--sb-divider-color, #00000014);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sb-friends-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-inline-end: 0.6rem;
+}
+.sb-profile-picture-empty,
+.sb-friends-avatar-empty {
+  opacity: 0.5;
+}
+.sb-friends-person-about {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}

@@ -79,8 +79,12 @@ export async function publishSlice(
       400,
       `kind must be one of ${OFFERING_KINDS.join(", ")}`
     );
-  // A customization is not passage-scoped; everything else is.
-  if (kind !== "customization" && !isOsisRef(String(raw.passage ?? "")))
+  // A customization or a profile is not passage-scoped; everything else is.
+  if (
+    kind !== "customization" &&
+    kind !== "profile" &&
+    !isOsisRef(String(raw.passage ?? ""))
+  )
     throw new WireRefusal(400, "passage must be an OSIS reference (JHN.3)");
   if (!raw.title?.trim()) throw new WireRefusal(400, "title required");
   if (!raw.markdown?.trim()) throw new WireRefusal(400, "markdown required");

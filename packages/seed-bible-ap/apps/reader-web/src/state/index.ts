@@ -12,6 +12,7 @@ import { createDiscover } from "./social/discover";
 import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
 import { createPresence } from "./social/presence";
+import { createProfile } from "./social/profile";
 import { createLiveSession } from "./sessions/live";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
@@ -120,6 +121,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
+  const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
   /** Listening: the reader's chosen voice and whether the next chapter plays on its own (device preferences). */
   const listening = {
@@ -502,6 +504,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     discover,
     publishing,
     today,
+    profile,
     presence,
     live,
     audio,

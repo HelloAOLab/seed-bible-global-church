@@ -54,6 +54,8 @@ const KIND_NOTATIONS = [
   "playlist",
   "plan",
   "image",
+  "customization",
+  "profile",
 ] as const;
 
 const sameAgent = (a: string, b: string) =>
