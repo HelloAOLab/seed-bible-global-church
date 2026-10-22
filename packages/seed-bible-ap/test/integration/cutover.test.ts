@@ -137,7 +137,7 @@ describe("the cutover surface", () => {
     };
     vi.stubGlobal("location", {
       pathname: "/read/BSB/JHN/3",
-      search: "?embed=minimal&theme=dark",
+      search: "?embed=minimal&theme=dark&v=16-17",
     });
     vi.stubGlobal("history", { replaceState: () => {}, pushState: () => {} });
     const state = createReaderState({
@@ -151,6 +151,11 @@ describe("the cutover surface", () => {
     expect(state.ui.embed.value).toBe(true);
     expect(state.settings.theme.value).toBe("dark");
     expect(state.reading.chapterRef.value).toBe("JHN.3");
+    // The shared verses are selected once the chapter is open.
+    const t0 = Date.now();
+    while (!state.selection.verses.value.length && Date.now() - t0 < 2000)
+      await new Promise((r) => setTimeout(r, 5));
+    expect(state.selection.verses.value).toEqual([16, 17]);
     stop();
   });
 });

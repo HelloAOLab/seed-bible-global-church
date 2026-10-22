@@ -22,6 +22,27 @@ export function parseRoute(pathname: string): ChapterRoute | null {
 export const routeOf = (r: ChapterRoute) =>
   `/read/${encodeURIComponent(r.translationId)}/${encodeURIComponent(r.bookId)}/${r.chapterNumber}`;
 
+/** The verses a share link names: `?v=16` or `?v=16-18` → [16, 18]; null for none or nonsense. */
+export function versesOf(search: string): [number, number] | null {
+  const m = /^(\d+)(?:-(\d+))?$/.exec(
+    new URLSearchParams(search).get("v") ?? ""
+  );
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[2] ?? m[1]);
+  return a >= 1 && b >= a ? [a, b] : null;
+}
+
+/** A link to a verse or range of the chapter, on this origin. */
+export function shareUrl(
+  origin: string,
+  r: ChapterRoute,
+  start: number,
+  end = start
+): string {
+  return `${origin}${routeOf(r)}?v=${start === end ? start : `${start}-${end}`}`;
+}
+
 /** Wire the browser history to the reading state; returns the cleanup. */
 export function bindRoute(reading: () => Reading): () => void {
   if (typeof window === "undefined") return () => {};
@@ -36,6 +57,10 @@ export function bindRoute(reading: () => Reading): () => void {
 export function pushRoute(r: ChapterRoute) {
   if (typeof window === "undefined") return;
   const path = routeOf(r);
-  if (location.pathname !== path)
-    history.pushState(null, "", path + location.search);
+  if (location.pathname === path) return;
+  // A share link's verses belong to the chapter it named, not the next one.
+  const q = new URLSearchParams(location.search);
+  q.delete("v");
+  const search = q.toString();
+  history.pushState(null, "", path + (search ? `?${search}` : ""));
 }

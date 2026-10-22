@@ -107,9 +107,25 @@ export function renderChapterShell(chapter: TranslationBookChapter): string {
   );
 }
 
+/** The text of a verse range, for a shared link's title and description. */
+export function versesDescription(
+  chapter: TranslationBookChapter,
+  [start, end]: [number, number],
+  max = 300
+): string {
+  let out = "";
+  for (const e of chapter.chapter.content) {
+    if (!e || typeof e !== "object" || e.type !== "verse") continue;
+    if (e.number < start || e.number > end) continue;
+    out += (out ? " " : "") + getVersePlainText(e.content);
+  }
+  return out.length > max ? out.slice(0, max - 1).trimEnd() + "…" : out;
+}
+
 export async function renderChapterPage(
   route: ChapterRoute,
-  endpoint = FREE_USE_BIBLE_API_ENDPOINT
+  endpoint = FREE_USE_BIBLE_API_ENDPOINT,
+  verses: [number, number] | null = null
 ): Promise<RenderedChapter | null> {
   const api = new FreeUseBibleAPI(endpoint);
   try {
@@ -122,10 +138,14 @@ export async function renderChapterPage(
       api.getTranslationBooks(route.translationId).catch(() => null),
     ]);
     const label = chapter.translation.shortName ?? chapter.translation.id;
+    const ref = verses
+      ? `${chapter.book.name} ${chapter.chapter.number}:${verses[0] === verses[1] ? verses[0] : `${verses[0]}–${verses[1]}`}`
+      : `${chapter.book.name} ${chapter.chapter.number}`;
+    const shared = verses ? versesDescription(chapter, verses) : "";
     return {
       html: renderChapterShell(chapter),
-      title: `${chapter.book.name} ${chapter.chapter.number} · ${label} · Seed Bible`,
-      description: chapterDescription(chapter),
+      title: `${ref} · ${label} · Seed Bible`,
+      description: shared || chapterDescription(chapter),
       lang: chapter.translation.language?.slice(0, 2) ?? "en",
       seed: api.snapshotResponseCache(),
     };

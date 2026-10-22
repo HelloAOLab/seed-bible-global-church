@@ -3,7 +3,7 @@
 // Bible API answers are cached by the edge per their own headers; a failed render falls back to the plain app
 // shell, which loads the chapter itself.
 import { injectIntoIndex, renderChapterPage } from "../src/entry-server";
-import { parseRoute, routeOf } from "../src/state/reading/route";
+import { parseRoute, routeOf, versesOf } from "../src/state/reading/route";
 import {
   FREE_USE_BIBLE_API_ENDPOINT,
   FreeUseBibleAPI,
@@ -59,9 +59,17 @@ export default {
     );
     if (!shell.ok) return shell;
     const indexHtml = await shell.text();
-    const page = await renderChapterPage(route);
+    const page = await renderChapterPage(
+      route,
+      undefined,
+      versesOf(url.search)
+    );
     const body = page
-      ? injectIntoIndex(indexHtml, page, `${url.origin}${url.pathname}`)
+      ? injectIntoIndex(
+          indexHtml,
+          page,
+          `${url.origin}${url.pathname}${versesOf(url.search) ? url.search : ""}`
+        )
       : indexHtml;
     return new Response(body, {
       status: 200,

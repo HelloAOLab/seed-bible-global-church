@@ -27,7 +27,7 @@ import { createVerseSearch } from "../backend/search";
 import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
-import { bindRoute, parseRoute, pushRoute } from "./reading/route";
+import { bindRoute, parseRoute, pushRoute, versesOf } from "./reading/route";
 import { createTabs } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
 import { createChapterAudio } from "./media/audio";
@@ -286,7 +286,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     const fromUrl =
       typeof location !== "undefined" ? parseRoute(location.pathname) : null;
     const target = fromUrl ?? (await position.load());
-    tabs.addTab(target ?? {});
+    const tab = tabs.addTab(target ?? {});
+    // A share link's verses: selected once the chapter it named is open.
+    const shared =
+      fromUrl && typeof location !== "undefined"
+        ? versesOf(location.search)
+        : null;
+    if (shared && fromUrl)
+      void tab.reading
+        .goTo(fromUrl.translationId, fromUrl.bookId, fromUrl.chapterNumber)
+        .then(() => selection.select(shared[0], shared[1]));
     const stops = [bindRoute(readingOf), outbox.start()];
     void customizations.refresh();
     void extensions.bind(stateObject);

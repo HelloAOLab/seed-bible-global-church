@@ -1,8 +1,10 @@
 // THE VERSE TOOLBAR — what the old BibleReaderToolbar shows over a selection: the reference, the highlight
 // swatches, note, clear and close (`sb-verse-toolbar-*` from the copied stylesheet).
+import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { passageOf } from "../../state/records/marks";
+import { shareUrl } from "../../state/reading/route";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -13,6 +15,35 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const start = Math.min(...verses);
   const end = Math.max(...verses);
   const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
+  const [shared, setShared] = useState(false);
+  useEffect(() => {
+    if (!shared) return;
+    const t = setTimeout(() => setShared(false), 1800);
+    return () => clearTimeout(t);
+  }, [shared]);
+  /** The link to these verses: the system share sheet where there is one, else the clipboard. */
+  const share = async () => {
+    const url = shareUrl(
+      location.origin,
+      {
+        translationId: reading.translationId.value,
+        bookId: reading.bookId.value,
+        chapterNumber: reading.chapterNumber.value,
+      },
+      start,
+      end
+    );
+    const nav = navigator as Navigator & {
+      share?: (d: { title: string; url: string }) => Promise<void>;
+    };
+    try {
+      if (nav.share) await nav.share({ title: ref, url });
+      else await navigator.clipboard.writeText(url);
+      setShared(true);
+    } catch {
+      /* the sheet was dismissed, or the clipboard refused: nothing to say */
+    }
+  };
   const current = state.highlights.forChapter(chapterRef).value.find((h) => {
     const v = h.verse;
     return typeof v === "number"
@@ -125,6 +156,20 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           </span>
           <span className="sb-verse-toolbar-action-label">
             {t("note", { defaultValue: "Note" })}
+          </span>
+        </button>
+        <button
+          className="sb-verse-toolbar-action"
+          onClick={() => void share()}
+          aria-label={t("share-verses", { defaultValue: "Share" })}
+        >
+          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
+            {shared ? "check" : "share"}
+          </span>
+          <span className="sb-verse-toolbar-action-label">
+            {shared
+              ? t("link-copied", { defaultValue: "Copied" })
+              : t("share-verses", { defaultValue: "Share" })}
           </span>
         </button>
         <button
