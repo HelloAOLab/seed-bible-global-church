@@ -30,16 +30,43 @@ export async function loadChapterReferences(
   },
   fetchImpl: typeof fetch = fetch
 ): Promise<ChapterReferences | null> {
-  const key = `xref:${bookId}/${chapter}`;
+  const key = `xref2:${bookId}/${chapter}`;
   const hit = (await cache.get(key)) as ChapterReferences | undefined;
   if (hit) return hit;
   const res = await fetchImpl(
     `${REFERENCES_BASE_URL}/${bookId}/${chapter}.json`
   );
   if (!res.ok) return null;
-  const data = (await res.json()) as ChapterReferences;
+  const data = normalizeReferences(await res.json(), bookId, chapter);
   await cache.set(key, data);
   return data;
+}
+
+/**
+ * The Bible API's file as this extension reads it: the dataset puts each verse's references under
+ * `chapter.content` (`{ verse, references }`), not at the top level.
+ */
+export function normalizeReferences(
+  raw: unknown,
+  bookId: string,
+  chapter: number
+): ChapterReferences {
+  const r = (raw ?? {}) as {
+    references?: ChapterReferences["references"];
+    chapter?: { number?: number; content?: ChapterReferences["references"] };
+  };
+  const list = Array.isArray(r.references)
+    ? r.references
+    : Array.isArray(r.chapter?.content)
+      ? r.chapter.content
+      : [];
+  return {
+    book: bookId,
+    chapter: r.chapter?.number ?? chapter,
+    references: list.filter(
+      (v) => v && typeof v.verse === "number" && Array.isArray(v.references)
+    ),
+  };
 }
 
 export function itemsFor(

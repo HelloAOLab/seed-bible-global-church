@@ -123,19 +123,23 @@ describe("the extension host", () => {
 describe("the ported extensions' pure parts", () => {
   it("cross-references: read once per chapter, listed for the selected verses by score", async () => {
     let fetches = 0;
+    // The Bible API's real shape: each verse's references under `chapter.content`.
     const data = {
-      book: "JHN",
-      chapter: 3,
-      references: [
-        {
-          verse: 16,
-          references: [
-            { book: "ROM", chapter: 5, verse: 8, score: 9 },
-            { book: "1JN", chapter: 4, verse: 9, endVerse: 10, score: 12 },
-          ],
-        },
-        { verse: 3, references: [{ book: "1PE", chapter: 1, verse: 23 }] },
-      ],
+      dataset: { id: "open-cross-ref" },
+      book: { id: "JHN" },
+      chapter: {
+        number: 3,
+        content: [
+          {
+            verse: 16,
+            references: [
+              { book: "ROM", chapter: 5, verse: 8, score: 9 },
+              { book: "1JN", chapter: 4, verse: 9, endVerse: 10, score: 12 },
+            ],
+          },
+          { verse: 3, references: [{ book: "1PE", chapter: 1, verse: 23 }] },
+        ],
+      },
     };
     const fetchImpl = (async () => (
       fetches++,
