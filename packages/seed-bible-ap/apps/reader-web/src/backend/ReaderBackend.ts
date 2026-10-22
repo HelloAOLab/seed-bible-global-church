@@ -113,9 +113,34 @@ export interface ReaderBackend {
     doc: unknown,
     id?: string
   ): Promise<{ id?: string }>;
+  /** A file's bytes to the serving plane under the reader's address (content-addressed); the catalog is the reader's. */
+  uploadFile(
+    name: string,
+    contentType: string,
+    bytes: Uint8Array
+  ): Promise<UploadedFile>;
+  /** A link's preview, read by the serving plane. */
+  linkPreview(url: string): Promise<LinkPreview>;
 }
 
-export type WorkFolder = "seed-bible/playlists" | "seed-bible/plans";
+export type WorkFolder =
+  | "seed-bible/playlists"
+  | "seed-bible/plans"
+  | "seed-bible/files";
+
+export interface UploadedFile {
+  url: string;
+  sha256: string;
+  contentType: string;
+  size: number;
+}
+export interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  siteName?: string;
+}
 export interface WorkEntry {
   id?: string;
   name: string;

@@ -1,12 +1,13 @@
 // THE LIBRARY PANE — playlists and reading plans: the lists, a maker for each from the chapter on screen, the
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { PlaylistItem } from "@seed/seed-schema";
 import { spanOf } from "../../state/records/marks";
 import { sanitizeNoteHtml } from "../records/noteHtml";
+import type { LinkPreview } from "../../backend/ReaderBackend";
 
 function itemLabel(state: ReaderState, it: PlaylistItem): string {
   if (it["@type"] === "seed:ScriptureItem") {
@@ -34,6 +35,42 @@ function openItem(state: ReaderState, it: PlaylistItem) {
     .then(() => {
       if (verses) state.selection.select(start, end);
     });
+}
+
+function LinkCard({
+  state,
+  url,
+  label,
+}: {
+  state: ReaderState;
+  url: string;
+  label?: string;
+}) {
+  const [p, setP] = useState<LinkPreview | null>(null);
+  useEffect(() => {
+    let live = true;
+    void state.files
+      .preview(url)
+      .then((x) => live && setP(x))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [url]);
+  return (
+    <a className="sb-link-card" href={url} target="_blank" rel="noreferrer">
+      {p?.image && <img className="sb-link-card-image" src={p.image} alt="" />}
+      <span className="sb-link-card-text">
+        <span className="sb-link-card-title">{p?.title ?? label ?? url}</span>
+        {p?.description && (
+          <span className="sb-link-card-description">{p.description}</span>
+        )}
+        <span className="sb-link-card-site">
+          {p?.siteName ?? new URL(url).hostname}
+        </span>
+      </span>
+    </a>
+  );
 }
 
 function Player({ state }: { state: ReaderState }) {
@@ -66,11 +103,7 @@ function Player({ state }: { state: ReaderState }) {
           />
         )}
         {it["@type"] === "seed:LinkItem" && (
-          <p className="sb-small">
-            <a href={it.url} target="_blank" rel="noreferrer">
-              {it.label ?? it.url}
-            </a>
-          </p>
+          <LinkCard state={state} url={it.url} label={it.label} />
         )}
       </div>
       <div className="sb-play-controls sb-note-card-actions">
@@ -106,6 +139,7 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [open, setOpen] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [planTo, setPlanTo] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const canPublish = !!state.session.value?.wire;
   const currentPassage = () => {
     const v = state.selection.verses.value;
@@ -270,6 +304,75 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         </li>
                       ))}
                     </ol>
+                    {pl.heroImage && (
+                      <img
+                        className="sb-hero-thumb sb-playlist-hero"
+                        src={pl.heroImage}
+                        alt=""
+                      />
+                    )}
+                    <div className="sb-note-card-actions">
+                      <label className="sb-note-button">
+                        {state.files.uploading.value
+                          ? "…"
+                          : t("cover-image", { defaultValue: "Cover image" })}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          disabled={!state.session.value}
+                          onChange={(e) => {
+                            const f = (e.target as HTMLInputElement).files?.[0];
+                            if (f)
+                              void state.files
+                                .upload(f)
+                                .then((img) =>
+                                  playlists.update(pl["@id"], {
+                                    heroImage: img.url,
+                                  })
+                                )
+                                .catch(() => {});
+                          }}
+                        />
+                      </label>
+                      <form
+                        className="sb-inline-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const u = linkUrl.trim();
+                          if (!/^https?:\/\//.test(u)) return;
+                          void state.files
+                            .preview(u)
+                            .catch(() => ({ url: u }) as LinkPreview)
+                            .then((p) =>
+                              playlists.addItem(pl["@id"], {
+                                "@type": "seed:LinkItem",
+                                url: u,
+                                ...(p.title ? { label: p.title } : {}),
+                              })
+                            );
+                          setLinkUrl("");
+                        }}
+                      >
+                        <input
+                          className="sb-note-editor"
+                          placeholder={t("add-link-url", {
+                            defaultValue: "Add a link (https://…)",
+                          })}
+                          value={linkUrl}
+                          onInput={(e) =>
+                            setLinkUrl((e.target as HTMLInputElement).value)
+                          }
+                        />
+                        <button
+                          type="submit"
+                          className="sb-note-button"
+                          disabled={!/^https?:\/\//.test(linkUrl.trim())}
+                        >
+                          {t("add-link", { defaultValue: "Add link" })}
+                        </button>
+                      </form>
+                    </div>
                     <div className="sb-note-card-actions">
                       <button
                         className="sb-note-button sb-note-button-primary"

@@ -17,6 +17,8 @@ import {
   type SessionTicket,
   type WorkEntry,
   type WorkFolder,
+  type UploadedFile,
+  type LinkPreview,
   type ReaderIdentity,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
@@ -194,6 +196,29 @@ export function createDevBackend(
       const k = `${who!.agent.toLowerCase()}:${folder}/${name}`;
       works.set(k, clone(doc));
       return { id: k };
+    },
+    async uploadFile(_name, contentType, bytes): Promise<UploadedFile> {
+      guard();
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        bytes.slice().buffer as ArrayBuffer
+      );
+      const sha256 = [...new Uint8Array(digest)]
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      return {
+        url: `https://files.test/${who!.agent.toLowerCase()}/${sha256}`,
+        sha256,
+        contentType,
+        size: bytes.byteLength,
+      };
+    },
+    async linkPreview(url): Promise<LinkPreview> {
+      return {
+        url,
+        title: `Preview of ${new URL(url).hostname}`,
+        description: "a fake preview",
+      };
     },
     async sessionStart(): Promise<SessionTicket> {
       guard();

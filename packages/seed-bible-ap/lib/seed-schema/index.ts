@@ -245,6 +245,21 @@ export const PlanProgress = z.object({
 });
 export type PlanProgress = z.infer<typeof PlanProgress>;
 
+export const GalleryImage = z.object({
+  "@id": z.string().min(1),
+  "@type": z.literal("seed:GalleryImage"),
+  heldBy: agentRef,
+  label: z.string().min(1),
+  url: z.string().url(),
+  contentType: z.string().min(1),
+  contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+  size: z.number().int().positive().optional(),
+  createdAt: iso.optional(),
+  updatedAt: iso.optional(),
+  deleted: z.boolean().optional(),
+});
+export type GalleryImage = z.infer<typeof GalleryImage>;
+
 export const Offering = z.object({
   "@id": z.string().min(1),
   "@type": z.literal("seed:Offering"),
@@ -290,5 +305,6 @@ export const SCHEMAS = {
   Playlist,
   ReadingPlan,
   PlanProgress,
+  GalleryImage,
 } as const;
 export type SeedClass = keyof typeof SCHEMAS;

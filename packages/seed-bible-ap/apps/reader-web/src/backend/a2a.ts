@@ -13,6 +13,8 @@ import {
   type SessionTicket,
   type WorkEntry,
   type WorkFolder,
+  type UploadedFile,
+  type LinkPreview,
   type ReaderBackend,
   type ReaderIdentity,
 } from "./ReaderBackend";
@@ -228,6 +230,34 @@ export function createA2aBackend(
       );
       const file = r.file as { id?: string } | undefined;
       return { ...(file?.id ? { id: file.id } : {}) };
+    },
+    async uploadFile(name, contentType, bytes): Promise<UploadedFile> {
+      let bin = "";
+      for (let i = 0; i < bytes.byteLength; i += 0x8000)
+        bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      const r = await ask(
+        "seed.file.put",
+        { name, contentType, dataBase64: btoa(bin) },
+        `keep the file ${name}`
+      );
+      return {
+        url: String(r.url ?? ""),
+        sha256: String(r.sha256 ?? ""),
+        contentType: String(r.contentType ?? contentType),
+        size: Number(r.size ?? bytes.byteLength),
+      };
+    },
+    async linkPreview(url): Promise<LinkPreview> {
+      const r = await ask("seed.workspace.preview", { url }, `preview ${url}`);
+      const pick = (k: string) =>
+        typeof r[k] === "string" ? { [k]: r[k] as string } : {};
+      return {
+        url,
+        ...pick("title"),
+        ...pick("description"),
+        ...pick("image"),
+        ...pick("siteName"),
+      };
     },
     async sessionJoin(sessionId, code): Promise<SessionTicket> {
       const r = await ask(

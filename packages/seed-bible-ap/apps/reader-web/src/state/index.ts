@@ -14,6 +14,7 @@ import { createToday } from "./social/today";
 import { createLiveSession } from "./sessions/live";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
+import { createFiles } from "./library/files";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -81,6 +82,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const saves = createSaves(buckets, identity);
   const playlists = createPlaylists(backend, stores, identity);
   const plans = createPlans(backend, stores, buckets, identity);
+  const files = createFiles(backend, stores, identity);
   const search = createVerseSearch();
   const position = createPosition(stores);
   const settings = createSettings();
@@ -281,6 +283,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     saves,
     playlists,
     plans,
+    files,
     search,
     position,
     settings,

@@ -14,7 +14,11 @@ import {
   type VaultEnv,
 } from "./vault";
 import { publishSlice, withdrawSlice, type PublishArgs } from "./publish";
-import { platformGet, type PlatformEnv } from "../clients/platform";
+import {
+  platformGet,
+  platformSend,
+  type PlatformEnv,
+} from "../clients/platform";
 import {
   SESSION_JOIN,
   SESSION_RECORD,
@@ -137,6 +141,7 @@ export const DISCOVER: ToolSpec = {
 const WORK_FOLDERS: ReadonlySet<string> = new Set([
   "seed-bible/playlists",
   "seed-bible/plans",
+  "seed-bible/files",
 ]);
 const workFolderOf = (raw: unknown): string => {
   const f = String(raw ?? "");
@@ -191,6 +196,44 @@ export const WORK_READ: ToolSpec = {
   establishes: "lookup",
 };
 
+export const FILE_PUT: ToolSpec = {
+  id: "seed.file.put",
+  description:
+    "Puts a file's bytes (an image for a playlist cover or a photo) on the serving plane under the signed-in reader's address, content-addressed; the catalog entry (seed:GalleryImage) is the reader's to keep. Args: name, contentType, dataBase64 (≤ 5 MB).",
+  inputSchema: {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      contentType: { type: "string" },
+      dataBase64: { type: "string" },
+    },
+    required: ["name", "contentType", "dataBase64"],
+  },
+  answers: ["upload this picture", "set a cover image"],
+};
+export const PREVIEW: ToolSpec = {
+  id: "seed.workspace.preview",
+  description:
+    "A link's preview (title, description, image) read by the serving plane. Args: url.",
+  inputSchema: {
+    type: "object",
+    properties: { url: { type: "string" } },
+    required: ["url"],
+  },
+  answers: ["what is this link"],
+  establishes: "lookup",
+};
+
+const IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/avif": "avif",
+  "image/svg+xml": "svg",
+  "application/pdf": "pdf",
+};
+
 export const CONTACTS: ToolSpec = {
   id: "seed.workspace.contacts",
   description:
@@ -216,6 +259,8 @@ export const TOOLS: ToolSpec[] = [
   WORK_SAVE,
   WORK_LIST,
   WORK_READ,
+  FILE_PUT,
+  PREVIEW,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -394,6 +439,70 @@ export function invokers(
         file: out.result.file ?? null,
         runRef: out.runRef,
       };
+    },
+    [FILE_PUT.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      const contentType = String(args.contentType ?? "").toLowerCase();
+      const ext = IMAGE_TYPES[contentType];
+      if (!ext)
+        throw new WireRefusal(
+          400,
+          `not a file kind the reader keeps: ${contentType}`
+        );
+      let bytes: Uint8Array;
+      try {
+        bytes = Uint8Array.from(atob(String(args.dataBase64 ?? "")), (ch) =>
+          ch.charCodeAt(0)
+        );
+      } catch {
+        throw new WireRefusal(400, "dataBase64 is not base64");
+      }
+      if (!bytes.byteLength || bytes.byteLength > 5 * 1024 * 1024)
+        throw new WireRefusal(413, "a file is 1 byte to 5 MB");
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const sha256 = [...new Uint8Array(digest)]
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      const res = await platformSend(
+        deps.env,
+        `/files/${reader}/${sha256}.${ext}`,
+        {
+          method: "PUT",
+          headers: {
+            "content-type": contentType,
+            "x-sb-upload-token": deps.env.PLATFORM_UPLOAD_TOKEN ?? "",
+          },
+          body: bytes,
+        }
+      );
+      const out = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        url?: string;
+        error?: string;
+      } | null;
+      if (!res.ok || !out?.ok || !out.url)
+        throw new WireRefusal(
+          502,
+          out?.error ?? `the serving plane answered ${res.status}`
+        );
+      return {
+        url: out.url,
+        sha256,
+        contentType,
+        size: bytes.byteLength,
+        name: String(args.name ?? ""),
+        text: `Kept ${args.name} at ${out.url}`,
+      };
+    },
+    [PREVIEW.id]: async (_t, args) => {
+      const url = String(args.url ?? "");
+      if (!/^https?:\/\//.test(url))
+        throw new WireRefusal(400, "url must be http(s)");
+      const out = await platformGet<Record<string, unknown>>(
+        deps.env,
+        `/preview?url=${encodeURIComponent(url)}`
+      );
+      return { ...out, text: String(out.title ?? url) };
     },
     [SESSION_START.id]: async (_t, args) => {
       const reader = readerOf(asker);
