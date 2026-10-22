@@ -7,7 +7,12 @@ const here = fileURLToPath(new URL(".", import.meta.url));
 // carry the `@seed` alias, Preact's JSX and the two guards (no real sockets, no real network beyond the Bible API).
 const shared = {
   resolve: { alias: { "@seed": `${here}lib` } },
-  oxc: { jsx: { runtime: "automatic", importSource: "preact" } },
+  // The room (`rooms/ReadingSession.ts`) uses the Agents SDK's `@callable()`; node runs no decorators natively, so the
+  // runner compiles them (wrangler's esbuild does the same for the deploy).
+  oxc: {
+    jsx: { runtime: "automatic", importSource: "preact" },
+    decorator: { legacy: true },
+  },
 };
 const setupFiles = [
   "test/setup/blockRealSockets.ts",
