@@ -2,7 +2,15 @@
 // description in the HTML, plus the seed the client reuses), everything else is the asset the build emitted. The
 // Bible API answers are cached by the edge per their own headers; a failed render falls back to the plain app
 // shell, which loads the chapter itself.
-import { injectIntoIndex, renderChapterPage } from "../src/entry-server";
+import {
+  injectIntoIndex,
+  injectSharedIntoIndex,
+  renderChapterPage,
+} from "../src/entry-server";
+import {
+  loadSharedPage,
+  parseSharedPath,
+} from "../src/state/social/sharedPage";
 import { parseRoute, routeOf, versesOf } from "../src/state/reading/route";
 import {
   FREE_USE_BIBLE_API_ENDPOINT,
@@ -13,6 +21,26 @@ const SITEMAP_TRANSLATIONS = ["BSB"];
 
 export interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
+  /** The reader agent's origin: shared pages are read through its public lane. */
+  A2A_BASE?: string;
+}
+
+/** A public shelf document's text, through the reader agent's public lane (what the browser uses too). */
+async function readPublic(
+  a2a: string,
+  shelf: string,
+  path: string
+): Promise<string> {
+  const res = await fetch(
+    `${a2a}/api/public/read?shelf=${encodeURIComponent(shelf)}&path=${encodeURIComponent(path)}`
+  );
+  const body = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    text?: string;
+    error?: string;
+  };
+  if (!res.ok || !body.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+  return body.text ?? "";
 }
 
 export default {
@@ -48,10 +76,42 @@ export default {
       void cache?.put(request, res.clone());
       return res;
     }
-    const route = parseRoute(url.pathname);
     const isNavigation =
       request.method === "GET" &&
       (request.headers.get("accept") ?? "").includes("text/html");
+    const shared = parseSharedPath(url.pathname);
+    if (shared && isNavigation) {
+      const shell = await env.ASSETS.fetch(
+        new Request(new URL("/", url).toString(), request)
+      );
+      if (!shell.ok) return shell;
+      const indexHtml = await shell.text();
+      const a2a = (env.A2A_BASE ?? "").replace(/\/$/, "");
+      const page = a2a
+        ? await loadSharedPage(
+            (shelf, path) => readPublic(a2a, shelf, path),
+            shared
+          ).catch(() => null)
+        : null;
+      return new Response(
+        page
+          ? injectSharedIntoIndex(
+              indexHtml,
+              page,
+              `${url.origin}${url.pathname}`
+            )
+          : indexHtml,
+        {
+          status: page ? 200 : 404,
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": page ? "public, max-age=60" : "no-cache",
+            "x-sb-ssr": page ? "shared" : "shell",
+          },
+        }
+      );
+    }
+    const route = parseRoute(url.pathname);
     if (!route || !isNavigation) return env.ASSETS.fetch(request);
 
     const shell = await env.ASSETS.fetch(

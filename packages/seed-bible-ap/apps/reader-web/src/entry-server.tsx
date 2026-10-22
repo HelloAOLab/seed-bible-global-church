@@ -2,6 +2,11 @@
 // column as the client would draw them (the same `renderChapterContent`, so a crawler and a slow connection see
 // the text), the page title and description, and a seed the client's own API instance reuses instead of
 // re-fetching the data the page already carries (`FreeUseBibleAPI.seedResponseCache`).
+import {
+  markdownBlocks,
+  sharedSummary,
+  type SharedPage,
+} from "./state/social/sharedPage";
 import { render } from "preact-render-to-string";
 import {
   FreeUseBibleAPI,
@@ -219,5 +224,63 @@ export function injectIntoIndex(
     .replace(
       '<div id="root"></div>',
       `<div id="root">${page.html}</div>${seedScript}`
+    );
+}
+
+export const SHARED_GLOBAL = "__SB_SHARED__";
+
+const SHARED_KIND_LABEL: Record<SharedPage["kind"], string> = {
+  note: "Note",
+  playlist: "Playlist",
+  plan: "Reading plan",
+  customization: "Church theme",
+};
+
+/** A shared page's static markup: what a crawler or a link preview reads before the app takes over. */
+export function renderSharedHtml(page: SharedPage): string {
+  const e = escapeHtml;
+  const blocks = markdownBlocks(page.markdown)
+    .map((b) =>
+      b.type === "heading"
+        ? b.level === 1
+          ? ""
+          : `<h${b.level + 1}>${e(b.text)}</h${b.level + 1}>`
+        : b.type === "list"
+          ? `<ul>${b.items.map((i) => `<li>${e(i)}</li>`).join("")}</ul>`
+          : `<p>${e(b.text)}</p>`
+    )
+    .join("");
+  return `<main class="sb-shared-page sb-shared-page-ssr"><p class="sb-shared-kind">${e(SHARED_KIND_LABEL[page.kind])} · ${e(page.shelf)}</p><h1>${e(page.title)}</h1>${blocks}</main>`;
+}
+
+/** The index.html with a shared page's title, preview tags, markup and the loaded page for the app to reuse. */
+export function injectSharedIntoIndex(
+  indexHtml: string,
+  page: SharedPage,
+  url: string
+): string {
+  const title = `${page.title} · ${SHARED_KIND_LABEL[page.kind]} · Seed Bible`;
+  const description =
+    sharedSummary(page) || `${SHARED_KIND_LABEL[page.kind]} by ${page.shelf}`;
+  const e = escapeHtml;
+  const og = [
+    `<meta property="og:type" content="article" />`,
+    `<meta property="og:title" content="${e(page.title)}" />`,
+    `<meta property="og:description" content="${e(description)}" />`,
+    `<meta property="og:url" content="${e(url)}" />`,
+    `<meta property="og:site_name" content="Seed Bible" />`,
+    `<meta property="og:image" content="${e(new URL(url).origin)}/og.jpg" />`,
+    `<meta name="twitter:card" content="summary" />`,
+    `<link rel="canonical" href="${e(url)}" />`,
+  ].join("");
+  const seed = `<script>window.${SHARED_GLOBAL}=${JSON.stringify(page).replace(/</g, "\\u003c")}</script>`;
+  return indexHtml
+    .replace(
+      /<title>[^<]*<\/title>/,
+      `<title>${e(title)}</title><meta name="description" content="${e(description)}" />${og}`
+    )
+    .replace(
+      '<div id="root"></div>',
+      `<div id="root">${renderSharedHtml(page)}</div>${seed}`
     );
 }

@@ -1,5 +1,6 @@
 // DISCOVER — what Seed Bible agents released for the chapter on screen, from the Seed registry through the
 // workspace: published notes, studies, offerings. Dressed by the copied `discover.css` (`sb-discover-*`).
+import { sharedPathOf, sharedRefOf } from "../../state/social/sharedPage";
 import { useEffect, useState, useRef } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -34,6 +35,8 @@ function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
   }, [focused]);
   const body = open ? state.discover.body(o).value : null;
   const mine = state.backend.identity()?.agent === o.owner;
+  const page = sharedRefOf(o);
+  const [copied, setCopied] = useState(false);
   return (
     <li
       ref={item}
@@ -73,6 +76,26 @@ function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
             </p>
           ) : (
             <pre className="sb-discover-markdown">{body}</pre>
+          )}
+          {page && (
+            <div className="sb-note-card-actions">
+              <button
+                type="button"
+                className="sb-note-button sb-discover-copy-page"
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText(`${location.origin}${sharedPathOf(page)}`)
+                    .then(() => setCopied(true))
+                    .catch(() => undefined)
+                }
+              >
+                {copied
+                  ? t("shared-page-copied", {
+                      defaultValue: "Page link copied",
+                    })
+                  : t("shared-copy-page", { defaultValue: "Copy page link" })}
+              </button>
+            </div>
           )}
         </div>
       )}

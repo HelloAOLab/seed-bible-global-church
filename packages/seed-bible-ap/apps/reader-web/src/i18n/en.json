@@ -386,5 +386,19 @@
   "tutorials": "Tutorials",
   "tutorials-off": "Turned off.",
   "tutorials-on": "Short tours show the first time you use a feature.",
-  "tutorials-again": "Show tutorials again"
+  "tutorials-again": "Show tutorials again",
+  "shared-save-play": "Save to my Library and play",
+  "shared-save-start": "Save to my Library and start",
+  "shared-theme-missing": "This theme is not listed yet. Try again in a minute.",
+  "shared-use-theme": "Use this theme",
+  "shared-read-passage": "Read {{passage}}",
+  "shared-kind-note": "Note",
+  "shared-kind-playlist": "Playlist",
+  "shared-kind-plan": "Reading plan",
+  "shared-kind-customization": "Church theme",
+  "shared-open-reader": "Open Seed Bible",
+  "shared-gone": "This page is not shared any more",
+  "shared-gone-body": "Whoever shared it may have taken it down, or the link is incomplete.",
+  "shared-copy-page": "Copy page link",
+  "shared-page-copied": "Page link copied"
 }

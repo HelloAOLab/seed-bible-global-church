@@ -1670,4 +1670,80 @@ export const MORE_FLOWS: Flow[] = [
       return `${steps} steps walked to Done; a link with tutorialStep=2 opened on ${progress[0]}; Escape closed it`;
     },
   },
+  {
+    id: "G12",
+    timeoutMs: 420_000,
+    section: "8. Today, Discover and publishing",
+    title: "Shared page for a published playlist",
+    rows: ["Shared pages"],
+    checks:
+      "Signed in: publish a playlist; Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.signInAsSample();
+      const lib = await c.openLibrary("Playlists");
+      const title = `Flow page ${stamp()}`;
+      await lib.locator('input[placeholder^="New playlist"]').fill(title);
+      await lib.getByRole("button", { name: /^create$/i }).click();
+      const card = lib.locator(".sb-note-card", { hasText: title }).first();
+      await card.waitFor({ timeout: 10000 });
+      await ensureOpen(card);
+      await card.locator("button", { hasText: /(^|\s)Publish\s*$/ }).click();
+      await card
+        .locator("button", { hasText: /(^|\s)Published\s*$/ })
+        .waitFor({ timeout: 120000 });
+      await c.pressToolbar("Discover");
+      const item = c.pane().locator(".sb-discover-item", { hasText: title });
+      for (let i = 0; i < 12 && !(await item.count()); i++) {
+        await c
+          .pane()
+          .getByRole("button", { name: /refresh/i })
+          .first()
+          .click()
+          .catch(() => undefined);
+        await c.page.waitForTimeout(5000);
+      }
+      if (!(await item.count())) throw new Error("not listed in Discover");
+      await item.locator(".sb-discover-item-main").click();
+      await item.locator(".sb-discover-copy-page").click();
+      await c.page.waitForTimeout(300);
+      const link = await c.page.evaluate(() => navigator.clipboard.readText());
+      if (!/\/shared\/[^/]+\/playlist\//.test(link))
+        throw new Error(`link "${link}"`);
+      const fresh = await c.secondPage();
+      const edge = await fresh.request.get(link, {
+        headers: { accept: "text/html" },
+      });
+      const html = await edge.text();
+      if (edge.headers()["x-sb-ssr"] !== "shared" || !html.includes(title))
+        throw new Error(
+          `edge: ${edge.status()} ${edge.headers()["x-sb-ssr"]}; title in html ${html.includes(title)}`
+        );
+      await fresh.goto(link, { waitUntil: "domcontentloaded" });
+      await c.dismissWelcome(fresh);
+      const h1 = fresh.locator(".sb-shared-overlay h1");
+      await c.waitText(h1, new RegExp(title), 30000);
+      await fresh
+        .getByRole("button", { name: /save to my library and play/i })
+        .waitFor({ timeout: 5000 });
+      await fresh
+        .locator(".sb-shared-actions")
+        .last()
+        .getByRole("button", { name: /open seed bible/i })
+        .click();
+      await fresh.waitForURL(/\/read\//, { timeout: 10000 });
+      await c.openLibrary("Playlists");
+      await ensureOpen(card);
+      await card.locator("button", { hasText: /(^|\s)Published\s*$/ }).click();
+      await card
+        .locator("button", { hasText: /(^|\s)Publish\s*$/ })
+        .waitFor({ timeout: 120000 });
+      c.page.once("dialog", (d) => void d.accept());
+      await card.getByRole("button", { name: /^delete$/i }).click();
+      const gone = await fresh.request.get(link, {
+        headers: { accept: "text/html" },
+      });
+      return `${link.replace(BASE, "")}: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers ${gone.status()}`;
+    },
+  },
 ];

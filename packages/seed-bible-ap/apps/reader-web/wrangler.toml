@@ -10,11 +10,14 @@ compatibility_flags = ["nodejs_compat"]
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/read/*", "/sitemap.xml", "/robots.txt"]
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]
 
 [env.faithnet]
 name = "seed-bible-reader-web-faithnet"
 workers_dev = true
+
+[env.faithnet.vars]
+A2A_BASE = "https://seed-reader-a2a.faithnet.io"
 
 [[env.faithnet.routes]]
 pattern = "seed-reader.faithnet.io"
@@ -24,4 +27,4 @@ custom_domain = true
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/read/*", "/sitemap.xml", "/robots.txt"]
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]

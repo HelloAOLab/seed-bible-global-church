@@ -1,6 +1,7 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import { parseSharedPath, type SharedRef } from "./social/sharedPage";
 import { createTours, parseTutorialLink } from "./chrome/tours";
 import { createToolbarLayout } from "./chrome/toolbarLayout";
 import { createOfflineTranslations } from "./reading/offlineTranslations";
@@ -412,6 +413,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     share: signal<{ title: string; url: string } | null>(null),
     /** The verse toolbar opened as a menu at the pointer (a right-click on a verse); null when docked. */
     verseMenuAt: signal<{ x: number; y: number } | null>(null),
+    /** The shared page open over the reader (`/shared/<shelf>/<kind>/<slug>`); null when none. */
+    shared: signal<SharedRef | null>(
+      typeof location !== "undefined"
+        ? parseSharedPath(location.pathname)
+        : null
+    ),
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };

@@ -57,7 +57,9 @@ export function bindRoute(reading: () => Reading): () => void {
 export function pushRoute(r: ChapterRoute) {
   if (typeof window === "undefined") return;
   const path = routeOf(r);
-  if (location.pathname === path) return;
+  // A shared page keeps its own address while it is open; closing it moves the URL to the chapter.
+  if (location.pathname === path || location.pathname.startsWith("/shared/"))
+    return;
   // A share link's verses belong to the chapter it named, not the next one.
   const q = new URLSearchParams(location.search);
   q.delete("v");

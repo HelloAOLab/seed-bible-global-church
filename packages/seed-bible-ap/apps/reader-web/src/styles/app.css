@@ -1442,3 +1442,49 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-tour-spacer {
   flex: 1;
 }
+
+/* A shared page (/shared/…): a page of its own over the reader, centred and readable. */
+.sb-shared-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  overflow-y: auto;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+}
+.sb-shared-page {
+  position: relative;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem;
+}
+.sb-shared-page h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.75rem;
+}
+.sb-shared-kind {
+  margin: 0;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.sb-shared-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.sb-shared-body {
+  line-height: 1.6;
+}
+.sb-shared-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: 0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: inherit;
+}
