@@ -23,11 +23,11 @@ export const routeOf = (r: ChapterRoute) =>
   `/read/${encodeURIComponent(r.translationId)}/${encodeURIComponent(r.bookId)}/${r.chapterNumber}`;
 
 /** Wire the browser history to the reading state; returns the cleanup. */
-export function bindRoute(reading: Reading): () => void {
+export function bindRoute(reading: () => Reading): () => void {
   if (typeof window === "undefined") return () => {};
   const onPop = () => {
     const r = parseRoute(location.pathname);
-    if (r) void reading.goTo(r.translationId, r.bookId, r.chapterNumber);
+    if (r) void reading().goTo(r.translationId, r.bookId, r.chapterNumber);
   };
   window.addEventListener("popstate", onPop);
   return () => window.removeEventListener("popstate", onPop);

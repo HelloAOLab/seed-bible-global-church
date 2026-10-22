@@ -1,8 +1,9 @@
-// THE SHELL — the reader column, a side pane (notes or account), the verse toolbar, the floating reader toolbar
-// and the selector overlay. Replaces the hello page.
+// THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
+// verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
 import { useEffect } from "preact/hooks";
 import type { ReaderState } from "./state";
-import { BibleReader } from "./components/reader/BibleReader";
+import { TabsSidebar } from "./components/reader/TabsSidebar";
+import { PanesLayout } from "./components/reader/PanesLayout";
 import { BibleSelector } from "./components/reader/BibleSelector";
 import { VerseToolbar } from "./components/reader/VerseToolbar";
 import { ReaderToolbar } from "./components/reader/ReaderToolbar";
@@ -22,10 +23,14 @@ export function App({ state }: { state: ReaderState }) {
   }, []);
 
   const pane = state.ui.pane.value;
+  const collapsed = state.ui.sidebarCollapsed.value;
   return (
-    <div className={`sb-app${pane !== "none" ? " sb-app-with-pane" : ""}`}>
+    <div
+      className={`sb-app${pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
+    >
+      <TabsSidebar state={state} />
       <main className="sb-app-main">
-        <BibleReader state={state} />
+        <PanesLayout state={state} />
       </main>
       {pane === "notes" && (
         <aside className="sb-app-pane">

@@ -1,9 +1,11 @@
 // THE READER — the desktop shell of packages/seed-bible's BibleReader (header with the tappable book · chapter
 // title and the translation button, the chapter column, the footnote modal, the skeleton and error states), over
-// the ported state. Selecting verses, highlighting and notes hang off the same clicks the old reader handled.
+// the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
+// follow the selected tab.
 import { useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
 import type { ReaderState } from "../../state";
+import type { Reading } from "../../state/reading/reading";
 import { useI18n } from "../../i18n";
 import { renderChapterContent } from "./chapterContent";
 import { ChapterColumn } from "./ChapterColumn";
@@ -13,9 +15,17 @@ interface SelectedFootnote {
   verse: ChapterVerse | null;
 }
 
-export function BibleReader({ state }: { state: ReaderState }) {
+export function BibleReader({
+  state,
+  reading,
+  active = true,
+}: {
+  state: ReaderState;
+  reading: Reading;
+  active?: boolean;
+}) {
   const { t } = useI18n();
-  const { reading, settings, ui, selection } = state;
+  const { settings, ui, selection } = state;
   const chapter = reading.chapterData.value;
   const chapterRef = reading.chapterRef.value;
   const highlights = state.highlights.forChapter(chapterRef).value;
@@ -23,6 +33,8 @@ export function BibleReader({ state }: { state: ReaderState }) {
   const [footnote, setFootnote] = useState<SelectedFootnote | null>(null);
   const translationLabel =
     reading.translation.value?.shortName ?? reading.translationId.value;
+  const saved = state.saves.forPassage(chapterRef).length > 0;
+  const bookmarked = state.bookmarks.onChapter(chapterRef).length > 0;
 
   const onVerseClick = (verseNumber: number, event: MouseEvent) => {
     event.stopPropagation();
@@ -72,9 +84,10 @@ export function BibleReader({ state }: { state: ReaderState }) {
         stale={reading.loading.value}
       >
         {renderChapterContent(chapter, {
-          selectedVerses: selection.verses.value,
-          playingVerse:
-            state.audio.currentVerse.value ?? state.tts.currentVerse.value,
+          selectedVerses: active ? selection.verses.value : [],
+          playingVerse: active
+            ? (state.audio.currentVerse.value ?? state.tts.currentVerse.value)
+            : null,
           highlights,
           notes,
           scriptureElements: settings.scripture.value,
@@ -114,7 +127,7 @@ export function BibleReader({ state }: { state: ReaderState }) {
 
   return (
     <div
-      className={`sb-bible-reader sb-font-size-${settings.fontSize.value}`}
+      className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
       onClick={() => selection.clear()}
     >
       <div className="sb-bible-reader-header">
@@ -155,8 +168,7 @@ export function BibleReader({ state }: { state: ReaderState }) {
           {reading.fromDevice.value && (
             <span
               className="sb-reader-from-device"
-              title={t("translation-available-offline", {
-                size: "",
+              title={t("read-from-device", {
                 defaultValue: "Read from this device",
               })}
             >
@@ -165,7 +177,7 @@ export function BibleReader({ state }: { state: ReaderState }) {
           )}
           <button
             type="button"
-            className={`sb-bible-reader-save-button${state.saves.forPassage(chapterRef).length ? " sb-bible-reader-save-button-saved" : ""}`}
+            className={`sb-bible-reader-save-button${saved ? " sb-bible-reader-save-button-saved" : ""}`}
             aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
             title={t("save-chapter", { defaultValue: "Save chapter" })}
             onClick={(e: MouseEvent) => {
@@ -178,14 +190,12 @@ export function BibleReader({ state }: { state: ReaderState }) {
             }}
           >
             <span className="material-symbols-outlined">
-              {state.saves.forPassage(chapterRef).length
-                ? "inventory_2"
-                : "archive"}
+              {saved ? "inventory_2" : "archive"}
             </span>
           </button>
           <button
             type="button"
-            className={`sb-bible-reader-bookmark-button${state.bookmarks.onChapter(chapterRef).length ? " sb-bible-reader-save-button-saved" : ""}`}
+            className={`sb-bible-reader-bookmark-button${bookmarked ? " sb-bible-reader-save-button-saved" : ""}`}
             aria-label={t("bookmark-this-chapter", {
               defaultValue: "Bookmark this chapter",
             })}
@@ -201,9 +211,7 @@ export function BibleReader({ state }: { state: ReaderState }) {
             }}
           >
             <span className="material-symbols-outlined">
-              {state.bookmarks.onChapter(chapterRef).length
-                ? "bookmark"
-                : "bookmark_border"}
+              {bookmarked ? "bookmark" : "bookmark_border"}
             </span>
           </button>
         </div>

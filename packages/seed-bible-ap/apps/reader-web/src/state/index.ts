@@ -17,6 +17,7 @@ import { setVerseLinkTranslation } from "../components/records/tiptap/VerseRefer
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
 import { bindRoute, parseRoute, pushRoute } from "./reading/route";
+import { createTabs } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
 import { createChapterAudio } from "./media/audio";
 import { createTextToSpeechManager } from "./media/textToSpeech";
@@ -68,27 +69,48 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const audio = createChapterAudio({ api });
   const tts = createTextToSpeechManager();
 
-  const reading = createReading({
-    api,
-    chapters: stores.chapters,
-    onChange: (p) => {
-      void position.save(p);
-      pushRoute(p);
-      setVerseLinkTranslation(p.translationId);
-    },
+  // Every tab has its own reading state; the device position and the URL follow the selected tab only.
+  const tabs = createTabs({
+    makeReading: (tabId) =>
+      createReading({
+        api,
+        chapters: stores.chapters,
+        onChange: (p) => {
+          if (tabs.selectedId.value !== tabId) return;
+          void position.save(p);
+          pushRoute(p);
+          setVerseLinkTranslation(p.translationId);
+        },
+      }),
+  });
+  /** The selected tab's reading state — what the toolbars, panes and the URL act on. */
+  const readingOf = () => tabs.selected.value?.reading ?? fallbackReading;
+  const fallbackReading = createReading({ api, chapters: stores.chapters });
+  // Selecting another tab moves the URL and the device position to it.
+  effect(() => {
+    const r = tabs.selected.value?.reading;
+    if (!r) return;
+    const p = {
+      translationId: r.translationId.value,
+      bookId: r.bookId.value,
+      chapterNumber: r.chapterNumber.value,
+    };
+    pushRoute(p);
+    void position.save(p);
+    setVerseLinkTranslation(p.translationId);
   });
 
   // The recording follows the open chapter; reading aloud stops when the chapter changes.
   effect(() => {
-    const chapter = reading.chapterData.value;
+    const chapter = readingOf().chapterData.value;
     void audio.load(chapter);
     tts.stop();
   });
   const speechLang = () =>
-    bibleLanguageToBcp47(reading.translation.value?.language);
+    bibleLanguageToBcp47(readingOf().translation.value?.language);
   /** Read the open chapter aloud with the browser's own voice (when the API has no recording). */
   function listen() {
-    const chapter = reading.chapterData.value;
+    const chapter = readingOf().chapterData.value;
     if (!chapter) return;
     const verses = chapter.chapter.content
       .filter(
@@ -100,6 +122,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
 
   const verses = signal<number[]>([]);
+  effect(() => {
+    readingOf().chapterRef.value;
+    verses.value = [];
+  });
   const selection = {
     verses,
     toggle(verse: number, extend = false) {
@@ -132,6 +158,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
+    sidebarCollapsed: signal(false),
   };
 
   async function signIn(s: ReaderSession) {
@@ -146,15 +173,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   /** Open the chapter the URL names, else where the reader left off, else John 1; wire history and the outbox. */
   async function start(): Promise<() => void> {
-    const stops = [bindRoute(reading), outbox.start()];
     const fromUrl =
       typeof location !== "undefined" ? parseRoute(location.pathname) : null;
     const target = fromUrl ?? (await position.load());
-    await reading.goTo(
-      target?.translationId ?? reading.translationId.value,
-      target?.bookId ?? reading.bookId.value,
-      target?.chapterNumber ?? reading.chapterNumber.value
-    );
+    tabs.addTab(target ?? {});
+    const stops = [bindRoute(readingOf), outbox.start()];
     return () => stops.forEach((s) => s());
   }
 
@@ -175,7 +198,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     tts,
     speechLang,
     listen,
-    reading,
+    tabs,
+    get reading() {
+      return readingOf();
+    },
     selection,
     ui,
     signIn,

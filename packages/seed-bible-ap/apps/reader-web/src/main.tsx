@@ -15,6 +15,10 @@ import "./styles/toolbar.css";
 import "./styles/your-content.css";
 import "./styles/tiptap.css";
 import "./styles/audio-scrubber.css";
+import "./styles/tabs-inline.css";
+import "./styles/tabs.css";
+import "./styles/pane-layout-inline.css";
+import "./styles/pane-layout.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;
