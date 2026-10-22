@@ -44,6 +44,8 @@
     "test/integration",
     "test/unit/reader-a2a/log-hygiene.test.ts",
     "test/unit/reader-a2a/publish-without-reads.test.ts",
+    "test/unit/reader-a2a/bucket-doc-id.test.ts",
+    "test/unit/reader-a2a/bucket-cache.test.ts",
     "test/unit/reader-web"
   ]
 }

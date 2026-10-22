@@ -2,6 +2,7 @@
 // reader, signed by this workspace's asking key under the reader's ask-as-me wire (an `A2A-Session` assertion). The
 // reader's own agent admits the wire, runs the step under their standing, and writes their Library as them. This
 // workspace never writes a reader's vault itself (agents-and-skills.md; pattern: demo-openbook-reader server/agent.ts).
+import type { BucketCacheHandle } from "../rooms/BucketCache";
 import { wrapSessionSignature } from "@agenticprimitives/a2a";
 import {
   callerAssertionDigest,
@@ -41,6 +42,8 @@ export interface PersonAgentOutcome<T> {
 }
 
 export class PersonAgent {
+  /** The reader's bucket cache, when this workspace has one (skills/vault.ts `agentFor`). */
+  cache?: BucketCacheHandle;
   private readonly key: Hex;
   private readonly origin: string;
 

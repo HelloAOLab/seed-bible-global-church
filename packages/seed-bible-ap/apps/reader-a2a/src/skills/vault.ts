@@ -27,9 +27,55 @@ import {
 } from "../../../../lib/library-client";
 import { BucketItem } from "../../../../lib/seed-schema";
 import { PersonAgent, type PersonAgentEnv } from "../clients/person-agent";
+import type {
+  BucketCacheHandle,
+  BucketCacheNamespace,
+  CachedBucket,
+} from "../rooms/BucketCache";
 import { WireRefusal, wireFor, type WireEnv } from "../wires";
 
-export type VaultEnv = PersonAgentEnv & WireEnv;
+export type VaultEnv = PersonAgentEnv &
+  WireEnv & {
+    /** The readers' bucket caches (rooms/BucketCache.ts); absent ⇒ every read goes to the reader's agent. */
+    BUCKET_CACHE?: BucketCacheNamespace;
+  };
+
+/** How long a cached bucket stands for the Library's copy (every write of it goes through this workspace). */
+const BUCKET_FRESH_MS = 10 * 60_000;
+
+/** The reader's cache, or undefined. Never fatal: a cache that cannot be reached is a cache that missed. */
+function bucketCacheFor(
+  env: VaultEnv,
+  reader: string
+): BucketCacheHandle | undefined {
+  const ns = env.BUCKET_CACHE;
+  if (!ns) return undefined;
+  const stub = ns.get(ns.idFromName(reader.toLowerCase()) as never);
+  const call = async (body: Record<string, unknown>) =>
+    (await (
+      await stub.fetch("https://bucket-cache/", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      })
+    ).json()) as { entry?: CachedBucket | null };
+  return {
+    get: async (key) => {
+      try {
+        const e = (await call({ op: "get", key })).entry ?? null;
+        return e && Date.now() - e.at < BUCKET_FRESH_MS ? e : null;
+      } catch {
+        return null;
+      }
+    },
+    put: async (key, entry) => {
+      await call({ op: "put", key, entry }).catch(() => undefined);
+    },
+    drop: async (key) => {
+      await call({ op: "delete", key }).catch(() => undefined);
+    },
+  };
+}
 
 /** Work that may finish after the reply (the Worker's waitUntil); without it the work is awaited. */
 export type Defer = (p: Promise<unknown>) => void;
@@ -124,7 +170,9 @@ export async function agentFor(
       409,
       "this workspace holds no permission to ask your agent — sign in again to let it keep your Library"
     );
-  return new PersonAgent(env, reader, wire);
+  const agent = new PersonAgent(env, reader, wire);
+  agent.cache = bucketCacheFor(env, reader);
+  return agent;
 }
 
 /** The reader's agent answers a read of a document the shelf lacks as a REFUSED step ("no document named …"); that is
@@ -139,6 +187,14 @@ export async function readBucket(
 ): Promise<BucketRead & { runRef: string | null }> {
   const folder = bucketFolder(collection, chapterRef);
   const name = bucketName(collection, chapterRef);
+  // What this workspace last read or saved of the bucket, while fresh: no run at the reader's agent at all.
+  const cached = await agent.cache?.get(`${folder}/${name}`);
+  if (cached)
+    return {
+      bucket: parseBucket(cached.text, collection, chapterRef),
+      file: { id: cached.id, version: cached.version },
+      runRef: null,
+    };
   const known = await knownDocId(agent.reader, folder, name);
   const read = (id?: string) =>
     agent.run<LibraryRead>(
@@ -185,6 +241,13 @@ export async function readBucket(
     : undefined;
   if (file && file.id !== known)
     await rememberDocId(agent.reader, folder, name, file.id);
+  if (file)
+    await agent.cache?.put(`${folder}/${name}`, {
+      text: r.text ?? "",
+      id: file.id,
+      version: file.version,
+      at: Date.now(),
+    });
   return {
     bucket: parseBucket(r.text ?? "", collection, chapterRef),
     ...(file ? { file } : {}),
@@ -263,14 +326,21 @@ async function saveBucketAndManifest(
 ): Promise<{ file: { id: string; version: number }; runRefs: string[] }> {
   const folder = bucketFolder(collection, chapterRef);
   const name = bucketName(collection, chapterRef);
-  const saved = await saveDoc(
-    agent,
-    folder,
-    name,
-    serialize(bucket),
-    existing?.id,
-    why
-  );
+  const text = serialize(bucket);
+  let saved: Awaited<ReturnType<typeof saveDoc>>;
+  try {
+    saved = await saveDoc(agent, folder, name, text, existing?.id, why);
+  } catch (e) {
+    // What the Library holds after a failed save is not known here: the next read goes to it.
+    await agent.cache?.drop(`${folder}/${name}`);
+    throw e;
+  }
+  await agent.cache?.put(`${folder}/${name}`, {
+    text,
+    id: saved.file.id,
+    version: saved.file.version,
+    at: Date.now(),
+  });
   const runRefs = saved.runRef ? [saved.runRef] : [];
   // The manifest is bookkeeping (which buckets moved); the reader waits for the bucket, not for it.
   const updateManifest = async () => {
