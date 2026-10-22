@@ -12,9 +12,13 @@ import {
   renderChapterContent,
   getVersePlainText,
 } from "./components/reader/chapterContent";
-import type { ChapterRoute } from "./state/reading/route";
+import { routeOf, type ChapterRoute } from "./state/reading/route";
+import { BUILD_ID } from "./build";
 
 export const SEED_GLOBAL = "__SB_SEED__";
+/** On the shell's root element: which chapter URL the markup is for, and which build rendered it (hydrate.tsx). */
+export const SSR_ROUTE_ATTR = "data-sb-route";
+export const SSR_BUILD_ATTR = "data-sb-build";
 
 export interface RenderedChapter {
   html: string;
@@ -52,11 +56,29 @@ export function chapterDescription(
   return out.length > max ? out.slice(0, max - 1).trimEnd() + "…" : out;
 }
 
-/** The chapter's markup for `#root`, without any interactive state. */
-export function renderChapterShell(chapter: TranslationBookChapter): string {
+/**
+ * The chapter as the Worker renders it and as the client first adopts it (hydrate.tsx): the reader's header and the
+ * chapter column, no interactive state. The root carries the route and the build so the client can tell whether
+ * the markup is its own to adopt.
+ */
+export function ChapterShell({
+  chapter,
+  buildId = BUILD_ID,
+}: {
+  chapter: TranslationBookChapter;
+  buildId?: string;
+}) {
   const label = chapter.translation.shortName ?? chapter.translation.id;
-  return render(
-    <div class="sb-app sb-app-ssr">
+  const attrs = {
+    [SSR_ROUTE_ATTR]: routeOf({
+      translationId: chapter.translation.id,
+      bookId: chapter.book.id,
+      chapterNumber: chapter.chapter.number,
+    }),
+    [SSR_BUILD_ATTR]: buildId,
+  };
+  return (
+    <div class="sb-app sb-app-ssr" {...attrs}>
       <main class="sb-app-main">
         <div class="sb-panes-layout" data-layout="single">
           <div class="sb-pane-shell sb-pane-slot-1">
@@ -105,6 +127,14 @@ export function renderChapterShell(chapter: TranslationBookChapter): string {
       </main>
     </div>
   );
+}
+
+/** The chapter's markup for `#root`, without any interactive state. */
+export function renderChapterShell(
+  chapter: TranslationBookChapter,
+  buildId = BUILD_ID
+): string {
+  return render(<ChapterShell chapter={chapter} buildId={buildId} />);
 }
 
 /** The text of a verse range, for a shared link's title and description. */

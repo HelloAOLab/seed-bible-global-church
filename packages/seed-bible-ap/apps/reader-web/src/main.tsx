@@ -5,6 +5,8 @@ import { RELAY_CHANNEL } from "./session";
 import { createReaderState } from "./state";
 import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "./backend/bible";
 import { SEED_GLOBAL } from "./entry-server";
+import { hydrateChapter } from "./hydrate";
+import { BUILD_ID } from "./build";
 import { registerSW } from "virtual:pwa-register";
 import { initI18n } from "./i18n";
 // The old reader's stylesheets, in its import order, then this app's own layer.
@@ -35,9 +37,16 @@ const root = document.getElementById("root")!;
 const search = new URLSearchParams(location.search);
 
 async function boot() {
+  const seed = (window as unknown as Record<string, unknown>)[SEED_GLOBAL];
+  // The edge-rendered chapter becomes a live tree at once (or is cleared when it is not this page's); the App
+  // takes over below once the state is ready.
+  hydrateChapter(root, {
+    pathname: location.pathname,
+    seed,
+    buildId: BUILD_ID,
+  });
   await initI18n();
   const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
-  const seed = (window as unknown as Record<string, unknown>)[SEED_GLOBAL];
   if (seed && typeof seed === "object")
     api.seedResponseCache(seed as Record<string, unknown>);
   const state = createReaderState({ api });

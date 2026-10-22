@@ -68,7 +68,7 @@ describe("ssr", () => {
     expect(html).toContain(
       '<meta name="description" content="Now there was a Pharisee'
     );
-    expect(html).toContain('<div id="root"><div class="sb-app sb-app-ssr">');
+    expect(html).toContain('<div id="root"><div class="sb-app sb-app-ssr"');
     expect(html).toContain(`window.${SEED_GLOBAL}=`);
     expect(html).toContain('<html lang="en"');
   });
