@@ -244,6 +244,12 @@ town runs on.
 
 ## Rules carried over
 
+- **Nothing outside the estate is written to.** The reader, the workspace and the serving plane may READ outside
+  sources (the Bible API, Typesense, OpenStreetMap tiles, OpenBible geometry, and later Twitch, transcripts, MCP
+  connectors) and never write, post or publish to them. Writes stay within faithnet: the Home, person agents, the
+  workspace, the serving plane, and the town's registry. Integrations are connected as widely as useful, read-only.
+  (The one outbound send is the Home's own email rail for a friend invitation — an estate feature.)
+
 - The browser never reaches the MCP directly; the agent does (ADR-0044).
 - No private key in app source. The seed reader's key is in `.seed/` only; the workers hold a marker, not a custody key.
 - A reader is who their Home says — verified server-side against the Home's JWKS, never trusted from the browser.

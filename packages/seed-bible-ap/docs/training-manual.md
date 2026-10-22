@@ -277,6 +277,12 @@ runtime) with their contracts in the skills repo. Four of the six are done; one-
 - **Is the edge render on?** `curl -sI -H "accept: text/html" https://seed-reader.faithnet.io/read/BSB/JHN/3 | grep x-sb-ssr`
   prints `x-sb-ssr: chapter`.
 
+### What the app never does
+
+It never writes to anything outside the estate. Every outside source it uses — the Bible text, search, map tiles,
+place geometry, and later Twitch, transcripts or an MCP connector — is read only. What you do here changes your own
+Library, the workspace, and the serving plane's copies; never a site elsewhere.
+
 ### What to report
 
 Say which sample person (or your own Home) you used, the chapter, what you did, and what the account pane said
