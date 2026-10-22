@@ -22,9 +22,16 @@ async function readerWith(refuse: string[]) {
   const library = fakeLibrary();
   const agent = fakePersonAgent({ library, refuse });
   const workspace = fakeWorkspace({ library });
+  // The registry: after a publish or a withdraw the workspace asks it to crawl the owner's shelf now.
+  const crawls: unknown[] = [];
   installFakeNetwork({
     "a2a.faithnet.io": agent.app,
     "www.faithnet.me": home.app,
+    "seed-bible-a2a.faithnet.io": async (request: Request) => {
+      if (new URL(request.url).pathname === "/registry/crawl")
+        crawls.push(await request.json());
+      return Response.json({ ok: true });
+    },
   });
   await workspace.connect(
     READER,
@@ -36,6 +43,7 @@ async function readerWith(refuse: string[]) {
   return {
     library,
     agent,
+    crawls,
     backend: createA2aBackend(() => session, workspace.fetch),
   };
 }
@@ -49,12 +57,13 @@ const args = {
 
 describe("publishing without the Library reads", () => {
   it("names the ids itself: a publish, a re-publish as a new version, a withdraw", async () => {
-    const { library, agent, backend } = await readerWith([
+    const { library, agent, backend, crawls } = await readerWith([
       "library.file.read",
       "library.files.list",
     ]);
     const first = await backend.publishSlice(args);
     expect(first).toBeTruthy();
+    expect(crawls).toEqual([{ owner: READER }]);
     const jsonId = deterministicId(
       "seed-bible/public/note",
       "this-is-a-test.jsonld"

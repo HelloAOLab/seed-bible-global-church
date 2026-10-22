@@ -410,13 +410,32 @@ export function invokers(
       const w = args.withdraw as
         | { kind?: string; slug?: string; as?: string }
         | undefined;
-      if (w && typeof w === "object")
-        return withdrawSlice(deps.env, reader, {
-          kind: String(w.kind ?? ""),
-          slug: String(w.slug ?? ""),
-          ...(typeof w.as === "string" ? { as: w.as } : {}),
-        });
-      return publishSlice(deps.env, reader, args as unknown as PublishArgs);
+      const as = (w && typeof w === "object" ? w.as : args.as) as unknown;
+      const owner =
+        typeof as === "string" && /^0x[0-9a-f]{40}$/i.test(as)
+          ? as.toLowerCase()
+          : reader;
+      const out =
+        w && typeof w === "object"
+          ? await withdrawSlice(deps.env, reader, {
+              kind: String(w.kind ?? ""),
+              slug: String(w.slug ?? ""),
+              ...(typeof w.as === "string" ? { as: w.as } : {}),
+            })
+          : await publishSlice(
+              deps.env,
+              reader,
+              args as unknown as PublishArgs
+            );
+      // The registry indexes on a quarter-hour crawl; ask it to read this shelf now, so the reader finds the
+      // release (or no longer finds it) in Discover straight away. A nudge that fails costs only that wait.
+      await platformSend(deps.env, "/registry/crawl", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ owner }),
+        signal: AbortSignal.timeout(20_000),
+      }).catch(() => undefined);
+      return out;
     },
     [WORK_SAVE.id]: async (_t, args) => {
       const reader = readerOf(asker);

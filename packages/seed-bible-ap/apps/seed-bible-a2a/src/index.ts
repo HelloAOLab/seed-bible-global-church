@@ -89,8 +89,12 @@ async function shelvesOf(env: Env) {
   return shelves;
 }
 
-export async function reindex(env: Env, fetchImpl: typeof fetch = fetch) {
-  const shelves = await shelvesOf(env);
+export async function reindex(
+  env: Env,
+  fetchImpl: typeof fetch = fetch,
+  only?: (s: { name: string }) => boolean
+) {
+  const shelves = (await shelvesOf(env)).filter((s) => !only || only(s));
   const crawls = await crawlAll(
     (u, i) => fetchImpl(u, i),
     shelves,
@@ -233,6 +237,40 @@ app.get("/registry/recent", async (c) => {
     Number(c.req.query("max") ?? 50)
   );
   return c.json({ ok: true, count: rows.length, offerings: rows.map(rowView) });
+});
+// A PUBLISHER'S NUDGE: right after a release (or a withdrawal) the reader's workspace asks for that owner's shelves to
+// be crawled now instead of at the next quarter-hour. It reads only what is already public — exactly what the cron
+// reads — so it needs no grant; it is throttled per owner, and an owner the index has not seen yet re-crawls all
+// registered shelves (at most once a minute).
+const lastCrawl = new Map<string, number>();
+app.post("/registry/crawl", async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as { owner?: unknown };
+  const owner = String(body.owner ?? "").toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/.test(owner))
+    return c.json(
+      { ok: false, error: "owner (an agent address) required" },
+      400
+    );
+  const known = await c.env.DB.prepare(
+    "SELECT DISTINCT shelf FROM offerings WHERE lower(owner) = ?"
+  )
+    .bind(owner)
+    .all<{ shelf: string }>();
+  const names = new Set((known.results ?? []).map((r) => r.shelf));
+  const key = names.size ? owner : "*";
+  const now = Date.now();
+  if (now - (lastCrawl.get(key) ?? 0) < (names.size ? 5_000 : 60_000))
+    return c.json({ ok: true, throttled: true });
+  lastCrawl.set(key, now);
+  const shelves = await reindex(
+    c.env,
+    fetch,
+    names.size ? (s) => names.has(s.name) : undefined
+  );
+  return c.json({
+    ok: true,
+    shelves: shelves.map((s) => ({ shelf: s.shelf, ok: s.ok })),
+  });
 });
 app.get("/registry/shelves", async (c) =>
   c.json({ ok: true, shelves: await shelvesOf(c.env) })

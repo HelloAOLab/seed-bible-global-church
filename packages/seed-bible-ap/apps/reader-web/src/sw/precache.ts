@@ -34,6 +34,12 @@ const NEVER_PRECACHED =
   /^(index\.html|sw\.js|workbox-[A-Za-z0-9]+\.js|registerSW\.js)$/;
 
 /** The files the app needs to BOOT: every entry chunk, its static imports (transitively), their css and assets. */
+/**
+ * Lazy chunks a reader needs offline before ever opening them online: the note editor (a note written on a device
+ * that has only ever read must still open its editor without a connection). Everything else lazy is cached on use.
+ */
+const OFFLINE_LAZY = [/(^|\/)tiptap\/TipTapEditor\.tsx$/];
+
 export function selectCoreAssetFiles(
   manifest: Record<string, ViteManifestChunk>
 ): Set<string> {
@@ -50,7 +56,7 @@ export function selectCoreAssetFiles(
     for (const imported of chunk.imports ?? []) visit(imported);
   }
   for (const [key, chunk] of Object.entries(manifest))
-    if (chunk.isEntry) visit(key);
+    if (chunk.isEntry || OFFLINE_LAZY.some((re) => re.test(key))) visit(key);
   return core;
 }
 

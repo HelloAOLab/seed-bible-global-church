@@ -875,7 +875,7 @@ export const MORE_FLOWS: Flow[] = [
             )
           );
       const shown = (await days()).join(" | ");
-      if (!/^Comfort.*Psalm 23.*John 1 \| Day 2.*Romans 8:28/.test(shown))
+      if (!/^Comfort.*Psalms? 23.*John 1 \| Day 2.*Romans 8:28/i.test(shown))
         throw new Error(`days: ${shown}`);
       await c.page.reload();
       const again = await c.openLibrary("Reading plans");
@@ -1656,7 +1656,8 @@ export const MORE_FLOWS: Flow[] = [
           .first()
           .click();
         await c.page.getByRole("button", { name: /^1$/ }).first().click();
-        await c.verse(1).waitFor({ timeout: 20000 });
+        await c.page.waitForURL(/\/read\/BSB\/OBA\/1/, { timeout: 20000 });
+        await c.waitText(c.verse(1), /vision of Obadiah/i, 20000);
         const text = (await c.verse(1).innerText()).slice(0, 40);
         return `BSB downloaded; offline, Obadiah 1 reads ("${text}")`;
       } finally {

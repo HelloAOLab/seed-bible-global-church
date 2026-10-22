@@ -69,6 +69,25 @@ describe("selectCoreAssetFiles()", () => {
   });
 });
 
+describe("the note editor offline", () => {
+  it("is precached with what it imports, so a device that never opened it online can write a note offline", () => {
+    const core = selectCoreAssetFiles({
+      ...manifest,
+      "src/components/records/tiptap/TipTapEditor.tsx": {
+        file: "assets/TipTapEditor-KKK.js",
+        isDynamicEntry: true,
+        imports: ["_tiptap-LLL.js"],
+        css: ["assets/TipTapEditor-MMM.css"],
+      },
+      "_tiptap-LLL.js": { file: "assets/tiptap-LLL.js" },
+    } as Record<string, ViteManifestChunk>);
+    expect(core.has("assets/TipTapEditor-KKK.js")).toBe(true);
+    expect(core.has("assets/tiptap-LLL.js")).toBe(true);
+    expect(core.has("assets/TipTapEditor-MMM.css")).toBe(true);
+    expect(core.has("assets/transcript-III.js")).toBe(false);
+  });
+});
+
 describe("selectCoreAssets()", () => {
   const core = selectCoreAssetFiles(manifest);
   const globbed = [
