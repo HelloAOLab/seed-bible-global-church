@@ -3,7 +3,7 @@
 // then play or listen, notes, Your Content, theme, and the account.
 import { arrange } from "../../state/chrome/toolbarLayout";
 import { handleGridKeyNav } from "../keyboardNav";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
@@ -164,6 +164,32 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const canListen =
     !audio.available.value && tts.canSpeakLanguage(state.speechLang());
   const [moreOpen, setMoreOpen] = useState(false);
+  // More is a passing menu: choosing verses (their own actions take its place), a tap anywhere else, or Esc closes it.
+  const selectedCount = state.selection.verses.value.length;
+  useEffect(() => {
+    if (selectedCount) setMoreOpen(false);
+  }, [selectedCount]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      if (
+        !el?.closest?.(
+          ".sb-reader-toolbar-more-menu, .sb-reader-toolbar-more-button"
+        )
+      )
+        setMoreOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoreOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [moreOpen]);
 
   // Everything after the chapter controls: inline on a wide screen, under "More" on a narrow phone; in the order
   // and with the buttons the reader chose (Account → Toolbar).

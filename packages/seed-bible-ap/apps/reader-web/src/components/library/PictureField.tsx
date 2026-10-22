@@ -12,8 +12,7 @@ import {
 } from "../../state/library/crop";
 
 /** The pictures a field takes, by extension and type. */
-const PICTURE_TYPES =
-  ".jpg,.jpeg,.png,.gif,.webp,.avif,image/jpeg,image/png,image/gif,image/webp,image/avif";
+const PICTURE_TYPES = ".jpg,.jpeg,.png,.gif,.webp,.avif";
 
 export function CropDialog({
   file,
@@ -277,10 +276,27 @@ export function PictureField({
   const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [choosing, setChoosing] = useState(false);
+  const [dragging, setDragging] = useState(false);
   return (
     <>
       <label
-        className={`sb-note-button sb-picture-pick${disabled ? " sb-disabled" : ""}`}
+        className={`sb-note-button sb-picture-pick${disabled ? " sb-disabled" : ""}${dragging ? " sb-picture-drop" : ""}`}
+        title={t("picture-drop-hint", {
+          defaultValue: "Choose a picture, or drop one here",
+        })}
+        // A picture dropped on the button needs no file dialog at all (the system one can be slow to appear).
+        onDragOver={(e) => {
+          if (disabled) return;
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const f = e.dataTransfer?.files?.[0];
+          if (!disabled && f && f.type.startsWith("image/")) setFile(f);
+        }}
       >
         {state.files.uploading.value ? "…" : label}
         <input

@@ -1788,3 +1788,54 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-friend-actions {
   margin-top: 0.5rem;
 }
+
+/* A PHONE: THE ACTIONS AT THE TOP. At the very bottom the toolbar sat over the text and against the browser's own
+   bottom bar (Safari's), and its More menu ran off the screen. On a phone it is a bar across the top, under the
+   browser's own; the page starts below it; the verse actions sit just under it; More opens as a panel beneath it
+   that wraps to the screen's width and scrolls when tall. */
+@media (max-width: 720px) {
+  .sb-app-main {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
+  }
+  .sb-reader-toolbar {
+    top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+    bottom: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    max-width: none;
+    transform: none;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .sb-verse-toolbar-docked {
+    top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+    bottom: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    max-width: none;
+    justify-content: center;
+  }
+  .sb-verse-toolbar-docked .sb-verse-toolbar-tools {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.25rem;
+  }
+  .sb-reader-toolbar-more-menu {
+    top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+    bottom: auto;
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+    grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
+    max-height: calc(100dvh - 6rem);
+    overflow-y: auto;
+  }
+}
+
+/* A picture held over the button: it takes the drop. */
+.sb-picture-drop {
+  outline: 2px dashed var(--sb-primary-color, #e07a4a);
+  outline-offset: 2px;
+}
