@@ -328,6 +328,26 @@ export function AccountPane({ state }: { state: ReaderState }) {
                   defaultValue: "No wire: your marks stay on this device.",
                 }))}
           </p>
+          {state.sessionTrouble.value && (
+            <p className="sb-small sb-pane-error">
+              {state.sessionTrouble.value === "expired"
+                ? t("session-expired", {
+                    defaultValue:
+                      "Your sign-in has lapsed. Your marks are safe on this device; sign in again and they go to your Library.",
+                  })
+                : t("wire-lapsed", {
+                    defaultValue:
+                      "Your agent no longer accepts the reader's permission. Sign in again to grant it; nothing on this device is lost.",
+                  })}{" "}
+              <button
+                className="sb-note-button sb-note-button-primary"
+                onClick={() => void onHome()}
+                disabled={!HOME_SIGNIN_AVAILABLE}
+              >
+                {t("connect-again", { defaultValue: "Sign in again" })}
+              </button>
+            </p>
+          )}
           <p className="sb-small sb-muted">
             {state.outbox.flushing.value
               ? t("sync-flushing", { defaultValue: "Sending your changes…" })

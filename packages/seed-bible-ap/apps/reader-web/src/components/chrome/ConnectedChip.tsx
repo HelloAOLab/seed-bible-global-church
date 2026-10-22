@@ -65,6 +65,7 @@ export function ConnectedChip({
     );
   const name = state.profile.mine.value?.displayName || s.name || s.sub;
   const pending = state.outbox.pending.value;
+  const trouble = state.sessionTrouble.value;
   return (
     <button
       type="button"
@@ -78,20 +79,24 @@ export function ConnectedChip({
         <span className="sb-connected-text">
           <span className="sb-connected-name">{name}</span>
           <span className="sb-connected-sub">
-            {pending
-              ? t("sync-pending-short", {
-                  count: pending,
-                  defaultValue: `${pending} to sync`,
-                })
-              : s.wire
-                ? t("connected", { defaultValue: "Connected" })
-                : t("connected-no-wire", {
-                    defaultValue: "Signed in · device only",
-                  })}
+            {trouble
+              ? t("connect-again", { defaultValue: "Sign in again" })
+              : pending
+                ? t("sync-pending-short", {
+                    count: pending,
+                    defaultValue: `${pending} to sync`,
+                  })
+                : s.wire
+                  ? t("connected", { defaultValue: "Connected" })
+                  : t("connected-no-wire", {
+                      defaultValue: "Signed in · device only",
+                    })}
           </span>
         </span>
       )}
-      {pending > 0 && <span className="sb-connected-dot" aria-hidden="true" />}
+      {(pending > 0 || trouble) && (
+        <span className="sb-connected-dot" aria-hidden="true" />
+      )}
     </button>
   );
 }

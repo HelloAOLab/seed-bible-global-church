@@ -21,7 +21,7 @@ interface Conn {
 }
 
 async function room() {
-  const r = new ReadingSession({ A2A_INTERNAL_MARKER: MARKER });
+  const r = new ReadingSession({} as never, { A2A_INTERNAL_MARKER: MARKER });
   await r.onStart();
   const internal = (
     path: string,

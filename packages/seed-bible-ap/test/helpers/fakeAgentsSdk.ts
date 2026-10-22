@@ -53,7 +53,8 @@ export class Agent<Env = unknown, State = unknown> {
   private db = new DatabaseSync(":memory:");
   readonly connections: FakeConnection[] = [];
 
-  constructor(env: Env) {
+  /** The SDK's shape: the Durable Object context first (unused here), then the Worker's env. */
+  constructor(_ctx: unknown, env: Env) {
     this.env = env;
   }
 

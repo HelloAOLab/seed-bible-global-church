@@ -114,13 +114,18 @@ export function fakeWorkspace(opts: FakeWorkspaceOptions = {}): FakeWorkspace {
         reply: { kind: "answer", results: [{ toolId: step.toolId, result }] },
       });
     } catch (e) {
-      const status = (e as { status?: number }).status ?? 500;
+      // The host's envelope for a step that threw (service-host run.ts): ok false, the words in `error`, HTTP 200.
+      const error = e instanceof Error ? e.message : String(e);
       return c.json({
-        ok: true,
+        ok: false,
         runRef,
+        error,
         reply: {
-          kind: status === 401 ? "refused" : "error",
-          error: e instanceof Error ? e.message : String(e),
+          kind: "refused",
+          runRef,
+          text: error,
+          results: [],
+          receipts: [],
         },
       });
     }

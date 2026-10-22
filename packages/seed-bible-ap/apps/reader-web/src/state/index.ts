@@ -37,7 +37,7 @@ import { createChapterAudio } from "./media/audio";
 import { createTextToSpeechManager } from "./media/textToSpeech";
 import { bibleLanguageToBcp47 } from "./media/languages";
 import { getVersePlainText } from "../components/reader/chapterContent";
-import { effect } from "@preact/signals";
+import { computed, effect } from "@preact/signals";
 import {
   loadSession,
   signOut as forgetSession,
@@ -378,6 +378,24 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };
+  /**
+   * Why the Library is out of reach while the reader is signed in, and so what the account pane asks of them:
+   * "expired" — their Home session lapsed, sign in again; "wire" — their agent no longer admits the reader's
+   * permission (the ask-as-me wire), sign in again to grant it. Null while the last flush went through. The marks
+   * stay on the device and in the outbox either way; nothing is dropped on the device's say-so.
+   */
+  const sessionTrouble = computed<"expired" | "wire" | null>(() => {
+    if (!session.value) return null;
+    if (outbox.lastErrorCode.value === "signed-out") return "expired";
+    if (
+      outbox.lastErrorCode.value &&
+      /ask-as-me wire|session wire|permission to ask your agent/i.test(
+        outbox.lastError.value ?? ""
+      )
+    )
+      return "wire";
+    return null;
+  });
   // A device's selected verse is its presence in the room.
   effect(() => {
     const first = verses.value[0] ?? null;
@@ -570,6 +588,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     },
     selection,
     ui,
+    sessionTrouble,
     signIn,
     signOut,
     start,

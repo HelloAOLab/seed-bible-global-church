@@ -50,6 +50,8 @@ export function createOutbox(deps: OutboxDeps) {
   const pending = signal(0);
   const flushing = signal(false);
   const lastError = signal<string | null>(null);
+  /** The last error's kind (a BackendError code, else "error"); null once a flush goes through. */
+  const lastErrorCode = signal<BackendError["code"] | "error" | null>(null);
   let inflight: Promise<FlushReport> | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -138,9 +140,11 @@ export function createOutbox(deps: OutboxDeps) {
         deps.onMerged?.(entry.collection, entry.chapter, merged);
         report.merged.push(k);
         lastError.value = null;
+        lastErrorCode.value = null;
       } catch (e) {
         report.error = e instanceof Error ? e.message : String(e);
         lastError.value = report.error;
+        lastErrorCode.value = e instanceof BackendError ? e.code : "error";
         if (e instanceof BackendError && e.code !== "refused") break;
       }
     }
@@ -168,7 +172,7 @@ export function createOutbox(deps: OutboxDeps) {
     return () => window.removeEventListener("online", onOnline);
   }
 
-  return { queue, flush, start, pending, flushing, lastError };
+  return { queue, flush, start, pending, flushing, lastError, lastErrorCode };
 }
 
 export type Outbox = ReturnType<typeof createOutbox>;
