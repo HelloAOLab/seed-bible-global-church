@@ -235,6 +235,36 @@ app.get("/api/presence/friends", async (c) =>
   presenceForward(c, "/presence/friends", { method: "GET" })
 );
 
+/** The places map: tiles and geometry from the serving plane (cached there), so the page talks to this origin only. */
+app.get("/api/tiles/:z/:x/:y", async (c) => {
+  const res = await platformSend(
+    c.env,
+    `/tiles/${c.req.param("z")}/${c.req.param("x")}/${c.req.param("y")}`,
+    { method: "GET" }
+  );
+  return new Response(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") ?? "image/png",
+      "cache-control": "public, max-age=604800, immutable",
+    },
+  });
+});
+app.get("/api/places/:name", async (c) => {
+  const res = await platformSend(
+    c.env,
+    `/places/${encodeURIComponent(c.req.param("name"))}`,
+    { method: "GET" }
+  );
+  return new Response(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") ?? "application/json",
+      "cache-control": "public, max-age=86400",
+    },
+  });
+});
+
 /** The plain lane: hello for anyone; the reader's own name when a session token is presented. */
 app.post("/hello", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as {

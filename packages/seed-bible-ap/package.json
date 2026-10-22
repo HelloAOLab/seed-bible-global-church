@@ -37,18 +37,19 @@
     "@agenticprimitives/service-host": "0.0.0-alpha.24",
     "@agenticprimitives/types": "1.0.0-alpha.41",
     "@preact/signals": "^2.9.1",
-    "hono": "^4.12.23",
-    "jose": "^6.2.12",
-    "preact": "catalog:",
-    "viem": "^2.52.2",
-    "zod": "catalog:",
-    "i18next": "catalog:",
     "@tiptap/core": "catalog:",
+    "@tiptap/extension-underline": "catalog:",
     "@tiptap/pm": "catalog:",
     "@tiptap/starter-kit": "catalog:",
-    "@tiptap/extension-underline": "catalog:",
+    "agents": "^0.29.0",
+    "hono": "^4.12.23",
+    "i18next": "catalog:",
+    "jose": "^6.2.12",
+    "leaflet": "1.9.4",
+    "preact": "catalog:",
+    "viem": "^2.52.2",
     "workbox-window": "7.4.1",
-    "agents": "^0.29.0"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@agenticprimitives/agent-account": "1.0.0-alpha.41",
@@ -57,14 +58,15 @@
     "@agenticprimitives/devkit": "0.0.0-alpha.29",
     "@cloudflare/workers-types": "^4.20260604.1",
     "@preact/preset-vite": "^2.10.5",
+    "@types/leaflet": "1.9.12",
     "@types/node": "^24.5.2",
+    "fake-indexeddb": "^6.0.0",
+    "preact-render-to-string": "catalog:",
     "tsx": "^4.20.5",
     "typescript": "^5.9.3",
     "vite": "^8.0.13",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.8",
-    "wrangler": "^4.0.0",
-    "fake-indexeddb": "^6.0.0",
-    "preact-render-to-string": "catalog:",
-    "vite-plugin-pwa": "^1.3.0"
+    "wrangler": "^4.0.0"
   }
 }

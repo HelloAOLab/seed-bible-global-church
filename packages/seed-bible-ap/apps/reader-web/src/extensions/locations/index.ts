@@ -1,7 +1,9 @@
 // LOCATIONS — ported from packages/locations-extension: the places named in the chapter (a bundled gazetteer),
-// offered in Discover; opening one selects the verse that names it. The map (a CasualOS portal before) is not
-// in this cut.
+// offered in Discover; opening one selects the verse that names it. The map is a plain web map (PlacesMapPane):
+// a toolbar item opens it when the chapter names a place.
+import { h } from "preact";
 import locations from "./locations.json";
+import { PlacesMapPane } from "./PlacesMapPane";
 import type { ExtensionRegistration } from "../host";
 import type { TranslationBookChapter } from "../../backend/bible";
 import { getVersePlainText } from "../../components/reader/chapterContent";
@@ -49,6 +51,17 @@ const locationsExtension: ExtensionRegistration = {
   description: "The places a chapter names, in Discover.",
   init: function* (ctx) {
     const { state } = ctx;
+    yield ctx.panes.register({
+      id: "places-map",
+      title: "Places map",
+      render: () => h(PlacesMapPane, { state }),
+    });
+    yield ctx.toolbar.add({
+      id: "places-map",
+      label: "Places map",
+      icon: "map",
+      onSelect: () => ctx.panes.open("places-map"),
+    });
     yield ctx.discover.registerProvider({
       id: "locations",
       label: "Places",

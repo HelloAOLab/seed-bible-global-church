@@ -407,6 +407,95 @@ app.get("/preview", async (c) => {
   return res;
 });
 
+// ── The places map: map tiles and place geometry, proxied and cached, so a page never calls a third party ─────
+const TILE_SOURCE = "https://tile.openstreetmap.org";
+const TILE_MAX_ZOOM = 12;
+/** OSM's tile policy asks for a real User-Agent and caching; one Worker, a week in the cache, zoom capped. */
+const TILE_UA =
+  "seed-bible.svc/1.0 (https://seed-reader.faithnet.io; a Bible reader's places map)";
+export const tileOk = (z: number, x: number, y: number) =>
+  Number.isInteger(z) &&
+  z >= 0 &&
+  z <= TILE_MAX_ZOOM &&
+  Number.isInteger(x) &&
+  Number.isInteger(y) &&
+  x >= 0 &&
+  y >= 0 &&
+  x < 2 ** z &&
+  y < 2 ** z;
+app.get("/tiles/:z/:x/:y", async (c) => {
+  const z = Number(c.req.param("z"));
+  const x = Number(c.req.param("x"));
+  const y = Number(c.req.param("y").replace(/\.png$/i, ""));
+  if (!tileOk(z, x, y)) return c.text("not a tile", 400);
+  const cache = (globalThis as unknown as { caches?: { default: Cache } })
+    .caches?.default;
+  const key = new Request(`https://tiles.seed-bible.svc/${z}/${x}/${y}.png`);
+  const hit = await cache?.match(key);
+  if (hit) return hit;
+  const up = await fetch(`${TILE_SOURCE}/${z}/${x}/${y}.png`, {
+    headers: { "user-agent": TILE_UA, accept: "image/png" },
+  });
+  if (!up.ok) return c.text(`tile source answered ${up.status}`, 502);
+  const res = new Response(up.body, {
+    headers: {
+      "content-type": up.headers.get("content-type") ?? "image/png",
+      "cache-control": "public, max-age=604800, immutable",
+      "access-control-allow-origin": "*",
+    },
+  });
+  if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, res.clone()));
+  return res;
+});
+
+/** Where a biblical place's geometry comes from: the open geocoding data the old locations extension read. */
+const PLACE_SOURCES = (name: string) => [
+  `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${name}.geojson`,
+  `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${name}.geojson`,
+];
+export const placeNameOk = (name: string) =>
+  /^[A-Za-z][A-Za-z0-9 '_.-]{0,60}$/.test(name);
+app.get("/places/:name", async (c) => {
+  const name = decodeURIComponent(c.req.param("name"));
+  if (!placeNameOk(name))
+    return c.json({ ok: false, error: "not a place name" }, 400);
+  const cache = (globalThis as unknown as { caches?: { default: Cache } })
+    .caches?.default;
+  const key = new Request(
+    `https://places.seed-bible.svc/${encodeURIComponent(name)}`
+  );
+  const hit = await cache?.match(key);
+  if (hit) return hit;
+  for (const url of PLACE_SOURCES(name)) {
+    const up = await fetch(url, {
+      headers: {
+        "user-agent": TILE_UA,
+        accept: "application/geo+json, application/json",
+      },
+    }).catch(() => null);
+    if (!up?.ok) continue;
+    const text = await up.text();
+    try {
+      JSON.parse(text);
+    } catch {
+      continue;
+    }
+    const res = new Response(text, {
+      headers: {
+        "content-type": "application/geo+json",
+        "cache-control": "public, max-age=604800",
+        "access-control-allow-origin": "*",
+      },
+    });
+    if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, res.clone()));
+    return res;
+  }
+  const miss = c.json({ ok: false, error: "no geometry for this place" }, 404);
+  miss.headers.set("cache-control", "public, max-age=86400");
+  if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, miss.clone()));
+  return miss;
+});
+
 app.get("/admin/snapshot", async (c) => {
   if (!admitted(c))
     return c.json({ ok: false, error: "admin token required" }, 401);

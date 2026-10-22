@@ -111,9 +111,9 @@ export function AccountPane({ state }: { state: ReaderState }) {
               <p className="sb-small">
                 {t("first-run-playbook", {
                   defaultValue:
-                    "Your agent has not been given the Seed Bible reader behaviour yet. Assign it at your Home, then tap Sync now.",
+                    "Your agent does not offer the reader's behaviour yet. Open your Home once — it gives your agent the behaviour by itself — then come back here: the reader retries on its own.",
                 })}{" "}
-                <a href={`${estate.home}/you`} target="_blank" rel="noreferrer">
+                <a href={`${estate.home}/`} target="_blank" rel="noreferrer">
                   {t("open-home", { defaultValue: "Open your Home" })}
                 </a>
               </p>

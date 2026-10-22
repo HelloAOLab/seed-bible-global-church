@@ -147,6 +147,7 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [planTo, setPlanTo] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const canPublish = !!state.session.value?.wire;
+  const [copied, setCopied] = useState<string | null>(null);
   const currentPassage = () => {
     const v = state.selection.verses.value;
     const chapter = reading.chapterRef.value;
@@ -602,6 +603,31 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                           {published
                             ? t("published", { defaultValue: "Published" })
                             : t("publish", { defaultValue: "Publish" })}
+                        </button>
+                      )}
+                      {published && (
+                        <button
+                          className="sb-note-button"
+                          title={t("customization-link-hint", {
+                            defaultValue:
+                              "A link that opens the reader in this theme",
+                          })}
+                          onClick={() => {
+                            const entry =
+                              state.customizations.available.value.find(
+                                (a) => a.customization["@id"] === c["@id"]
+                              );
+                            const ref = entry
+                              ? state.customizations.refOf(entry)
+                              : c["@id"];
+                            const url = `${location.origin}${location.pathname}?customization=${encodeURIComponent(ref)}`;
+                            void navigator.clipboard?.writeText(url);
+                            setCopied(c["@id"]);
+                          }}
+                        >
+                          {copied === c["@id"]
+                            ? t("link-copied", { defaultValue: "Copied" })
+                            : t("copy-link", { defaultValue: "Copy link" })}
                         </button>
                       )}
                       <button

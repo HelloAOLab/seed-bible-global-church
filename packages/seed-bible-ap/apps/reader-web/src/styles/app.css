@@ -909,3 +909,19 @@ body {
   cursor: pointer;
   text-decoration: underline dotted;
 }
+
+/* The places map */
+.sb-places-map-canvas {
+  height: min(60vh, 28rem);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--sb-divider-color, #eee);
+}
+.sb-places-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}

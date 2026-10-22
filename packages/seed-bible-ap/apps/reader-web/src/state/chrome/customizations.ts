@@ -49,6 +49,16 @@ export function pickVariant(
   return c.hasVariant.find((v) => v.scheme === scheme) ?? c.hasVariant[0]!;
 }
 
+/** `Grace Church · Blue` → `grace-church-blue`. */
+export const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
 export function createCustomizations(
   backend: ReaderBackend,
   stores: ReaderStores,
@@ -71,6 +81,27 @@ export function createCustomizations(
   const ready = stores.prefs.get(KEY).then((v) => {
     if (v && typeof v === "object") selected.value = v as Selection;
   });
+
+  /** The link form of a customization: its title as a slug (`grace-church-blue`); the descriptor id also works. */
+  function refOf(entry: {
+    offering: Offering;
+    customization: Customization;
+  }): string {
+    return slugify(entry.customization.label) || entry.offering.descriptorId;
+  }
+  /** The customization a link names — by title slug, descriptor id, or the work's own id. */
+  function findByRef(ref: string) {
+    const r = ref.trim();
+    const slug = slugify(r);
+    return (
+      available.value.find(
+        (a) =>
+          a.offering.descriptorId === r ||
+          a.customization["@id"] === r ||
+          (slug && slugify(a.customization.label) === slug)
+      ) ?? null
+    );
+  }
 
   async function refresh() {
     loading.value = true;
@@ -224,6 +255,8 @@ export function createCustomizations(
   return {
     mine,
     available,
+    refOf,
+    findByRef,
     loading,
     error,
     selected,

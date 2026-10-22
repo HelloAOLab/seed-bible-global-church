@@ -57,6 +57,9 @@ export interface ReaderStateOptions {
 /** How long a chapter stays open before it counts as read. */
 export const READ_DWELL_MS = 8_000;
 
+/** A refusal the person's Home fixes on its next open (the agent runs bare, without the reader's contracts). */
+export const NEEDS_HOME =
+  /does not offer|unknown_tool|playbook|assign|archetype/i;
 const TABS_KEY = "tabs:open";
 const TABS_SAVE_MS = 300;
 interface SavedTabs {
@@ -382,10 +385,26 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       void tab.reading
         .goTo(fromUrl.translationId, fromUrl.bookId, fromUrl.chapterNumber)
         .then(() => shared && selection.select(shared[0], shared[1]));
+    // Coming back to the tab after a refusal that the Home can heal (the agent lacked the reader's behaviour):
+    // try again by itself rather than waiting for a tap on Sync now.
+    const onBack = () => {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "visible" &&
+        session.value &&
+        NEEDS_HOME.test(outbox.lastError.value ?? "")
+      )
+        void buckets.resync();
+    };
+    if (typeof document !== "undefined")
+      document.addEventListener("visibilitychange", onBack);
     const stops = [
       bindRoute(readingOf),
       outbox.start(),
       presence.start(),
+      () =>
+        typeof document !== "undefined" &&
+        document.removeEventListener("visibilitychange", onBack),
       // Leaving writes the last tab change at once rather than losing it to the debounce.
       saveTabsNow,
     ];
@@ -402,11 +421,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       const cust = q.get("customization");
       if (cust)
         void customizations.refresh().then(() => {
-          const entry = customizations.available.value.find(
-            (a) =>
-              a.offering.descriptorId === cust ||
-              a.customization["@id"] === cust
-          );
+          const entry = customizations.findByRef(cust);
           if (entry) void customizations.select(entry);
         });
       const sid = q.get("session");
