@@ -18,6 +18,11 @@ import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
 import { bindRoute, parseRoute, pushRoute } from "./reading/route";
 import { createSettings } from "./chrome/settings";
+import { createChapterAudio } from "./media/audio";
+import { createTextToSpeechManager } from "./media/textToSpeech";
+import { bibleLanguageToBcp47 } from "./media/languages";
+import { getVersePlainText } from "../components/reader/chapterContent";
+import { effect } from "@preact/signals";
 import {
   loadSession,
   signOut as forgetSession,
@@ -60,6 +65,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const search = createVerseSearch();
   const position = createPosition(stores);
   const settings = createSettings();
+  const audio = createChapterAudio({ api });
+  const tts = createTextToSpeechManager();
 
   const reading = createReading({
     api,
@@ -70,6 +77,27 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       setVerseLinkTranslation(p.translationId);
     },
   });
+
+  // The recording follows the open chapter; reading aloud stops when the chapter changes.
+  effect(() => {
+    const chapter = reading.chapterData.value;
+    void audio.load(chapter);
+    tts.stop();
+  });
+  const speechLang = () =>
+    bibleLanguageToBcp47(reading.translation.value?.language);
+  /** Read the open chapter aloud with the browser's own voice (when the API has no recording). */
+  function listen() {
+    const chapter = reading.chapterData.value;
+    if (!chapter) return;
+    const verses = chapter.chapter.content
+      .filter(
+        (e): e is Extract<typeof e, { type: "verse" }> =>
+          !!e && typeof e === "object" && e.type === "verse"
+      )
+      .map((e) => ({ number: e.number, text: getVersePlainText(e.content) }));
+    tts.speak(verses, { lang: speechLang() });
+  }
 
   const verses = signal<number[]>([]);
   const selection = {
@@ -143,6 +171,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     search,
     position,
     settings,
+    audio,
+    tts,
+    speechLang,
+    listen,
     reading,
     selection,
     ui,

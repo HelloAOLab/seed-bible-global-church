@@ -375,3 +375,11 @@ body {
   font-weight: 600;
   white-space: nowrap;
 }
+
+/* The verse the recording or the voice is on. */
+.sb-verse-playing .sb-verse-decorator {
+  text-decoration: underline;
+  text-decoration-color: var(--sb-primary-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}

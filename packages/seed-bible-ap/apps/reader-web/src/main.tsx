@@ -14,6 +14,7 @@ import "./styles/selector.css";
 import "./styles/toolbar.css";
 import "./styles/your-content.css";
 import "./styles/tiptap.css";
+import "./styles/audio-scrubber.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;

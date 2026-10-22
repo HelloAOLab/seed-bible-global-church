@@ -188,6 +188,8 @@ export function renderInlineContent(
 
 export interface ChapterContentOptions {
   selectedVerses: number[];
+  /** The verse the recording or the voice is on, marked `sb-verse-playing`. */
+  playingVerse?: number | null;
   highlights: ChapterHighlight[];
   notes: Note[];
   scriptureElements: ScriptureElementsBehavior;
@@ -279,6 +281,7 @@ export function renderChapterContent(
       "sb-verse",
       hasPoetry ? "sb-verse-poetry" : "",
       isSelected ? "sb-verse-selected" : "",
+      opts.playingVerse === value.number ? "sb-verse-playing" : "",
     ]
       .filter(Boolean)
       .join(" ");

@@ -79,6 +79,9 @@ function fakeApi(down = { value: false }): ReadingApi {
       fail();
       return chapter(Number(c));
     },
+    getAudioTimings: async () => {
+      throw new Error("no audio in this fake");
+    },
   };
 }
 

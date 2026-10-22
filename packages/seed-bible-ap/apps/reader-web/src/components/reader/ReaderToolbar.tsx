@@ -1,7 +1,9 @@
-// THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): previous / book
-// and chapter / next, then notes, theme, and the account.
+// THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
+// when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
+// then play or listen, notes, Your Content, theme, and the account.
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { AudioScrubber } from "./AudioScrubber";
 
 function Item(props: {
   icon: string;
@@ -38,18 +40,50 @@ function Item(props: {
 
 export function ReaderToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const { reading, ui, settings } = state;
+  const { reading, ui, settings, audio, tts } = state;
   const notes = state.annotations.forChapter(reading.chapterRef.value).value
     .length;
   const pending = state.outbox.pending.value;
   const dark = settings.resolvedTheme().id === "dark";
   const togglePane = (p: "notes" | "account" | "content") =>
     (ui.pane.value = ui.pane.value === p ? "none" : p);
+  const audioPlaying = audio.controller.isPlaying.value;
+  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
+  const speaking = tts.isSpeaking.value;
+  const canListen =
+    !audio.available.value && tts.canSpeakLanguage(state.speechLang());
+
   return (
     <nav
-      className="sb-reader-toolbar"
+      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
+      {audioActive && (
+        <>
+          <div className="sb-reader-toolbar-audio">
+            <AudioScrubber playback={audio.controller} showTimeRemaining />
+          </div>
+          <Item
+            icon={audioPlaying ? "pause" : "play_arrow"}
+            className="sb-reader-toolbar-item-arrow"
+            label={
+              audioPlaying
+                ? t("pause", { defaultValue: "Pause" })
+                : t("play", { defaultValue: "Play" })
+            }
+            onClick={() => (audioPlaying ? audio.pause() : audio.play())}
+          />
+          {!audioPlaying && (
+            <Item
+              icon="stop"
+              className="sb-reader-toolbar-item-arrow"
+              label={t("stop", { defaultValue: "Stop" })}
+              onClick={() => audio.stop()}
+            />
+          )}
+          <span className="sb-reader-toolbar-divider" aria-hidden="true" />
+        </>
+      )}
       <Item
         icon="chevron_left"
         className="sb-reader-toolbar-item-arrow"
@@ -74,6 +108,25 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         onClick={() => void reading.next()}
       />
       <span className="sb-reader-toolbar-divider" aria-hidden="true" />
+      {audio.available.value && !audioActive && (
+        <Item
+          icon="play_circle"
+          label={t("play", { defaultValue: "Play" })}
+          onClick={() => audio.play()}
+        />
+      )}
+      {canListen && (
+        <Item
+          icon={speaking ? "stop_circle" : "record_voice_over"}
+          label={
+            speaking
+              ? t("stop", { defaultValue: "Stop" })
+              : t("listen", { defaultValue: "Listen" })
+          }
+          active={speaking}
+          onClick={() => (speaking ? tts.stop() : state.listen())}
+        />
+      )}
       <Item
         icon="sticky_note_2"
         label={t("notes", { defaultValue: "Notes" })}

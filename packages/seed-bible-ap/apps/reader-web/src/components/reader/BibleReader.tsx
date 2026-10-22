@@ -73,6 +73,8 @@ export function BibleReader({ state }: { state: ReaderState }) {
       >
         {renderChapterContent(chapter, {
           selectedVerses: selection.verses.value,
+          playingVerse:
+            state.audio.currentVerse.value ?? state.tts.currentVerse.value,
           highlights,
           notes,
           scriptureElements: settings.scripture.value,

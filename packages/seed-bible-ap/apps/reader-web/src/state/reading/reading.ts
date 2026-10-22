@@ -20,6 +20,7 @@ export interface ReadingApi {
   getAvailableTranslations: FreeUseBibleAPI["getAvailableTranslations"];
   getTranslationBooks: FreeUseBibleAPI["getTranslationBooks"];
   getTranslationBookChapter: FreeUseBibleAPI["getTranslationBookChapter"];
+  getAudioTimings: FreeUseBibleAPI["getAudioTimings"];
 }
 
 export interface ReadingDeps {
