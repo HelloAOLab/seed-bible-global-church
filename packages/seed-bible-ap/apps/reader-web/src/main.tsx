@@ -3,6 +3,9 @@ import { relayCodeIfPopupReturn } from "@agenticprimitives/connect-client";
 import { App } from "./App";
 import { RELAY_CHANNEL } from "./session";
 import { createReaderState } from "./state";
+import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "./backend/bible";
+import { SEED_GLOBAL } from "./entry-server";
+import { registerSW } from "virtual:pwa-register";
 import { initI18n } from "./i18n";
 // The old reader's stylesheets, in its import order, then this app's own layer.
 import "./styles/base.css";
@@ -26,7 +29,11 @@ const search = new URLSearchParams(location.search);
 
 async function boot() {
   await initI18n();
-  const state = createReaderState();
+  const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+  const seed = (window as unknown as Record<string, unknown>)[SEED_GLOBAL];
+  if (seed && typeof seed === "object")
+    api.seedResponseCache(seed as Record<string, unknown>);
+  const state = createReaderState({ api });
   render(<App state={state} />, root);
 }
 
@@ -41,3 +48,4 @@ if (search.get("ac_relay") === "1" && search.get("code")) {
 } else {
   void boot();
 }
+registerSW({ immediate: true });
