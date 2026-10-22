@@ -2156,12 +2156,12 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
-    id: "M1",
+    id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
     rows: ["Phone layout"],
     checks:
-      "On an iPhone 13: the reader's bar sits at the top; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour, and More opens with a Sign in button first that opens the sign-in pane",
+      "On an iPhone 13: the reader's bar sits at the top; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 390, height: 664 },
@@ -2184,6 +2184,21 @@ export const MORE_FLOWS: Flow[] = [
           .catch(() => {
             throw new Error("reading down did not scroll the page");
           });
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await c.selectVerse(16, page);
+        await page.locator(".sb-verse-toolbar-color").first().click();
+        await page.keyboard.press("Escape");
+        const signin = page.locator(".sb-reader-toolbar-signin");
+        await signin
+          .locator(".sb-reader-toolbar-unread-indicator")
+          .waitFor({ timeout: 5000 });
+        const icon = await signin
+          .locator(".material-symbols-outlined")
+          .innerText();
+        if (icon !== "account_circle")
+          throw new Error(
+            `with a change waiting the sign-in icon is "${icon}"`
+          );
         const fill = await page
           .locator(".sb-reader-toolbar-signin .sb-reader-toolbar-button")
           .evaluate((b) => getComputedStyle(b).backgroundColor);
@@ -2199,7 +2214,7 @@ export const MORE_FLOWS: Flow[] = [
         await page
           .getByRole("button", { name: /sign in with faithnet/i })
           .waitFor({ timeout: 5000 });
-        return `bar at y=${Math.round(top)}; the page scrolled; sign-in filled (${fill}); More → Sign in opened the sign-in pane`;
+        return `bar at y=${Math.round(top)}; the page scrolled; sign-in filled (${fill}) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane`;
       } finally {
         await ctx.close();
       }

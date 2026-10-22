@@ -384,27 +384,19 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           ))}
         </div>
       )}
+      {/* Who you are, always: your picture signed in, the account icon (filled, to stand out) signed out. Changes
+          still to send are a count on its corner, never a different icon in its place. */}
       <Item
-        icon={
-          pending
-            ? "cloud_upload"
-            : state.session.value
-              ? "account_circle"
-              : "login"
-        }
-        {...(state.session.value && !pending
+        icon="account_circle"
+        {...(state.session.value
           ? { render: () => <Avatar state={state} /> }
-          : {})}
+          : { className: "sb-reader-toolbar-signin" })}
         label={
           state.session.value
             ? t("account-settings", { defaultValue: "Account settings" })
             : t("sign-in", { defaultValue: "Sign in" })
         }
         active={ui.pane.value === "account"}
-        // Signed out, the way in is filled in the accent colour, not one more outline icon.
-        {...(state.session.value
-          ? {}
-          : { className: "sb-reader-toolbar-signin" })}
         badge={pending}
         onClick={() => togglePane("account")}
       />

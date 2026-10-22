@@ -579,6 +579,18 @@ body {
   color: var(--sb-primary-font-color);
   border-radius: 999px;
 }
+/* The account button's count of changes still to send sits on its corner, ringed in the bar's colour, so it reads
+   apart from the picture or the filled sign-in button under it. */
+.sb-reader-toolbar
+  > .sb-reader-toolbar-item:last-child
+  .sb-reader-toolbar-unread-indicator {
+  top: -0.125rem;
+  right: -0.125rem;
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background, #fff);
+  box-shadow: 0 0 0 2px
+    var(--sb-reader-toolbar-background, var(--sb-reader-background, #fff));
+}
 
 /* Discover + Today */
 .sb-discover-item-main {
