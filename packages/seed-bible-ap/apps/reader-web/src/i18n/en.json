@@ -429,5 +429,15 @@
   "reading-plan-save-changes": "Save changes",
   "new-plan-name": "New plan",
   "plan-blank": "Start a blank plan",
-  "edit-plan": "Edit"
+  "edit-plan": "Edit",
+  "crop-unreadable": "That file is not a picture this browser can open.",
+  "zoom": "Zoom",
+  "crop-hint": "Drag the picture to move it; zoom to fit.",
+  "uploading": "Uploading...",
+  "earlier-pictures": "Earlier pictures",
+  "earlier-pictures-none": "Pictures you upload are kept here to use again.",
+  "crop-use": "Use picture",
+  "crop-your-photo": "Crop your photo",
+  "crop-cover": "Crop the cover image",
+  "crop-logo": "Fit your logo"
 }

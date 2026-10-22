@@ -891,6 +891,80 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "G14",
+    timeoutMs: 300_000,
+    section: "2. Getting in",
+    title: "Crop a picture; use an earlier one",
+    rows: ["Your profile"],
+    checks:
+      "Signed in: Account → Picture → a 600×300 picture opens the round crop window; zoom in, drag, Use picture — the profile shows a 256×256 picture; Earlier pictures lists it and picking it sets it again",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await c.openAccount();
+      const b64 = await c.page.evaluate(() => {
+        const cv = document.createElement("canvas");
+        cv.width = 600;
+        cv.height = 300;
+        const x = cv.getContext("2d")!;
+        x.fillStyle = "#2a6";
+        x.fillRect(0, 0, 600, 300);
+        x.fillStyle = "#fff";
+        x.fillRect(250, 100, 100, 100);
+        return cv.toDataURL("image/png").split(",")[1]!;
+      });
+      await pane
+        .locator(".sb-profile-card .sb-picture-pick input[type=file]")
+        .setInputFiles({
+          name: "wide.png",
+          mimeType: "image/png",
+          buffer: Buffer.from(b64, "base64"),
+        });
+      const dialog = c.page.locator(".sb-crop-dialog");
+      await dialog.waitFor({ timeout: 5000 });
+      if (!(await dialog.locator(".sb-crop-window-round").count()))
+        throw new Error("the profile crop window is not round");
+      await dialog.getByLabel("Zoom").fill("1.6");
+      const win = dialog.locator(".sb-crop-window");
+      const box = (await win.boundingBox())!;
+      await c.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await c.page.mouse.down();
+      await c.page.mouse.move(
+        box.x + box.width / 2 + 40,
+        box.y + box.height / 2
+      );
+      await c.page.mouse.up();
+      await dialog.locator(".sb-crop-confirm").click();
+      await dialog.waitFor({ state: "detached", timeout: 90000 });
+      const pic = pane.locator("img.sb-profile-picture");
+      await pic.waitFor({ timeout: 30000 });
+      await c.page.waitForFunction(
+        () => {
+          const i = document.querySelector<HTMLImageElement>(
+            "img.sb-profile-picture"
+          );
+          return !!i && i.complete && i.naturalWidth > 0;
+        },
+        undefined,
+        { timeout: 30000 }
+      );
+      const size = await pic.evaluate(
+        (i) =>
+          `${(i as HTMLImageElement).naturalWidth}x${(i as HTMLImageElement).naturalHeight}`
+      );
+      if (size !== "256x256") throw new Error(`stored picture is ${size}`);
+      const src = await pic.getAttribute("src");
+      await pane.locator(".sb-profile-card .sb-picture-earlier").click();
+      const grid = c.page.locator(".sb-gallery-dialog");
+      const item = grid.locator(`.sb-gallery-item img[src="${src}"]`);
+      await item.waitFor({ timeout: 30000 });
+      const count = await grid.locator(".sb-gallery-item").count();
+      await item.click();
+      await grid.waitFor({ state: "detached", timeout: 5000 });
+      return `cropped to ${size}; Earlier pictures listed ${count}, the new one among them, and picking it kept it`;
+    },
+  },
+  {
     id: "P3",
     timeoutMs: 360_000,
     section: "10. Playlists and reading plans",
@@ -917,6 +991,7 @@ export const MORE_FLOWS: Flow[] = [
         mimeType: "image/png",
         buffer: PNG,
       });
+      await c.page.locator(".sb-crop-confirm").click();
       const img = card.locator("img").first();
       await img.waitFor({ timeout: 60000 });
       const src = (await img.getAttribute("src")) ?? "";

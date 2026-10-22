@@ -1521,3 +1521,53 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
 }
+
+/* Cropping a picture: the window of the target's shape (round for a profile picture) on a checkerboard, so a logo's
+   transparent margin shows. */
+.sb-crop-window {
+  position: relative;
+  margin: 0.5rem auto;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  cursor: grab;
+  touch-action: none;
+  max-width: 100%;
+  background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+}
+.sb-crop-window-round {
+  border-radius: 50%;
+}
+.sb-crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sb-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sb-crop-zoom input {
+  flex: 1;
+}
+.sb-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+  gap: 0.5rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.sb-gallery-item {
+  padding: 0;
+  border: 1px solid var(--sb-border-color, #ddd);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  background: none;
+}
+.sb-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

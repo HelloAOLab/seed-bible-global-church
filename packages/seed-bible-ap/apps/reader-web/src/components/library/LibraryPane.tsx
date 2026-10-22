@@ -1,6 +1,9 @@
 // THE LIBRARY PANE — playlists and reading plans: the lists, a maker for each from the chapter on screen, the
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
+
+import { PictureField } from "./PictureField";
+import { COVER_IMAGE, LOGO } from "../../state/library/crop";
 import { PlanEditor } from "./PlanEditor";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
@@ -623,29 +626,20 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                       />
                     )}
                     <div className="sb-note-card-actions">
-                      <label className="sb-note-button">
-                        {state.files.uploading.value
-                          ? "…"
-                          : t("cover-image", { defaultValue: "Cover image" })}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          disabled={!state.session.value}
-                          onChange={(e) => {
-                            const f = (e.target as HTMLInputElement).files?.[0];
-                            if (f)
-                              void state.files
-                                .upload(f)
-                                .then((img) =>
-                                  playlists.update(pl["@id"], {
-                                    heroImage: img.url,
-                                  })
-                                )
-                                .catch(() => {});
-                          }}
-                        />
-                      </label>
+                      <PictureField
+                        state={state}
+                        target={COVER_IMAGE}
+                        label={t("cover-image", {
+                          defaultValue: "Cover image",
+                        })}
+                        cropTitle={t("crop-cover", {
+                          defaultValue: "Crop the cover image",
+                        })}
+                        disabled={!state.session.value}
+                        onPicked={(url) =>
+                          playlists.update(pl["@id"], { heroImage: url })
+                        }
+                      />
                       {editing === `note:${pl["@id"]}` ? (
                         <div className="sb-item-editor">
                           <NoteEditor
@@ -983,27 +977,18 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                       </p>
                     </div>
                     <div className="sb-note-card-actions">
-                      <label className="sb-note-button">
-                        {t("logo", { defaultValue: "Logo" })}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          disabled={!state.session.value}
-                          onChange={(e) => {
-                            const f = (e.target as HTMLInputElement).files?.[0];
-                            if (f)
-                              void state.files
-                                .upload(f)
-                                .then((img) =>
-                                  state.customizations.update(c["@id"], {
-                                    logo: img.url,
-                                  })
-                                )
-                                .catch(() => {});
-                          }}
-                        />
-                      </label>
+                      <PictureField
+                        state={state}
+                        target={LOGO}
+                        label={t("logo", { defaultValue: "Logo" })}
+                        cropTitle={t("crop-logo", {
+                          defaultValue: "Fit your logo",
+                        })}
+                        disabled={!state.session.value}
+                        onPicked={(url) =>
+                          state.customizations.update(c["@id"], { logo: url })
+                        }
+                      />
                       <button
                         className="sb-note-button"
                         onClick={() =>

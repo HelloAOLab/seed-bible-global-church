@@ -1,4 +1,6 @@
 import { Avatar } from "./ConnectedChip";
+import { PictureField } from "../library/PictureField";
+import { PROFILE_PICTURE } from "../../state/library/crop";
 import { toolbarActions } from "../reader/ReaderToolbar";
 import { ordered } from "../../state/chrome/toolbarLayout";
 import { wakeLockSupported } from "../../state/chrome/wakeLock";
@@ -56,24 +58,13 @@ function ProfileCard({ state }: { state: ReaderState }) {
             person
           </span>
         )}
-        <label className="sb-note-button">
-          {state.files.uploading.value
-            ? "…"
-            : t("profile-picture", { defaultValue: "Picture" })}
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = (e.target as HTMLInputElement).files?.[0];
-              if (f)
-                void state.files
-                  .upload(f)
-                  .then((img) => state.profile.save({ picture: img.url }))
-                  .catch(() => {});
-            }}
-          />
-        </label>
+        <PictureField
+          state={state}
+          target={PROFILE_PICTURE}
+          label={t("profile-picture", { defaultValue: "Picture" })}
+          cropTitle={t("crop-your-photo", { defaultValue: "Crop your photo" })}
+          onPicked={(url) => state.profile.save({ picture: url })}
+        />
       </div>
       <form
         className="sb-item-editor"

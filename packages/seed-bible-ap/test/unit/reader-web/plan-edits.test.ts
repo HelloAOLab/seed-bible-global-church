@@ -74,7 +74,7 @@ function plan(): ReadingPlan {
 const ids = (p: ReadingPlan) =>
   p.hasSession.map(
     (s) =>
-      `${s["@id"].split(":").pop()}[${s.readings.map((r) => r.item.aboutPassage).join(",")}]`
+      `${s["@id"].split(":").pop()}[${s.readings.map((r) => ("aboutPassage" in r.item ? r.item.aboutPassage : "")).join(",")}]`
   );
 
 describe("editing a plan's days and readings", () => {
