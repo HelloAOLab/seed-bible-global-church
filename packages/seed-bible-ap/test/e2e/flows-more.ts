@@ -1903,11 +1903,9 @@ export const MORE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open("/read/BSB/GEN/12");
       await c.pressToolbar("Discover");
-      const section = c
-        .pane()
-        .locator(".sb-content-section", {
-          hasText: "People, places and events",
-        });
+      const section = c.pane().locator(".sb-content-section", {
+        hasText: "People, places and events",
+      });
       await c.waitText(section, /Abraham enters Canaan/, 20000);
       await c.waitText(section, /Haran/, 5000);
       await section
@@ -1985,6 +1983,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it",
     run: async (c) => {
+      await c.keepTours();
       const card = c.page.locator(".sb-tour-card");
       await c.open(`${CH}?tutorial=introduction`);
       await card.waitFor({ timeout: 8000 });
