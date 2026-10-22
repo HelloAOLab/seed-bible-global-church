@@ -13,3 +13,4 @@ Operator steps, one file each, in the order they are first needed:
 9. `assign-playbook.md` — a reader's agent must carry a playbook with the Library reads (done for seedreader 2026-10-21)
 10. `secrets.md` — every secret per Worker, set and rotate
 11. `cutover-checklist.md` — the order to take traffic on seed-reader.faithnet.io, and the rollback
+12. `church-publishes-as-itself.md` — the steward link, vault key and playbook an organization needs before Publish as works

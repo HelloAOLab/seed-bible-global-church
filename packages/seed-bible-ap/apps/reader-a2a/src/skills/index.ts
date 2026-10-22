@@ -686,15 +686,27 @@ export function invokers(
     [ORGS.id]: async () => {
       const reader = readerOf(asker);
       const agent = await agentFor(deps.env, reader);
-      const out = await agent.run<Record<string, unknown>>(
-        [{ toolId: "person.roles.list", args: {} }],
-        "which organizations do I steward"
-      );
+      // What the person is part of (affiliations) names the organizations and their standing there; the roles read
+      // (what each organization records of them) is the fallback for an older playbook.
+      let out: Awaited<ReturnType<typeof agent.run<Record<string, unknown>>>>;
+      try {
+        out = await agent.run<Record<string, unknown>>(
+          [{ toolId: "person.affiliations.list", args: {} }],
+          "which organizations am I part of"
+        );
+      } catch {
+        out = await agent.run<Record<string, unknown>>(
+          [{ toolId: "person.roles.list", args: {} }],
+          "which organizations do I steward"
+        );
+      }
       const r = out.result as { refused?: string } & Record<string, unknown>;
       if (r.refused) throw new WireRefusal(403, r.refused);
       // The roles read lists every organization with the person's standing there; stewards are who may publish as it.
       const rows: Array<Record<string, unknown>> = [];
       for (const k of [
+        "links",
+        "affiliations",
         "roles",
         "organizations",
         "memberships",
@@ -716,8 +728,24 @@ export function invokers(
           ),
         }))
         .filter((o) => /^0x[0-9a-f]{40}$/.test(o.agent));
-      const stewarded = orgs.filter((o) =>
-        /steward|custodian|owner|admin/i.test(o.relationship)
+      // Organizations only: a treasury or a service the person stewards is not something to publish as.
+      const orgLike = (row: Record<string, unknown>) =>
+        String(row.type ?? row.kind ?? "").toLowerCase() === "org" ||
+        /#OrganizationAgent$/.test(String(row.class ?? "")) ||
+        /\.org$/.test(String(row.name ?? ""));
+      const typed = new Set(
+        rows
+          .filter(orgLike)
+          .map((row) =>
+            String(
+              row.org ?? row.organization ?? row.agent ?? row.address ?? ""
+            ).toLowerCase()
+          )
+      );
+      const stewarded = orgs.filter(
+        (o) =>
+          /steward|custodian|owner|admin/i.test(o.relationship) &&
+          (typed.size === 0 || typed.has(o.agent))
       );
       return {
         orgs: stewarded.length ? stewarded : orgs,

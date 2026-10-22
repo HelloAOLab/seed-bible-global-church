@@ -150,12 +150,22 @@ export function createCustomizations(
     }
   });
 
+  /** What a selection turns on: the state wires this to the extension host. */
+  let onRecommend: ((ids: string[]) => Promise<void>) | null = null;
+  const setOnRecommend = (f: ((ids: string[]) => Promise<void>) | null) => {
+    onRecommend = f;
+  };
+
   async function select(
     entry: { offering: Offering; customization: Customization } | null,
     variantId?: string
   ) {
     await ready;
     await stashReady;
+    if (entry?.customization.recommendsExtension?.length && onRecommend)
+      await onRecommend(entry.customization.recommendsExtension).catch(
+        () => undefined
+      );
     if (!entry) {
       selected.value = null;
       stashed.value = null;
@@ -257,6 +267,7 @@ export function createCustomizations(
     available,
     refOf,
     findByRef,
+    setOnRecommend,
     loading,
     error,
     selected,

@@ -1,6 +1,6 @@
 # Seed Bible on faithnet — training manual
 
-_Last updated 2026-10-22, after guests and voice in live sessions. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**._
+_Last updated 2026-10-22, after publishing as a church and recommended extensions. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**._
 
 This manual is for anyone trying the new reader: what it is, how to use each feature, and which features should
 work today. Every feature carries a mark:
@@ -208,12 +208,12 @@ The **music-list** icon in the bottom toolbar opens the Library pane.
 
 ## 11. Church themes (customizations)
 
-| Feature                | Mark | How                                                                                                                                                    | Why not yet · when                                                                                                                           |
-| ---------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Make a customization   | ✅   | Library pane → **Customizations** → name → **Create**. Pick colours for the Light and Dark variants, a logo from a picture, the default translation.   | —                                                                                                                                            |
-| Publish it             | ✅   | **Publish** on the card (signed in with a wire). It is released from **your** shelf; a church's own agent as publisher is a later step.                | —                                                                                                                                            |
-| Use one                | ✅   | Account pane → **Church theme** → pick one (↻ refreshes the list). The reader takes its colours in light and dark; **None** goes back to Seed Bible's. | —                                                                                                                                            |
-| Recommended extensions | ⬜   | [later]                                                                                                                                                | A church's recommended extensions wait on the org publisher (§11 open question) so a church can publish its list. Second church-library cut. |
+| Feature                | Mark | How                                                                                                                                                                                                                                                                                                            | Why not yet · when |
+| ---------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Make a customization   | ✅   | Library pane → **Customizations** → name → **Create**. Pick colours for the Light and Dark variants, a logo from a picture, the default translation.                                                                                                                                                           | —                  |
+| Publish it             | ✅   | **Publish** on the card (signed in with a wire). It is released from your shelf, or from your church's: Account → **Publish as** lists the organizations you steward; pick the church and everything you publish (notes, playlists, plans, themes, your profile) lands on the church's shelf, published by it. | —                  |
+| Use one                | ✅   | Account pane → **Church theme** → pick one (↻ refreshes the list). The reader takes its colours in light and dark; **None** goes back to Seed Bible's.                                                                                                                                                         | —                  |
+| Recommended extensions | ✅   | Library → Customizations → tick the extensions the church recommends; a reader who picks the theme gets them turned on (and can turn any off in Account → Extensions).                                                                                                                                         | —                  |
 
 ## 12. Extensions and the study companion
 
@@ -258,7 +258,7 @@ Account pane → **Extensions** turns each one on or off. All four are on to sta
 ## 15. What has to be built in the substrate first
 
 These are capabilities the Home and the agents offer every app, built in ap-home (the Home and the person-agent
-runtime) with their contracts in the skills repo. Four of the six are done; one-step consent and org acts remain.
+runtime) with their contracts in the skills repo. All six are done.
 
 | Capability                  | What the reader needs it for                                                                                                                                                                                                                                      | Where it goes                                                                                                                                    |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

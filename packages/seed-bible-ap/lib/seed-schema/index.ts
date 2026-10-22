@@ -49,6 +49,7 @@ export const SEED_CONTEXT = {
   startedAt: { "@id": "seed:startedAt", "@type": "xsd:dateTime" },
   endedAt: { "@id": "seed:endedAt", "@type": "xsd:dateTime" },
   libraryFile: "seed:libraryFile",
+  recommendsExtension: "seed:recommendsExtension",
 } as const;
 
 /** Keys that are NOT `seed:` properties — mapped by the context; the TTL test allows exactly these. */
@@ -280,6 +281,8 @@ export const Customization = z.object({
   hasVariant: z.array(ThemeVariant).min(1),
   logo: z.string().url().optional(),
   defaultEdition: z.string().optional(),
+  /** Extension ids the church recommends; turned on for a reader who picks the theme. */
+  recommendsExtension: z.array(z.string().min(1)).optional(),
 });
 export type Customization = z.infer<typeof Customization>;
 

@@ -225,6 +225,15 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     },
     ...(opts.presenceBeatMs ? { beatMs: opts.presenceBeatMs } : {}),
   });
+  // A church theme's recommended extensions are turned on when the theme is picked (a reader can turn them off).
+  customizations.setOnRecommend(async (ids) => {
+    for (const id of ids)
+      if (
+        extensions.registered.value.some((r) => r.id === id) &&
+        !extensions.enabled.value.has(id)
+      )
+        await extensions.setEnabled(id, true);
+  });
   // Moving to another chapter tells friends at once rather than at the next beat.
   effect(() => {
     readingOf().chapterRef.value;

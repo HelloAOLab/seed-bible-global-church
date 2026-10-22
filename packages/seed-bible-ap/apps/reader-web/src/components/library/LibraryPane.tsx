@@ -853,6 +853,40 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         </div>
                       </div>
                     ))}
+                    <div className="sb-customization-recommend">
+                      <div className="sb-rp-section-label">
+                        {t("recommended-extensions", {
+                          defaultValue: "Recommended extensions",
+                        })}
+                      </div>
+                      {state.extensions.registered.value.map((ext) => (
+                        <label key={ext.id} className="sb-small sb-check">
+                          <input
+                            type="checkbox"
+                            checked={(c.recommendsExtension ?? []).includes(
+                              ext.id
+                            )}
+                            onChange={(e) => {
+                              const on = (e.target as HTMLInputElement).checked;
+                              const next = (c.recommendsExtension ?? [])
+                                .filter((x) => x !== ext.id)
+                                .concat(on ? [ext.id] : []);
+                              void state.customizations.mine.save({
+                                ...c,
+                                recommendsExtension: next,
+                              });
+                            }}
+                          />{" "}
+                          {ext.label}
+                        </label>
+                      ))}
+                      <p className="sb-small sb-muted">
+                        {t("recommended-extensions-note", {
+                          defaultValue:
+                            "Turned on for a reader who picks this theme; they can turn any off.",
+                        })}
+                      </p>
+                    </div>
                     <div className="sb-note-card-actions">
                       <label className="sb-note-button">
                         {t("logo", { defaultValue: "Logo" })}
