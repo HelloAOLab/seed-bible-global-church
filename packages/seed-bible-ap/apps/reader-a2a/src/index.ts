@@ -15,6 +15,9 @@ import {
 import { servedEstates, TOWN } from "../../../estate/faithnet";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
+import { routeAgentRequest } from "agents";
+import { ReadingSession } from "./rooms/ReadingSession";
+export { ReadingSession };
 import { askingKeyAddress, type WireEnv } from "./wires";
 import type { PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
@@ -34,6 +37,8 @@ export interface Env extends SessionEnv, WireEnv, PlatformEnv {
   A2A_PUBLIC_ORIGIN?: string;
   /** The agent's own run object and the in-Worker marker its store requires (a secret, never a custody key). */
   RUNS: DurableObjectNamespace;
+  /** The live reading rooms (rooms/ReadingSession.ts), bound by class name as the Agents SDK routes them. */
+  ReadingSession?: DurableObjectNamespace;
   A2A_INTERNAL_MARKER?: string;
 }
 
@@ -44,6 +49,15 @@ const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors());
 app.route("/", connectRoutes);
 app.route("/", publicRoutes);
+// The rooms: people's devices join a session on this origin (realtime-collaboration.md rule 2).
+app.all("/agents/*", async (c) => {
+  const r = await routeAgentRequest(
+    c.req.raw,
+    c.env as unknown as Record<string, unknown>,
+    { cors: true }
+  );
+  return r ?? c.json({ ok: false, error: "no such room" }, 404);
+});
 
 const mcpUrl = (env: Env) =>
   (env.MCP_URL ?? "http://127.0.0.1:8890").replace(/\/$/, "");

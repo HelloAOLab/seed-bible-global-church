@@ -12,6 +12,7 @@ import { AccountPane } from "./components/chrome/AccountPane";
 import { YourContentPane } from "./components/records/YourContentPane";
 import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
+import { SessionPane } from "./components/sessions/SessionPane";
 import { completeRedirectIfReturning } from "./session";
 
 export function App({ state }: { state: ReaderState }) {
@@ -52,6 +53,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "discover" && (
         <aside className="sb-app-pane">
           <DiscoverPane state={state} />
+        </aside>
+      )}
+      {pane === "session" && (
+        <aside className="sb-app-pane">
+          <SessionPane state={state} />
         </aside>
       )}
       {pane === "account" && (

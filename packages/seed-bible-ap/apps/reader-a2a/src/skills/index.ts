@@ -9,10 +9,21 @@ import {
   putMark,
   readBucket,
   agentFor,
+  setDefer,
+  type Defer,
   type VaultEnv,
 } from "./vault";
 import { publishSlice, withdrawSlice, type PublishArgs } from "./publish";
 import { platformGet, type PlatformEnv } from "../clients/platform";
+import {
+  SESSION_JOIN,
+  SESSION_RECORD,
+  SESSION_START,
+  joinSession,
+  sessionRecord,
+  startSession,
+  type RoomsEnv,
+} from "./session";
 import type { Collection } from "../../../../lib/library-client";
 
 export const HELLO_TOOL: ToolSpec = {
@@ -133,6 +144,9 @@ export const TOOLS: ToolSpec[] = [
   PUBLISH_SLICE,
   DISCOVER,
   CONTACTS,
+  SESSION_START,
+  SESSION_JOIN,
+  SESSION_RECORD,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -148,12 +162,14 @@ const collectionOf = (raw: unknown): Collection => {
 };
 
 export interface SkillDeps {
-  env: VaultEnv & PlatformEnv;
+  env: VaultEnv & PlatformEnv & RoomsEnv;
   hello: (
     name: string | undefined
   ) => Promise<{ greeting: string; workspace: string }>;
   /** The signed-in reader's name, when the bearer carried one. */
   askerName?: string;
+  /** The request's waitUntil: bookkeeping runs after the reply. */
+  defer?: Defer;
 }
 
 /** Every act needs a signed-in reader; a stranger is refused in words, never served someone else's Library. */
@@ -170,6 +186,7 @@ export function invokers(
   deps: SkillDeps,
   asker: AdmittedPrincipal
 ): Record<string, ToolInvoker> {
+  setDefer(deps.defer ?? null);
   const putter =
     (collection: Collection): ToolInvoker =>
     async (_t, args) =>
@@ -220,6 +237,26 @@ export function invokers(
         });
       return publishSlice(deps.env, reader, args as unknown as PublishArgs);
     },
+    [SESSION_START.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      return startSession(deps.env, reader, deps.askerName ?? reader, {
+        translationId: String(args.translationId ?? ""),
+        bookId: String(args.bookId ?? "").toUpperCase(),
+        chapterNumber: Number(args.chapterNumber ?? 1),
+      });
+    },
+    [SESSION_JOIN.id]: async (_t, args) => {
+      const reader = readerOf(asker);
+      return joinSession(
+        deps.env,
+        reader,
+        deps.askerName ?? reader,
+        String(args.sessionId ?? ""),
+        typeof args.code === "string" ? args.code : undefined
+      );
+    },
+    [SESSION_RECORD.id]: async (_t, args) =>
+      sessionRecord(deps.env, readerOf(asker), String(args.sessionId ?? "")),
     [CONTACTS.id]: async () => {
       const reader = readerOf(asker);
       const agent = await agentFor(deps.env, reader);

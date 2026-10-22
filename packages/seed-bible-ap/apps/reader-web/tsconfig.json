@@ -27,6 +27,7 @@
     "../../estate/**/*.ts",
     "../../lib/**/*.ts",
     "../../test/unit/reader-web/**/*",
-    "../../scripts/smoke/reader-web.ts"
+    "../../scripts/smoke/reader-web.ts",
+    "../../scripts/smoke/session.ts"
   ]
 }

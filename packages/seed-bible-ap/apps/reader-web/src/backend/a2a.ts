@@ -9,6 +9,8 @@ import {
   BackendError,
   type PublishReceipt,
   type PublishSliceArgs,
+  type SessionPassageArgs,
+  type SessionTicket,
   type ReaderBackend,
   type ReaderIdentity,
 } from "./ReaderBackend";
@@ -190,6 +192,22 @@ export function createA2aBackend(
     async contacts() {
       const r = await ask("seed.workspace.contacts", {}, "who are my contacts");
       return (r.contacts as Contact[] | undefined) ?? [];
+    },
+    async sessionStart(passage: SessionPassageArgs): Promise<SessionTicket> {
+      const r = await ask(
+        "seed.session.start",
+        { ...passage },
+        `start a reading session on ${passage.bookId} ${passage.chapterNumber}`
+      );
+      return r as unknown as SessionTicket;
+    },
+    async sessionJoin(sessionId, code): Promise<SessionTicket> {
+      const r = await ask(
+        "seed.session.join",
+        { sessionId, ...(code ? { code } : {}) },
+        `join session ${sessionId}`
+      );
+      return r as unknown as SessionTicket;
     },
   };
 }

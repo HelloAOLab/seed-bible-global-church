@@ -31,6 +31,14 @@ import { WireRefusal, wireFor, type WireEnv } from "../wires";
 
 export type VaultEnv = PersonAgentEnv & WireEnv;
 
+/** Work that may finish after the reply (the Worker's waitUntil); without it the work is awaited. */
+export type Defer = (p: Promise<unknown>) => void;
+let defer: Defer | null = null;
+/** Hand the current request's waitUntil to the vault: the manifest update leaves the reply's critical path. */
+export function setDefer(d: Defer | null) {
+  defer = d;
+}
+
 export interface BucketRead {
   bucket: BucketDocument;
   /** The Library's id and version of the document; absent when the shelf has none yet. */
@@ -190,23 +198,28 @@ async function saveBucketAndManifest(
     why
   );
   const runRefs = saved.runRef ? [saved.runRef] : [];
-  const { manifest, file: mf } = await readManifest(agent, collection);
-  const next = noteBucketSaved(
-    manifest,
-    bucketKey(collection, chapterRef),
-    bucket,
-    name,
-    saved.file.version
-  );
-  const savedManifest = await saveDoc(
-    agent,
-    manifestFolder(collection),
-    MANIFEST_NAME,
-    serialize(next),
-    mf?.id,
-    `update my ${collection} manifest`
-  );
-  if (savedManifest.runRef) runRefs.push(savedManifest.runRef);
+  // The manifest is bookkeeping (which buckets moved); the reader waits for the bucket, not for it.
+  const updateManifest = async () => {
+    const { manifest, file: mf } = await readManifest(agent, collection);
+    const next = noteBucketSaved(
+      manifest,
+      bucketKey(collection, chapterRef),
+      bucket,
+      name,
+      saved.file.version
+    );
+    const savedManifest = await saveDoc(
+      agent,
+      manifestFolder(collection),
+      MANIFEST_NAME,
+      serialize(next),
+      mf?.id,
+      `update my ${collection} manifest`
+    );
+    if (savedManifest.runRef) runRefs.push(savedManifest.runRef);
+  };
+  if (defer) defer(updateManifest().catch(() => {}));
+  else await updateManifest();
   return { file: saved.file, runRefs };
 }
 

@@ -33,9 +33,17 @@ migrations_dir = "migrations"
 name = "RUNS"
 class_name = "ReaderRunDO"
 
+[[durable_objects.bindings]]
+name = "ReadingSession"
+class_name = "ReadingSession"
+
 [[migrations]]
 tag = "v1-reader-runs"
 new_sqlite_classes = ["ReaderRunDO"]
+
+[[migrations]]
+tag = "v2-reading-sessions"
+new_sqlite_classes = ["ReadingSession"]
 
 # ─────────────────────────────────────────────────────────────────────────────────────────────
 # FAITHNET (faithchain 34348) — serves the readers of the faithnet estate: a reader's id_token is
@@ -80,3 +88,7 @@ migrations_dir = "migrations"
 [[env.faithnet.durable_objects.bindings]]
 name = "RUNS"
 class_name = "ReaderRunDO"
+
+[[env.faithnet.durable_objects.bindings]]
+name = "ReadingSession"
+class_name = "ReadingSession"

@@ -27,7 +27,8 @@
     "dev:svc-mcp": "wrangler dev -c apps/seed-bible-mcp/wrangler.toml",
     "smoke:svc": "tsx scripts/smoke/svc.ts",
     "smoke:rebuild": "tsx scripts/smoke/rebuild.ts",
-    "smoke:reader-web": "tsx scripts/smoke/reader-web.ts"
+    "smoke:reader-web": "tsx scripts/smoke/reader-web.ts",
+    "smoke:session": "tsx scripts/smoke/session.ts"
   },
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",
@@ -46,7 +47,8 @@
     "@tiptap/pm": "catalog:",
     "@tiptap/starter-kit": "catalog:",
     "@tiptap/extension-underline": "catalog:",
-    "workbox-window": "7.4.1"
+    "workbox-window": "7.4.1",
+    "agents": "^0.29.0"
   },
   "devDependencies": {
     "@agenticprimitives/agent-account": "1.0.0-alpha.41",

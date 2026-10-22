@@ -97,6 +97,7 @@ export function createReaderHost(deps: ReaderHostDeps): ServiceHost {
           env: deps.env,
           hello: deps.hello,
           askerName: names.get(asker.agent.toLowerCase()),
+          ...(deps.waitUntil ? { defer: deps.waitUntil } : {}),
         } satisfies SkillDeps,
         asker
       ),

@@ -10,6 +10,9 @@ const WORKSPACE_LOCAL = new Set([
   "seed.bucket.read",
   "seed.workspace.discover",
   "seed.workspace.contacts",
+  "seed.session.start",
+  "seed.session.join",
+  "seed.session.record",
 ]);
 
 describe("pinned skills", () => {

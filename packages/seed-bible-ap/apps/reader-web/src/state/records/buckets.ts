@@ -40,6 +40,33 @@ export function adoptBucket(
   return changed ? { ...bucket, "@graph": graph } : null;
 }
 
+/**
+ * The bucket split into the reader's own marks (anonymous ones adopted) and marks held by someone else — another
+ * person who signed in on this device earlier. Foreign marks are never sent as the reader's; they are parked on
+ * the device under `parked:<agent>:<key>` until that person signs in here again.
+ */
+export function separateForeign(
+  bucket: BucketDocument,
+  agent: string,
+  newId: () => string,
+  now = () => new Date().toISOString()
+): { mine: BucketDocument; foreign: Map<string, BucketDocument> } {
+  const me = agentAddress(agent);
+  const foreign = new Map<string, BucketDocument>();
+  const mine: (typeof bucket)["@graph"] = [];
+  for (const it of bucket["@graph"]) {
+    const holder = agentAddress(it.heldBy);
+    if (holder === me) mine.push(it);
+    else if (holder === LOCAL_AGENT)
+      mine.push({ ...it, heldBy: me, opId: newId(), updatedAt: now() });
+    else {
+      const f = foreign.get(holder) ?? { ...bucket, "@graph": [] };
+      foreign.set(holder, { ...f, "@graph": [...f["@graph"], it] });
+    }
+  }
+  return { mine: { ...bucket, "@graph": mine }, foreign };
+}
+
 export interface BucketStoreDeps {
   backend: ReaderBackend;
   stores: ReaderStores;
@@ -156,14 +183,22 @@ export function createBucketStore(deps: BucketStoreDeps) {
       // Every bucket this device holds — open in this session or kept from an earlier one — gives its anonymous
       // marks to the reader and goes up.
       for (const k of await deps.stores.buckets.keys()) {
+        if (k.startsWith("parked:")) continue;
         const stored = await deps.stores.buckets.get(k);
         if (!stored) continue;
-        const adopted = adoptBucket(stored, who.agent, newId, now);
-        if (!adopted) continue;
+        const { mine, foreign } = separateForeign(
+          stored,
+          who.agent,
+          newId,
+          now
+        );
+        if (serialize(mine) === serialize(stored)) continue;
         const [collection, chapter] = splitKey(k);
-        await deps.stores.buckets.set(k, adopted);
+        for (const [holder, doc] of foreign)
+          await deps.stores.buckets.set(`parked:${holder}:${k}`, doc);
+        await deps.stores.buckets.set(k, mine);
         const ob = open.get(k);
-        if (ob) ob.bucket.value = adopted;
+        if (ob) ob.bucket.value = mine;
         await deps.outbox.queue(collection, chapter, `adopt-${newId()}`);
       }
     }

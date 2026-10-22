@@ -72,6 +72,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 7. Standing at a scope, derived on every join
 
+**First form 2026-10-22 — [ADR-0009](../adr/0009-live-sessions-room-on-the-workspace-origin.md):** standing = the host, or the session's share code; the join act mints a one-time token the room consumes. Org / circle membership and invitations as grounds come later.
+
 **Problem.** "May this person join this session?" depends on the scope: party to a conversation, member/steward of an org or `.circle`, or holder of an invitation. Each is a different lookup (Home relationships, org agent membership, the room's own invitation table), each can change mid-session, and the browser must never be the one asserting it.
 
 **Approach.** Copy the huddle/poker table: reader-a2a derives `{actor, standing}` in `src/standing/` from (a) the id_token, (b) a cached membership answer from the org/circle agent (`org.members.list` via the org's A2A, TTL minutes), (c) the room's invitations. The DO trusts only what the Worker hands it, re-checks standing on reconnect, and the Worker revokes (closes sockets) on a membership-change trigger (spec 375) when one exists. Roles come from the host's acts (`seed.session.op role.set`), never from the client.
@@ -79,6 +81,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 **Open.** Membership lookup latency on the first join (an A2A round trip); whether to pre-warm from the person's own `person.orgs.list`. Folders: `reader-a2a/src/standing`, `rooms/ReadingSessionDO.ts`.
 
 ## 8. The session document: one state, many devices, growing forever
+
+**Settled 2026-10-22 — [ADR-0009](../adr/0009-live-sessions-room-on-the-workspace-origin.md):** `state` is the small document (this chapter's decorations only); the op log and chat are the room's SQLite, paged by callables; presence is a raw frame ≤10 Hz; clients never `setState`.
 
 **Problem.** Agents SDK `setState` syncs the **whole** state object to every connection. A session's decorations and chat grow; presence changes 10×/s; a late joiner needs a snapshot; a flaky phone reconnects often. Naively putting everything in `state` melts bandwidth and CPU.
 

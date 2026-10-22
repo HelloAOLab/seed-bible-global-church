@@ -46,7 +46,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const pending = state.outbox.pending.value;
   const dark = settings.resolvedTheme().id === "dark";
   const togglePane = (
-    p: "notes" | "account" | "content" | "today" | "discover"
+    p: "notes" | "account" | "content" | "today" | "discover" | "session"
   ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
   const audioPlaying = audio.controller.isPlaying.value;
   const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
@@ -128,6 +128,17 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => (speaking ? tts.stop() : state.listen())}
         />
       )}
+      <Item
+        icon={state.live.active.value ? "groups" : "group_add"}
+        label={t("live-session", { defaultValue: "Live session" })}
+        active={ui.pane.value === "session" || state.live.active.value}
+        badge={
+          state.live.active.value
+            ? state.live.state.value?.participants.length
+            : undefined
+        }
+        onClick={() => togglePane("session")}
+      />
       <Item
         icon="today"
         label={t("today", { defaultValue: "Today" })}

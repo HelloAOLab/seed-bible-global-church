@@ -191,6 +191,8 @@ export interface ChapterContentOptions {
   /** The verse the recording or the voice is on, marked `sb-verse-playing`. */
   playingVerse?: number | null;
   highlights: ChapterHighlight[];
+  /** A live session's decorations for this chapter, drawn as outlined (broadcast) highlights over the reader's own. */
+  decorations?: ChapterHighlight[];
   notes: Note[];
   scriptureElements: ScriptureElementsBehavior;
   onVerseClick: (verseNumber: number, event: MouseEvent) => void;
@@ -205,7 +207,20 @@ export function renderChapterContent(
   if (!chapterData) return null;
   const { scriptureElements, selectedVerses, highlights, notes } = opts;
 
+  const decorationOf = (verseNumber: number): ChapterHighlight | null => {
+    for (const h of opts.decorations ?? []) {
+      if (
+        typeof h.verse === "number"
+          ? h.verse === verseNumber
+          : verseNumber >= h.verse[0] && verseNumber <= h.verse[1]
+      )
+        return h;
+    }
+    return null;
+  };
   const getVerseHighlight = (verseNumber: number): ChapterHighlight | null => {
+    const d = decorationOf(verseNumber);
+    if (d) return d;
     if (!scriptureElements.showHighlights) return null;
     for (const h of highlights) {
       if (typeof h.verse === "number") {
@@ -466,7 +481,10 @@ export function renderChapterContent(
       nodes.push(
         <span
           key={`highlight-run-${i}`}
-          className={`sb-highlight sb-highlight-${highlight.colorId}`}
+          className={`sb-highlight sb-highlight-${highlight.colorId}${highlight.id.startsWith("session:") ? " sb-highlight-broadcast" : ""}`}
+          data-highlight-broadcast={
+            highlight.id.startsWith("session:") ? "true" : undefined
+          }
           data-highlight-fill={`var(--sb-highlight-${highlight.colorId}-color, transparent)`}
           data-highlight-key={`${firstVerse}-${lastVerse}`}
         >

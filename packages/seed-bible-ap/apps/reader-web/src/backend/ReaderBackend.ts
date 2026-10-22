@@ -17,6 +17,24 @@ export interface PublishSliceArgs {
   descriptor?: Record<string, unknown>;
 }
 
+export interface SessionPassageArgs {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+}
+
+export interface SessionTicket {
+  sessionId: string;
+  /** The one-time token for the room's WebSocket; spent on connect. */
+  token: string;
+  role: string;
+  /** The share code (host only). */
+  code?: string;
+  /** Where the host's agent kept the record, when it did. */
+  recordRef?: string | null;
+  recordNote?: string;
+}
+
 export interface PublishReceipt {
   descriptorId: string;
   slug: string;
@@ -81,4 +99,8 @@ export interface ReaderBackend {
   readPublic(shelf: string, path: string): Promise<string>;
   /** The reader's contacts from their Home (their agent's `person.contact.list`). */
   contacts(): Promise<Contact[]>;
+  /** Open a live reading session on a passage (the reader hosts); the record goes to their Library. */
+  sessionStart(passage: SessionPassageArgs): Promise<SessionTicket>;
+  /** Join a session with its share code (the host needs none). A stranger is refused. */
+  sessionJoin(sessionId: string, code?: string): Promise<SessionTicket>;
 }

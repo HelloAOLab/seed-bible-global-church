@@ -197,3 +197,39 @@ describe("adoption of anonymous marks", () => {
     ).toEqual([false, true]);
   });
 });
+
+describe("marks of another person on this device", () => {
+  it("are parked at sign-in, never sent as the reader's, and the reader's own go up", async () => {
+    const backend = createDevBackend(null);
+    const d = device(backend, { value: true });
+    // Earlier on this device: Ruth signed in and highlighted; then a stranger highlighted.
+    const RUTH = "0x" + "99".repeat(20);
+    await d.buckets.get("highlights", "JHN.3").ready;
+    await d.buckets.put("highlights", "JHN.3", {
+      "@id": "urn:seed:highlight:JHN.3.2",
+      "@type": "seed:Highlight",
+      heldBy: RUTH,
+      aboutPassage: "JHN.3.2",
+      highlightColor: "seed:highlightcolor-pink",
+      opId: "op-ruth",
+    });
+    await d.highlights.set("JHN.3", 16, 16, "yellow");
+    await tick();
+    backend.setIdentity(READER);
+    await d.buckets.resync();
+    const lib = backend.buckets
+      .get("highlights:JHN.3")!
+      ["@graph"].filter((it) => !it.deleted);
+    expect(lib.map((it) => it.heldBy)).toEqual([READER.agent]);
+    expect(d.outbox.pending.value).toBe(0);
+    const parked = await d.stores.buckets.get(
+      `parked:${RUTH}:highlights:JHN.3`
+    );
+    expect(parked?.["@graph"].map((it) => it["@id"])).toEqual([
+      "urn:seed:highlight:JHN.3.2",
+    ]);
+    expect(
+      d.highlights.forChapter("JHN.3").value.map((h) => h.colorId)
+    ).toEqual(["yellow"]);
+  });
+});

@@ -14,6 +14,7 @@ import {
   BackendError,
   type PublishSliceArgs,
   type ReaderBackend,
+  type SessionTicket,
   type ReaderIdentity,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
@@ -165,6 +166,22 @@ export function createDevBackend(
     async contacts() {
       guard();
       return clone(this.contactList);
+    },
+    async sessionStart(): Promise<SessionTicket> {
+      guard();
+      return {
+        sessionId: crypto.randomUUID(),
+        token: "dev-token",
+        role: "leader",
+        code: "DEVCODE",
+        recordRef: null,
+      };
+    },
+    async sessionJoin(sessionId, code): Promise<SessionTicket> {
+      guard();
+      if (code !== "DEVCODE")
+        throw new BackendError("no standing in this session", "refused");
+      return { sessionId, token: "dev-token", role: "reader" };
     },
   };
 }

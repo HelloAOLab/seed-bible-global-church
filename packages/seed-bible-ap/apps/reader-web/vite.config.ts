@@ -67,6 +67,7 @@ export default defineConfig({
       "/a2a": {
         target: "http://127.0.0.1:8891",
         changeOrigin: true,
+        ws: true,
         rewrite: (path) => path.replace(/^\/a2a/, ""),
       },
     },

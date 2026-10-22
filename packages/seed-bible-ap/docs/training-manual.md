@@ -159,7 +159,20 @@ Not yet: choosing between readers, auto-continue to the next chapter, the phone 
 | Friends' notes in Today | ✅   | Once a contact has published something, it lists under "What your friends released"; tap to open the passage.                                                                                                                        |
 | First-run help          | 🟡   | If your agent refuses because it lacks the reader behaviour, the account pane says so with a link to your Home; the assignment itself is a Home screen.                                                                              |
 
-## 9. Coming next (not working yet)
+## 9. Reading together (live sessions)
+
+| Feature                     | Mark | How                                                                                                                                            |
+| --------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Start a session             | ✅   | The **people** icon in the bottom toolbar → **Start a session here** (signed in). You lead; the pane shows the share code and **Copy link**.   |
+| Join a session              | ✅   | Open the link a host shared (sign in if asked), or paste the session id and share code in the pane. Without the code you are refused.          |
+| Follow the leader           | ✅   | When the leader changes chapter, every device follows. The host can make someone else leader or navigator from the roster.                     |
+| Show everyone a verse       | ✅   | Leader or decorator: select verses → **Show everyone**. They appear as outlined ribbons on every device for this session.                      |
+| Who is here, and where      | ✅   | The roster shows each person's role and the verse they have selected.                                                                          |
+| Chat                        | ✅   | In the pane. Kept with the session, not in your Library.                                                                                       |
+| The session as a record     | ✅   | Starting a session keeps a `seed:ReadingSession` record in the host's Library (the pane shows where). The room itself keeps nothing permanent. |
+| Anonymous guests, voice, QR | ⬜   | [later cuts of step 6]                                                                                                                         |
+
+## 10. Coming next (not working yet)
 
 | Feature                                                                | Step |
 | ---------------------------------------------------------------------- | ---- |
@@ -173,11 +186,12 @@ Not yet: choosing between readers, auto-continue to the next chapter, the phone 
 | Extensions (audio reader, references, transcript, Twitch …), AI        | 8    |
 | Sitemap, embed mode, onboarding tour, legal modals                     | 9    |
 
-## 10. For testers: how to check it yourself
+## 11. For testers: how to check it yourself
 
 - **The live gate** (needs the repo): `cd packages/seed-bible-ap && A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`
   signs in as `seedreader`, makes marks on one "device", reads them on a second, edits a note and cleans up.
   "all checks passed" means the whole path — Home → workspace → the reader's agent → Library — is up.
+- **Live sessions:** `A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:session` (two devices, follow, decoration, chat, a stranger refused, the record outliving the room).
 - **Unit tests:** `pnpm test` (offline flush, two-device merge, reading, tabs, audio, search, markup, SSR).
 - **Is the edge render on?** `curl -sI -H "accept: text/html" https://seed-reader.faithnet.io/read/BSB/JHN/3 | grep x-sb-ssr`
   prints `x-sb-ssr: chapter`.

@@ -518,3 +518,40 @@ body {
   opacity: 0.7;
   word-break: break-all;
 }
+
+/* Live session pane */
+.sb-session-join {
+  display: grid;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+.sb-session-chat {
+  max-height: 16rem;
+  overflow: auto;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+}
+.sb-session-chat-line {
+  font-size: 0.9375rem;
+}
+.sb-session-chat-mine .sb-session-chat-name {
+  color: var(--sb-primary-color);
+}
+.sb-session-chat-name {
+  font-weight: 600;
+  margin-inline-end: 0.25rem;
+}
+.sb-session-say {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+.sb-session-say input {
+  flex: 1;
+}
+.sb-session-role-select {
+  margin-inline-start: auto;
+  font: inherit;
+  font-size: 0.8125rem;
+}

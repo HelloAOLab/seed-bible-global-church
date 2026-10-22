@@ -30,5 +30,9 @@
     "scripts/smoke/**/*.ts",
     "test/**/*.ts"
   ],
-  "exclude": ["test/unit/reader-web", "scripts/smoke/reader-web.ts"]
+  "exclude": [
+    "test/unit/reader-web",
+    "scripts/smoke/reader-web.ts",
+    "scripts/smoke/session.ts"
+  ]
 }

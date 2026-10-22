@@ -17,6 +17,7 @@ interface Ribbon {
   key: string;
   d: string;
   fill: string;
+  broadcast: boolean;
 }
 
 export function ChapterColumn(props: {
@@ -52,6 +53,7 @@ export function ChapterColumn(props: {
         el,
         key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
+        broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
         trailPad: padX,
@@ -79,7 +81,12 @@ export function ChapterColumn(props: {
         rtl,
       });
       if (d)
-        next.push({ key: `${props.chapterId}:${run.key}`, d, fill: run.fill });
+        next.push({
+          key: `${props.chapterId}:${run.key}`,
+          d,
+          fill: run.fill,
+          broadcast: run.broadcast,
+        });
     }
     const signature = JSON.stringify(next);
     if (signature === signatureRef.current) return;
@@ -112,9 +119,12 @@ export function ChapterColumn(props: {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className="sb-highlight-ribbon"
+            className={`sb-highlight-ribbon${ribbon.broadcast ? " sb-highlight-ribbon-broadcast" : ""}`}
             d={ribbon.d}
-            style={{ fill: ribbon.fill }}
+            style={{
+              fill: ribbon.fill,
+              stroke: ribbon.broadcast ? ribbon.fill : undefined,
+            }}
           />
         ))}
       </svg>

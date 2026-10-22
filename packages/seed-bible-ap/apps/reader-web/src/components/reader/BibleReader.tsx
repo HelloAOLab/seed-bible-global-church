@@ -89,6 +89,16 @@ export function BibleReader({
             ? (state.audio.currentVerse.value ?? state.tts.currentVerse.value)
             : null,
           highlights,
+          decorations: active
+            ? state.live.decorations.value.map((d) => ({
+                id: `session:${d.id}`,
+                colorId: d.colorId,
+                verse:
+                  d.start === d.end
+                    ? d.start
+                    : ([d.start, d.end] as [number, number]),
+              }))
+            : [],
           notes,
           scriptureElements: settings.scripture.value,
           onVerseClick,

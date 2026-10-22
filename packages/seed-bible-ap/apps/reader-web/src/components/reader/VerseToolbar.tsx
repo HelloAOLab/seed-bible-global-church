@@ -51,6 +51,28 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             </button>
           ))}
         </div>
+        {state.live.active.value &&
+          (state.live.myRole.value === "leader" ||
+            state.live.myRole.value === "decorator") && (
+            <button
+              className="sb-verse-toolbar-action"
+              onClick={() => {
+                void state.live.decorate(
+                  start,
+                  end,
+                  current?.colorId ?? "yellow"
+                );
+                state.selection.clear();
+              }}
+            >
+              <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
+                campaign
+              </span>
+              <span className="sb-verse-toolbar-action-label">
+                {t("session-show-everyone", { defaultValue: "Show everyone" })}
+              </span>
+            </button>
+          )}
         {current && (
           <button
             className="sb-verse-toolbar-action sb-verse-toolbar-clear"

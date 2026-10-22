@@ -7,10 +7,11 @@ import type { ReaderBackend } from "../backend/ReaderBackend";
 import { createA2aBackend } from "../backend/a2a";
 import { indexedDbStores, type ReaderStores } from "../backend/offline/db";
 import { createOutbox } from "../backend/offline/outbox";
-import { adoptBucket, createBucketStore } from "./records/buckets";
+import { createBucketStore, separateForeign } from "./records/buckets";
 import { createDiscover } from "./social/discover";
 import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
+import { createLiveSession } from "./sessions/live";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -54,9 +55,15 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     stores,
     ...(opts.isOnline ? { isOnline: opts.isOnline } : {}),
     onMerged: (c, ch, b) => buckets.accept(c, ch, b),
-    repair: (_c, _ch, b) => {
+    repair: (c, ch, b) => {
       const who = backend.identity();
-      return who ? adoptBucket(b, who.agent, () => crypto.randomUUID()) : null;
+      if (!who) return null;
+      const { mine, foreign } = separateForeign(b, who.agent, () =>
+        crypto.randomUUID()
+      );
+      for (const [holder, doc] of foreign)
+        void stores.buckets.set(`parked:${holder}:${c}:${ch ?? c}`, doc);
+      return mine;
     },
   });
   const buckets = createBucketStore({
@@ -76,6 +83,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
+  const live = createLiveSession({
+    backend,
+    reading: () => readingOf(),
+    identity: () => backend.identity(),
+  });
+  // The leader's navigation moves the room.
+  effect(() => {
+    readingOf().chapterRef.value;
+    live.leaderMoved();
+  });
   const audio = createChapterAudio({ api });
   const tts = createTextToSpeechManager();
 
@@ -165,18 +182,37 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   const ui = {
     pane: signal<
-      "none" | "notes" | "account" | "content" | "today" | "discover"
+      | "none"
+      | "notes"
+      | "account"
+      | "content"
+      | "today"
+      | "discover"
+      | "session"
     >("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
     sidebarCollapsed: signal(false),
+    /** A share link's session, joined once signed in. */
+    pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };
+  // A device's selected verse is its presence in the room.
+  effect(() => {
+    const first = verses.value[0] ?? null;
+    if (live.active.value) void live.presenceAt(first);
+  });
 
   async function signIn(s: ReaderSession) {
     session.value = s;
     await buckets.resync();
     void today.refresh();
+    const pj = ui.pendingJoin.value;
+    if (pj) {
+      ui.pendingJoin.value = null;
+      ui.pane.value = "session";
+      void live.join(pj.sessionId, pj.code).catch(() => {});
+    }
   }
   async function signOut() {
     forgetSession();
@@ -191,6 +227,19 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     const target = fromUrl ?? (await position.load());
     tabs.addTab(target ?? {});
     const stops = [bindRoute(readingOf), outbox.start()];
+    // A share link: join the session (after sign-in when needed), and drop the query from the URL.
+    if (typeof location !== "undefined") {
+      const q = new URLSearchParams(location.search);
+      const sid = q.get("session");
+      if (sid) {
+        const code = q.get("code") ?? undefined;
+        history.replaceState(null, "", location.pathname);
+        ui.pane.value = "session";
+        if (session.value) void live.join(sid, code).catch(() => {});
+        else
+          ui.pendingJoin.value = { sessionId: sid, ...(code ? { code } : {}) };
+      }
+    }
     return () => stops.forEach((s) => s());
   }
 
@@ -210,6 +259,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     discover,
     publishing,
     today,
+    live,
     audio,
     tts,
     speechLang,

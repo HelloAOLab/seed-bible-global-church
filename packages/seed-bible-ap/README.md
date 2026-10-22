@@ -149,6 +149,15 @@ pane (`seed.publish.slice`, withdraw to make it private), first-run guidance whe
 behaviour. reader-a2a gained `seed.workspace.contacts` and owner-based discover; the svc `GET /registry/recent`.
 Not yet: circle shelves, share links, reading history, profile photos.
 
+### Live sessions (step 6, first cut — live-sessions, 2026-10-22)
+
+`ReadingSession` (Agents SDK) on reader-a2a's origin: `seed.session.start` keeps the `seed:ReadingSession` record in
+the host's Library then opens the room; `seed.session.join` admits the host or a share-code holder with a one-time
+token; follow the leader, decorations (outlined ribbons), presence, chat, roles
+([ADR-0009](docs/adr/0009-live-sessions-room-on-the-workspace-origin.md)). reader-web: the session pane, the share
+link `?session=&code=`. Proof: `pnpm smoke:session`. Not yet: chat from the scope's topic, huddles, agent seats,
+the SSE fallback, org/circle standing, anonymous guests.
+
 ## Deployed on faithnet (2026-10-21)
 
 | App            | Worker                           | Host                                                                                         |
