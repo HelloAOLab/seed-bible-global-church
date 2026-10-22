@@ -2,6 +2,7 @@
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
 
+import { ThemeLivePreview } from "../chrome/ThemePreview";
 import { PictureField } from "./PictureField";
 import { COVER_IMAGE, LOGO } from "../../state/library/crop";
 import { PlanEditor } from "./PlanEditor";
@@ -22,6 +23,7 @@ import { passageOf } from "../../state/records/marks";
 import {
   EDITABLE_TEXT_VARIABLES,
   EDITABLE_VARIABLES,
+  themeFromVariant,
 } from "../../state/chrome/customizations";
 import type { LinkPreview } from "../../backend/ReaderBackend";
 
@@ -378,6 +380,8 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [tab, setTab] = useState<"playlists" | "plans" | "customizations">(
     "playlists"
   );
+  const [variantName, setVariantName] = useState("");
+  const [variantScheme, setVariantScheme] = useState<"light" | "dark">("light");
   const [variableDrafts, setVariableDrafts] = useState<Record<string, string>>(
     {}
   );
@@ -862,7 +866,62 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                   <>
                     {c.hasVariant.map((v) => (
                       <div key={v["@id"]} className="sb-customization-variant">
-                        <div className="sb-rp-section-label">{v.label}</div>
+                        <div className="sb-customization-variant-head">
+                          <input
+                            className="sb-note-editor sb-customization-variant-name"
+                            aria-label={t("variant-name-of", {
+                              defaultValue: "Name of the {{name}} variant",
+                              name: v.label,
+                            })}
+                            defaultValue={v.label}
+                            onBlur={(e) =>
+                              void state.customizations.changeVariant(
+                                c["@id"],
+                                v["@id"],
+                                { label: (e.target as HTMLInputElement).value }
+                              )
+                            }
+                          />
+                          <span className="sb-small sb-muted">
+                            {v.scheme === "dark"
+                              ? t("variant-dark", { defaultValue: "dark" })
+                              : t("variant-light", { defaultValue: "light" })}
+                          </span>
+                          {c.hasVariant.length > 1 && (
+                            <button
+                              type="button"
+                              className="sb-note-button sb-note-button-danger"
+                              aria-label={t("variant-remove", {
+                                defaultValue: "Remove the {{name}} variant",
+                                name: v.label,
+                              })}
+                              onClick={() =>
+                                void state.customizations.changeVariant(
+                                  c["@id"],
+                                  v["@id"],
+                                  "remove"
+                                )
+                              }
+                            >
+                              {t("remove", { defaultValue: "Remove" })}
+                            </button>
+                          )}
+                        </div>
+                        <ThemeLivePreview
+                          theme={themeFromVariant(c, {
+                            ...v,
+                            variables: {
+                              ...v.variables,
+                              ...Object.fromEntries(
+                                Object.entries(variableDrafts)
+                                  .filter(([k]) =>
+                                    k.startsWith(`${c["@id"]}:${v["@id"]}:`)
+                                  )
+                                  .map(([k, x]) => [k.split(":").pop()!, x])
+                              ),
+                            },
+                          })}
+                        />
                         <div className="sb-customization-grid">
                           {EDITABLE_VARIABLES.map(([name, label]) => {
                             const key = `${c["@id"]}:${v["@id"]}:${name}`;
@@ -942,6 +1001,65 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         </div>
                       </div>
                     ))}
+                    <form
+                      className="sb-customization-add-variant"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!variantName.trim()) return;
+                        void state.customizations.addVariant(
+                          c["@id"],
+                          variantName,
+                          variantScheme
+                        );
+                        setVariantName("");
+                      }}
+                    >
+                      <input
+                        className="sb-note-editor"
+                        aria-label={t("variant-new-name", {
+                          defaultValue: "New variant name",
+                        })}
+                        placeholder={t("variant-new-placeholder", {
+                          defaultValue: "Another variant (e.g. Sepia)",
+                        })}
+                        value={variantName}
+                        onInput={(e) =>
+                          setVariantName((e.target as HTMLInputElement).value)
+                        }
+                      />
+                      <select
+                        className="sb-note-editor"
+                        aria-label={t("variant-based-on", {
+                          defaultValue: "Based on",
+                        })}
+                        value={variantScheme}
+                        onChange={(e) =>
+                          setVariantScheme(
+                            (e.target as HTMLSelectElement).value as
+                              | "light"
+                              | "dark"
+                          )
+                        }
+                      >
+                        <option value="light">
+                          {t("variant-from-light", {
+                            defaultValue: "from Light",
+                          })}
+                        </option>
+                        <option value="dark">
+                          {t("variant-from-dark", {
+                            defaultValue: "from Dark",
+                          })}
+                        </option>
+                      </select>
+                      <button
+                        type="submit"
+                        className="sb-note-button"
+                        disabled={!variantName.trim()}
+                      >
+                        {t("variant-add", { defaultValue: "Add variant" })}
+                      </button>
+                    </form>
                     <div className="sb-customization-recommend">
                       <div className="sb-rp-section-label">
                         {t("recommended-extensions", {

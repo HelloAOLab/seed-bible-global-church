@@ -1,4 +1,6 @@
 import { Avatar } from "./ConnectedChip";
+import { ThemeThumbnail } from "./ThemePreview";
+import { themeFromVariant } from "../../state/chrome/customizations";
 import {
   TEXT_FONTS,
   TEXT_SECTIONS,
@@ -725,6 +727,60 @@ export function AccountPane({ state }: { state: ReaderState }) {
             <span className="material-symbols-outlined">refresh</span>
           </button>
         </label>
+        {(() => {
+          const sel = state.customizations.selected.value;
+          const c = state.customizations.current.value;
+          if (!sel || !c || c.hasVariant.length < 2) return null;
+          return (
+            <div
+              className="sb-variant-gallery"
+              role="radiogroup"
+              aria-label={t("variant-gallery", { defaultValue: "Variant" })}
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!sel.variantId}
+                className={`sb-variant-option${!sel.variantId ? " sb-variant-option-on" : ""}`}
+                onClick={() => {
+                  const entry = state.customizations.available.value.find(
+                    (x) => x.offering.descriptorId === sel.descriptorId
+                  );
+                  if (entry) void state.customizations.select(entry);
+                }}
+              >
+                <span
+                  className="sb-cz-theme-thumb sb-variant-auto material-symbols-outlined"
+                  aria-hidden="true"
+                >
+                  contrast
+                </span>
+                <span className="sb-small">
+                  {t("variant-automatic", { defaultValue: "Automatic" })}
+                </span>
+              </button>
+              {c.hasVariant.map((v) => (
+                <button
+                  key={v["@id"]}
+                  type="button"
+                  role="radio"
+                  aria-checked={sel.variantId === v["@id"]}
+                  className={`sb-variant-option${sel.variantId === v["@id"] ? " sb-variant-option-on" : ""}`}
+                  onClick={() => {
+                    const entry = state.customizations.available.value.find(
+                      (x) => x.offering.descriptorId === sel.descriptorId
+                    );
+                    if (entry)
+                      void state.customizations.select(entry, v["@id"]);
+                  }}
+                >
+                  <ThemeThumbnail theme={themeFromVariant(c, v)} />
+                  <span className="sb-small">{v.label}</span>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
         <label className="sb-small">
           {t("language", { defaultValue: "Language" })}{" "}
           <select

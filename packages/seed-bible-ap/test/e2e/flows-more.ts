@@ -1023,6 +1023,69 @@ export const MORE_FLOWS: Flow[] = [
   },
   // ── 11. Church themes ──────────────────────────────────────────────────────────────────────────────────────
   {
+    id: "G16",
+    timeoutMs: 300_000,
+    section: "11. Church themes",
+    title: "Theme variants and the live preview",
+    rows: ["Theme variants and preview"],
+    checks:
+      "Signed in: Library → Customizations → Create; each variant shows a live preview; changing a colour redraws it; Add variant Sepia (from Light) makes a third with its own preview; rename it; Remove it; delete the theme",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await c.openLibrary("Customizations");
+      const name = `Flow variants ${stamp()}`;
+      await pane.locator('input[placeholder*="name" i]').first().fill(name);
+      await pane.getByRole("button", { name: /^create$/i }).click();
+      const card = pane.locator(".sb-note-card", { hasText: name }).first();
+      await card.waitFor({ timeout: 10000 });
+      await ensureOpen(card);
+      const previews = card.locator(".sb-cz-live-preview");
+      if ((await previews.count()) !== 2)
+        throw new Error(
+          `${await previews.count()} previews for Light and Dark`
+        );
+      const dot = previews.first().locator(".sb-cz-live-preview-dot");
+      const before = await dot.evaluate(
+        (d) => getComputedStyle(d).backgroundColor
+      );
+      await card.locator('input[type="color"]').first().fill("#7a1f5c");
+      const after = await dot.evaluate(
+        (d) => getComputedStyle(d).backgroundColor
+      );
+      if (before === after) throw new Error("the preview did not redraw");
+      await card.getByLabel("New variant name").fill("Sepia");
+      await card.getByRole("button", { name: /add variant/i }).click();
+      await c.page.waitForFunction(
+        (n) =>
+          [...document.querySelectorAll(".sb-note-card")]
+            .find((x) => x.textContent?.includes(n))
+            ?.querySelectorAll(".sb-cz-live-preview").length === 3,
+        name,
+        { timeout: 10000 }
+      );
+      const field = card.getByLabel("Name of the Sepia variant");
+      await field.fill("Sepia warm");
+      await field.blur();
+      await card
+        .getByRole("button", { name: "Remove the Sepia warm variant" })
+        .waitFor({ timeout: 10000 });
+      await card
+        .getByRole("button", { name: "Remove the Sepia warm variant" })
+        .click();
+      await c.page.waitForFunction(
+        (n) =>
+          [...document.querySelectorAll(".sb-note-card")]
+            .find((x) => x.textContent?.includes(n))
+            ?.querySelectorAll(".sb-cz-live-preview").length === 2,
+        name,
+        { timeout: 10000 }
+      );
+      await card.getByRole("button", { name: /^delete$/i }).click();
+      return `two previews; a colour redrew it (${before} → ${after}); Sepia added, renamed, removed`;
+    },
+  },
+  {
     id: "T1",
     timeoutMs: 360_000,
     section: "11. Church themes",

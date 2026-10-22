@@ -49,6 +49,56 @@ export function pickVariant(
   return c.hasVariant.find((v) => v.scheme === scheme) ?? c.hasVariant[0]!;
 }
 
+/**
+ * A new variant (the old variant gallery's "Add"): it starts as a copy of the first variant of its scheme, so a
+ * "Sepia" made from Light keeps Light's colours until it is changed. Its id comes from its name, made unique.
+ */
+export function withVariantAdded(
+  c: Customization,
+  label: string,
+  scheme: "light" | "dark"
+): Customization {
+  const base = c.hasVariant.find((v) => v.scheme === scheme);
+  const stem = slugify(label) || scheme;
+  let id = stem;
+  for (let n = 2; c.hasVariant.some((v) => v["@id"] === id); n++)
+    id = `${stem}-${n}`;
+  return {
+    ...c,
+    hasVariant: [
+      ...c.hasVariant,
+      {
+        "@type": "seed:ThemeVariant",
+        "@id": id,
+        label: label.trim() || id,
+        scheme,
+        variables: { ...(base?.variables ?? {}) },
+      },
+    ],
+  };
+}
+
+/** A variant renamed (its id, which readers' selections name, stays) or removed — never the last one. */
+export function withVariantChanged(
+  c: Customization,
+  variantId: string,
+  change: { label: string } | "remove"
+): Customization {
+  if (change === "remove")
+    return c.hasVariant.length > 1
+      ? { ...c, hasVariant: c.hasVariant.filter((v) => v["@id"] !== variantId) }
+      : c;
+  const label = change.label.trim();
+  return label
+    ? {
+        ...c,
+        hasVariant: c.hasVariant.map((v) =>
+          v["@id"] === variantId ? { ...v, label } : v
+        ),
+      }
+    : c;
+}
+
 /** `Grace Church · Blue` → `grace-church-blue`. */
 export const slugify = (s: string) =>
   s
@@ -252,6 +302,24 @@ export function createCustomizations(
     });
   }
 
+  async function addVariant(
+    id: string,
+    label: string,
+    scheme: "light" | "dark"
+  ) {
+    const c = mine.byId(id);
+    if (c) await mine.save(withVariantAdded(c, label, scheme));
+  }
+
+  async function changeVariant(
+    id: string,
+    variantId: string,
+    change: { label: string } | "remove"
+  ) {
+    const c = mine.byId(id);
+    if (c) await mine.save(withVariantChanged(c, variantId, change));
+  }
+
   async function update(
     id: string,
     patch: Partial<
@@ -278,6 +346,8 @@ export function createCustomizations(
     theme,
     create,
     setVariable,
+    addVariant,
+    changeVariant,
     update,
   };
 }
