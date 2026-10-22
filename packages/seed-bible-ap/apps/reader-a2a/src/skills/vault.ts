@@ -362,6 +362,10 @@ async function saveBucketAndManifest(
     );
     if (savedManifest.runRef) runRefs.push(savedManifest.runRef);
   };
+  // The manifest LISTS the buckets (what another device pulls); a re-save of one it already names changes nothing a
+  // reader uses, and its read and save queued for the Library index beside the reader's next mark. Only a bucket's
+  // first save is noted.
+  if (existing?.id) return { file: saved.file, runRefs };
   if (defer) defer(updateManifest().catch(() => {}));
   else await updateManifest();
   return { file: saved.file, runRefs };
