@@ -286,6 +286,26 @@ export const saveJsonLdStep = (
     ...(accessPolicy ? { accessPolicy } : {}),
   },
 });
+/** An image's bytes as a Library document (the record of a file; the serving plane's copy can be re-put from it). */
+export const saveBytesStep = (
+  folder: string,
+  name: string,
+  bytesB64: string,
+  contentType: string,
+  id?: string,
+  accessPolicy?: "public" | "private"
+): PlanStep => ({
+  toolId: LIBRARY_FILE_SAVE,
+  args: {
+    folder,
+    name,
+    bytesB64,
+    kind: "image",
+    contentType,
+    ...(id ? { id } : {}),
+    ...(accessPolicy ? { accessPolicy } : {}),
+  },
+});
 export const saveMarkdownStep = (
   folder: string,
   name: string,

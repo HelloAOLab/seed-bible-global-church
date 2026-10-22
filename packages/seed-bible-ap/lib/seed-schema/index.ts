@@ -43,6 +43,7 @@ export const SEED_CONTEXT = {
   updatedAt: { "@id": "seed:updatedAt", "@type": "xsd:dateTime" },
   startedAt: { "@id": "seed:startedAt", "@type": "xsd:dateTime" },
   endedAt: { "@id": "seed:endedAt", "@type": "xsd:dateTime" },
+  libraryFile: "seed:libraryFile",
 } as const;
 
 /** Keys that are NOT `seed:` properties — mapped by the context; the TTL test allows exactly these. */
@@ -275,6 +276,8 @@ export const GalleryImage = z.object({
   contentType: z.string().min(1),
   contentHash: z.string().regex(/^[a-f0-9]{64}$/),
   size: z.number().int().positive().optional(),
+  /** The Library document holding the bytes — the record; `url` is the serving plane's copy. */
+  libraryFile: z.string().min(1).optional(),
   createdAt: iso.optional(),
   updatedAt: iso.optional(),
   deleted: z.boolean().optional(),

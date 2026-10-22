@@ -181,6 +181,108 @@ export async function crawlShelf(
   return out;
 }
 
+/** A public picture on a shelf: `seed-bible/files/<sha256>.<ext>`, the bytes a page loads from the serving plane. */
+export interface ShelfImage {
+  owner: string;
+  id: string;
+  /** `<sha256>.<ext>` — the serving plane's key under the owner. */
+  name: string;
+  contentType: string;
+}
+
+const IMAGE_NAME = /^[a-f0-9]{64}\.(jpg|png|webp|gif|avif|svg|pdf)$/i;
+
+/** The public pictures a shelf lists in its files folder. A shelf failing lists none; the error is returned. */
+export async function crawlImages(
+  fetchImpl: Fetch,
+  shelf: Shelf,
+  folder = "seed-bible/files"
+): Promise<{ images: ShelfImage[]; error?: string }> {
+  let listing;
+  try {
+    listing = await publicShelfList(fetchImpl, shelf.endpoint, folder);
+  } catch (e) {
+    return { images: [], error: e instanceof Error ? e.message : String(e) };
+  }
+  const images: ShelfImage[] = [];
+  for (const f of listing.files) {
+    if (f.isFolder || !IMAGE_NAME.test(f.name)) continue;
+    if (!(f.contentType ?? "").startsWith("image/") && !/\.pdf$/i.test(f.name))
+      continue;
+    images.push({
+      owner: listing.owner,
+      id: f.id,
+      name: f.name.toLowerCase(),
+      contentType: f.contentType ?? "application/octet-stream",
+    });
+  }
+  return { images };
+}
+
+/** The bucket the serving plane serves pictures from, as the refill needs it. */
+export interface FileBucket {
+  head(key: string): Promise<unknown | null>;
+  put(
+    key: string,
+    bytes: ArrayBuffer,
+    opts: { httpMetadata: { contentType: string; cacheControl: string } }
+  ): Promise<unknown>;
+}
+
+/**
+ * The serving plane's copy of every public picture, re-put from the shelf when the bucket lacks it (ADR-0004: the
+ * vault is the record, the bucket is rebuildable). One read per missing picture; present ones cost a head.
+ */
+export async function refillImages(
+  fetchImpl: Fetch,
+  bucket: FileBucket,
+  shelf: Shelf,
+  images: ShelfImage[]
+): Promise<{
+  present: number;
+  refilled: number;
+  failed: Array<{ name: string; reason: string }>;
+}> {
+  let present = 0;
+  let refilled = 0;
+  const failed: Array<{ name: string; reason: string }> = [];
+  for (const img of images) {
+    const key = `${img.owner}/${img.name}`;
+    if (await bucket.head(key)) {
+      present++;
+      continue;
+    }
+    try {
+      const read = await publicShelfRead(fetchImpl, shelf.endpoint, {
+        id: img.id,
+      });
+      if (!read.read || !read.bytesB64) {
+        failed.push({
+          name: img.name,
+          reason: read.refused ?? "no bytes on the shelf",
+        });
+        continue;
+      }
+      const bytes = Uint8Array.from(atob(read.bytesB64), (ch) =>
+        ch.charCodeAt(0)
+      );
+      await bucket.put(key, bytes.slice().buffer as ArrayBuffer, {
+        httpMetadata: {
+          contentType: read.contentType ?? img.contentType,
+          cacheControl: "public, max-age=31536000, immutable",
+        },
+      });
+      refilled++;
+    } catch (e) {
+      failed.push({
+        name: img.name,
+        reason: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+  return { present, refilled, failed };
+}
+
 export async function crawlAll(
   fetchImpl: Fetch,
   shelves: Shelf[],

@@ -142,6 +142,9 @@ export interface ShelfRead {
   truncated?: boolean;
   file?: ShelfEntry;
   refused?: string;
+  /** An image's bytes, when the document is one. */
+  bytesB64?: string;
+  contentType?: string;
 }
 
 export async function publicShelfRead(
@@ -157,6 +160,10 @@ export async function publicShelfRead(
     read: d.read === true,
     owner: String(d.owner ?? "").toLowerCase(),
     ...(typeof d.text === "string" ? { text: d.text } : {}),
+    ...(typeof d.bytesB64 === "string" ? { bytesB64: d.bytesB64 } : {}),
+    ...(typeof d.contentType === "string"
+      ? { contentType: d.contentType }
+      : {}),
     ...(d.truncated === true ? { truncated: true } : {}),
     ...(d.file ? { file: d.file as ShelfEntry } : {}),
     ...(typeof d.refused === "string" ? { refused: d.refused } : {}),

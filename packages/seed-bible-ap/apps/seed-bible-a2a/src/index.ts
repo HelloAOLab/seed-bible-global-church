@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Address } from "@agenticprimitives/types";
 import { createSvcHost, SvcRunDO } from "./host";
-import { crawlAll } from "./registry/crawl";
+import { crawlAll, crawlImages, refillImages } from "./registry/crawl";
 import {
   applyCrawl,
   listShelves,
@@ -95,6 +95,26 @@ export async function reindex(env: Env, fetchImpl: typeof fetch = fetch) {
   const report = [];
   for (const c of crawls) {
     const r = await applyCrawl(env.DB, c);
+    // The pictures a shelf publishes: the bucket's copy re-put from the shelf where it is missing.
+    const shelf = shelves.find((s) => s.name === c.shelf);
+    let files: Record<string, unknown> = {};
+    if (shelf && env.FILES) {
+      const { images, error } = await crawlImages(
+        (u, i) => fetchImpl(u, i),
+        shelf
+      );
+      const refill = await refillImages(
+        (u, i) => fetchImpl(u, i),
+        env.FILES,
+        shelf,
+        images
+      );
+      files = {
+        images: images.length,
+        ...refill,
+        ...(error ? { imagesError: error } : {}),
+      };
+    }
     report.push({
       shelf: c.shelf,
       owner: c.owner,
@@ -102,6 +122,7 @@ export async function reindex(env: Env, fetchImpl: typeof fetch = fetch) {
       ...(c.error ? { error: c.error } : {}),
       listed: c.listed,
       ...r,
+      files,
       skipped: c.skipped,
     });
   }

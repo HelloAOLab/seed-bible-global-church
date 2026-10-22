@@ -298,6 +298,9 @@ export function createA2aBackend(
         sha256: String(r.sha256 ?? ""),
         contentType: String(r.contentType ?? contentType),
         size: Number(r.size ?? bytes.byteLength),
+        ...(typeof r.libraryFile === "string"
+          ? { libraryFile: r.libraryFile }
+          : {}),
       };
     },
     async linkPreview(url): Promise<LinkPreview> {

@@ -284,6 +284,7 @@ export function createDevBackend(
       return {
         url: `https://files.test/${who!.agent.toLowerCase()}/${sha256}`,
         sha256,
+        libraryFile: `lib-${sha256.slice(0, 12)}`,
         contentType,
         size: bytes.byteLength,
       };

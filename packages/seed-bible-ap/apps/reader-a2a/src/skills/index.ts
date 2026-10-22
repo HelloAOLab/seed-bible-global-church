@@ -37,6 +37,7 @@ import {
   type LibraryList,
   type LibraryRead,
   type LibrarySaved,
+  saveBytesStep,
 } from "../../../../lib/library-client";
 
 export const HELLO_TOOL: ToolSpec = {
@@ -214,7 +215,7 @@ export const WORK_READ: ToolSpec = {
 export const FILE_PUT: ToolSpec = {
   id: "seed.file.put",
   description:
-    "Puts a file's bytes (an image for a playlist cover or a photo) on the serving plane under the signed-in reader's address, content-addressed; the catalog entry (seed:GalleryImage) is the reader's to keep. Args: name, contentType, dataBase64 (≤ 5 MB).",
+    "Keeps a picture (a playlist cover, a photo): the bytes go into the signed-in reader's own Library as a public document (seed-bible/files/<sha256>.<ext> — the record), then to the serving plane under their address for pages to load (a copy the registry can re-put from the shelf). Args: name, contentType, dataBase64 (≤ 1.4 MB).",
   inputSchema: {
     type: "object",
     properties: {
@@ -239,6 +240,9 @@ export const PREVIEW: ToolSpec = {
   establishes: "lookup",
 };
 
+/** The Library serves a public image inline up to 1.4 MB and takes 2 MB of base64 — the cap the reader shrinks to. */
+const FILE_MAX_BYTES = 1_400_000;
+const FILES_FOLDER = "seed-bible/files";
 const IMAGE_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -495,13 +499,45 @@ export function invokers(
       } catch {
         throw new WireRefusal(400, "dataBase64 is not base64");
       }
-      if (!bytes.byteLength || bytes.byteLength > 5 * 1024 * 1024)
-        throw new WireRefusal(413, "a file is 1 byte to 5 MB");
+      if (!bytes.byteLength || bytes.byteLength > FILE_MAX_BYTES)
+        throw new WireRefusal(
+          413,
+          `a file is 1 byte to ${FILE_MAX_BYTES} bytes`
+        );
       const buf = bytes.slice().buffer as ArrayBuffer;
       const digest = await crypto.subtle.digest("SHA-256", buf);
       const sha256 = [...new Uint8Array(digest)]
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
+      // THE RECORD FIRST: the bytes as a public document in the reader's own Library (`seed-bible/files/<sha>.<ext>`,
+      // content-addressed, so a repeat upload is the same document). The serving plane's copy below is what pages
+      // load; it can be re-put from the shelf (the registry's crawl does, ADR-0004).
+      const fileName = `${sha256}.${ext}`;
+      let libraryFile: string | undefined;
+      let libraryNote: string | undefined;
+      try {
+        const agent = await agentFor(deps.env, reader);
+        const saved = await agent.run<LibrarySaved>(
+          [
+            saveBytesStep(
+              FILES_FOLDER,
+              fileName,
+              String(args.dataBase64),
+              contentType,
+              undefined,
+              "public"
+            ),
+          ],
+          `keep the picture ${fileName} in my Library`
+        );
+        if (saved.result.saved && saved.result.file?.id)
+          libraryFile = saved.result.file.id;
+        else
+          libraryNote =
+            saved.result.refused ?? "your agent did not keep the file";
+      } catch (e) {
+        libraryNote = e instanceof Error ? e.message : String(e);
+      }
       const res = await platformSend(
         deps.env,
         `/files/${reader}/${sha256}.${ext}`,
@@ -530,7 +566,11 @@ export function invokers(
         contentType,
         size: bytes.byteLength,
         name: String(args.name ?? ""),
-        text: `Kept ${args.name} at ${out.url}`,
+        ...(libraryFile ? { libraryFile } : {}),
+        ...(libraryNote ? { libraryNote } : {}),
+        text: libraryFile
+          ? `Kept ${args.name} in your Library (${FILES_FOLDER}/${fileName}) and at ${out.url}`
+          : `Kept ${args.name} at ${out.url} — not in your Library: ${libraryNote}`,
       };
     },
     [PREVIEW.id]: async (_t, args) => {

@@ -178,6 +178,8 @@ export interface UploadedFile {
   sha256: string;
   contentType: string;
   size: number;
+  /** The Library document the bytes were kept in (the record); absent when the Library could not take them. */
+  libraryFile?: string;
 }
 export interface LinkPreview {
   url: string;

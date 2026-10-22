@@ -177,6 +177,14 @@ study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers 
 the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
 transcripts and Twitch (the outbound allowlist, §10).
 
+### Files in the Library (church-library, second cut, 2026-10-22)
+
+A picture is the reader's own: `seed.file.put` saves the bytes into their Library first (`library.file.save` with
+`bytesB64`, `seed-bible/files/<sha256>.<ext>`, public) and then puts the serving plane's copy; the registry's crawl
+lists each shelf's public pictures and re-puts any the bucket lacks (`refillImages`), so ADR-0004 holds for bytes:
+the vault is the record, R2 is rebuildable. The device shrinks a picture to the Library's inline cap (1.4 MB) before
+upload; `seed:GalleryImage` carries `libraryFile`.
+
 ### Presence (social, third cut, 2026-10-22)
 
 Where the reader is now, for their mutual friends. Substrate (ap-home): a `PresenceDO` per person, `POST
