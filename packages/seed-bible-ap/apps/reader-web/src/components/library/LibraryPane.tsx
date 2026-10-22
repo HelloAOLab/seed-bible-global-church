@@ -6,7 +6,9 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { PlaylistItem } from "@seed/seed-schema";
 import { spanOf } from "../../state/records/marks";
-import { sanitizeNoteHtml } from "../records/noteHtml";
+import { noteText, sanitizeNoteHtml } from "../records/noteHtml";
+import { NoteEditor } from "../records/NotesPane";
+import { passageOf } from "../../state/records/marks";
 import { EDITABLE_VARIABLES } from "../../state/chrome/customizations";
 import type { LinkPreview } from "../../backend/ReaderBackend";
 
@@ -36,6 +38,135 @@ function openItem(state: ReaderState, it: PlaylistItem) {
     .then(() => {
       if (verses) state.selection.select(start, end);
     });
+}
+
+/** A link's embed form: YouTube and Vimeo become their players; anything else is framed as it is. */
+export function embedUrlOf(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be")
+      return `https://www.youtube.com/embed/${u.pathname.slice(1)}`;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const v = u.searchParams.get("v");
+      if (v) return `https://www.youtube.com/embed/${v}`;
+      const m = /^\/(embed|shorts|live)\/([^/?]+)/.exec(u.pathname);
+      if (m) return `https://www.youtube.com/embed/${m[2]}`;
+    }
+    if (host === "vimeo.com") {
+      const id = /^\/(\d+)/.exec(u.pathname)?.[1];
+      if (id) return `https://player.vimeo.com/video/${id}`;
+    }
+    return u.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One playlist item, rewritten in place: a passage's note, a note's text and title, a link's label and embed. */
+function ItemEditor({
+  item,
+  onSave,
+  onCancel,
+}: {
+  item: PlaylistItem;
+  onSave: (next: PlaylistItem) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useI18n();
+  const [label, setLabel] = useState(
+    item["@type"] === "seed:ScriptureItem"
+      ? (item.noteTitle ?? "")
+      : (item.label ?? "")
+  );
+  const [note, setNote] = useState(
+    item["@type"] === "seed:ScriptureItem" ? (item.note ?? "") : ""
+  );
+  const [embed, setEmbed] = useState(
+    item["@type"] === "seed:LinkItem" ? item.embed === true : false
+  );
+  const labelInput = (
+    <input
+      className="sb-note-editor"
+      placeholder={t("playlist-item-title-placeholder", {
+        defaultValue: "Title (optional)",
+      })}
+      value={label}
+      onInput={(e) => setLabel((e.target as HTMLInputElement).value)}
+    />
+  );
+  if (item["@type"] === "seed:HtmlItem")
+    return (
+      <div className="sb-item-editor">
+        {labelInput}
+        <NoteEditor
+          initial={item.html}
+          saveLabel={t("playlist-save-item", { defaultValue: "Save item" })}
+          cancelLabel={t("cancel", { defaultValue: "Cancel" })}
+          onCancel={onCancel}
+          onSave={(html) =>
+            onSave({
+              ...item,
+              html,
+              ...(label.trim() ? { label: label.trim() } : {}),
+            })
+          }
+        />
+      </div>
+    );
+  return (
+    <form
+      className="sb-item-editor"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (item["@type"] === "seed:ScriptureItem")
+          onSave({
+            ...item,
+            ...(label.trim() ? { noteTitle: label.trim() } : {}),
+            ...(note.trim() ? { note: note.trim() } : {}),
+          });
+        else
+          onSave({
+            ...item,
+            ...(label.trim() ? { label: label.trim() } : {}),
+            embed,
+          });
+      }}
+    >
+      {labelInput}
+      {item["@type"] === "seed:ScriptureItem" && (
+        <textarea
+          className="sb-note-editor"
+          rows={3}
+          placeholder={t("playlist-scripture-note-label", {
+            defaultValue: "A note to show with this passage",
+          })}
+          value={note}
+          onInput={(e) => setNote((e.target as HTMLTextAreaElement).value)}
+        />
+      )}
+      {item["@type"] === "seed:LinkItem" && (
+        <label className="sb-small sb-check">
+          <input
+            type="checkbox"
+            checked={embed}
+            onChange={(e) => setEmbed((e.target as HTMLInputElement).checked)}
+          />{" "}
+          {t("playlist-add-link-embed", {
+            defaultValue: "Show the page itself (video players embed)",
+          })}
+        </label>
+      )}
+      <div className="sb-note-card-actions">
+        <button type="submit" className="sb-note-button sb-note-button-primary">
+          {t("playlist-save-item", { defaultValue: "Save item" })}
+        </button>
+        <button type="button" className="sb-note-button" onClick={onCancel}>
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+      </div>
+    </form>
+  );
 }
 
 function LinkCard({
@@ -103,9 +234,19 @@ function Player({ state }: { state: ReaderState }) {
             dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(it.html) }}
           />
         )}
-        {it["@type"] === "seed:LinkItem" && (
-          <LinkCard state={state} url={it.url} label={it.label} />
-        )}
+        {it["@type"] === "seed:LinkItem" &&
+          (it.embed && embedUrlOf(it.url) ? (
+            <iframe
+              className="sb-link-embed"
+              src={embedUrlOf(it.url)!}
+              title={it.label ?? it.url}
+              allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+              allowFullScreen
+            />
+          ) : (
+            <LinkCard state={state} url={it.url} label={it.label} />
+          ))}
       </div>
       <div className="sb-play-controls sb-note-card-actions">
         <button
@@ -147,6 +288,29 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [planTo, setPlanTo] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const canPublish = !!state.session.value?.wire;
+  /** `${playlistId}:${index}` of the item being edited, "note:${playlistId}" for a new note. */
+  const [editing, setEditing] = useState<string | null>(null);
+  const [refText, setRefText] = useState("");
+  /** A typed reference ("John 3:16-18") as a scripture item in the open translation. */
+  const scriptureFromText = (text: string): PlaylistItem | null => {
+    const r = state.search.parseReference(text.trim(), reading.books.value);
+    if (!r) return null;
+    const chapter = `${r.book}.${r.chapter}`;
+    const passage = r.verse
+      ? passageOf(
+          chapter,
+          r.verse,
+          r.endChapter && r.endChapter !== r.chapter
+            ? r.verse
+            : (r.endVerse ?? r.verse)
+        )
+      : chapter;
+    return {
+      "@type": "seed:ScriptureItem",
+      aboutPassage: passage,
+      ofEdition: reading.translationId.value,
+    };
+  };
   const [copied, setCopied] = useState<string | null>(null);
   const currentPassage = () => {
     const v = state.selection.verses.value;
@@ -281,13 +445,48 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                     <ol className="sb-library-items">
                       {pl.hasItem.map((it, i) => (
                         <li key={i} className="sb-library-item">
-                          <button
-                            className="sb-note-card-ref"
-                            onClick={() => openItem(state, it)}
-                          >
-                            {itemLabel(state, it)}
-                          </button>
+                          {editing === `${pl["@id"]}:${i}` ? (
+                            <ItemEditor
+                              item={it}
+                              onCancel={() => setEditing(null)}
+                              onSave={(next) => {
+                                void playlists.updateItem(pl["@id"], i, next);
+                                setEditing(null);
+                              }}
+                            />
+                          ) : (
+                            <button
+                              className="sb-note-card-ref"
+                              onClick={() => openItem(state, it)}
+                            >
+                              <span className="material-symbols-outlined sb-item-icon">
+                                {it["@type"] === "seed:ScriptureItem"
+                                  ? "menu_book"
+                                  : it["@type"] === "seed:HtmlItem"
+                                    ? "sticky_note_2"
+                                    : "link"}
+                              </span>
+                              {itemLabel(state, it)}
+                            </button>
+                          )}
                           <span>
+                            <button
+                              className="sb-content-kebab"
+                              aria-label={t("playlist-edit-item", {
+                                defaultValue: "Edit item",
+                              })}
+                              onClick={() =>
+                                setEditing(
+                                  editing === `${pl["@id"]}:${i}`
+                                    ? null
+                                    : `${pl["@id"]}:${i}`
+                                )
+                              }
+                            >
+                              <span className="material-symbols-outlined">
+                                edit
+                              </span>
+                            </button>
                             <button
                               className="sb-content-kebab"
                               aria-label={t("move-up", {
@@ -350,6 +549,69 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                           }}
                         />
                       </label>
+                      {editing === `note:${pl["@id"]}` ? (
+                        <div className="sb-item-editor">
+                          <NoteEditor
+                            saveLabel={t("playlist-add-item", {
+                              defaultValue: "Add to playlist",
+                            })}
+                            cancelLabel={t("cancel", {
+                              defaultValue: "Cancel",
+                            })}
+                            onCancel={() => setEditing(null)}
+                            onSave={(html) => {
+                              const first = noteText(html)
+                                .split("\n")[0]
+                                ?.trim()
+                                .slice(0, 80);
+                              void playlists.addItem(pl["@id"], {
+                                "@type": "seed:HtmlItem",
+                                html,
+                                ...(first ? { label: first } : {}),
+                              });
+                              setEditing(null);
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          className="sb-note-button"
+                          onClick={() => setEditing(`note:${pl["@id"]}`)}
+                        >
+                          {t("playlist-scripture-note-add", {
+                            defaultValue: "Add a note",
+                          })}
+                        </button>
+                      )}
+                      <form
+                        className="sb-inline-form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const item = scriptureFromText(refText);
+                          if (!item) return;
+                          void playlists.addItem(pl["@id"], item);
+                          setRefText("");
+                        }}
+                      >
+                        <input
+                          className="sb-note-editor"
+                          placeholder={t("playlist-add-scripture-placeholder", {
+                            defaultValue:
+                              "Add a passage by reference (John 3:16-18)",
+                          })}
+                          value={refText}
+                          onInput={(e) =>
+                            setRefText((e.target as HTMLInputElement).value)
+                          }
+                        />
+                        <button
+                          type="submit"
+                          className="sb-note-button"
+                          disabled={!scriptureFromText(refText)}
+                        >
+                          {t("playlist-add-button", { defaultValue: "Add" })}
+                        </button>
+                      </form>
                       <form
                         className="sb-inline-form"
                         onSubmit={(e) => {

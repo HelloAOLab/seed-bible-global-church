@@ -20,7 +20,7 @@ const bodyHtml = (note: string) =>
     ? sanitizeNoteHtml(note)
     : `<p>${escapeHtml(note).replace(/\n/g, "<br>")}</p>`;
 
-function NoteEditor(props: {
+export function NoteEditor(props: {
   initial?: string;
   onSave: (html: string) => void;
   onCancel: () => void;

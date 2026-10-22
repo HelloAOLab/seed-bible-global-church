@@ -71,6 +71,13 @@ export function createPlaylists(
     update(id, {
       hasItem: (works.byId(id)?.hasItem ?? []).filter((_, i) => i !== index),
     });
+  /** One item re-written in place (a note's text, a link's label or embed, a passage's note). */
+  const updateItem = (id: string, index: number, item: PlaylistItem) =>
+    update(id, {
+      hasItem: (works.byId(id)?.hasItem ?? []).map((it, i) =>
+        i === index ? item : it
+      ),
+    });
   const moveItem = (id: string, from: number, to: number) => {
     const items = [...(works.byId(id)?.hasItem ?? [])];
     const [it] = items.splice(from, 1);
@@ -100,6 +107,7 @@ export function createPlaylists(
     create,
     update,
     addItem,
+    updateItem,
     removeItem,
     moveItem,
     play,

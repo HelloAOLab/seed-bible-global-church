@@ -925,3 +925,24 @@ body {
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
 }
+
+/* Playlist items: the inline editor, kind icons, an embedded link in the player */
+.sb-item-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.sb-item-icon {
+  font-size: 1rem;
+  vertical-align: text-bottom;
+  margin-inline-end: 0.35rem;
+  opacity: 0.7;
+}
+.sb-link-embed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.75rem;
+  background: #000;
+}

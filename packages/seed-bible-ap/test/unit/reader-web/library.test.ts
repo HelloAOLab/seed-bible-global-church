@@ -89,6 +89,68 @@ describe("playlists", () => {
     expect(a.playlists.live()).toHaveLength(0);
   });
 
+  it("hold notes and links beside passages, and an item is rewritten in place", async () => {
+    const d = device();
+    const pl = await d.playlists.create("Mixed", [
+      {
+        "@type": "seed:ScriptureItem",
+        aboutPassage: "JHN.3.16-JHN.3.18",
+        ofEdition: "BSB",
+      },
+    ]);
+    await d.playlists.addItem(pl["@id"], {
+      "@type": "seed:HtmlItem",
+      html: "<p>Why this matters</p>",
+      label: "Why this matters",
+    });
+    await d.playlists.addItem(pl["@id"], {
+      "@type": "seed:LinkItem",
+      url: "https://youtu.be/abc123",
+      label: "A talk",
+    });
+    await d.playlists.updateItem(pl["@id"], 0, {
+      "@type": "seed:ScriptureItem",
+      aboutPassage: "JHN.3.16-JHN.3.18",
+      ofEdition: "BSB",
+      noteTitle: "The gospel",
+      note: "Read slowly.",
+    });
+    await d.playlists.updateItem(pl["@id"], 2, {
+      "@type": "seed:LinkItem",
+      url: "https://youtu.be/abc123",
+      label: "A talk",
+      embed: true,
+    });
+    const got = d.playlists.byId(pl["@id"])!;
+    expect(got.hasItem.map((it) => it["@type"])).toEqual([
+      "seed:ScriptureItem",
+      "seed:HtmlItem",
+      "seed:LinkItem",
+    ]);
+    expect(got.hasItem[0]).toMatchObject({
+      noteTitle: "The gospel",
+      note: "Read slowly.",
+    });
+    expect(got.hasItem[2]).toMatchObject({ embed: true });
+    d.playlists.play(pl["@id"], 1);
+    expect(d.playlists.current.value?.item).toMatchObject({
+      "@type": "seed:HtmlItem",
+      label: "Why this matters",
+    });
+    const { embedUrlOf } =
+      await import("../../../apps/reader-web/src/components/library/LibraryPane");
+    expect(embedUrlOf("https://youtu.be/abc123")).toBe(
+      "https://www.youtube.com/embed/abc123"
+    );
+    expect(embedUrlOf("https://www.youtube.com/watch?v=xyz&t=10")).toBe(
+      "https://www.youtube.com/embed/xyz"
+    );
+    expect(embedUrlOf("https://vimeo.com/12345")).toBe(
+      "https://player.vimeo.com/video/12345"
+    );
+    expect(embedUrlOf("http://example.com/page")).toBeNull();
+  });
+
   it("publish as a slice the registry lists under the first passage's chapter", async () => {
     const d = device();
     const pl = await d.playlists.create("Light", [
