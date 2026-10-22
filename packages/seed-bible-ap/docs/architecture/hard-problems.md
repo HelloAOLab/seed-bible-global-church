@@ -40,7 +40,7 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 4. Friends can see nothing unless something is public
 
-**Substrate asks (2026-10-22):** friends, invitations by email (ap-home's Cloudflare email), and app-wide presence are capabilities for the agenticprimitives repo, not this reader; the reader lists Home contacts until friends exist. Files are to move from the serving plane's R2 to the Home Library's own file handling.
+**Substrate (2026-10-22):** friends landed in ap-home as `person.friend.list` — a view over the person's contacts and inbox (mutual friend-role contacts, requests, requested; no new record, no act) — and friend invitations by email through the Worker's rail (`/connect/friend-invite/email`, `/invite/friend/<token>`). The reader's Today follows the friends and falls back to contacts for an agent without the read. App-wide presence is still a substrate ask (no WebSocket primitive exists); files are to move from the serving plane's R2 to the Home Library's own file handling.
 
 **Layer 1 landed 2026-10-22 (step 5):** a note published from the notes pane is a released public slice; Today shows the friends' recent releases by owner through the registry (`/registry/recent`), friends being the Home's contacts. Layers 2 (circle shelves) and 3 (share grants) are open.
 

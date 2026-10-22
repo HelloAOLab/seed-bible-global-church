@@ -177,6 +177,16 @@ study companion — `POST /companion/ask` on reader-a2a (signed in) → Workers 
 the pane naming the answerer. Not yet: Apologist / theographic / default-content as org offerings, external MCP,
 transcripts and Twitch (the outbound allowlist, §10).
 
+### Friends (social, second cut, 2026-10-22)
+
+The substrate side lives in ap-home: `person.friend.list` on the person agent (a view over contacts and the inbox —
+mutual friend-role contacts, `requests` who added you, `requested` whom you added), offered wherever a playbook
+offers `person.contact.list`; the contract is `skills/agentic-trust/person-friend-read`; friend invitations by email
+go out as the person through the Worker's rail and land on `/invite/friend/<token>`. Here: `seed.workspace.friends`
+on reader-a2a, `friends()` on the backend seam, and Today follows the friends (contacts stand in for an agent
+without the read), shows requests with **Add back at your Home**, and links **Add a friend** / **Invite by email**
+to the Home's Contacts page (`?add=`, `?invite=`).
+
 ### Reading history and cross-device pull (core-reader, second cut, 2026-10-22)
 
 A chapter that stays open counts as read: one `seed:ReadingEvent` per reader, chapter and day in a new `history`

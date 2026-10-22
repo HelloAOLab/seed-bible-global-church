@@ -21,6 +21,7 @@ import {
   type LinkPreview,
   type ReaderBackend,
   type ReaderIdentity,
+  type FriendsView,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -208,6 +209,14 @@ export function createA2aBackend(
     async contacts() {
       const r = await ask("seed.workspace.contacts", {}, "who are my contacts");
       return (r.contacts as Contact[] | undefined) ?? [];
+    },
+    async friends() {
+      const r = await ask("seed.workspace.friends", {}, "who are my friends");
+      return {
+        friends: (r.friends as FriendsView["friends"] | undefined) ?? [],
+        requests: (r.requests as FriendsView["requests"] | undefined) ?? [],
+        requested: (r.requested as FriendsView["requested"] | undefined) ?? [],
+      };
     },
     async sessionStart(passage: SessionPassageArgs): Promise<SessionTicket> {
       const r = await ask(

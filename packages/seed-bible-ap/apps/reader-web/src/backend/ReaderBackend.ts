@@ -61,6 +61,23 @@ export class BackendError extends Error {
   }
 }
 
+export interface Friend {
+  agent: string;
+  name: string | null;
+  /** Friends since (mutual), or when the reader added them (requested). */
+  since?: string;
+  /** When they added the reader (a request). */
+  at?: string | null;
+}
+export interface FriendsView {
+  /** Mutual: the reader added them and they added the reader back. */
+  friends: Friend[];
+  /** They added the reader; the reader has not added them back. */
+  requests: Friend[];
+  /** The reader added them; they have not added the reader back. */
+  requested: Friend[];
+}
+
 export interface ReaderIdentity {
   /** The reader's agent address — what `heldBy` on every one of their marks is. */
   agent: string;
@@ -106,6 +123,8 @@ export interface ReaderBackend {
   readPublic(shelf: string, path: string): Promise<string>;
   /** The reader's contacts from their Home (their agent's `person.contact.list`). */
   contacts(): Promise<Contact[]>;
+  /** The reader's friends and who is waiting on whom (their agent's `person.friend.list`). */
+  friends(): Promise<FriendsView>;
   /** Open a live reading session on a passage (the reader hosts); the record goes to their Library. */
   sessionStart(passage: SessionPassageArgs): Promise<SessionTicket>;
   /** Join a session with its share code (the host needs none). A stranger is refused. */

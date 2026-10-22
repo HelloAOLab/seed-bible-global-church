@@ -21,6 +21,7 @@ import {
   type UploadedFile,
   type LinkPreview,
   type ReaderIdentity,
+  type FriendsView,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -40,6 +41,8 @@ export interface DevBackend extends ReaderBackend {
   readonly registry: Map<string, Offering & { markdown: string }>;
   /** Contacts the fake Home reports. */
   contactList: Contact[];
+  /** Friends the fake Home reports; when null, derived from the contacts (mutual ones are friends). */
+  friendsView: FriendsView | null;
   /** The reader's works as the fake Library holds them, by `folder/name`. */
   readonly works: Map<string, unknown>;
   setIdentity(identity: ReaderIdentity | null): void;
@@ -75,6 +78,7 @@ export function createDevBackend(
     calls,
     registry,
     contactList: [],
+    friendsView: null,
     works,
     setIdentity: (i) => (who = i),
     setOffline: (o) => (offline = o),
@@ -193,6 +197,23 @@ export function createDevBackend(
     async contacts() {
       guard();
       return clone(this.contactList);
+    },
+    async friends() {
+      guard();
+      if (this.friendsView) return clone(this.friendsView);
+      const people = this.contactList.filter(
+        (c) => (c.status ?? "active") !== "removed"
+      );
+      const row = (c: Contact) => ({
+        agent: c.contact,
+        name: c.name,
+        ...(c.since ? { since: c.since } : {}),
+      });
+      return {
+        friends: people.filter((c) => c.mutual === true).map(row),
+        requests: [],
+        requested: people.filter((c) => c.mutual !== true).map(row),
+      };
     },
     async listWorks(folder: WorkFolder): Promise<WorkEntry[]> {
       guard();

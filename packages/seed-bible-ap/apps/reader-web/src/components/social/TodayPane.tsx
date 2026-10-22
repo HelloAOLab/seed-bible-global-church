@@ -196,22 +196,79 @@ export function TodayPane({ state }: { state: ReaderState }) {
         {signedIn && today.contactsError.value && (
           <p className="sb-pane-error">{today.contactsError.value}</p>
         )}
+        {signedIn && today.requests.value.length > 0 && (
+          <div className="sb-friend-requests">
+            <p className="sb-small sb-muted">
+              {t("friend-requests", {
+                count: today.requests.value.length,
+                defaultValue: `${today.requests.value.length} added you — add them back to be friends:`,
+              })}
+            </p>
+            {today.requests.value.map((r) => (
+              <div key={r.agent} className="sb-friends-row">
+                <span className="sb-friends-person-text">
+                  <span className="sb-friends-person-name">
+                    {r.name ?? r.agent}
+                  </span>
+                </span>
+                <a
+                  className="sb-note-button"
+                  href={`${home}/contacts?add=${encodeURIComponent(r.name ?? r.agent)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("friend-add-back", {
+                    defaultValue: "Add back at your Home",
+                  })}
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
         {signedIn &&
           !today.contactsLoading.value &&
           !today.friends.value.length &&
           !today.contactsError.value && (
             <p className="sb-content-empty">
-              {t("today-no-friends", {
-                defaultValue:
-                  "No contacts yet. Friends are the contacts at your Home.",
-              })}{" "}
-              <a href={`${home}/you`} target="_blank" rel="noreferrer">
-                {t("today-add-at-home", {
-                  defaultValue: "Add people at your Home",
-                })}
-              </a>
+              {today.friendsView.value
+                ? t("today-no-friends", {
+                    defaultValue:
+                      "No friends yet. You are friends once you have added each other at your Home.",
+                  })
+                : t("today-no-contacts", {
+                    defaultValue:
+                      "No contacts yet. Friends are the contacts at your Home.",
+                  })}
             </p>
           )}
+        {signedIn && today.requested.value.length > 0 && (
+          <p className="sb-small sb-muted">
+            {t("friends-requested", {
+              defaultValue: "Not yet added you back:",
+            })}{" "}
+            {today.requested.value.map((r) => r.name ?? r.agent).join(", ")}
+          </p>
+        )}
+        {signedIn && (
+          <div className="sb-note-card-actions sb-friend-actions">
+            <a
+              className="sb-note-button"
+              href={`${home}/contacts`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("friend-add", { defaultValue: "Add a friend" })}
+            </a>
+            <a
+              className="sb-note-button"
+              href={`${home}/contacts?invite=1`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("friend-invite-email", { defaultValue: "Invite by email" })}
+            </a>
+          </div>
+        )}
         {today.friends.value.map((c) => (
           <div key={c.contact} className="sb-friends-row">
             <span className="sb-friends-person-text">

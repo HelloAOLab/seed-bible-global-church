@@ -79,6 +79,68 @@ describe("publish and discover", () => {
     expect(today.feed.value.map((o) => o.title)).toEqual(["Ruth's note"]);
   });
 
+  it("the feed follows the Home's friends — mutual only — and Today shows who is waiting on whom", async () => {
+    const backend = createDevBackend(RUTH);
+    const stores = memoryStores();
+    await createPublishing(backend, stores).publishNote(
+      "JHN.3",
+      note,
+      "Ruth's note"
+    );
+    const stranger = {
+      agent: "0x" + "33".repeat(20),
+      name: "Stranger",
+      wire: true,
+    };
+    backend.setIdentity(stranger);
+    await createPublishing(backend, memoryStores()).publishNote(
+      "JHN.3",
+      { ...note, id: "urn:seed:note:JHN.3:stranger" },
+      "A stranger's note"
+    );
+    backend.setIdentity(SEED);
+    // Ruth is a friend; the stranger added Seed (a request); Seed added Dan, who has not added back.
+    backend.friendsView = {
+      friends: [
+        { agent: RUTH.agent, name: "Ruth", since: "2026-10-01T00:00:00Z" },
+      ],
+      requests: [
+        { agent: stranger.agent, name: "Stranger", at: "2026-10-22T00:00:00Z" },
+      ],
+      requested: [{ agent: "0x" + "44".repeat(20), name: "Dan" }],
+    };
+    const today = createToday(backend, stores);
+    await today.refresh();
+    expect(today.friends.value.map((c) => `${c.name}:${c.mutual}`)).toEqual([
+      "Ruth:true",
+    ]);
+    expect(today.requests.value.map((r) => r.name)).toEqual(["Stranger"]);
+    expect(today.requested.value.map((r) => r.name)).toEqual(["Dan"]);
+    expect(today.feed.value.map((o) => o.title)).toEqual(["Ruth's note"]);
+    // The friends view is remembered on the device for the next open.
+    expect(await stores.prefs.get("friends")).toMatchObject({
+      friends: [{ name: "Ruth" }],
+    });
+  });
+
+  it("an agent without the friends read answers with its contacts", async () => {
+    const backend = createDevBackend(SEED);
+    backend.contactList = [
+      { contact: RUTH.agent, name: "Ruth", mutual: true },
+      { contact: "0x" + "44".repeat(20), name: "Dan", mutual: false },
+    ];
+    const original = backend.friends.bind(backend);
+    backend.friends = async () => {
+      throw new Error("unknown tool person.friend.list");
+    };
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(today.friendsView.value).toBeNull();
+    expect(today.friends.value.map((c) => c.name)).toEqual(["Ruth", "Dan"]);
+    expect(today.requests.value).toEqual([]);
+    backend.friends = original;
+  });
+
   it("notes become shelf markdown", () => {
     expect(
       noteHtmlToMarkdown(

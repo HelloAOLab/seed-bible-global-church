@@ -1,8 +1,13 @@
 // TODAY — ported in outline from packages/seed-bible TodayManager (docs/porting/TodayManager.md): where to resume,
 // your recent bookmarks and saves, and what your friends released (their public slices through the registry —
-// hard-problems §4 layer 1; fan-in by owner, never a read of their Libraries). Friends are the Home's contacts.
+// hard-problems §4 layer 1; fan-in by owner, never a read of their Libraries). Friends are the Home's friends —
+// mutual contacts (`person.friend.list`) — with the plain contacts as the stand-in where the agent lacks that read.
 import { computed, signal } from "@preact/signals";
-import type { ReaderBackend } from "../../backend/ReaderBackend";
+import type {
+  Friend,
+  FriendsView,
+  ReaderBackend,
+} from "../../backend/ReaderBackend";
 import type { ReaderStores } from "../../backend/offline/db";
 import type { Offering } from "./discover";
 
@@ -16,11 +21,22 @@ export interface Contact {
 }
 
 const KEY = "contacts";
+const FRIENDS_KEY = "friends";
+
+const toContact = (f: Friend): Contact => ({
+  contact: f.agent,
+  name: f.name,
+  role: "friend",
+  mutual: true,
+  ...(f.since ? { since: f.since } : {}),
+});
 
 export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   const contacts = signal<Contact[]>([]);
   const contactsError = signal<string | null>(null);
   const contactsLoading = signal(false);
+  /** The Home's friends view; null until read (or when the agent has no friends read — contacts stand in). */
+  const friendsView = signal<FriendsView | null>(null);
   const feed = signal<Offering[]>([]);
   const feedError = signal<string | null>(null);
   const feedLoading = signal(false);
@@ -29,9 +45,22 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   void stores.prefs.get(KEY).then((v) => {
     if (Array.isArray(v)) contacts.value = v as Contact[];
   });
+  void stores.prefs.get(FRIENDS_KEY).then((v) => {
+    if (v && typeof v === "object" && Array.isArray((v as FriendsView).friends))
+      friendsView.value = v as FriendsView;
+  });
 
-  const friends = computed(() =>
-    contacts.value.filter((c) => (c.status ?? "active") !== "removed")
+  /** Who the feed follows: the mutual friends when the Home answers that read, else every contact. */
+  const friends = computed<Contact[]>(() =>
+    friendsView.value
+      ? friendsView.value.friends.map(toContact)
+      : contacts.value.filter((c) => (c.status ?? "active") !== "removed")
+  );
+  /** People who added the reader and are waiting to be added back (empty on the contacts stand-in). */
+  const requests = computed<Friend[]>(() => friendsView.value?.requests ?? []);
+  /** People the reader added who have not added them back. */
+  const requested = computed<Friend[]>(
+    () => friendsView.value?.requested ?? []
   );
 
   async function refreshContacts() {
@@ -42,6 +71,13 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
     contactsLoading.value = true;
     contactsError.value = null;
     try {
+      // The friends read first; an agent without it (an older playbook) answers with its contacts.
+      try {
+        friendsView.value = await backend.friends();
+        await stores.prefs.set(FRIENDS_KEY, friendsView.value);
+      } catch {
+        friendsView.value = null;
+      }
       contacts.value = await backend.contacts();
       await stores.prefs.set(KEY, contacts.value);
     } catch (e) {
@@ -78,6 +114,9 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   return {
     contacts,
     friends,
+    friendsView,
+    requests,
+    requested,
     contactsError,
     contactsLoading,
     feed,

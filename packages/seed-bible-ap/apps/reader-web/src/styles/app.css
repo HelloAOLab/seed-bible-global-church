@@ -880,3 +880,11 @@ body {
   opacity: 0.75;
   margin: 0.25rem 0;
 }
+
+/* Today: friend requests and the add / invite actions */
+.sb-friend-requests {
+  margin: 0 0 0.75rem;
+}
+.sb-friend-actions {
+  margin-top: 0.5rem;
+}

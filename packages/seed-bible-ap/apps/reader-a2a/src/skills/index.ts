@@ -258,6 +258,15 @@ export const CONTACTS: ToolSpec = {
   establishes: "lookup",
 };
 
+export const FRIENDS: ToolSpec = {
+  id: "seed.workspace.friends",
+  description:
+    "The signed-in reader's friends — the people among their Home contacts who added them back — and who is waiting on whom (requests: they added the reader; requested: the reader added them), read from their own agent (person.friend.list) over the ask-as-me wire. The Today feed follows the friends. No args.",
+  inputSchema: { type: "object", properties: {} },
+  answers: ["who are my friends", "friend requests"],
+  establishes: "lookup",
+};
+
 export const TOOLS: ToolSpec[] = [
   HELLO_TOOL,
   HIGHLIGHT_PUT,
@@ -269,6 +278,7 @@ export const TOOLS: ToolSpec[] = [
   PUBLISH_SLICE,
   DISCOVER,
   CONTACTS,
+  FRIENDS,
   SESSION_START,
   SESSION_JOIN,
   SESSION_RECORD,
@@ -575,6 +585,38 @@ export function invokers(
         text: contacts.length
           ? `${contacts.length} contact(s): ${contacts.map((c) => c.name ?? c.contact).join(", ")}`
           : "No contacts yet — add people at your Home.",
+      };
+    },
+    [FRIENDS.id]: async () => {
+      const reader = readerOf(asker);
+      const agent = await agentFor(deps.env, reader);
+      type Row = {
+        agent: string;
+        name: string | null;
+        since?: string;
+        at?: string | null;
+      };
+      const out = await agent.run<{
+        friends?: Row[];
+        requests?: Row[];
+        requested?: Row[];
+        refused?: string;
+      }>([{ toolId: "person.friend.list", args: {} }], "who are my friends");
+      if (out.result.refused) throw new WireRefusal(403, out.result.refused);
+      const friends = out.result.friends ?? [];
+      const requests = out.result.requests ?? [];
+      const requested = out.result.requested ?? [];
+      return {
+        friends,
+        requests,
+        requested,
+        count: friends.length,
+        runRef: out.runRef,
+        text: friends.length
+          ? `${friends.length} friend(s): ${friends.map((c) => c.name ?? c.agent).join(", ")}${requests.length ? `; ${requests.length} waiting on you` : ""}`
+          : requests.length
+            ? `${requests.length} person(s) added you — add them back at your Home.`
+            : "No friends yet — add people at your Home; you are friends once they add you back.",
       };
     },
     [DISCOVER.id]: async (_t, args) => {
