@@ -1263,7 +1263,7 @@ export const MORE_FLOWS: Flow[] = [
       const acct = await c.openAccount();
       await c.check(acct, "Twitch (watch)").check();
       await c.pressToolbar("Watch");
-      await c.pane().locator("input").first().fill("twitchdev");
+      await c.page.getByPlaceholder(/twitch channel/i).fill("twitchdev");
       await c
         .pane()
         .getByRole("button", { name: /^watch$/i })

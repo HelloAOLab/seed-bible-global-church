@@ -50,20 +50,26 @@ export class FlowContext {
   }
 
   /** The guided tour's card on each page, dismissed whenever it appears (keepTours lets the tour's own flow see it). */
-  private tourCards = new WeakMap<Page, Locator>();
+  private tourCards = new WeakMap<
+    Page,
+    { card: Locator; added: Promise<void> }
+  >();
 
   watch(page: Page) {
     // A contextual tour shows the first time the book picker or the translation list opens; a flow about something
     // else dismisses it the way a reader would (Esc) and carries on.
     const card = page.locator(".sb-tour-card");
-    this.tourCards.set(page, card);
-    void page.addLocatorHandler(
-      card,
-      async () => {
-        await page.keyboard.press("Escape");
-      },
-      { noWaitAfter: true }
-    );
+    const added = page
+      .addLocatorHandler(
+        card,
+        async () => {
+          // Only while it still shows: an Esc after it has gone would close whatever the flow opened.
+          if (await card.isVisible()) await page.keyboard.press("Escape");
+        },
+        { noWaitAfter: true }
+      )
+      .catch(() => undefined);
+    this.tourCards.set(page, { card, added });
     page.on("pageerror", (e) => this.logs.push(`[pageerror] ${e.message}`));
     page.on("console", (m) => {
       if (m.type() === "error") this.logs.push(`[console.error] ${m.text()}`);
@@ -72,8 +78,10 @@ export class FlowContext {
 
   /** Stop dismissing tours on this page: the flow is about the tour. */
   async keepTours(page: Page = this.page): Promise<void> {
-    const card = this.tourCards.get(page);
-    if (card) await page.removeLocatorHandler(card);
+    const held = this.tourCards.get(page);
+    if (!held) return;
+    await held.added;
+    await page.removeLocatorHandler(held.card);
   }
 
   /** A second device: its own storage, same browser. */

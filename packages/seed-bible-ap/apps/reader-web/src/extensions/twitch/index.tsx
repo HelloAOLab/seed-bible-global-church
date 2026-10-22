@@ -3,7 +3,7 @@
 // stream and its chat beside the text, as Twitch's own embeds (read-only players; nothing of the reader's leaves).
 // The channel is the reader's own setting, or the church theme's `twitchChannel`.
 import { signal } from "@preact/signals";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import type { ExtensionRegistration } from "../host";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -27,14 +27,16 @@ export function twitchEmbeds(
 
 /** The reader's chosen channel (a device preference). */
 export const channel = signal<string>("");
+/** What the reader is typing — kept outside the pane, so turning the extension on (which re-renders the pane) or
+ *  the saved channel arriving a moment later never wipes it. */
+const draft = signal<string>("");
 
 function WatchPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const [draft, setDraft] = useState(channel.value);
   // The saved channel arrives from the device a moment after the pane opens; it fills the field only if the
   // reader has not started typing.
   useEffect(() => {
-    if (!draft) setDraft(channel.value);
+    if (!draft.value) draft.value = channel.value;
   }, [channel.value]);
   const theme = state.settings.resolvedTheme().variables["twitchChannel"] ?? "";
   const name = channel.value || theme;
@@ -49,7 +51,7 @@ function WatchPane({ state }: { state: ReaderState }) {
         className="sb-inline-form"
         onSubmit={(e) => {
           e.preventDefault();
-          channel.value = draft.trim();
+          channel.value = draft.value.trim();
           void state.stores.prefs.set(TWITCH_CHANNEL_KEY, channel.value);
         }}
       >
@@ -59,7 +61,7 @@ function WatchPane({ state }: { state: ReaderState }) {
             defaultValue: "Twitch channel (e.g. yourchurch)",
           })}
           value={draft}
-          onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+          onInput={(e) => (draft.value = (e.target as HTMLInputElement).value)}
         />
         <button type="submit" className="sb-note-button">
           {t("watch", { defaultValue: "Watch" })}
