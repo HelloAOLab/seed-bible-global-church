@@ -61,6 +61,15 @@ export class BackendError extends Error {
   }
 }
 
+export interface Connector {
+  id: string;
+  name: string;
+  url: string;
+  server: string | null;
+  attachedAt: string | null;
+  tools: Array<{ name: string; kind: string; why: string | null }>;
+}
+
 export interface Friend {
   agent: string;
   name: string | null;
@@ -137,6 +146,8 @@ export interface ReaderBackend {
   contacts(): Promise<Contact[]>;
   /** The reader's friends and who is waiting on whom (their agent's `person.friend.list`). */
   friends(): Promise<FriendsView>;
+  /** The MCP servers the reader attached to their agent at the Home, read-only (never invoked here). */
+  connectors(): Promise<Connector[]>;
   /** Where the reader is now, for their friends: a beat that lapses on its own; `gone` ends it. No act, no record. */
   presenceBeat(
     beat: { scope?: string; label?: string } | { gone: true }

@@ -192,3 +192,29 @@ describe("profiles", () => {
     expect(today.releases.value.map((o) => o.kind)).not.toContain("profile");
   });
 });
+
+describe("connectors", () => {
+  it("are listed from the Home, read-only", async () => {
+    const backend = createDevBackend(SEED);
+    backend.connectorList = [
+      {
+        id: "c1",
+        name: "Ligonier",
+        url: "https://mcp.ligonier.test",
+        server: "ligonier",
+        attachedAt: null,
+        tools: [
+          { name: "search_resources", kind: "read", why: null },
+          { name: "post_note", kind: "act", why: null },
+        ],
+      },
+    ];
+    const rows = await backend.connectors();
+    expect(
+      rows.map(
+        (c) =>
+          `${c.name}:${c.tools.filter((t) => t.kind === "read").length}/${c.tools.length}`
+      )
+    ).toEqual(["Ligonier:1/2"]);
+  });
+});

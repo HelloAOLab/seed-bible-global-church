@@ -1,3 +1,4 @@
+import type { Connector } from "../../backend/ReaderBackend";
 // ACCOUNT — the Home sign-in (popup / redirect / quick connect / dev reader) from the hello page, now a side pane,
 // plus where the reader's marks stand: on this device only, or in their Library through their own agent.
 import { useEffect, useState } from "preact/hooks";
@@ -130,6 +131,76 @@ function ProfileCard({ state }: { state: ReaderState }) {
           defaultValue:
             "Private until you publish it; published, your friends see the name, line and picture in their Today.",
         })}
+      </p>
+    </div>
+  );
+}
+
+/** The MCP servers the reader attached at their Home — listed, never called from here (reads only, and at the Home). */
+function ConnectorsCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const [rows, setRows] = useState<Connector[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const estate = estateById(DEFAULT_ESTATE)!;
+  useEffect(() => {
+    let live = true;
+    state.backend
+      .connectors()
+      .then((c) => live && setRows(c))
+      .catch(
+        (e: unknown) =>
+          live && setErr(e instanceof Error ? e.message : String(e))
+      );
+    return () => {
+      live = false;
+    };
+  }, []);
+  return (
+    <div className="sb-account-card">
+      <p className="sb-small">
+        <strong>
+          {t("connected-sources", { defaultValue: "Connected sources" })}
+        </strong>
+      </p>
+      {err && <p className="sb-small sb-muted">{err}</p>}
+      {rows === null && !err && (
+        <p className="sb-small sb-muted">
+          {t("loading", { defaultValue: "Loading…" })}
+        </p>
+      )}
+      {rows && rows.length === 0 && (
+        <p className="sb-small sb-muted">
+          {t("connectors-none", {
+            defaultValue: "No MCP servers are connected to your agent.",
+          })}
+        </p>
+      )}
+      {rows?.map((c) => (
+        <div key={c.id} className="sb-connector">
+          <div>
+            <strong>{c.name}</strong>{" "}
+            <span className="sb-small sb-muted">{c.server ?? c.url}</span>
+          </div>
+          <div className="sb-small sb-muted">
+            {c.tools
+              .filter((x) => x.kind === "read")
+              .map((x) => x.name)
+              .join(", ") ||
+              t("connectors-no-reads", { defaultValue: "no reads" })}
+            {c.tools.some((x) => x.kind !== "read")
+              ? ` · ${t("connectors-acts-hidden", { count: c.tools.filter((x) => x.kind !== "read").length, defaultValue: `${c.tools.filter((x) => x.kind !== "read").length} act(s) not offered here` })}`
+              : ""}
+          </div>
+        </div>
+      ))}
+      <p className="sb-small sb-muted">
+        {t("connectors-note", {
+          defaultValue:
+            "Attached at your Home; this reader only lists them and never calls them.",
+        })}{" "}
+        <a href={`${estate.home}/apps`} target="_blank" rel="noreferrer">
+          {t("manage-at-home", { defaultValue: "Manage at your Home" })}
+        </a>
       </p>
     </div>
   );
@@ -489,6 +560,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
       </div>
 
       {state.session.value && <ProfileCard state={state} />}
+      {state.session.value && <ConnectorsCard state={state} />}
 
       <div className="sb-account-card">
         <p className="sb-small">

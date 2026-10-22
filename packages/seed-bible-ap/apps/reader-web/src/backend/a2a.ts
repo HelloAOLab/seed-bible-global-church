@@ -23,6 +23,7 @@ import {
   type ReaderIdentity,
   type FriendsView,
   type FriendPresence,
+  type Connector,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -241,6 +242,14 @@ export function createA2aBackend(
           res.status === 401 ? "signed-out" : "unavailable"
         );
       return out.friends ?? [];
+    },
+    async connectors() {
+      const r = await ask(
+        "seed.workspace.connectors",
+        {},
+        "which servers are connected to my agent"
+      );
+      return (r.connectors as Connector[] | undefined) ?? [];
     },
     async friends() {
       const r = await ask("seed.workspace.friends", {}, "who are my friends");

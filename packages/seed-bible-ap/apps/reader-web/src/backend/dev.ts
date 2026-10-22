@@ -23,6 +23,7 @@ import {
   type ReaderIdentity,
   type FriendsView,
   type PresenceEntry,
+  type Connector,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { Contact } from "../state/social/today";
@@ -44,6 +45,8 @@ export interface DevBackend extends ReaderBackend {
   contactList: Contact[];
   /** Friends the fake Home reports; when null, derived from the contacts (mutual ones are friends). */
   friendsView: FriendsView | null;
+  /** The MCP connectors the fake Home reports. */
+  connectorList: Connector[];
   /** Live presence by agent, as the fake runtime holds it (the reader's own beats land here too). */
   readonly presence: Map<string, PresenceEntry[]>;
   /** The reader's works as the fake Library holds them, by `folder/name`. */
@@ -83,6 +86,7 @@ export function createDevBackend(
     registry,
     contactList: [],
     friendsView: null,
+    connectorList: [],
     presence,
     works,
     setIdentity: (i) => (who = i),
@@ -202,6 +206,10 @@ export function createDevBackend(
     async contacts() {
       guard();
       return clone(this.contactList);
+    },
+    async connectors() {
+      guard();
+      return clone(this.connectorList);
     },
     async presenceBeat(beat) {
       guard();

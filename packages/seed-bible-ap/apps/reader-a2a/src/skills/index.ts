@@ -272,6 +272,15 @@ export const FRIENDS: ToolSpec = {
   establishes: "lookup",
 };
 
+export const CONNECTORS: ToolSpec = {
+  id: "seed.workspace.connectors",
+  description:
+    "The external MCP servers the signed-in reader attached to their agent at their Home, with each server's tools and whether each is a read or an act — read from their own agent (mcp.connectors.list) over the ask-as-me wire. Never calls one. No args.",
+  inputSchema: { type: "object", properties: {} },
+  answers: ["which servers are connected to my agent", "my connectors"],
+  establishes: "lookup",
+};
+
 export const TOOLS: ToolSpec[] = [
   HELLO_TOOL,
   HIGHLIGHT_PUT,
@@ -284,6 +293,7 @@ export const TOOLS: ToolSpec[] = [
   DISCOVER,
   CONTACTS,
   FRIENDS,
+  CONNECTORS,
   SESSION_START,
   SESSION_JOIN,
   SESSION_RECORD,
@@ -658,6 +668,54 @@ export function invokers(
           : requests.length
             ? `${requests.length} person(s) added you — add them back at your Home.`
             : "No friends yet — add people at your Home; you are friends once they add you back.",
+      };
+    },
+    [CONNECTORS.id]: async () => {
+      const reader = readerOf(asker);
+      const agent = await agentFor(deps.env, reader);
+      type Tool = {
+        name: string;
+        kind?: string;
+        why?: string;
+        capability?: string;
+      };
+      type Row = {
+        id: string;
+        name: string;
+        url: string;
+        server?: string | null;
+        attachedAt?: string;
+        hasToken?: boolean;
+        tools?: Tool[];
+      };
+      const out = await agent.run<{
+        connectors?: Row[];
+        count?: number;
+        refused?: string;
+      }>(
+        [{ toolId: "mcp.connectors.list", args: {} }],
+        "which servers are connected to my agent"
+      );
+      if (out.result.refused) throw new WireRefusal(403, out.result.refused);
+      const connectors = (out.result.connectors ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        url: c.url,
+        server: c.server ?? null,
+        attachedAt: c.attachedAt ?? null,
+        tools: (c.tools ?? []).map((t) => ({
+          name: t.name,
+          kind: t.kind ?? "read",
+          why: t.why ?? null,
+        })),
+      }));
+      return {
+        connectors,
+        count: connectors.length,
+        runRef: out.runRef,
+        text: connectors.length
+          ? `${connectors.length} connector(s): ${connectors.map((c) => `${c.name} (${c.tools.length} tools)`).join(", ")}`
+          : "No MCP servers are connected to your agent — attach one at your Home.",
       };
     },
     [DISCOVER.id]: async (_t, args) => {
