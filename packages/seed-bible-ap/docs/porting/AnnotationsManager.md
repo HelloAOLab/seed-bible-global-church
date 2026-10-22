@@ -14,5 +14,6 @@ Source (read-only): `packages/seed-bible/seed-bible/managers/AnnotationsManager.
 Every edit carries `seed:supersedes` (the opId it was made from) — the one thing the old manager did not have to
 say, because CasualOS had a single server copy.
 
-Dropped for now: TipTap (rich text) — the editor is a textarea until the TipTap port lands; replies (`replyTo`) and
+The TipTap editor (`components/records/tiptap/`, loaded on first edit) is the old one with its toolbar, text-align
+extension and verse-reference autolink; a reference link opens the chapter in the reader. Replies (`replyTo`) and
 tags are in the schema and not in the UI yet.

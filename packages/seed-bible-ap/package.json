@@ -41,7 +41,11 @@
     "preact": "catalog:",
     "viem": "^2.52.2",
     "zod": "catalog:",
-    "i18next": "catalog:"
+    "i18next": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "@tiptap/extension-underline": "catalog:"
   },
   "devDependencies": {
     "@agenticprimitives/agent-account": "1.0.0-alpha.41",

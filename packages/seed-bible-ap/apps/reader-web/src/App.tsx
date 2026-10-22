@@ -8,6 +8,7 @@ import { VerseToolbar } from "./components/reader/VerseToolbar";
 import { ReaderToolbar } from "./components/reader/ReaderToolbar";
 import { NotesPane } from "./components/records/NotesPane";
 import { AccountPane } from "./components/chrome/AccountPane";
+import { YourContentPane } from "./components/records/YourContentPane";
 import { completeRedirectIfReturning } from "./session";
 
 export function App({ state }: { state: ReaderState }) {
@@ -29,6 +30,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "notes" && (
         <aside className="sb-app-pane">
           <NotesPane state={state} />
+        </aside>
+      )}
+      {pane === "content" && (
+        <aside className="sb-app-pane">
+          <YourContentPane state={state} />
         </aside>
       )}
       {pane === "account" && (

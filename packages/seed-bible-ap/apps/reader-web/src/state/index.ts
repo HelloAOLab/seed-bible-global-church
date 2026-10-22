@@ -11,6 +11,9 @@ import { createBucketStore } from "./records/buckets";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
+import { createSaves } from "./records/saves";
+import { createVerseSearch } from "../backend/search";
+import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
 import { bindRoute, parseRoute, pushRoute } from "./reading/route";
@@ -53,6 +56,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const highlights = createHighlights(buckets, identity);
   const annotations = createAnnotations(buckets, identity);
   const bookmarks = createBookmarks(buckets, identity);
+  const saves = createSaves(buckets, identity);
+  const search = createVerseSearch();
   const position = createPosition(stores);
   const settings = createSettings();
 
@@ -62,6 +67,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     onChange: (p) => {
       void position.save(p);
       pushRoute(p);
+      setVerseLinkTranslation(p.translationId);
     },
   });
 
@@ -94,7 +100,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   };
 
   const ui = {
-    pane: signal<"none" | "notes" | "account">("none"),
+    pane: signal<"none" | "notes" | "account" | "content">("none"),
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
@@ -133,6 +139,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     highlights,
     annotations,
     bookmarks,
+    saves,
+    search,
     position,
     settings,
     reading,

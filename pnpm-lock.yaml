@@ -622,6 +622,18 @@ importers:
       '@preact/signals':
         specifier: ^2.9.1
         version: 2.9.1(preact@10.29.8)
+      '@tiptap/core':
+        specifier: 'catalog:'
+        version: 3.27.1(@tiptap/pm@3.27.1)
+      '@tiptap/extension-underline':
+        specifier: 'catalog:'
+        version: 3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))
+      '@tiptap/pm':
+        specifier: 'catalog:'
+        version: 3.27.1
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.27.1
       hono:
         specifier: ^4.12.23
         version: 4.13.13

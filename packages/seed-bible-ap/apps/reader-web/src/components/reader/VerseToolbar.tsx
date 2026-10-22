@@ -2,6 +2,7 @@
 // swatches, note, clear and close (`sb-verse-toolbar-*` from the copied stylesheet).
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { passageOf } from "../../state/records/marks";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -78,6 +79,29 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           </span>
           <span className="sb-verse-toolbar-action-label">
             {t("note", { defaultValue: "Note" })}
+          </span>
+        </button>
+        <button
+          className="sb-verse-toolbar-action"
+          aria-pressed={
+            state.saves.forPassage(passageOf(chapterRef, start, end)).length > 0
+          }
+          onClick={() => {
+            void state.saves.toggle(
+              chapterRef,
+              { start, end },
+              reading.translationId.value
+            );
+            state.selection.clear();
+          }}
+        >
+          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
+            {state.saves.forPassage(passageOf(chapterRef, start, end)).length
+              ? "inventory_2"
+              : "archive"}
+          </span>
+          <span className="sb-verse-toolbar-action-label">
+            {t("save-verses", { defaultValue: "Save" })}
           </span>
         </button>
         <button

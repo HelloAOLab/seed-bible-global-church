@@ -161,6 +161,26 @@ export function BibleReader({ state }: { state: ReaderState }) {
           )}
           <button
             type="button"
+            className={`sb-bible-reader-save-button${state.saves.forPassage(chapterRef).length ? " sb-bible-reader-save-button-saved" : ""}`}
+            aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
+            title={t("save-chapter", { defaultValue: "Save chapter" })}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void state.saves.toggle(
+                chapterRef,
+                null,
+                reading.translationId.value
+              );
+            }}
+          >
+            <span className="material-symbols-outlined">
+              {state.saves.forPassage(chapterRef).length
+                ? "inventory_2"
+                : "archive"}
+            </span>
+          </button>
+          <button
+            type="button"
             className={`sb-bible-reader-bookmark-button${state.bookmarks.onChapter(chapterRef).length ? " sb-bible-reader-save-button-saved" : ""}`}
             aria-label={t("bookmark-this-chapter", {
               defaultValue: "Bookmark this chapter",

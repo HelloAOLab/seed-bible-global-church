@@ -43,7 +43,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     .length;
   const pending = state.outbox.pending.value;
   const dark = settings.resolvedTheme().id === "dark";
-  const togglePane = (p: "notes" | "account") =>
+  const togglePane = (p: "notes" | "account" | "content") =>
     (ui.pane.value = ui.pane.value === p ? "none" : p);
   return (
     <nav
@@ -80,6 +80,12 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         active={ui.pane.value === "notes"}
         badge={notes}
         onClick={() => togglePane("notes")}
+      />
+      <Item
+        icon="library_books"
+        label={t("your-content", { defaultValue: "Your content" })}
+        active={ui.pane.value === "content"}
+        onClick={() => togglePane("content")}
       />
       <Item
         icon={dark ? "light_mode" : "dark_mode"}

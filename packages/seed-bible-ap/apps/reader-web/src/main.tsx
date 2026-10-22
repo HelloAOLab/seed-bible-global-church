@@ -12,6 +12,8 @@ import "./styles/reader-extra.css";
 import "./styles/selector-inline.css";
 import "./styles/selector.css";
 import "./styles/toolbar.css";
+import "./styles/your-content.css";
+import "./styles/tiptap.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;

@@ -262,3 +262,120 @@ body {
   display: flex;
   gap: 0.375rem;
 }
+
+/* Notes as TipTap output. */
+.sb-note-editor-tiptap .sb-editor-content {
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  min-height: 5rem;
+}
+.sb-note-editor-tiptap .ProseMirror {
+  outline: none;
+  min-height: 4rem;
+}
+.sb-note-editor-loading {
+  min-height: 6rem;
+}
+.sb-note-card-body .text-center {
+  text-align: center;
+}
+.sb-note-card-body .text-right {
+  text-align: right;
+}
+.sb-note-card-body .text-justify {
+  text-align: justify;
+}
+.sb-note-card-body p:first-child {
+  margin-top: 0;
+}
+.sb-note-card-body p:last-child {
+  margin-bottom: 0;
+}
+.sb-verse-reference-link {
+  color: var(--sb-link-color);
+  text-decoration: underline dotted;
+}
+.sb-content-screen {
+  --sb-content-padding: 0 0 0.75rem;
+}
+.sb-content-quote {
+  display: block;
+  width: 100%;
+  text-align: start;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.sb-content-save-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.sb-content-save {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: start;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  min-width: 0;
+}
+.sb-content-save-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-content-kebab {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+}
+.sb-content-highlight-row,
+.sb-content-annotation {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: start;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.375rem 0;
+}
+.sb-content-highlight {
+  flex: 0 0 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  align-self: center;
+}
+.sb-content-highlight-text,
+.sb-content-annotation-body {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+.sb-content-highlight-ref,
+.sb-content-annotation-head {
+  font-weight: 600;
+  white-space: nowrap;
+}

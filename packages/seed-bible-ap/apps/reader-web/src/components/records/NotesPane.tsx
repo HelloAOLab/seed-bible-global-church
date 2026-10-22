@@ -1,16 +1,82 @@
-// NOTES — the chapter's annotations as a side pane: a draft for the selected verses, each note editable, and a
-// note that came back twice from a merge (edited on two devices) shown as a conflict the reader settles.
-import { useEffect, useState } from "preact/hooks";
+// NOTES — the chapter's annotations as a side pane: a TipTap draft for the selected verses (the editor loads on
+// first use), each note editable, and a note that came back twice from a merge (edited on two devices) shown as a
+// conflict the reader settles. A verse reference typed into a note is a link that opens the chapter.
+import { lazy, Suspense } from "preact/compat";
+import { useEffect, useRef, useState } from "preact/hooks";
+import type { Editor } from "@tiptap/core";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Note } from "../../state/records/annotations";
+import { isHtmlNote, sanitizeNoteHtml } from "./noteHtml";
+import { parseRoute } from "../../state/reading/route";
+
+const TipTapEditor = lazy(() => import("./tiptap/TipTapEditor"));
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/** A note's body as safe HTML: TipTap output sanitized, plain text of the first cut paragraphed. */
+const bodyHtml = (note: string) =>
+  isHtmlNote(note)
+    ? sanitizeNoteHtml(note)
+    : `<p>${escapeHtml(note).replace(/\n/g, "<br>")}</p>`;
+
+function NoteEditor(props: {
+  initial?: string;
+  onSave: (html: string) => void;
+  onCancel: () => void;
+  saveLabel: string;
+  cancelLabel: string;
+}) {
+  const editorRef = useRef<Editor | null>(null);
+  const [empty, setEmpty] = useState(!props.initial);
+  const save = () => {
+    const html = editorRef.current?.getHTML() ?? "";
+    if (!html || editorRef.current?.isEmpty) return;
+    props.onSave(html);
+  };
+  return (
+    <>
+      <Suspense
+        fallback={<div className="sb-note-editor sb-note-editor-loading" />}
+      >
+        <TipTapEditor
+          className="sb-note-editor-tiptap"
+          initialContent={props.initial}
+          onEditor={(e) => (editorRef.current = e)}
+          onEmptyChange={setEmpty}
+          onModEnter={save}
+          autofocus="end"
+        />
+      </Suspense>
+      <div className="sb-note-card-actions">
+        <button
+          type="button"
+          className="sb-note-button sb-note-button-primary"
+          disabled={empty}
+          onClick={save}
+        >
+          {props.saveLabel}
+        </button>
+        <button
+          type="button"
+          className="sb-note-button"
+          onClick={props.onCancel}
+        >
+          {props.cancelLabel}
+        </button>
+      </div>
+    </>
+  );
+}
 
 function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
   const { t } = useI18n();
   const chapterRef = state.reading.chapterRef.value;
   const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(note.note);
   const ref = `${state.reading.bookName.value} ${state.reading.chapterNumber.value}:${note.start === note.end ? note.start : `${note.start}–${note.end}`}`;
+  const hasConflictCopy = state.annotations
+    .forChapter(chapterRef)
+    .value.some((n) => n.conflictOf === note.id);
   return (
     <article
       className={`sb-note-card${note.conflictOf ? " sb-note-card-conflict" : ""}`}
@@ -34,43 +100,24 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
         </p>
       )}
       {editing ? (
-        <>
-          <textarea
-            className="sb-note-editor"
-            value={text}
-            onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
-            rows={4}
-          />
-          <div className="sb-note-card-actions">
-            <button
-              className="sb-note-button sb-note-button-primary"
-              disabled={!text.trim()}
-              onClick={() => {
-                void state.annotations.edit(chapterRef, note.id, text.trim());
-                setEditing(false);
-              }}
-            >
-              {t("save", { defaultValue: "Save" })}
-            </button>
-            <button
-              className="sb-note-button"
-              onClick={() => {
-                setText(note.note);
-                setEditing(false);
-              }}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-          </div>
-        </>
+        <NoteEditor
+          initial={isHtmlNote(note.note) ? note.note : bodyHtml(note.note)}
+          saveLabel={t("save", { defaultValue: "Save" })}
+          cancelLabel={t("cancel", { defaultValue: "Cancel" })}
+          onSave={(html) => {
+            void state.annotations.edit(chapterRef, note.id, html);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+        />
       ) : (
         <>
-          <p className="sb-note-card-body">{note.note}</p>
+          <div
+            className="sb-note-card-body"
+            dangerouslySetInnerHTML={{ __html: bodyHtml(note.note) }}
+          />
           <div className="sb-note-card-actions">
-            {note.conflictOf ||
-            state.annotations
-              .forChapter(chapterRef)
-              .value.some((n) => n.conflictOf === note.id) ? (
+            {(note.conflictOf || hasConflictCopy) && (
               <button
                 className="sb-note-button sb-note-button-primary"
                 onClick={() =>
@@ -79,7 +126,7 @@ function NoteCard({ state, note }: { state: ReaderState; note: Note }) {
               >
                 {t("keep-this-version", { defaultValue: "Keep this version" })}
               </button>
-            ) : null}
+            )}
             <button className="sb-note-button" onClick={() => setEditing(true)}>
               {t("edit", { defaultValue: "Edit" })}
             </button>
@@ -101,27 +148,42 @@ export function NotesPane({ state }: { state: ReaderState }) {
   const chapterRef = state.reading.chapterRef.value;
   const notes = state.annotations.forChapter(chapterRef).value;
   const draft = state.ui.noteDraft.value;
-  const [text, setText] = useState("");
   const focus = state.ui.focusNoteVerse.value;
 
   useEffect(() => {
     if (focus === null) return;
-    const el = document.querySelector<HTMLElement>(
-      `.sb-note-card[data-note-id]`
-    );
     const target = notes.find((n) => n.start === focus);
     if (target)
       document
         .querySelector<HTMLElement>(`[data-note-id="${CSS.escape(target.id)}"]`)
         ?.scrollIntoView({ block: "nearest" });
-    else el?.scrollIntoView({ block: "nearest" });
     state.ui.focusNoteVerse.value = null;
   }, [focus]);
+
+  // A verse-reference link inside a note opens the chapter here instead of leaving the page.
+  const onClick = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement | null)?.closest<HTMLAnchorElement>(
+      "a.sb-verse-reference-link"
+    );
+    if (!a) return;
+    e.preventDefault();
+    const r = parseRoute(a.getAttribute("href") ?? "");
+    if (!r) return;
+    const verse = a.dataset["verse"];
+    void state.reading
+      .goTo(state.reading.translationId.value, r.bookId, r.chapterNumber)
+      .then(() => {
+        if (!verse) return;
+        const [s, en] = verse.split("-").map(Number);
+        state.selection.select(s!, en ?? s!);
+      });
+  };
 
   return (
     <section
       className="sb-pane sb-notes-pane"
       aria-label={t("notes", { defaultValue: "Notes" })}
+      onClick={onClick}
     >
       <header className="sb-pane-header">
         <h2>
@@ -139,22 +201,7 @@ export function NotesPane({ state }: { state: ReaderState }) {
         </button>
       </header>
       {draft && (
-        <form
-          className="sb-note-card sb-note-card-draft"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!text.trim()) return;
-            void state.annotations.add(
-              chapterRef,
-              draft.start,
-              draft.end,
-              text.trim()
-            );
-            setText("");
-            state.ui.noteDraft.value = null;
-            state.selection.clear();
-          }}
-        >
+        <div className="sb-note-card sb-note-card-draft">
           <header className="sb-note-card-header">
             <span className="sb-note-card-ref">
               {state.reading.bookName.value} {state.reading.chapterNumber.value}
@@ -164,34 +211,22 @@ export function NotesPane({ state }: { state: ReaderState }) {
                 : `${draft.start}–${draft.end}`}
             </span>
           </header>
-          <textarea
-            className="sb-note-editor"
-            rows={4}
-            autoFocus
-            value={text}
-            placeholder={t("note", { defaultValue: "Note" })}
-            onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
+          <NoteEditor
+            saveLabel={t("save", { defaultValue: "Save" })}
+            cancelLabel={t("cancel", { defaultValue: "Cancel" })}
+            onSave={(html) => {
+              void state.annotations.add(
+                chapterRef,
+                draft.start,
+                draft.end,
+                html
+              );
+              state.ui.noteDraft.value = null;
+              state.selection.clear();
+            }}
+            onCancel={() => (state.ui.noteDraft.value = null)}
           />
-          <div className="sb-note-card-actions">
-            <button
-              type="submit"
-              className="sb-note-button sb-note-button-primary"
-              disabled={!text.trim()}
-            >
-              {t("save", { defaultValue: "Save" })}
-            </button>
-            <button
-              type="button"
-              className="sb-note-button"
-              onClick={() => {
-                state.ui.noteDraft.value = null;
-                setText("");
-              }}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-          </div>
-        </form>
+        </div>
       )}
       {!notes.length && !draft && (
         <p className="sb-pane-empty">
