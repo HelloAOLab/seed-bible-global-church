@@ -2,6 +2,7 @@
 // geometry the serving plane proxies and caches (the page talks to the workspace's origin only). The places the
 // chapter on screen names are drawn; tapping one selects the verse that names it.
 import { useEffect, useRef, useState } from "preact/hooks";
+import { retryChunkImport } from "../../sw/retryChunkImport";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { A2A_BASE } from "../../api";
@@ -60,7 +61,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
   useEffect(() => {
     let dead = false;
     void (async () => {
-      const L: Leaflet = await import("leaflet");
+      const L: Leaflet = await retryChunkImport(() => import("leaflet"));
       if (dead || !host.current) return;
       if (!mapRef.current) {
         const info = (await fetch(`${A2A_BASE}/api/tiles-info`)

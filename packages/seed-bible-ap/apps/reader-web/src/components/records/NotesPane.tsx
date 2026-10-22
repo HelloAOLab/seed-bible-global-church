@@ -10,7 +10,11 @@ import type { Note } from "../../state/records/annotations";
 import { isHtmlNote, sanitizeNoteHtml } from "./noteHtml";
 import { parseRoute } from "../../state/reading/route";
 
-const TipTapEditor = lazy(() => import("./tiptap/TipTapEditor"));
+import { retryChunkImport } from "../../sw/retryChunkImport";
+
+const TipTapEditor = lazy(() =>
+  retryChunkImport(() => import("./tiptap/TipTapEditor"))
+);
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
