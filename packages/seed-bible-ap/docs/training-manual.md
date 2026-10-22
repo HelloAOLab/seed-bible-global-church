@@ -295,4 +295,4 @@ under the sync line. For a note conflict or a lost mark, the two devices and the
 - Sample people share a Library: another tester's marks may be there already.
 - Phones: the sidebar is a drawer from the toolbar's menu icon; under 480 px the extra actions are under ⋯ More.
 - Friends and presence need two people who added each other at the Home; the sample people have no friends yet, so test with two real Homes (or add a sample person back from your own Home).
-- The friends and presence tools are offered to any agent whose playbook carries the contact list; the person-steward archetype itself has not been re-rolled to list them, so the Home's Ask may not plan "who is online" on its own yet.
+- The person-steward archetype now lists the friends and presence reads, so the Home's Ask plans "who is online" by itself. A Home that has not been opened since 2026-10-22 picks up the new playbook on its next open or app sign-in.
