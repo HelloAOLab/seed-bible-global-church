@@ -27,7 +27,8 @@ export const PUBLIC_FOLDER = "seed-bible/public";
 
 export interface PublishArgs {
   kind: string;
-  passage: string;
+  /** The OSIS passage the slice is for; a customization has none. */
+  passage?: string;
   title: string;
   markdown: string;
   /** Extra descriptor fields (prov:wasDerivedFrom, …); the required ones are built here. */
@@ -78,7 +79,8 @@ export async function publishSlice(
       400,
       `kind must be one of ${OFFERING_KINDS.join(", ")}`
     );
-  if (!isOsisRef(String(raw.passage ?? "")))
+  // A customization is not passage-scoped; everything else is.
+  if (kind !== "customization" && !isOsisRef(String(raw.passage ?? "")))
     throw new WireRefusal(400, "passage must be an OSIS reference (JHN.3)");
   if (!raw.title?.trim()) throw new WireRefusal(400, "title required");
   if (!raw.markdown?.trim()) throw new WireRefusal(400, "markdown required");
@@ -91,7 +93,7 @@ export async function publishSlice(
     "@type": "seed:Offering",
     label: raw.title.trim(),
     publishedBy: reader,
-    offeredForPassage: raw.passage,
+    ...(raw.passage ? { offeredForPassage: raw.passage } : {}),
     offeringKind: conceptIri("offeringkind", kind),
     visibility: conceptIri("visibility", "world"),
   });

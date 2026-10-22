@@ -10,7 +10,12 @@ import {
   plainToMarkdown,
 } from "../../components/records/noteMarkdown";
 import type { Note } from "../records/annotations";
-import type { Playlist, ReadingPlan, PlaylistItem } from "@seed/seed-schema";
+import type {
+  Customization,
+  Playlist,
+  ReadingPlan,
+  PlaylistItem,
+} from "@seed/seed-schema";
 import { spanOf } from "../records/marks";
 import { passageOf } from "../records/marks";
 
@@ -97,7 +102,9 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
         : `- [${it.label ?? it.url}](${it.url})`;
 
   /** A playlist or plan released to the public shelf as a slice (kind playlist / plan), indexed under its first passage. */
-  async function publishWork(work: Playlist | ReadingPlan) {
+  async function publishWork(work: Playlist | ReadingPlan | Customization) {
+    if (work["@type"] === "seed:Customization")
+      return publishCustomization(work);
     const kind = work["@type"] === "seed:Playlist" ? "playlist" : "plan";
     const items: PlaylistItem[] =
       work["@type"] === "seed:Playlist"
@@ -148,7 +155,41 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     }
   }
 
-  async function withdrawWork(id: string, kind: "playlist" | "plan") {
+  async function publishCustomization(work: Customization) {
+    const slug = `customization-${work["@id"].split(":").pop()!.slice(0, 12).toLowerCase()}`;
+    busy.value = work["@id"];
+    error.value = null;
+    try {
+      const r = await backend.publishSlice({
+        kind: "customization",
+        title: work.label,
+        slug,
+        markdown: `# ${work.label}\n\n${work.description ?? ""}\n\n${work.hasVariant.map((v) => `- ${v.label}${v.scheme ? ` (${v.scheme})` : ""}`).join("\n")}`,
+        descriptor: { "prov:wasDerivedFrom": work["@id"], work },
+      });
+      published.value = {
+        ...published.value,
+        [work["@id"]]: {
+          noteId: work["@id"],
+          slug,
+          descriptorId: r.descriptorId,
+          passage: "",
+          publishedAt: new Date().toISOString(),
+        },
+      };
+      await save();
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      throw e;
+    } finally {
+      busy.value = null;
+    }
+  }
+
+  async function withdrawWork(
+    id: string,
+    kind: "playlist" | "plan" | "customization"
+  ) {
     const p = published.value[id];
     if (!p) return;
     busy.value = id;

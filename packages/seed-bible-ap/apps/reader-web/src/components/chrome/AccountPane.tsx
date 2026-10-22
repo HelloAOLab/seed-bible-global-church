@@ -225,6 +225,52 @@ export function AccountPane({ state }: { state: ReaderState }) {
 
       <div className="sb-account-card">
         <label className="sb-small">
+          {t("church-theme", { defaultValue: "Church theme" })}{" "}
+          <select
+            value={state.customizations.selected.value?.descriptorId ?? ""}
+            onChange={(e) => {
+              const id = (e.target as HTMLSelectElement).value;
+              const entry =
+                state.customizations.available.value.find(
+                  (a) => a.offering.descriptorId === id
+                ) ?? null;
+              void state.customizations.select(entry);
+            }}
+          >
+            <option value="">
+              {t("church-theme-none", { defaultValue: "None (Seed Bible)" })}
+            </option>
+            {state.customizations.available.value.map((a) => (
+              <option
+                key={a.offering.descriptorId}
+                value={a.offering.descriptorId}
+              >
+                {a.customization.label} · {a.offering.shelf}
+              </option>
+            ))}
+            {state.customizations.selected.value &&
+              !state.customizations.available.value.some(
+                (a) =>
+                  a.offering.descriptorId ===
+                  state.customizations.selected.value?.descriptorId
+              ) && (
+                <option
+                  value={state.customizations.selected.value.descriptorId}
+                >
+                  {state.customizations.selected.value.label}
+                </option>
+              )}
+          </select>{" "}
+          <button
+            type="button"
+            className="sb-pane-close"
+            aria-label={t("refresh", { defaultValue: "Refresh" })}
+            onClick={() => void state.customizations.refresh()}
+          >
+            <span className="material-symbols-outlined">refresh</span>
+          </button>
+        </label>
+        <label className="sb-small">
           {t("language", { defaultValue: "Language" })}{" "}
           <select
             value={language}

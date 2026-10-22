@@ -11,6 +11,7 @@ import {
   listShelves,
   putShelf,
   queryByPassage,
+  queryByKind,
   queryRecent,
   type OfferingRow,
   removeShelf,
@@ -167,6 +168,16 @@ const rowView = (r: OfferingRow) => ({
 
 app.get("/registry/offerings", async (c) => {
   const passage = c.req.query("passage") ?? "";
+  const kindOnly = c.req.query("kind");
+  if (!passage && kindOnly) {
+    const rows = await queryByKind(c.env.DB, kindOnly);
+    return c.json({
+      ok: true,
+      kind: kindOnly,
+      count: rows.length,
+      offerings: rows.map(rowView),
+    });
+  }
   if (!isOsisRef(passage))
     return c.json(
       { ok: false, error: "passage must be an OSIS reference (JHN.3)" },

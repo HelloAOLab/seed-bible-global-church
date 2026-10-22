@@ -126,11 +126,14 @@ export function createDevBackend(
               (x) => x.toLowerCase() === o.owner || x.toLowerCase() === o.shelf
             )
           )
-        : rows.filter(
-            (o) =>
-              chapterOf(o.passage) === chapterOf(q.passage ?? "") &&
-              (!q.kind || o.kind === q.kind)
-          );
+        : q.passage
+          ? rows.filter(
+              (o) =>
+                o.passage !== "*" &&
+                chapterOf(o.passage) === chapterOf(q.passage ?? "") &&
+                (!q.kind || o.kind === q.kind)
+            )
+          : rows.filter((o) => o.kind === q.kind);
       return clone(
         hit
           .sort((a, b) => b.indexedAt.localeCompare(a.indexedAt))
@@ -147,7 +150,7 @@ export function createDevBackend(
         shelf: `${who!.name.toLowerCase().replace(/\s+/g, "")}.me`,
         entryId: `e-${slug}`,
         version: (registry.get(descriptorId)?.version ?? 0) + 1,
-        passage: args.passage,
+        passage: args.passage ?? "*",
         kind: args.kind,
         title: args.title,
         descriptorId,

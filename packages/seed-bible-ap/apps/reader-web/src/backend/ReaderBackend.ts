@@ -10,7 +10,8 @@ import type { Contact } from "../state/social/today";
 
 export interface PublishSliceArgs {
   kind: string;
-  passage: string;
+  /** The OSIS passage the slice is for; a customization has none. */
+  passage?: string;
   title: string;
   markdown: string;
   slug?: string;
@@ -126,7 +127,8 @@ export interface ReaderBackend {
 export type WorkFolder =
   | "seed-bible/playlists"
   | "seed-bible/plans"
-  | "seed-bible/files";
+  | "seed-bible/files"
+  | "seed-bible/customizations";
 
 export interface UploadedFile {
   url: string;

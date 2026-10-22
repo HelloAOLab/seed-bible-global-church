@@ -7,6 +7,7 @@ import { useI18n } from "../../i18n";
 import type { PlaylistItem } from "@seed/seed-schema";
 import { spanOf } from "../../state/records/marks";
 import { sanitizeNoteHtml } from "../records/noteHtml";
+import { EDITABLE_VARIABLES } from "../../state/chrome/customizations";
 import type { LinkPreview } from "../../backend/ReaderBackend";
 
 function itemLabel(state: ReaderState, it: PlaylistItem): string {
@@ -135,7 +136,12 @@ function Player({ state }: { state: ReaderState }) {
 export function LibraryPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { playlists, plans, reading } = state;
-  const [tab, setTab] = useState<"playlists" | "plans">("playlists");
+  const [tab, setTab] = useState<"playlists" | "plans" | "customizations">(
+    "playlists"
+  );
+  const [variableDrafts, setVariableDrafts] = useState<Record<string, string>>(
+    {}
+  );
   const [open, setOpen] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [planTo, setPlanTo] = useState("");
@@ -176,6 +182,14 @@ export function LibraryPane({ state }: { state: ReaderState }) {
             onClick={() => setTab("plans")}
           >
             {t("reading-plans", { defaultValue: "Reading plans" })}
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "customizations"}
+            className={`sb-selector-pane-chip${tab === "customizations" ? " sb-selector-pane-chip-selected" : ""}`}
+            onClick={() => setTab("customizations")}
+          >
+            {t("customizations", { defaultValue: "Customizations" })}
           </button>
         </div>
         <div>
@@ -415,6 +429,188 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         onClick={() => void playlists.remove(pl["@id"])}
                       >
                         {t("delete-playlist", { defaultValue: "Delete" })}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </article>
+            );
+          })}
+        </>
+      )}
+
+      {tab === "customizations" && (
+        <>
+          <form
+            className="sb-account-card"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!title.trim()) return;
+              void state.customizations
+                .create(title.trim())
+                .then((c) => setOpen(c["@id"]));
+              setTitle("");
+            }}
+          >
+            <p className="sb-small sb-muted">
+              {t("customization-maker-blurb", {
+                defaultValue:
+                  "A branded reader: colours for light and dark, a logo, a default translation. Publish it and readers can pick it under Church theme.",
+              })}
+            </p>
+            <input
+              className="sb-note-editor"
+              placeholder={t("customization-name", {
+                defaultValue: "Name (your church or ministry)",
+              })}
+              value={title}
+              onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
+            />
+            <div className="sb-note-card-actions">
+              <button
+                type="submit"
+                className="sb-note-button sb-note-button-primary"
+                disabled={!title.trim()}
+              >
+                {t("create-customization", { defaultValue: "Create" })}
+              </button>
+            </div>
+          </form>
+          {!state.customizations.mine.live().length && (
+            <p className="sb-pane-empty">
+              {t("customizations-empty", {
+                defaultValue: "No customizations yet.",
+              })}
+            </p>
+          )}
+          {state.customizations.mine.live().map((c) => {
+            const isOpen = open === c["@id"];
+            const published = state.publishing.isPublished(c["@id"]);
+            return (
+              <article key={c["@id"]} className="sb-note-card">
+                <header className="sb-note-card-header">
+                  <button
+                    className="sb-note-card-ref"
+                    onClick={() => setOpen(isOpen ? null : c["@id"])}
+                  >
+                    {c.label}
+                  </button>
+                  {c.logo && (
+                    <img
+                      className="sb-customization-logo"
+                      src={c.logo}
+                      alt=""
+                    />
+                  )}
+                </header>
+                {isOpen && (
+                  <>
+                    {c.hasVariant.map((v) => (
+                      <div key={v["@id"]} className="sb-customization-variant">
+                        <div className="sb-rp-section-label">{v.label}</div>
+                        <div className="sb-customization-grid">
+                          {EDITABLE_VARIABLES.map(([name, label]) => {
+                            const key = `${c["@id"]}:${v["@id"]}:${name}`;
+                            const value =
+                              variableDrafts[key] ?? v.variables[name] ?? "";
+                            return (
+                              <label
+                                key={name}
+                                className="sb-small sb-customization-field"
+                              >
+                                <input
+                                  type="color"
+                                  value={
+                                    /^#[0-9a-f]{6}$/i.test(value)
+                                      ? value
+                                      : "#888888"
+                                  }
+                                  onInput={(e) =>
+                                    setVariableDrafts({
+                                      ...variableDrafts,
+                                      [key]: (e.target as HTMLInputElement)
+                                        .value,
+                                    })
+                                  }
+                                  onChange={(e) =>
+                                    void state.customizations.setVariable(
+                                      c["@id"],
+                                      v["@id"],
+                                      name,
+                                      (e.target as HTMLInputElement).value
+                                    )
+                                  }
+                                />{" "}
+                                {label}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="sb-note-card-actions">
+                      <label className="sb-note-button">
+                        {t("logo", { defaultValue: "Logo" })}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          disabled={!state.session.value}
+                          onChange={(e) => {
+                            const f = (e.target as HTMLInputElement).files?.[0];
+                            if (f)
+                              void state.files
+                                .upload(f)
+                                .then((img) =>
+                                  state.customizations.update(c["@id"], {
+                                    logo: img.url,
+                                  })
+                                )
+                                .catch(() => {});
+                          }}
+                        />
+                      </label>
+                      <button
+                        className="sb-note-button"
+                        onClick={() =>
+                          void state.customizations.update(c["@id"], {
+                            defaultEdition: reading.translationId.value,
+                          })
+                        }
+                      >
+                        {t("default-edition-here", {
+                          defaultValue: "Default translation:",
+                        })}{" "}
+                        {c.defaultEdition ?? "—"} →{" "}
+                        {reading.translationId.value}
+                      </button>
+                      {canPublish && (
+                        <button
+                          className={`sb-note-button${published ? " sb-note-button-published" : ""}`}
+                          disabled={state.publishing.busy.value === c["@id"]}
+                          onClick={() =>
+                            void (
+                              published
+                                ? state.publishing.withdrawWork(
+                                    c["@id"],
+                                    "customization"
+                                  )
+                                : state.publishing.publishWork(c)
+                            ).catch(() => {})
+                          }
+                        >
+                          {published
+                            ? t("published", { defaultValue: "Published" })
+                            : t("publish", { defaultValue: "Publish" })}
+                        </button>
+                      )}
+                      <button
+                        className="sb-note-button sb-note-button-danger"
+                        onClick={() =>
+                          void state.customizations.mine.remove(c["@id"])
+                        }
+                      >
+                        {t("delete-customization", { defaultValue: "Delete" })}
                       </button>
                     </div>
                   </>

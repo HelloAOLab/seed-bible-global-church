@@ -145,7 +145,7 @@ export function createA2aBackend(
       const r = await ask(
         "seed.publish.slice",
         { ...args },
-        `publish my ${args.kind} on ${args.passage}`
+        `publish my ${args.kind}${args.passage ? ` on ${args.passage}` : ""}`
       );
       if (r.published !== true)
         throw new BackendError(

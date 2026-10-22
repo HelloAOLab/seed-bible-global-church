@@ -154,6 +154,21 @@ export async function queryByPassage(
   return r.results ?? [];
 }
 
+/** Every live row of a kind, newest first — what a customization list is (not passage-scoped). */
+export async function queryByKind(
+  db: D1Database,
+  kind: string,
+  max = 100
+): Promise<OfferingRow[]> {
+  const r = await db
+    .prepare(
+      "SELECT * FROM offerings WHERE kind = ?1 AND withdrawn_at IS NULL ORDER BY indexed_at DESC LIMIT ?2"
+    )
+    .bind(kind, Math.min(Math.max(max, 1), 200))
+    .all<OfferingRow>();
+  return r.results ?? [];
+}
+
 /** The newest live rows whose owner address or shelf name is one of `owners`. */
 export async function queryRecent(
   db: D1Database,

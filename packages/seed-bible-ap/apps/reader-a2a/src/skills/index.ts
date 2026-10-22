@@ -142,6 +142,7 @@ const WORK_FOLDERS: ReadonlySet<string> = new Set([
   "seed-bible/playlists",
   "seed-bible/plans",
   "seed-bible/files",
+  "seed-bible/customizations",
 ]);
 const workFolderOf = (raw: unknown): string => {
   const f = String(raw ?? "");
@@ -564,6 +565,22 @@ export function invokers(
         };
       }
       const passage = String(args.passage ?? "");
+      if (!passage && typeof args.kind === "string") {
+        const out = await platformGet<{
+          ok: boolean;
+          count: number;
+          offerings: Array<{ title: string; kind: string; shelf: string }>;
+        }>(
+          deps.env,
+          `/registry/offerings?kind=${encodeURIComponent(args.kind)}`
+        );
+        return {
+          ...out,
+          text: out.count
+            ? `${out.count} ${args.kind}(s): ${out.offerings.map((o) => `${o.title} (${o.shelf})`).join("; ")}`
+            : `No ${args.kind} released yet.`,
+        };
+      }
       const kind =
         typeof args.kind === "string"
           ? `&kind=${encodeURIComponent(args.kind)}`

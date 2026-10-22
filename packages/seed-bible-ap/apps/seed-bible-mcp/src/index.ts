@@ -42,8 +42,8 @@ export function validate(descriptor: unknown, owner?: string) {
     };
   return {
     ok: true as const,
-    passage: chapterOf(o.offeredForPassage),
-    passageRef: o.offeredForPassage,
+    passage: o.offeredForPassage ? chapterOf(o.offeredForPassage) : "*",
+    passageRef: o.offeredForPassage ?? "*",
     kind: o.offeringKind,
     title: o.label,
     id: o["@id"],

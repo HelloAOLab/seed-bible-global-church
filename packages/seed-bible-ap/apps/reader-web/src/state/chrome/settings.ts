@@ -37,7 +37,12 @@ function read(): Persisted {
   }
 }
 
-export function createSettings() {
+export interface SettingsDeps {
+  /** A selected customization's theme for the scheme, when one is selected (state/chrome/customizations.ts). */
+  brand?: (prefersDark: boolean) => BibleTheme | null;
+}
+
+export function createSettings(deps: SettingsDeps = {}) {
   const saved = read();
   const theme = signal<ThemeChoice>(saved.theme ?? "system");
   const fontSize = signal<FontSize>(saved.fontSize ?? "m");
@@ -58,10 +63,10 @@ export function createSettings() {
     mq.addEventListener?.("change", (e) => (systemDark.value = e.matches));
   }
 
+  const prefersDark = () =>
+    theme.value === "dark" || (theme.value === "system" && systemDark.value);
   const resolvedTheme = (): BibleTheme =>
-    theme.value === "dark" || (theme.value === "system" && systemDark.value)
-      ? DARK_THEME
-      : LIGHT_THEME;
+    deps.brand?.(prefersDark()) ?? (prefersDark() ? DARK_THEME : LIGHT_THEME);
 
   // Theme variables are injected body-scoped (what the old ThemeManager did), so they beat the :root defaults.
   const dispose = effect(() => {
@@ -93,7 +98,7 @@ export function createSettings() {
   });
 
   const toggleTheme = () => {
-    theme.value = resolvedTheme().id === "dark" ? "light" : "dark";
+    theme.value = prefersDark() ? "light" : "dark";
   };
 
   return { theme, fontSize, scripture, resolvedTheme, toggleTheme, dispose };

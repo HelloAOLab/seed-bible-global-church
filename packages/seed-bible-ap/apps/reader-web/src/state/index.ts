@@ -15,6 +15,7 @@ import { createLiveSession } from "./sessions/live";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
 import { createFiles } from "./library/files";
+import { createCustomizations } from "./chrome/customizations";
 import { createHighlights } from "./records/highlights";
 import { createAnnotations } from "./records/annotations";
 import { createBookmarks } from "./records/bookmarks";
@@ -85,7 +86,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const files = createFiles(backend, stores, identity);
   const search = createVerseSearch();
   const position = createPosition(stores);
-  const settings = createSettings();
+  const customizations = createCustomizations(backend, stores, identity);
+  const settings = createSettings({
+    brand: (dark) => customizations.theme(dark),
+  });
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
@@ -235,6 +239,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     void today.refresh();
     void playlists.refresh();
     void plans.refresh();
+    void customizations.mine.refresh();
     const pj = ui.pendingJoin.value;
     if (pj) {
       ui.pendingJoin.value = null;
@@ -255,6 +260,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     const target = fromUrl ?? (await position.load());
     tabs.addTab(target ?? {});
     const stops = [bindRoute(readingOf), outbox.start()];
+    void customizations.refresh();
     // A share link: join the session (after sign-in when needed), and drop the query from the URL.
     if (typeof location !== "undefined") {
       const q = new URLSearchParams(location.search);
@@ -284,6 +290,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     playlists,
     plans,
     files,
+    customizations,
     search,
     position,
     settings,

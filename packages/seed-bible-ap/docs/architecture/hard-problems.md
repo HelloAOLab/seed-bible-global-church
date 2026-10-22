@@ -114,6 +114,8 @@ Facts checked against ap-home on 2026-10-21 (`apps/agent-runtime/src/library-too
 
 ## 11. Org acts from a human in the reader UI
 
+**Where it stands 2026-10-22:** customizations are built, published (as a slice of kind `customization`) and selected end to end — from the signed-in **person's** shelf. The org publisher needs the ask-as-org wire; nothing here is blocked on it except whose name is on the shelf.
+
 **Problem.** A church admin edits a customization in reader-web. The write must be the **org agent's** (`.church`) Library, under the org's playbook, by a person with steward standing — but the browser only has the person's id_token and the person's ask-as-me wire.
 
 **Approach.** `seed.workspace.ask.org`: reader-a2a asks the **person's** agent to ask the **org's** agent (routed, spec 329/380 shape) with a `seed.customization.put` plan; the org's harness verifies the person's steward standing and runs `library.file.save` + `visibility public` + `publish` in its own Library. The person signs nothing new; standing is checked where the org lives.

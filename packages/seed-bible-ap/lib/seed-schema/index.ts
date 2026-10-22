@@ -36,6 +36,8 @@ export const SEED_CONTEXT = {
   hasSession: "seed:hasSession",
   progressOf: { "@id": "seed:progressOf", "@type": "@id" },
   heroImage: { "@id": "seed:heroImage", "@type": "@id" },
+  logo: { "@id": "seed:logo", "@type": "@id" },
+  variables: { "@id": "seed:variables", "@type": "@json" },
   completedAt: { "@id": "seed:completedAt", "@type": "xsd:dateTime" },
   createdAt: { "@id": "seed:createdAt", "@type": "xsd:dateTime" },
   updatedAt: { "@id": "seed:updatedAt", "@type": "xsd:dateTime" },
@@ -68,6 +70,7 @@ export const OFFERING_KINDS = [
   "playlist",
   "plan",
   "image",
+  "customization",
 ] as const;
 export const VISIBILITIES = ["world", "friends", "private"] as const;
 
@@ -245,6 +248,25 @@ export const PlanProgress = z.object({
 });
 export type PlanProgress = z.infer<typeof PlanProgress>;
 
+export const ThemeVariant = z.object({
+  "@type": z.literal("seed:ThemeVariant"),
+  "@id": z.string().min(1),
+  label: z.string().min(1),
+  scheme: z.enum(["light", "dark"]).optional(),
+  /** The reader's theme variables (camelCase names of the `--sb-*` set), e.g. primaryColor. */
+  variables: z.record(z.string(), z.string()),
+});
+export type ThemeVariant = z.infer<typeof ThemeVariant>;
+
+export const Customization = z.object({
+  ...work,
+  "@type": z.literal("seed:Customization"),
+  hasVariant: z.array(ThemeVariant).min(1),
+  logo: z.string().url().optional(),
+  defaultEdition: z.string().optional(),
+});
+export type Customization = z.infer<typeof Customization>;
+
 export const GalleryImage = z.object({
   "@id": z.string().min(1),
   "@type": z.literal("seed:GalleryImage"),
@@ -265,7 +287,7 @@ export const Offering = z.object({
   "@type": z.literal("seed:Offering"),
   label: z.string().min(1),
   publishedBy: agentRef,
-  offeredForPassage: osisRef,
+  offeredForPassage: osisRef.optional(),
   offeringKind: z.enum(
     OFFERING_KINDS.map((k) => conceptIri("offeringkind", k)) as [
       string,
@@ -306,5 +328,6 @@ export const SCHEMAS = {
   ReadingPlan,
   PlanProgress,
   GalleryImage,
+  Customization,
 } as const;
 export type SeedClass = keyof typeof SCHEMAS;

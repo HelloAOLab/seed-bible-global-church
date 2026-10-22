@@ -186,7 +186,16 @@ The **music-list** icon in the bottom toolbar opens the Library pane.
 | Publish a playlist or plan  | ✅   | **Publish** on the card (signed in with a wire): it goes to your public shelf and Discover lists it under its first passage.              |
 | Where they are kept         | ✅   | On this device at once; in your Library when signed in (the card's **Refresh** re-reads the Library).                                     |
 
-## 11. Coming next (not working yet)
+## 11. Church themes (customizations)
+
+| Feature                       | Mark | How                                                                                                                                                    |
+| ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Make a customization          | ✅   | Library pane → **Customizations** → name → **Create**. Pick colours for the Light and Dark variants, a logo from a picture, the default translation.   |
+| Publish it                    | ✅   | **Publish** on the card (signed in with a wire). It is released from **your** shelf; a church's own agent as publisher is a later step.                |
+| Use one                       | ✅   | Account pane → **Church theme** → pick one (↻ refreshes the list). The reader takes its colours in light and dark; **None** goes back to Seed Bible's. |
+| Fonts, recommended extensions | ⬜   | [later]                                                                                                                                                |
+
+## 12. Coming next (not working yet)
 
 | Feature                                                                | Step |
 | ---------------------------------------------------------------------- | ---- |
@@ -200,7 +209,7 @@ The **music-list** icon in the bottom toolbar opens the Library pane.
 | Extensions (audio reader, references, transcript, Twitch …), AI        | 8    |
 | Sitemap, embed mode, onboarding tour, legal modals                     | 9    |
 
-## 12. For testers: how to check it yourself
+## 13. For testers: how to check it yourself
 
 - **The live gate** (needs the repo): `cd packages/seed-bible-ap && A2A_BASE=https://seed-reader-a2a.faithnet.io pnpm smoke:reader-web`
   signs in as `seedreader`, makes marks on one "device", reads them on a second, edits a note and cleans up.

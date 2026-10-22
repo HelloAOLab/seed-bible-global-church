@@ -164,8 +164,9 @@ Playlists and reading plans as the reader's own works (`seed:Playlist`, `seed:Re
 documents through `seed.work.save/list/read`), plan progress as a `seed:PlanProgress` mark in the `progress`
 bucket, the Library pane (maker, player, sessions to tick), and Publish for a work (a released slice the registry
 lists). Files: `seed.file.put` → `PUT /files/<owner>/<sha256>.<ext>` on the svc (R2, shared upload token), the catalog as
-`seed:GalleryImage` works; link previews from the svc's `/preview` (cached a day). Not yet: org acts from a
-steward (`seed.workspace.ask.org`, §11) and customizations.
+`seed:GalleryImage` works; link previews from the svc's `/preview` (cached a day). Customizations: made in the Library pane's Customizations tab (variants, colours, logo, default translation),
+published as a slice of kind `customization`, listed by the registry by kind, picked under **Church theme** in the
+account pane and applied over the built-in themes. Not yet: the organization as publisher (`seed.workspace.ask.org`, §11).
 
 ## Deployed on faithnet (2026-10-21)
 
