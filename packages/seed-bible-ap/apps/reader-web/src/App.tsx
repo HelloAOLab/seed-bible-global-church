@@ -7,6 +7,7 @@ import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
 import { FriendsPane } from "./components/social/FriendsPane";
+import { FriendInviteDialog } from "./components/social/FriendInviteDialog";
 import { ShareDialog } from "./components/chrome/ShareDialog";
 import { useEffect, useRef } from "preact/hooks";
 import type { ReaderState } from "./state";
@@ -171,6 +172,7 @@ export function App({ state }: { state: ReaderState }) {
       <FullScreenHelp state={state} />
       <ActivityBar />
       <Toast state={state} />
+      <FriendInviteDialog state={state} />
       <Onboarding state={state} />
     </div>
   );

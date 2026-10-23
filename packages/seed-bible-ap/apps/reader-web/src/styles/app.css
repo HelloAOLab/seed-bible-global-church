@@ -2118,3 +2118,41 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   pointer-events: none;
 }
+
+/* Friends: requests to answer, a friend being added at the Home, add by name, and your friend link. */
+.sb-friend-subtitle {
+  display: block;
+  margin: 0.75rem 0 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.sb-friend-request {
+  gap: 0.5rem;
+}
+.sb-friend-request .sb-friends-person-text {
+  flex: 1;
+  min-width: 0;
+}
+.sb-friend-tools {
+  margin-top: 0.5rem;
+}
+.sb-friend-add-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.sb-friend-add-row .sb-note-editor {
+  flex: 1;
+  min-width: 0;
+}
+.sb-friend-link-url {
+  display: block;
+  margin: 0.375rem 0;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--sb-background);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.sb-friend-invite-agent {
+  overflow-wrap: anywhere;
+}

@@ -21,6 +21,8 @@ import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
 import { createPresence } from "./social/presence";
 import { createProfile } from "./social/profile";
+import { createFriendship, parseFriendLink } from "./social/friendship";
+import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
 import { browserPeerFactory, createVoice } from "./sessions/voice";
 import { createPlaylists } from "./library/playlists";
@@ -47,6 +49,7 @@ import { bibleLanguageToBcp47 } from "./media/languages";
 import { getVersePlainText } from "../components/reader/chapterContent";
 import { computed, effect } from "@preact/signals";
 import {
+  DEFAULT_ESTATE,
   loadSession,
   signOut as forgetSession,
   type ReaderSession,
@@ -130,6 +133,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
+  const friendship = createFriendship({
+    prefs: stores.prefs,
+    friendsView: () => today.friendsView.value,
+    refresh: () => today.refreshContacts(),
+    homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
+  });
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
   /** Guided tours (the old TutorialManager): the introduction, contextual tours, `?tutorial=` links. */
@@ -653,6 +662,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.
       const tour = parseTutorialLink(q);
       if (tour) setTimeout(() => tours.start(tour.id, tour.step), 800);
+      // A friend link (`/friend/<address>?name=…`): who invited you, offered once the page is up.
+      const invite = parseFriendLink(location.pathname, location.search);
+      if (invite) {
+        friendship.invite.value = invite;
+        history.replaceState(null, "", "/");
+      }
       const sid = q.get("session");
       if (sid) {
         const code = q.get("code") ?? undefined;
@@ -693,6 +708,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     publishing,
     today,
     profile,
+    friendship,
     presence,
     live,
     voice,

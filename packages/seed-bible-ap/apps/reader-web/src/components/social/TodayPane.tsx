@@ -8,6 +8,7 @@ import { useI18n } from "../../i18n";
 import { DEFAULT_ESTATE } from "../../session";
 import { estateById } from "../../../../../estate/faithnet";
 import { parseRoute } from "../../state/reading/route";
+import { friendLink } from "../../state/social/friendship";
 
 function label(state: ReaderState, chapter: string) {
   const [book, ch] = chapter.split(".");
@@ -241,7 +242,6 @@ export function FriendsSection({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { today, reading } = state;
   const signedIn = !!state.session.value;
-  const home = estateById(DEFAULT_ESTATE)!.home;
   useEffect(() => {
     if (signedIn && !today.loadedFor.value) void today.refresh();
   }, [signedIn]);
@@ -317,35 +317,7 @@ export function FriendsSection({ state }: { state: ReaderState }) {
             </button>
           </div>
         ))}
-      {signedIn && today.requests.value.length > 0 && (
-        <div className="sb-friend-requests">
-          <p className="sb-small sb-muted">
-            {t("friend-requests", {
-              count: today.requests.value.length,
-              defaultValue: `${today.requests.value.length} added you — add them back to be friends:`,
-            })}
-          </p>
-          {today.requests.value.map((r) => (
-            <div key={r.agent} className="sb-friends-row">
-              <span className="sb-friends-person-text">
-                <span className="sb-friends-person-name">
-                  {r.name ?? r.agent}
-                </span>
-              </span>
-              <a
-                className="sb-note-button"
-                href={`${home}/contacts?add=${encodeURIComponent(r.name ?? r.agent)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t("friend-add-back", {
-                  defaultValue: "Add back at your Home",
-                })}
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
+      {signedIn && <FriendRequests state={state} />}
       {signedIn &&
         !today.contactsLoading.value &&
         !today.friends.value.length &&
@@ -369,26 +341,6 @@ export function FriendsSection({ state }: { state: ReaderState }) {
           })}{" "}
           {today.requested.value.map((r) => r.name ?? r.agent).join(", ")}
         </p>
-      )}
-      {signedIn && (
-        <div className="sb-note-card-actions sb-friend-actions">
-          <a
-            className="sb-note-button"
-            href={`${home}/contacts`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("friend-add", { defaultValue: "Add a friend" })}
-          </a>
-          <a
-            className="sb-note-button"
-            href={`${home}/contacts?invite=1`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("friend-invite-email", { defaultValue: "Invite by email" })}
-          </a>
-        </div>
       )}
       {today.friends.value.map((c) => {
         const here = presenceOf(c.contact);
@@ -445,8 +397,224 @@ export function FriendsSection({ state }: { state: ReaderState }) {
           </div>
         );
       })}
+      {signedIn && <AddFriend state={state} />}
       {signedIn && state.presence.error.value && (
         <p className="sb-small sb-muted">{state.presence.error.value}</p>
+      )}
+    </div>
+  );
+}
+
+/** People who asked you to be friends: Accept (sign at your Home) or Not now (kept on this device). */
+function FriendRequests({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { friendship } = state;
+  const asks = friendship.requests.value;
+  if (!asks.length) return null;
+  return (
+    <div className="sb-friend-requests">
+      <h4 className="sb-friend-subtitle">
+        {t("friend-requests-title", {
+          count: asks.length,
+          defaultValue: "Friend requests ({{count}})",
+        })}
+      </h4>
+      {asks.map((r) => (
+        <div key={r.agent} className="sb-friends-row sb-friend-request">
+          <span className="sb-friends-person-text">
+            <span className="sb-friends-person-name">{r.name ?? r.agent}</span>
+            <span className="sb-friends-person-subtitle">
+              {t("friend-request-line", {
+                defaultValue: "wants to be friends",
+              })}
+            </span>
+          </span>
+          <button
+            type="button"
+            className="sb-note-button sb-note-button-primary"
+            onClick={() => friendship.add(r.agent, r.name)}
+          >
+            {t("friend-accept", { defaultValue: "Accept" })}
+          </button>
+          <button
+            type="button"
+            className="sb-note-button"
+            onClick={() => void friendship.putAside(r.agent)}
+          >
+            {t("friend-not-now", { defaultValue: "Not now" })}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** While a friend is being added at the Home: what to do there, then what came of it. */
+function FriendWaiting({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { friendship } = state;
+  const w = friendship.waiting.value;
+  if (!w) return null;
+  const done = w.was === "friend" || w.was === "you-asked";
+  return (
+    <div className="sb-pane-notice sb-friend-waiting" role="status">
+      {!done ? (
+        <>
+          <p>
+            {t("friend-sign-at-home", {
+              name: w.label,
+              defaultValue:
+                "Sign at your Home to add {{name}} — the window that opened. This updates by itself when you are done.",
+            })}
+          </p>
+          <div className="sb-note-card-actions">
+            <button
+              type="button"
+              className="sb-note-button"
+              onClick={() => friendship.add(w.who, w.label)}
+            >
+              {t("friend-open-home-again", {
+                defaultValue: "Open your Home again",
+              })}
+            </button>
+            <button
+              type="button"
+              className="sb-note-button"
+              onClick={() => friendship.clearWaiting()}
+            >
+              {t("cancel", { defaultValue: "Cancel" })}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p>
+            {w.was === "friend"
+              ? t("friend-now-friends", {
+                  name: w.label,
+                  defaultValue: "✓ You and {{name}} are friends.",
+                })
+              : t("friend-asked", {
+                  name: w.label,
+                  defaultValue:
+                    "✓ Asked {{name}}. You are friends once they accept.",
+                })}
+          </p>
+          <button
+            type="button"
+            className="sb-note-button"
+            onClick={() => friendship.clearWaiting()}
+          >
+            {t("done", { defaultValue: "Done" })}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Add a friend by name, or send your friend link (copy, share, or email it). */
+function AddFriend({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const [who, setWho] = useState("");
+  const [copied, setCopied] = useState(false);
+  const s = state.session.value;
+  const me = s?.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0];
+  const myName = state.profile.mine.value?.displayName || s?.name || "";
+  const link =
+    me && typeof location !== "undefined"
+      ? friendLink(location.origin, me, myName)
+      : "";
+  const invitation = t("friend-link-message", {
+    name: myName || t("a-friend", { defaultValue: "A friend" }),
+    defaultValue: "{{name}} would like to be friends on Seed Bible:",
+  });
+  return (
+    <div className="sb-friend-tools">
+      <FriendWaiting state={state} />
+      <form
+        className="sb-friend-add"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const name = who.trim();
+          if (!name) return;
+          state.friendship.add(name);
+          setWho("");
+        }}
+      >
+        <label className="sb-friend-subtitle" htmlFor="sb-friend-add-input">
+          {t("friend-add", { defaultValue: "Add a friend" })}
+        </label>
+        <div className="sb-friend-add-row">
+          <input
+            id="sb-friend-add-input"
+            className="sb-note-editor"
+            placeholder={t("friend-add-placeholder", {
+              defaultValue: "Their name at a Home, like ruth.me",
+            })}
+            value={who}
+            onInput={(e) => setWho((e.target as HTMLInputElement).value)}
+          />
+          <button
+            type="submit"
+            className="sb-note-button sb-note-button-primary"
+            disabled={!who.trim()}
+          >
+            {t("add", { defaultValue: "Add" })}
+          </button>
+        </div>
+      </form>
+      {link && (
+        <div className="sb-friend-link">
+          <span className="sb-friend-subtitle">
+            {t("friend-link-title", { defaultValue: "Your friend link" })}
+          </span>
+          <p className="sb-small sb-muted">
+            {t("friend-link-hint", {
+              defaultValue:
+                "Send it to anyone. Opening it in the reader lets them add you in one step.",
+            })}
+          </p>
+          <code className="sb-friend-link-url">{link}</code>
+          <div className="sb-note-card-actions">
+            <button
+              type="button"
+              className="sb-note-button"
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(link)
+                  .then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  })
+                  .catch(() => {})
+              }
+            >
+              {copied
+                ? t("copied", { defaultValue: "Copied" })
+                : t("copy-link", { defaultValue: "Copy link" })}
+            </button>
+            {typeof navigator !== "undefined" && "share" in navigator && (
+              <button
+                type="button"
+                className="sb-note-button"
+                onClick={() =>
+                  void navigator
+                    .share({ text: invitation, url: link })
+                    .catch(() => {})
+                }
+              >
+                {t("share", { defaultValue: "Share" })}
+              </button>
+            )}
+            <a
+              className="sb-note-button"
+              href={`mailto:?subject=${encodeURIComponent(invitation)}&body=${encodeURIComponent(`${invitation}\n\n${link}`)}`}
+            >
+              {t("friend-link-email", { defaultValue: "Email it" })}
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );
