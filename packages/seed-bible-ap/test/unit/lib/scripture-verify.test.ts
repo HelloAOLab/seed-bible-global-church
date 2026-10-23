@@ -4,6 +4,7 @@
 // service's. A changed word, a forged root, a repeated verse number, an attestation for another agent or translation,
 // and a signature that is not the delegate's are each caught for what they are.
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
@@ -14,6 +15,7 @@ import {
   type TranslationVerification,
 } from "../../../lib/scripture/verify";
 
+const HERE = dirname(fileURLToPath(import.meta.url));
 const AGENT = "0x3064d88922223881b206dcab68b992b9b2ba90b2";
 const fx = <T>(name: string): T =>
   JSON.parse(
