@@ -144,7 +144,8 @@ export function skillForPath(
 
 /** Part of every edge-cache key: change it when the scripture agent's answers change shape or scope, so the edge
  * stops serving what was cached before (the Cache API cannot be purged from outside the worker). */
-const CACHE_EPOCH = "2";
+const CACHE_EPOCH = "3";
+const OWN_CACHE_CONTROL = "x-own-cache-control";
 
 async function edgeCached(
   c: Context<{ Bindings: BibleEnv }>,
@@ -156,10 +157,24 @@ async function edgeCached(
   url.searchParams.set("_epoch", CACHE_EPOCH);
   const key = new Request(url, { method: "GET" });
   const hit = cache ? await cache.match(key) : undefined;
-  if (hit) return hit;
+  if (hit) {
+    // A cached answer comes back with the zone's browser lifetime (four hours), not its own: give it back its own, so a
+    // translation the scripture agent adds reaches readers in minutes.
+    const own = hit.headers.get(OWN_CACHE_CONTROL);
+    if (!own) return hit;
+    const out = new Response(hit.body, hit);
+    out.headers.set("cache-control", own);
+    out.headers.delete(OWN_CACHE_CONTROL);
+    return out;
+  }
   const res = await build();
-  if (cache && res.status === 200)
-    c.executionCtx.waitUntil(cache.put(key, res.clone()));
+  if (cache && res.status === 200) {
+    const kept = res.clone();
+    const own = res.headers.get("cache-control");
+    const stored = new Response(kept.body, kept);
+    if (own) stored.headers.set(OWN_CACHE_CONTROL, own);
+    c.executionCtx.waitUntil(cache.put(key, stored));
+  }
   return res;
 }
 

@@ -2,7 +2,7 @@
 // asked with a standard SendMessage carrying a data part { skill, args }; its data part comes back with links under
 // /bible/; a refusal (a translation it does not hold) is a 404 with its words; a path the API does not have is a 404
 // without asking anyone.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import {
   bibleRoutes,
@@ -146,5 +146,73 @@ describe("asking the scripture agent", () => {
     const none = await get("/bible/api/BSB/JHN/x.json");
     expect(none.status).toBe(404);
     expect(asked).toHaveLength(1);
+  });
+});
+
+describe("the edge cache", () => {
+  const g = globalThis as { caches?: unknown };
+  const before = g.caches;
+  afterEach(() => {
+    g.caches = before;
+  });
+
+  it("gives a cached answer back its own lifetime, not the zone's four hours", async () => {
+    // Cloudflare's Cache API hands a hit back with the zone's browser lifetime in place of the stored one.
+    const stored = new Map<string, Response>();
+    g.caches = {
+      default: {
+        match: async (req: Request) => {
+          const hit = stored.get(req.url);
+          if (!hit) return undefined;
+          const out = new Response(hit.clone().body, hit);
+          out.headers.set("cache-control", "public, max-age=14400");
+          return out;
+        },
+        put: async (req: Request, res: Response) => {
+          stored.set(req.url, res);
+        },
+      },
+    };
+    let asked = 0;
+    const env: BibleEnv = {
+      SCRIPTURE: {
+        fetch: async (_input, init) => {
+          asked++;
+          const body = JSON.parse(String(init?.body));
+          return Response.json({
+            jsonrpc: "2.0",
+            id: body.id,
+            result: {
+              message: {
+                messageId: "m",
+                role: "ROLE_AGENT",
+                parts: [{ data: { translations: [{ id: "BSB" }] } }],
+              },
+            },
+          });
+        },
+      },
+    };
+    const a = new Hono<{ Bindings: BibleEnv }>();
+    a.route("/", bibleRoutes);
+    const pending: Promise<unknown>[] = [];
+    const get = () =>
+      a.fetch(
+        new Request(
+          "https://reader.test/bible/api/available_translations.json"
+        ),
+        env,
+        {
+          waitUntil: (p: Promise<unknown>) => pending.push(p),
+          passThroughOnException: () => {},
+        } as never
+      );
+    const first = await get();
+    await Promise.all(pending);
+    const second = await get();
+    expect(asked).toBe(1);
+    expect(first.headers.get("cache-control")).toBe("public, max-age=300");
+    expect(second.headers.get("cache-control")).toBe("public, max-age=300");
+    expect(await second.json()).toEqual({ translations: [{ id: "BSB" }] });
   });
 });
