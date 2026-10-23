@@ -142,13 +142,19 @@ export function skillForPath(
   return null;
 }
 
+/** Part of every edge-cache key: change it when the scripture agent's answers change shape or scope, so the edge
+ * stops serving what was cached before (the Cache API cannot be purged from outside the worker). */
+const CACHE_EPOCH = "2";
+
 async function edgeCached(
   c: Context<{ Bindings: BibleEnv }>,
   build: () => Promise<Response>
 ): Promise<Response> {
   const cache = (globalThis as { caches?: { default?: Cache } }).caches
     ?.default;
-  const key = new Request(c.req.url, { method: "GET" });
+  const url = new URL(c.req.url);
+  url.searchParams.set("_epoch", CACHE_EPOCH);
+  const key = new Request(url, { method: "GET" });
   const hit = cache ? await cache.match(key) : undefined;
   if (hit) return hit;
   const res = await build();
