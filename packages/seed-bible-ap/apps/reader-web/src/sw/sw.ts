@@ -41,7 +41,10 @@ const BIBLE_CACHE = "sb-bible-api";
 const FONT_STYLESHEET_CACHE = "sb-font-stylesheets";
 const FONT_FILE_CACHE = "sb-font-files";
 const ASSET_BASE_HREF = new URL("/", self.location.href).href;
-const BIBLE_API_ORIGINS = ["https://bible.helloao.org"];
+const BIBLE_API_ORIGINS = [
+  "https://scripture-api.faithnet.io",
+  "https://bible.helloao.org",
+];
 const FONT_STYLESHEET_ORIGINS = ["https://fonts.googleapis.com"];
 const FONT_FILE_ORIGINS = ["https://fonts.gstatic.com"];
 

@@ -2,7 +2,7 @@
   "name": "@seed-bible/ap",
   "version": "0.0.1",
   "private": true,
-  "description": "Seed Bible on the agenticprimitives substrate — a hello-world reader triad (reader-web, reader-a2a, reader-mcp) on the faithnet town and estate, built the same way as verifiable-content-demo. Feature set is deliberately tiny; the real apps are planned after this scaffold stands.",
+  "description": "Seed Bible on the agenticprimitives substrate \u2014 a hello-world reader triad (reader-web, reader-a2a, reader-mcp) on the faithnet town and estate, built the same way as verifiable-content-demo. Feature set is deliberately tiny; the real apps are planned after this scaffold stands.",
   "type": "module",
   "scripts": {
     "dev": "bash scripts/dev.sh",
@@ -40,9 +40,11 @@
   "dependencies": {
     "@agenticprimitives/a2a": "0.0.0-alpha.45",
     "@agenticprimitives/connect-client": "1.0.0-alpha.31",
+    "@agenticprimitives/content-primitives": "1.0.0-alpha.38",
     "@agenticprimitives/orchestration": "0.0.0-alpha.22",
     "@agenticprimitives/service-host": "0.0.0-alpha.24",
     "@agenticprimitives/types": "1.0.0-alpha.41",
+    "@agenticprimitives/verifiable-credentials": "0.0.0-alpha.38",
     "@preact/signals": "^2.9.1",
     "@tiptap/core": "catalog:",
     "@tiptap/extension-underline": "catalog:",

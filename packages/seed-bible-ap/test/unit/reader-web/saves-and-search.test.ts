@@ -119,16 +119,12 @@ describe("verse search", () => {
     });
     expect(s.parseReference("so loved the world", books)).toBeNull();
   });
-  it("asks the search service for free text, within the open translation, with the search-only key", async () => {
-    const calls: Array<{ url: string; key: string | undefined }> = [];
+  it("asks the scripture agent for free text, within the open translation, with no key in the browser", async () => {
+    const calls: Array<{ url: string; headers: unknown }> = [];
     const s = createVerseSearch({
-      url: "https://search.test",
-      key: "k-search",
+      url: "https://scripture.test/api/search",
       fetchImpl: async (input, init) => {
-        calls.push({
-          url: String(input),
-          key: (init?.headers as Record<string, string>)["x-typesense-api-key"],
-        });
+        calls.push({ url: String(input), headers: init?.headers });
         return new Response(
           JSON.stringify({
             found: 1,
@@ -155,10 +151,10 @@ describe("verse search", () => {
     expect(r.found).toBe(1);
     expect(r.hits[0]).toMatchObject({ book: "JHN", chapter: 3, verse: 16 });
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.key).toBe("k-search");
+    expect(calls[0]!.headers).toBeUndefined();
     const u = new URL(calls[0]!.url);
-    expect(u.pathname).toBe("/collections/bibleVerses.eng/documents/search");
-    expect(u.searchParams.get("filter_by")).toBe("translation:=BSB");
+    expect(u.pathname).toBe("/api/search/eng");
+    expect(u.searchParams.get("translation")).toBe("BSB");
     expect(u.searchParams.get("q")).toBe("so loved");
   });
   it("sends nothing for an empty query and reports a failed call", async () => {

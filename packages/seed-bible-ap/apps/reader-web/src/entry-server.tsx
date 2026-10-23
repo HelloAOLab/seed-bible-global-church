@@ -10,7 +10,7 @@ import {
 import { render } from "preact-render-to-string";
 import {
   FreeUseBibleAPI,
-  FREE_USE_BIBLE_API_ENDPOINT,
+  BIBLE_API_ENDPOINT,
   type TranslationBookChapter,
 } from "./backend/bible";
 import {
@@ -159,7 +159,7 @@ export function versesDescription(
 
 export async function renderChapterPage(
   route: ChapterRoute,
-  endpoint = FREE_USE_BIBLE_API_ENDPOINT,
+  endpoint = BIBLE_API_ENDPOINT,
   verses: [number, number] | null = null
 ): Promise<RenderedChapter | null> {
   const api = new FreeUseBibleAPI(endpoint);

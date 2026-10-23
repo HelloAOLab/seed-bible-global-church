@@ -2,11 +2,11 @@
 // hosts (`/api/d/open-cross-ref/<BOOK>/<ch>.json`; bible.helloao.org answers the browser with CORS, vmfnri does not), read per chapter and kept on the device, offered in Discover
 // for the verses on screen (the selected ones first). Browser-local: the Bible API only.
 import type { DiscoverItem, ExtensionRegistration } from "../host";
+import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import "./references.css";
 
-export const REFERENCES_BASE_URL =
-  "https://bible.helloao.org/api/d/open-cross-ref";
+export const REFERENCES_BASE_URL = `${BIBLE_API_ENDPOINT}api/d/open-cross-ref`;
 
 export interface CrossReference {
   book: string;

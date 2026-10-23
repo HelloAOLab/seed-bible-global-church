@@ -1,21 +1,14 @@
-// VERSE SEARCH — Typesense straight from the browser, as today's SearchManager does and the work order excepts. One
-// GET per query with the search-only key (no client library: the old 150 KB Typesense client is not worth it for
-// one call). A typed reference ("John 3:16", "1 Kings 2") is answered locally by lib/scripture.
+// VERSE SEARCH — the Seed Bible verse index (Typesense), asked through the scripture content service that serves the Bible
+// (`/api/search/{language}`, Typesense's own response shape): no key in the browser, one host for scripture. A typed
+// reference ("John 3:16", "1 Kings 2") is answered locally by lib/scripture.
+import { BIBLE_API_ENDPOINT } from "./bible";
 import {
   parseVerseReference,
   type TranslationBookLike,
   type VerseRef,
 } from "@seed/scripture";
 
-const viteEnv = (
-  import.meta as unknown as { env?: Record<string, string | undefined> }
-).env;
-export const TYPESENSE_URL = (
-  viteEnv?.["VITE_TYPESENSE_URL"] ?? "https://search.seedbible.org"
-).replace(/\/$/, "");
-export const TYPESENSE_SEARCH_KEY =
-  viteEnv?.["VITE_TYPESENSE_SEARCH_KEY"] ?? "";
-const VERSE_COLLECTION_PREFIX = "bibleVerses";
+export const VERSE_SEARCH_URL = `${BIBLE_API_ENDPOINT}api/search`;
 
 export interface VerseHit {
   id: string;
@@ -35,14 +28,12 @@ export interface VerseSearchResult {
 export interface SearchDeps {
   fetchImpl?: typeof fetch;
   url?: string;
-  key?: string;
 }
 
 export function createVerseSearch(deps: SearchDeps = {}) {
   const fetchImpl =
     deps.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
-  const url = deps.url ?? TYPESENSE_URL;
-  const key = deps.key ?? TYPESENSE_SEARCH_KEY;
+  const url = deps.url ?? VERSE_SEARCH_URL;
 
   /** Free-text verse search within one translation; `language` is the translation's ISO 639-3 code. */
   async function searchVerses(
@@ -55,13 +46,12 @@ export function createVerseSearch(deps: SearchDeps = {}) {
     if (!q) return { found: 0, hits: [] };
     const params = new URLSearchParams({
       q,
-      query_by: "referenceNormalized,reference,text",
-      filter_by: `translation:=${translationId}`,
+      translation: translationId,
       per_page: "25",
     });
     const res = await fetchImpl(
-      `${url}/collections/${VERSE_COLLECTION_PREFIX}.${language}/documents/search?${params}`,
-      { headers: { "x-typesense-api-key": key }, ...(signal ? { signal } : {}) }
+      `${url}/${encodeURIComponent(language)}?${params}`,
+      signal ? { signal } : {}
     );
     if (!res.ok) throw new Error(`search answered HTTP ${res.status}`);
     const body = (await res.json()) as {

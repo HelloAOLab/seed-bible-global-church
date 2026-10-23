@@ -10,7 +10,7 @@ import { defaultTranslationFor } from "./reading/defaultTranslation";
 import { bindWakeLock } from "./chrome/wakeLock";
 import { language } from "../i18n";
 import { signal } from "@preact/signals";
-import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
+import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
 import type { ReaderBackend } from "../backend/ReaderBackend";
 import { createA2aBackend } from "../backend/a2a";
 import { indexedDbStores, type ReaderStores } from "../backend/offline/db";
@@ -38,6 +38,7 @@ import { createBookmarks } from "./records/bookmarks";
 import { createSaves } from "./records/saves";
 import { createHistory } from "./records/history";
 import { createVerseSearch } from "../backend/search";
+import { createScriptureCheck } from "./reading/scriptureCheck";
 import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
@@ -90,7 +91,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   );
   const backend = opts.backend ?? createA2aBackend(() => session.value);
   const stores = opts.stores ?? indexedDbStores();
-  const api = opts.api ?? new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+  const api = opts.api ?? new FreeUseBibleAPI(BIBLE_API_ENDPOINT);
 
   const outbox = createOutbox({
     backend,
@@ -126,6 +127,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   registerBuiltInExtensions(extensions);
   const readingHistory = createHistory(buckets, stores, identity);
   const search = createVerseSearch();
+  const scriptureCheck = createScriptureCheck();
   const position = createPosition(stores);
   const customizations = createCustomizations(backend, stores, identity);
   const settings = createSettings({
@@ -719,6 +721,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     files,
     customizations,
     search,
+    scriptureCheck,
     position,
     settings,
     discover,

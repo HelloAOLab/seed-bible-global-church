@@ -1263,6 +1263,16 @@ interface DatasetReference {
 }
 
 export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
+/**
+^ * Where the reader reads scripture: the scripture content service (scripture-api.faithnet.io), which answers the Free Use Bible API's
+ * own paths and shapes from a copy received from it — every verse committed, each translation's root attested by the
+ * agent — so the reader can check what it shows (state/reading/verification.ts). `VITE_BIBLE_API_URL` overrides it.
+ */
+export const BIBLE_API_ENDPOINT = (
+  ((import.meta as unknown as { env?: Record<string, string | undefined> })
+    .env?.["VITE_BIBLE_API_URL"] ??
+    "https://scripture-api.faithnet.io/") as string
+).replace(/\/?$/, "/");
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org/";
 
 export function getDefaultAPIEndpoint(url: URL): string {

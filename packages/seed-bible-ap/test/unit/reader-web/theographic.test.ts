@@ -7,6 +7,7 @@ import {
   entityOf,
   itemsForChapter,
   readTheographic,
+  THEOGRAPHIC_ORIGIN,
   yearText,
 } from "../../../apps/reader-web/src/extensions/theographic/data";
 
@@ -131,7 +132,7 @@ describe("theographic", () => {
     await readTheographic("/api/d/theographic/GEN/12.json", cache, fake);
     await readTheographic("/api/d/theographic/GEN/12.json", cache, fake);
     expect(asked).toEqual([
-      "https://bible.helloao.org/api/d/theographic/GEN/12.json",
+      `${THEOGRAPHIC_ORIGIN}/api/d/theographic/GEN/12.json`,
     ]);
   });
 });

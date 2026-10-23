@@ -2,6 +2,7 @@
 // title and the translation button, the chapter column, the footnote modal, the skeleton and error states), over
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
+import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
 import type { ReaderState } from "../../state";
@@ -42,6 +43,9 @@ export function BibleReader({
   }, [reading]);
   const translationLabel =
     reading.translation.value?.shortName ?? reading.translationId.value;
+  // The text on screen, checked against what was published (state/reading/scriptureCheck.ts).
+  const check = state.scriptureCheck.of(chapter as never);
+  const verseChecks = check && "verses" in check ? check.verses : undefined;
   const saved = state.saves.forPassage(chapterRef).length > 0;
   const bookmarked = state.bookmarks.onChapter(chapterRef).length > 0;
 
@@ -117,6 +121,9 @@ export function BibleReader({
             ui.pane.value = "notes";
             ui.focusNoteVerse.value = verseNumber;
           },
+          ...(verseChecks
+            ? { verseChecks, verseCheckTitle: verseCheckTitle(t) }
+            : {}),
         })}
         {chapter.translation.licenseNotice && (
           <p className="sb-translation-license-notice">
@@ -194,6 +201,13 @@ export function BibleReader({
           >
             {translationLabel}
           </button>
+          <ScriptureCheckBadge
+            check={check}
+            translationName={
+              reading.translation.value?.name ?? translationLabel
+            }
+            chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
+          />
         </div>
         <div className="sb-bible-reader-actions">
           {reading.fromDevice.value && (

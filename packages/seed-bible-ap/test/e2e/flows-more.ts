@@ -2380,4 +2380,89 @@ export const MORE_FLOWS: Flow[] = [
       return `Seed Reader with their picture; then Ruth on a new tab: "${second.who.replace(/\s+/g, " ")}", no picture of Seed Reader's`;
     },
   },
+  {
+    id: "V1",
+    section: "3. Reading",
+    title: "Scripture checked on the device",
+    rows: ["Scripture check"],
+    checks:
+      "John 3 (BSB) opens with a Verified badge beside the translation; every verse number is marked as checked; the badge's sheet says all verses match the published text, that each is part of the translation's published set, that the set is signed by the scripture agent, and where the text was received from",
+    run: async (c) => {
+      await c.open(CH);
+      const badge = c.page.locator(".sb-scripture-check").first();
+      await c.page.waitForFunction(
+        () =>
+          !!document.querySelector(
+            ".sb-scripture-check:not(.sb-scripture-check-busy)"
+          ),
+        undefined,
+        { timeout: 30000 }
+      );
+      const label = (await badge.getAttribute("aria-label")) ?? "";
+      if (!/verified/i.test(label))
+        throw new Error(`the badge says "${label}"`);
+      const marked = await c.page
+        .locator("[data-verse-check=verified]")
+        .count();
+      if (marked < 30) throw new Error(`only ${marked} verse numbers marked`);
+      await badge.click();
+      const sheet = c.page.locator(".sb-scripture-check-sheet");
+      await c.waitText(sheet, /match the published Berean Standard Bible/);
+      await c.waitText(sheet, /signed by the scripture agent/);
+      await c.waitText(sheet, /Received from/);
+      return `Verified; ${marked} verse numbers marked; the sheet names the published set, the signer and the source`;
+    },
+  },
+  {
+    id: "V2",
+    section: "3. Reading",
+    title: "A changed verse is caught",
+    rows: ["Scripture check"],
+    checks:
+      "John 3:16 is altered on its way to the browser (its published fingerprint left as it was): the badge says Check failed, verse 16 — and only 16 — is marked, and the sheet names it",
+    run: async (c) => {
+      await c.page.route("**/api/BSB/JHN/3.json", async (route) => {
+        const res = await route.fetch();
+        const body = (await res.json()) as {
+          chapter: {
+            content: Array<{
+              type: string;
+              number?: number;
+              content?: unknown[];
+            }>;
+          };
+        };
+        body.chapter.content.find(
+          (x) => x.type === "verse" && x.number === 16
+        )!.content = [
+          "For God so loved the world that He sold His one and only Son.",
+        ];
+        await route.fulfill({ response: res, json: body });
+      });
+      await c.open(CH);
+      const badge = c.page.locator(".sb-scripture-check").first();
+      await c.page.waitForFunction(
+        () =>
+          !!document.querySelector(
+            ".sb-scripture-check:not(.sb-scripture-check-busy)"
+          ),
+        undefined,
+        { timeout: 30000 }
+      );
+      const label = (await badge.getAttribute("aria-label")) ?? "";
+      if (!/check failed/i.test(label))
+        throw new Error(`the badge says "${label}"`);
+      const flagged = await c.page
+        .locator("[data-verse-check=text-differs]")
+        .allInnerTexts();
+      if (flagged.map((x) => x.trim()).join(",") !== "16")
+        throw new Error(`flagged: ${flagged.join(", ") || "none"}`);
+      await badge.click();
+      await c.waitText(
+        c.page.locator(".sb-scripture-check-sheet"),
+        /do not match the published text: 16\./
+      );
+      return "Check failed; only verse 16 marked; the sheet names it";
+    },
+  },
 ];

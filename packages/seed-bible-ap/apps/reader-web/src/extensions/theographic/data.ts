@@ -2,8 +2,9 @@
 // the people, places and events in it and the verses they appear in; per entity, its description, relations and
 // references. Public and keyless (the Bible API exception); records are kept on the device once read.
 import type { DiscoverItem } from "../host";
+import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 
-export const THEOGRAPHIC_ORIGIN = "https://bible.helloao.org";
+export const THEOGRAPHIC_ORIGIN = BIBLE_API_ENDPOINT.replace(/\/$/, "");
 const PATH = /^\/api\/d\/theographic\/[A-Za-z0-9_./-]+\.json$/;
 
 export interface Related {

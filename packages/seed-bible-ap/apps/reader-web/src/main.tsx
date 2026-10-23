@@ -3,7 +3,7 @@ import { relayCodeIfPopupReturn } from "@agenticprimitives/connect-client";
 import { App } from "./App";
 import { RELAY_CHANNEL } from "./session";
 import { createReaderState } from "./state";
-import { FREE_USE_BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "./backend/bible";
+import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "./backend/bible";
 import { SEED_GLOBAL } from "./entry-server";
 import { hydrateChapter } from "./hydrate";
 import { BUILD_ID } from "./build";
@@ -46,7 +46,7 @@ async function boot() {
     buildId: BUILD_ID,
   });
   await initI18n();
-  const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+  const api = new FreeUseBibleAPI(BIBLE_API_ENDPOINT);
   if (seed && typeof seed === "object")
     api.seedResponseCache(seed as Record<string, unknown>);
   const state = createReaderState({ api });

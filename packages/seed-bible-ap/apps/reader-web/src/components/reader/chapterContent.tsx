@@ -3,6 +3,7 @@
 // markers, verse numbers and highlight runs look as they do in the reader today. What was left out of this cut:
 // live-session decorations and presence. The highlight runs carry `data-highlight-fill` for the ribbon layer in
 // ChapterColumn.tsx, which draws each run as a rounded path behind the text.
+import type { VerseCheck } from "@seed/scripture/verify";
 import { Fragment, type JSX } from "preact";
 import type { ChapterVerse, TranslationBookChapter } from "../../backend/bible";
 import type { ChapterHighlight } from "../../state/records/highlights";
@@ -198,6 +199,10 @@ export interface ChapterContentOptions {
   onVerseClick: (verseNumber: number, event: MouseEvent) => void;
   onOpenFootnote: (noteId: number, verse: ChapterVerse | null) => void;
   onAnnotationVerseClick: (verseNumber: number, event: MouseEvent) => void;
+  /** Each verse's check against the published text (state/reading/scriptureCheck.ts), by verse number. */
+  verseChecks?: Record<string, VerseCheck>;
+  /** What a verse's check says, for its title. */
+  verseCheckTitle?: (status: VerseCheck) => string;
 }
 
 export function renderChapterContent(
@@ -241,15 +246,21 @@ export function renderChapterContent(
     const annotated = hasNote(verseNumber);
     const handle = (event: MouseEvent) =>
       opts.onAnnotationVerseClick(verseNumber, event);
+    const check = opts.verseChecks?.[String(verseNumber)];
+    // A verse that does not match is always marked, verse numbers shown or not; a checked one marks its number.
+    const alarm = check === "text-differs" || check === "not-in-corpus";
     if (scriptureElements.showVerseNumbers) {
       return (
         <sup
           className={[
             "sb-verse-number",
             annotated ? "sb-verse-number-annotated" : "",
+            check ? `sb-verse-check-${check}` : "",
           ]
             .filter(Boolean)
             .join(" ")}
+          title={check ? opts.verseCheckTitle?.(check) : undefined}
+          data-verse-check={check}
           onClick={annotated ? handle : undefined}
           role={annotated ? "button" : undefined}
           tabIndex={annotated ? 0 : undefined}
@@ -258,6 +269,16 @@ export function renderChapterContent(
         </sup>
       );
     }
+    if (alarm && !annotated)
+      return (
+        <sup
+          className={`sb-verse-number sb-verse-check-${check}`}
+          title={opts.verseCheckTitle?.(check)}
+          data-verse-check={check}
+        >
+          <span className="material-symbols-outlined">gpp_maybe</span>
+        </sup>
+      );
     if (!annotated) return null;
     return (
       <sup
