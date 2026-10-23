@@ -87,11 +87,13 @@ export function createScriptureCheck(
     if (!res.ok) throw new Error(`${path}: ${res.status}`);
     return (await res.json()) as T;
   };
-  const translationOf = (id: string) => {
-    let p = translations.get(id);
+  const translationOf = (id: string, fresh = false) => {
+    let p = fresh ? undefined : translations.get(id);
     if (!p) {
+      // `fresh` asks past every cache (the page's, the service worker's, the edge's): a translation re-signed by the
+      // scripture agent must not be judged on a copy kept from before
       p = getJson<TranslationVerification>(
-        `api/${encodeURIComponent(id)}/verification.json`
+        `api/${encodeURIComponent(id)}/verification.json${fresh ? `?fresh=${Date.now()}` : ""}`
       );
       translations.set(id, p);
       p.catch(() => translations.delete(id));
@@ -107,18 +109,25 @@ export function createScriptureCheck(
     }
     try {
       // The proofs arrive with the chapter (the scripture agent's read-chapter, includeProofs); else they are asked for.
-      const [proofs, tv] = await Promise.all([
+      const [proofs, first] = await Promise.all([
         v.proofs
           ? { corpusRoot: v.corpusRoot, verses: v.proofs }
           : getJson<ChapterProofs>(v.proofsLink),
         translationOf(c.translation.id),
       ]);
+      let tv = first;
       const verses = checkChapterText(c.chapter.content, v, proofs);
-      const attestation = await checkAttestation(tv, {
+      const expected = {
         agentSa,
         translationId: c.translation.id,
         corpusRoot: v.corpusRoot,
-      });
+      };
+      let attestation = await checkAttestation(tv, expected);
+      // "Not attested" is a verdict, so it is never given on a kept copy: ask the agent once more, fresh
+      if (!attestation.ok) {
+        tv = await translationOf(c.translation.id, true);
+        attestation = await checkAttestation(tv, expected);
+      }
       const problems = Object.entries(verses)
         .filter(([, s]) => s === "text-differs" || s === "not-in-corpus")
         .map(([n]) => n);

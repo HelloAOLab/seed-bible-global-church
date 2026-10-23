@@ -111,7 +111,8 @@ export function skillForPath(
     return {
       skill: m[2] === "books" ? "list-books" : "translation-attestation",
       args: { translationId: m[1] },
-      maxAge: 86400,
+      // an attestation is re-signed when a translation is put in the store again: kept minutes, not a day
+      maxAge: m[2] === "books" ? 86400 : 300,
     };
   m =
     /^([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)\/(\d{1,3})(?:\.([A-Za-z0-9_-]{1,40})\.audioTimings)?\.json$/.exec(
@@ -144,7 +145,7 @@ export function skillForPath(
 
 /** Part of every edge-cache key: change it when the scripture agent's answers change shape or scope, so the edge
  * stops serving what was cached before (the Cache API cannot be purged from outside the worker). */
-const CACHE_EPOCH = "3";
+const CACHE_EPOCH = "5";
 const OWN_CACHE_CONTROL = "x-own-cache-control";
 
 async function edgeCached(
