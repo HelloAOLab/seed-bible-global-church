@@ -1,6 +1,6 @@
 # Seed Bible on faithnet — training manual
 
-_Last updated 2026-10-22, after the Playwright flow run (22 of 22 flows passed). Rows the gap analysis calls thin are 🟡 until the gap build closes them. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**._
+_Last updated 2026-10-22, end of day. The last full Playwright run (75 flows, `pnpm e2e`) passed 68, failed 4 (G3 keyboard navigation, G11 guided tour, P3 publish a playlist with a cover, X5 Twitch watch) and skipped 3 that need a second person (S5, S8, S9); a later partial run found L2 (show everyone, roster, chat, record) failing with a page error, so treat that row as under repair. Rows the gap analysis calls thin are 🟡. Everything marked ✅ is deployed on seed-reader.faithnet.io and www.faithnet.me. The app is at **https://seed-reader.faithnet.io**. Where the build sits overall: [the gap analysis](./architecture/gap-analysis.md) "Where we sit"._
 
 This manual is for anyone trying the new reader: what it is, how to use each feature, and which features should
 work today. Every feature carries a mark:
