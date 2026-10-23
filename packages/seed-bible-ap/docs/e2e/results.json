@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-23 02:23 UTC",
+  "when": "2026-10-23 04:13 UTC",
   "results": [
     {
-      "id": "A3",
-      "section": "2. Getting in",
-      "title": "Another person on the same device sees none of the last one's things",
-      "checks": "Seed Reader signs in (their profile picture shows); the tab is closed without signing out; Ruth signs in on a new tab of the same browser — her account, and no picture or profile of Seed Reader's",
+      "id": "V2",
+      "section": "3. Reading",
+      "title": "A changed verse is caught",
+      "checks": "John 3:16 is altered on its way to the browser (its published fingerprint left as it was; John 3 reached from John 2, so it is fetched): the badge says Check failed, verse 16 — and only 16 — is marked, and the sheet names it",
       "mark": "✅",
-      "note": "Seed Reader with their picture; then Ruth on a new tab: \"R Ruth Bankole 0x8421bd63… · Faithnet\", no picture of Seed Reader's",
-      "ms": 75185
+      "note": "Check failed; only verse 16 marked; the sheet names it",
+      "ms": 1555
     }
   ]
 }

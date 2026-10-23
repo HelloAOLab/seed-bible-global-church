@@ -1,5 +1,5 @@
-# Flow results — 2026-10-23 02:23 UTC — https://seed-reader.faithnet.io
+# Flow results — 2026-10-23 04:13 UTC — https://seed-reader.faithnet.io
 
 | Flow | Feature | Mark | What was checked | Result |
 | --- | --- | --- | --- | --- |
-| A3 | Another person on the same device sees none of the last one's things | ✅ | Seed Reader signs in (their profile picture shows); the tab is closed without signing out; Ruth signs in on a new tab of the same browser — her account, and no picture or profile of Seed Reader's | Seed Reader with their picture; then Ruth on a new tab: "R Ruth Bankole 0x8421bd63… · Faithnet", no picture of Seed Reader's |
+| V2 | A changed verse is caught | ✅ | John 3:16 is altered on its way to the browser (its published fingerprint left as it was; John 3 reached from John 2, so it is fetched): the badge says Check failed, verse 16 — and only 16 — is marked, and the sheet names it | Check failed; only verse 16 marked; the sheet names it |

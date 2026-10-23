@@ -2419,50 +2419,74 @@ export const MORE_FLOWS: Flow[] = [
     title: "A changed verse is caught",
     rows: ["Scripture check"],
     checks:
-      "John 3:16 is altered on its way to the browser (its published fingerprint left as it was): the badge says Check failed, verse 16 — and only 16 — is marked, and the sheet names it",
+      "John 3:16 is altered on its way to the browser (its published fingerprint left as it was; John 3 reached from John 2, so it is fetched): the badge says Check failed, verse 16 — and only 16 — is marked, and the sheet names it",
     run: async (c) => {
-      await c.page.route("**/api/BSB/JHN/3.json", async (route) => {
-        const res = await route.fetch();
-        const body = (await res.json()) as {
-          chapter: {
-            content: Array<{
-              type: string;
-              number?: number;
-              content?: unknown[];
-            }>;
-          };
-        };
-        body.chapter.content.find(
-          (x) => x.type === "verse" && x.number === 16
-        )!.content = [
-          "For God so loved the world that He sold His one and only Son.",
-        ];
-        await route.fulfill({ response: res, json: body });
+      // Its own browser with no service worker: a worker's fetches are not the page's, and would pass untouched.
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        serviceWorkers: "block",
       });
-      await c.open(CH);
-      const badge = c.page.locator(".sb-scripture-check").first();
-      await c.page.waitForFunction(
-        () =>
-          !!document.querySelector(
-            ".sb-scripture-check:not(.sb-scripture-check-busy)"
-          ),
-        undefined,
-        { timeout: 30000 }
-      );
-      const label = (await badge.getAttribute("aria-label")) ?? "";
-      if (!/check failed/i.test(label))
-        throw new Error(`the badge says "${label}"`);
-      const flagged = await c.page
-        .locator("[data-verse-check=text-differs]")
-        .allInnerTexts();
-      if (flagged.map((x) => x.trim()).join(",") !== "16")
-        throw new Error(`flagged: ${flagged.join(", ") || "none"}`);
-      await badge.click();
-      await c.waitText(
-        c.page.locator(".sb-scripture-check-sheet"),
-        /do not match the published text: 16\./
-      );
-      return "Check failed; only verse 16 marked; the sheet names it";
+      const page = await ctx.newPage();
+      try {
+        await page.route("**/api/BSB/JHN/3.json", async (route) => {
+          // A request the page dropped (it moved on) must not throw out of the handler.
+          const res = await route.fetch().catch(() => null);
+          if (!res) return;
+          const body = (await res.json()) as {
+            chapter: {
+              content: Array<{
+                type: string;
+                number?: number;
+                content?: unknown[];
+              }>;
+            };
+          };
+          body.chapter.content.find(
+            (x) => x.type === "verse" && x.number === 16
+          )!.content = [
+            "For God so loved the world that He sold His one and only Son.",
+          ];
+          await route.fulfill({ response: res, json: body }).catch(() => {});
+        });
+        // John 3 is reached in the app (John 2 → Next), so it is fetched — a page opened on it carries it from the edge.
+        await c.open("/read/BSB/JHN/2", page);
+        await page
+          .locator('.sb-reader-toolbar button[aria-label="Next Chapter"]')
+          .first()
+          .click();
+        await page.waitForURL(/\/JHN\/3$/, { timeout: 20000 });
+        const badge = page.locator(".sb-scripture-check").first();
+        // The address moves before John 3 arrives — John 2's badge is still there for a moment. Wait for John 3's text.
+        await page
+          .locator('[data-verse-number="16"]', { hasText: "He sold" })
+          .first()
+          .waitFor({ timeout: 30000 });
+        await page.waitForFunction(
+          () =>
+            !!document.querySelector(
+              ".sb-scripture-check:not(.sb-scripture-check-busy)"
+            ),
+          undefined,
+          { timeout: 30000 }
+        );
+        const label = (await badge.getAttribute("aria-label")) ?? "";
+        if (!/check failed/i.test(label))
+          throw new Error(`the badge says "${label}"`);
+        const flagged = await page
+          .locator("[data-verse-check=text-differs]")
+          .allInnerTexts();
+        if (flagged.map((x) => x.trim()).join(",") !== "16")
+          throw new Error(`flagged: ${flagged.join(", ") || "none"}`);
+        await badge.click();
+        await c.waitText(
+          page.locator(".sb-scripture-check-sheet"),
+          /do not match the published text: 16\./
+        );
+        return "Check failed; only verse 16 marked; the sheet names it";
+      } finally {
+        await page.unrouteAll({ behavior: "ignoreErrors" });
+        await ctx.close();
+      }
     },
   },
 ];
