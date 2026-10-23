@@ -2260,7 +2260,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Sign in with your Home; sign out",
     rows: ["Sign in with your Home", "Sign out"],
     checks:
-      'Account → Sign in with faithnet opens the Home; a demo person approves the reader — the Account pane closes, "Signed in as …" shows and the reader is signed in with no refresh; Sign out returns to the start page, signed out. Then the same with popups blocked (the page goes to the Home and back)',
+      'Account → Sign in with faithnet opens the Home; a demo person approves the reader — the Account pane closes, "Signed in as …" shows and the reader is signed in with no refresh; Sign out signs out of the Home too and returns to the start page — signing in again, the Home asks who you are. Then the same with popups blocked (the page goes to the Home and back)',
     run: async (c) => {
       const viaHome = async (
         page: import("playwright").Page,
@@ -2298,9 +2298,31 @@ export const MORE_FLOWS: Flow[] = [
           .waitFor({ timeout: 5000 });
         await c.pressToolbar("Account settings", page);
         await page.getByRole("button", { name: /^sign out$/i }).click();
+        await page.waitForURL(/seed-reader\.faithnet\.io/, { timeout: 30000 });
+        await c.dismissWelcome(page);
         await page
           .locator('.sb-reader-toolbar button[aria-label="Sign in"]')
           .waitFor({ timeout: 20000 });
+        // Signed out of the Home too: signing in again asks who you are instead of reusing the last person.
+        await c.pressToolbar("Sign in", page);
+        const reopened = popup
+          ? page.context().waitForEvent("page", { timeout: 15000 })
+          : null;
+        await page
+          .locator(".sb-app-pane")
+          .getByRole("button", { name: /sign in with faithnet/i })
+          .click();
+        const again = reopened ? await reopened : page;
+        await again
+          .getByText(/demo people/i)
+          .first()
+          .waitFor({ timeout: 30000 })
+          .catch(() => {
+            throw new Error(
+              "after signing out, the Home did not ask who is signing in"
+            );
+          });
+        if (reopened) await again.close();
         return said;
       };
       const popup = await viaHome(c.page, true);

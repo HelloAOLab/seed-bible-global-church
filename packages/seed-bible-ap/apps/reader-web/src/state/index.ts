@@ -493,8 +493,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     forgetSession();
     session.value = null;
     buckets.reset();
-    // A fresh start page: nothing of the person stays on screen or in memory.
-    if (typeof location !== "undefined") location.assign("/");
+    // Out of the Home too (its single sign-on), so the next sign-in asks who you are rather than reusing the last
+    // person; the Home's /logout ends its session and returns here to a fresh start page.
+    if (typeof location !== "undefined") {
+      const home = estateById(DEFAULT_ESTATE)?.home;
+      location.assign(
+        home
+          ? `${home}/logout?return=${encodeURIComponent(`${location.origin}/`)}`
+          : "/"
+      );
+    }
   }
 
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.

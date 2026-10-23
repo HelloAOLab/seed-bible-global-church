@@ -1,5 +1,6 @@
-# Flow results — 2026-10-23 01:58 UTC — https://seed-reader.faithnet.io
+# Flow results — 2026-10-23 02:01 UTC — https://seed-reader.faithnet.io
 
 | Flow | Feature | Mark | What was checked | Result |
 | --- | --- | --- | --- | --- |
-| PH1 | A phone: the bar at the top, the page scrolls, sign-in stands out | ✅ | On an iPhone 13: the reader's bar sits at the top; the Tabs drawer closes with its ✕ and with a tap beside it; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane | bar at y=8; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; sign-in filled (rgb(224, 123, 76)) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane |
+| A1 | Sign in as a sample person, mark, sync, sign out | ✅ | Account pane → a sample person → the chip shows their name; a highlight reaches the Library ('Everything is in your Library'); Sign out clears the chip | signed in as Seed Reader; the highlight reached the Library; signed out |
+| A2 | Sign in with your Home; sign out | ✅ | Account → Sign in with faithnet opens the Home; a demo person approves the reader — the Account pane closes, "Signed in as …" shows and the reader is signed in with no refresh; Sign out signs out of the Home too and returns to the start page — signing in again, the Home asks who you are. Then the same with popups blocked (the page goes to the Home and back) | popup: "Signed in as seedreader.me", landed in the reader, signed out to the start page; popups blocked: "Signed in as seedreader.me", the same |
