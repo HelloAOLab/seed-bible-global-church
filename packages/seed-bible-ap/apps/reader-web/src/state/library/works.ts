@@ -71,9 +71,14 @@ export function createWorks<T extends WorkLike>(
         const raw = await backend.readWork(folder, e.name).catch(() => null);
         if (raw) docs.push(...tryParse(raw));
       }
-      // The Library's copy wins over the device's for the same id; works only on the device stay.
+      // The newer copy wins for the same id — a Library read can still trail a save made a moment ago on this
+      // device; works only on the device stay.
       const byId = new Map(all.value.map((w) => [w["@id"], w] as const));
-      for (const d of docs) byId.set(d["@id"], d);
+      for (const d of docs) {
+        const here = byId.get(d["@id"]);
+        if (!here || (d.updatedAt ?? "") >= (here.updatedAt ?? ""))
+          byId.set(d["@id"], d);
+      }
       all.value = [...byId.values()];
       await persist();
       await persistIds();

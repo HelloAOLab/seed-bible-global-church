@@ -540,7 +540,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Your profile",
     rows: ["Your profile"],
     checks:
-      "Account → Your profile: a display name and a line → Save; after a reload they are still there; Publish → Published, then unpublished",
+      "Account → Your profile: a display name and a line → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -554,7 +554,10 @@ export const MORE_FLOWS: Flow[] = [
         .getByRole("button", { name: /^save$/i })
         .first()
         .click();
-      await c.page.waitForTimeout(2500);
+      const status = pane.locator(".sb-profile-card [role=status]");
+      const t0 = Date.now();
+      await c.waitText(status, /Saved to your Library/, 60000);
+      const took = ((Date.now() - t0) / 1000).toFixed(1);
       await c.page.reload();
       await c.page
         .locator(".sb-app:not(.sb-app-ssr)")
@@ -584,7 +587,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator("button", { hasText: /(^|\s)Publish\s*$/ })
         .first()
         .waitFor({ timeout: 90000 });
-      return `profile line "${line}" kept across a reload; published, then withdrawn`;
+      return `"Saved to your Library" after ${took}s; profile line "${line}" kept across a reload; published, then withdrawn`;
     },
   },
   {

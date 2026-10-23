@@ -492,5 +492,10 @@
   "full-screen-other": "Use your browser's menu: Install app or Add to Home screen, or its full-screen mode (F11 on a computer).",
   "full-screen-scroll": "In the browser, scrolling down the chapter also folds its bars away.",
   "full-screen-exit": "Exit full screen",
-  "full-screen": "Full screen"
+  "full-screen": "Full screen",
+  "saving": "Saving…",
+  "profile-saving": "Saving to your Library…",
+  "profile-saved": "✓ Saved to your Library",
+  "profile-saved-device": "✓ Saved on this device — sign in to keep it in your Library",
+  "profile-save-failed": "Saved on this device, but not yet in your Library: {{reason}} Tap Save to try again."
 }

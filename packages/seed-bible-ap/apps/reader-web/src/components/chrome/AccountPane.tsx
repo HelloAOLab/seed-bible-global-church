@@ -54,6 +54,19 @@ function ProfileCard({ state }: { state: ReaderState }) {
   }, [p?.displayName, p?.about]);
   const published = !!p && state.publishing.isPublished(p["@id"]);
   const canPublish = !!state.session.value?.wire;
+  // What became of the last save: the device copy is at once, the Library's takes a few seconds (or fails).
+  const [status, setStatus] = useState<"saving" | "saved" | "failed" | null>(
+    null
+  );
+  const save = async (patch: Parameters<typeof state.profile.save>[0]) => {
+    setStatus("saving");
+    await state.profile.save(patch);
+    const failed = !!state.profile.error.value;
+    setStatus(failed ? "failed" : "saved");
+    if (!failed)
+      setTimeout(() => setStatus((s) => (s === "saved" ? null : s)), 4000);
+    return !failed;
+  };
   return (
     <div className="sb-account-card sb-profile-card">
       <p className="sb-small">
@@ -72,16 +85,16 @@ function ProfileCard({ state }: { state: ReaderState }) {
           target={PROFILE_PICTURE}
           label={t("profile-picture", { defaultValue: "Picture" })}
           cropTitle={t("crop-your-photo", { defaultValue: "Crop your photo" })}
-          onPicked={(url) => state.profile.save({ picture: url })}
+          onPicked={(url) => save({ picture: url })}
         />
       </div>
       <form
         className="sb-item-editor"
         onSubmit={(e) => {
           e.preventDefault();
-          void state.profile
-            .save({ displayName: name, about })
-            .then(() => setDirty(false));
+          void save({ displayName: name, about }).then(
+            (ok) => ok && setDirty(false)
+          );
         }}
       >
         <input
@@ -106,9 +119,12 @@ function ProfileCard({ state }: { state: ReaderState }) {
           <button
             type="submit"
             className="sb-note-button sb-note-button-primary"
-            disabled={!dirty}
+            // After a failed send, Save tries again even with nothing changed.
+            disabled={(!dirty && status !== "failed") || status === "saving"}
           >
-            {t("save", { defaultValue: "Save" })}
+            {status === "saving"
+              ? t("saving", { defaultValue: "Saving…" })
+              : t("save", { defaultValue: "Save" })}
           </button>
           {canPublish && p && (
             <button
@@ -130,6 +146,32 @@ function ProfileCard({ state }: { state: ReaderState }) {
           )}
         </div>
       </form>
+      <p
+        className={`sb-small${status === "failed" ? " sb-pane-error" : " sb-muted"}`}
+        role="status"
+      >
+        {status === "saving" &&
+          (state.session.value
+            ? t("profile-saving", {
+                defaultValue: "Saving to your Library…",
+              })
+            : t("saving", { defaultValue: "Saving…" }))}
+        {status === "saved" &&
+          (state.session.value
+            ? t("profile-saved", {
+                defaultValue: "✓ Saved to your Library",
+              })
+            : t("profile-saved-device", {
+                defaultValue:
+                  "✓ Saved on this device — sign in to keep it in your Library",
+              }))}
+        {status === "failed" &&
+          t("profile-save-failed", {
+            defaultValue:
+              "Saved on this device, but not yet in your Library: {{reason}} Tap Save to try again.",
+            reason: state.profile.error.value ?? "",
+          })}
+      </p>
       <p className="sb-small sb-muted">
         {t("profile-note", {
           defaultValue:
@@ -229,7 +271,7 @@ function PublishAsCard({ state }: { state: ReaderState }) {
   return (
     <div className="sb-account-card">
       <label className="sb-small sb-account-row">
-        <span>{t("publish-as", { defaultValue: "Publish as" })}</span>
+        <strong>{t("publish-as", { defaultValue: "Publish as" })}</strong>
         <select
           value={current}
           onChange={(e) => {
@@ -917,7 +959,6 @@ export function AccountPane({ state }: { state: ReaderState }) {
             })}
           </label>
         )}
-        <p className="sb-small"></p>
         <label className="sb-small sb-check">
           <input
             type="checkbox"
