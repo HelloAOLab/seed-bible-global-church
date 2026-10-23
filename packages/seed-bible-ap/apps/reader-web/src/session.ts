@@ -108,12 +108,15 @@ function clientFor(estateId: EstateId): ConnectClient {
     resolveAuthOrigin: () => est.home,
     isAllowedIssuerOrigin: (origin) => isAllowedIssuer(estateId, origin),
   });
-  // The same client, asking for the ask-as-me template on every authorize it builds.
+  // The same client, asking for the ask-as-me template on every authorize it builds — and for the Home's person
+  // chooser (OIDC prompt=select_account): signing in to the reader picks who, rather than taking whoever the Home
+  // already has signed in (a demo person picked here used to come back as the browser's last Home session).
   const retemplate = async (
     start: Awaited<ReturnType<ConnectClient["startEnrollment"]>>
   ) => {
     const u = new URL(start.url);
     u.searchParams.set("delegation_template", ASK_AS_ME);
+    u.searchParams.set("prompt", "select_account");
     return { ...start, url: u.toString() };
   };
   return {
