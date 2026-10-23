@@ -574,53 +574,8 @@ app.get("/tiles/info", (c) =>
   })
 );
 
-/** Where a biblical place's geometry comes from: the open geocoding data the old locations extension read. */
-const PLACE_SOURCES = (name: string) => [
-  `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${name}.geojson`,
-  `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${name}.geojson`,
-];
-export const placeNameOk = (name: string) =>
-  /^[A-Za-z][A-Za-z0-9 '_.-]{0,60}$/.test(name);
-app.get("/places/:name", async (c) => {
-  const name = decodeURIComponent(c.req.param("name"));
-  if (!placeNameOk(name))
-    return c.json({ ok: false, error: "not a place name" }, 400);
-  const cache = (globalThis as unknown as { caches?: { default: Cache } })
-    .caches?.default;
-  const key = new Request(
-    `https://places.seed-bible.svc/${encodeURIComponent(name)}`
-  );
-  const hit = await cache?.match(key);
-  if (hit) return hit;
-  for (const url of PLACE_SOURCES(name)) {
-    const up = await fetch(url, {
-      headers: {
-        "user-agent": TILE_UA,
-        accept: "application/geo+json, application/json",
-      },
-    }).catch(() => null);
-    if (!up?.ok) continue;
-    const text = await up.text();
-    try {
-      JSON.parse(text);
-    } catch {
-      continue;
-    }
-    const res = new Response(text, {
-      headers: {
-        "content-type": "application/geo+json",
-        "cache-control": "public, max-age=604800",
-        "access-control-allow-origin": "*",
-      },
-    });
-    if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, res.clone()));
-    return res;
-  }
-  const miss = c.json({ ok: false, error: "no geometry for this place" }, 404);
-  miss.headers.set("cache-control", "public, max-age=86400");
-  if (cache) executionCtxOf(c)?.waitUntil(cache.put(key, miss.clone()));
-  return miss;
-});
+// A place's geometry is the scripture agent's (scripture-resolver.svc, its place-geometry skill over A2A); this plane
+// keeps only the base map's tiles above.
 
 app.get("/admin/snapshot", async (c) => {
   if (!admitted(c))

@@ -15,7 +15,7 @@ import {
   type SessionEnv,
 } from "./session";
 import { servedEstates, TOWN } from "../../../estate/faithnet";
-import { bibleRoutes, type BibleEnv } from "./routes/bible";
+import { askScripture, bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
@@ -320,19 +320,34 @@ app.get("/api/tiles-info", async (c) => {
     },
   });
 });
+// A place's geometry: asked of the scripture agent over A2A (its place-geometry skill — OpenBible.info's geometry, or a
+// Theographic point when exactly one place has the name), handed to the map as GeoJSON with where it came from.
 app.get("/api/places/:name", async (c) => {
-  const res = await platformSend(
-    c.env,
-    `/places/${encodeURIComponent(c.req.param("name"))}`,
-    { method: "GET" }
-  );
-  return new Response(res.body, {
-    status: res.status,
-    headers: {
-      "content-type": res.headers.get("content-type") ?? "application/json",
-      "cache-control": "public, max-age=86400",
-    },
-  });
+  const name = c.req.param("name");
+  try {
+    const answer = (await askScripture(c.env, "place-geometry", { name })) as {
+      geometry: unknown;
+      source: string | null;
+      license: string | null;
+      match: { method: string; confidence: number } | null;
+    };
+    return new Response(JSON.stringify(answer.geometry), {
+      headers: {
+        "content-type": "application/geo+json",
+        "cache-control": "public, max-age=86400",
+        "x-place-source": answer.source ?? "",
+        "x-place-license": answer.license ?? "",
+        "x-place-match": answer.match
+          ? `${answer.match.method}; confidence ${answer.match.confidence}`
+          : "",
+      },
+    });
+  } catch (e) {
+    return c.json(
+      { ok: false, error: e instanceof Error ? e.message : String(e) },
+      404
+    );
+  }
 });
 
 /** The plain lane: hello for anyone; the reader's own name when a session token is presented. */

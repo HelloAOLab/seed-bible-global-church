@@ -1,8 +1,9 @@
-// The map proxies take only what a map asks for: a tile inside the zoom cap and the grid, a plain place name.
+// The map's tile proxy takes only what a map asks for: a tile inside the zoom cap and the grid. (A place's geometry is
+// the scripture agent's, asked over A2A.)
 import { describe, expect, it } from "vitest";
-import { placeNameOk, tileOk } from "../../../apps/seed-bible-a2a/src/index";
+import { tileOk } from "../../../apps/seed-bible-a2a/src/index";
 
-describe("the map proxies", () => {
+describe("the map tile proxy", () => {
   it("accept a tile in the grid up to the zoom cap and nothing else", () => {
     expect(tileOk(0, 0, 0)).toBe(true);
     expect(tileOk(7, 77, 51)).toBe(true);
@@ -11,11 +12,5 @@ describe("the map proxies", () => {
     expect(tileOk(7, 128, 0)).toBe(false);
     expect(tileOk(7, -1, 0)).toBe(false);
     expect(tileOk(1.5, 0, 0)).toBe(false);
-  });
-  it("accept a place name and refuse a path", () => {
-    expect(placeNameOk("Bethlehem")).toBe(true);
-    expect(placeNameOk("Beth Shean")).toBe(true);
-    expect(placeNameOk("../etc")).toBe(false);
-    expect(placeNameOk("")).toBe(false);
   });
 });

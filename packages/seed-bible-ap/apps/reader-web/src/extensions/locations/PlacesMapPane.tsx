@@ -33,7 +33,7 @@ export function normalizeGeometry<T>(value: T): T {
   return value;
 }
 
-/** The geometry of a place, from the serving plane (null when it has none). */
+/** The geometry of a place, from the scripture agent through this reader's agent (null when it has none). */
 export async function loadPlaceGeometry(
   place: PlaceData,
   fetchImpl: typeof fetch = fetch
@@ -77,7 +77,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
         }).setView([31.8, 35.2], 7);
         L.tileLayer(`${A2A_BASE}/api/tiles/{z}/{x}/{y}.png`, {
           maxZoom: info?.maxZoom ?? 12,
-          attribution: `${info?.attribution ?? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'} · places: OpenBible.info`,
+          attribution: `${info?.attribution ?? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'} · places: OpenBible.info (CC BY 4.0), Theographic (CC BY-SA 4.0)`,
         }).addTo(map);
         mapRef.current = map;
         layerRef.current = L.layerGroup().addTo(map);
