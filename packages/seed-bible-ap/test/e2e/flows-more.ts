@@ -2341,4 +2341,43 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "A3",
+    timeoutMs: 240_000,
+    section: "2. Getting in",
+    title:
+      "Another person on the same device sees none of the last one's things",
+    rows: ["Sign in with your Home", "Your profile"],
+    checks:
+      "Seed Reader signs in (their profile picture shows); the tab is closed without signing out; Ruth signs in on a new tab of the same browser — her account, and no picture or profile of Seed Reader's",
+    run: async (c) => {
+      const account = async (page: import("playwright").Page) => {
+        await c.openAccount(page);
+        await page.waitForTimeout(3000);
+        return {
+          who: (await page.locator(".sb-account-who").innerText()).trim(),
+          picture: await page
+            .locator(".sb-profile-card img.sb-profile-picture")
+            .count(),
+        };
+      };
+      await c.open(CH);
+      await c.signInAsSample(/seed ?reader/i);
+      const first = await account(c.page);
+      if (!first.picture)
+        throw new Error(
+          "Seed Reader's profile picture did not show to begin with"
+        );
+      const tab = await c.page.context().newPage();
+      await c.page.close();
+      await c.open(CH, tab);
+      await c.signInAsSample(/ruth/i, tab);
+      const second = await account(tab);
+      if (!/ruth/i.test(second.who))
+        throw new Error(`the account shows "${second.who}"`);
+      if (second.picture)
+        throw new Error("Ruth is shown Seed Reader's profile picture");
+      return `Seed Reader with their picture; then Ruth on a new tab: "${second.who.replace(/\s+/g, " ")}", no picture of Seed Reader's`;
+    },
+  },
 ];

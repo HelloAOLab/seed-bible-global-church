@@ -21,6 +21,7 @@ import { createPublishing } from "./social/publishing";
 import { createToday } from "./social/today";
 import { createPresence } from "./social/presence";
 import { createProfile } from "./social/profile";
+import { claimDevice, forgetPerson } from "./records/deviceOwner";
 import { createFriendship, parseFriendLink } from "./social/friendship";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
@@ -466,6 +467,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
 
   async function signIn(s: ReaderSession, opts: { announce?: boolean } = {}) {
+    // Someone else's copy on this device (their profile, playlists, friends…) is forgotten, and the page starts
+    // again so nothing of theirs stays in memory; the session is saved, so it comes back signed in as this person.
+    const person = s.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0] ?? s.sub;
+    if (await claimDevice(stores.prefs, person)) {
+      if (typeof location !== "undefined") location.reload();
+      return;
+    }
     session.value = s;
     // Signing in from the Account pane lands in the reader, not on the account settings that replace the sign-in.
     if (opts.announce) {
@@ -490,6 +498,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
   async function signOut() {
     await presence.gone();
+    await forgetPerson(stores.prefs);
     forgetSession();
     session.value = null;
     buckets.reset();

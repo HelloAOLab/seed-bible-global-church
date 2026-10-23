@@ -25,11 +25,15 @@ export function createProfile(
   );
   const idOf = () =>
     `urn:seed:profile:${(identity()?.agent ?? LOCAL_AGENT).toLowerCase()}`;
-  /** The reader's own profile, or null until one is saved. */
-  const mine = computed<Profile | null>(
-    () =>
-      works.live().find((p) => p["@id"] === idOf()) ?? works.live()[0] ?? null
-  );
+  /** The reader's own profile — named for them, or held by them — never another person's on this device. */
+  const mine = computed<Profile | null>(() => {
+    const me = (identity()?.agent ?? LOCAL_AGENT).toLowerCase();
+    return (
+      works.live().find((p) => p["@id"] === idOf()) ??
+      works.live().find((p) => p.heldBy?.toLowerCase() === me) ??
+      null
+    );
+  });
 
   async function save(patch: {
     displayName?: string;
