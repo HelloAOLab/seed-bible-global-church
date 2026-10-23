@@ -2182,7 +2182,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
     rows: ["Phone layout"],
     checks:
-      "On an iPhone 13: the reader's bar sits at the top; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane",
+      "On an iPhone 13: the reader's bar sits at the top; the Tabs drawer closes with its ✕ and with a tap beside it; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 390, height: 664 },
@@ -2197,6 +2197,18 @@ export const MORE_FLOWS: Flow[] = [
         await bar.waitFor({ timeout: 20000 });
         const top = (await bar.boundingBox())!.y;
         if (top > 40) throw new Error(`the bar is at y=${top}, not the top`);
+        // The Tabs drawer has a way out: its ✕, and a tap on the dimmed reader beside it.
+        const drawer = page.locator(".sb-tabs-sidebar-drawer");
+        await page.locator(".sb-reader-toolbar-phone-only button").click();
+        await drawer.waitFor({ timeout: 3000 });
+        await page.locator(".sb-sidebar-drawer-close").click();
+        await drawer.waitFor({ state: "detached", timeout: 3000 });
+        await page.locator(".sb-reader-toolbar-phone-only button").click();
+        await drawer.waitFor({ timeout: 3000 });
+        await page.mouse.click(375, 500);
+        await drawer.waitFor({ state: "detached", timeout: 3000 }).catch(() => {
+          throw new Error("a tap beside the Tabs drawer did not close it");
+        });
         await page.mouse.wheel(0, 900);
         await page
           .waitForFunction(() => window.scrollY > 100, undefined, {
@@ -2235,7 +2247,7 @@ export const MORE_FLOWS: Flow[] = [
         await page
           .getByRole("button", { name: /sign in with faithnet/i })
           .waitFor({ timeout: 5000 });
-        return `bar at y=${Math.round(top)}; the page scrolled; sign-in filled (${fill}) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane`;
+        return `bar at y=${Math.round(top)}; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; sign-in filled (${fill}) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane`;
       } finally {
         await ctx.close();
       }

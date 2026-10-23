@@ -74,7 +74,17 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             </button>
           )}
         </div>
-        {!collapsed && (
+        {drawer && (
+          <button
+            type="button"
+            className="sb-sidebar-top-icon-button sb-sidebar-drawer-close"
+            aria-label={t("close", { defaultValue: "Close" })}
+            onClick={() => (state.ui.sidebarDrawer.value = false)}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        )}
+        {!collapsed && !drawer && (
           <div className="sb-sidebar-top-actions sb-pane-layout-anchor">
             <button
               type="button"

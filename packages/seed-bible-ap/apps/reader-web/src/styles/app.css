@@ -507,6 +507,10 @@ body {
 .sb-pane-layout-menu {
   z-index: 130;
 }
+/* Shown on a phone only, behind the open drawer (the rule inside the phone block below). */
+.sb-drawer-backdrop {
+  display: none;
+}
 @media (max-width: 720px) {
   .sb-app,
   .sb-app-with-pane {
@@ -531,6 +535,7 @@ body {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .sb-drawer-backdrop {
+    display: block;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.35);
@@ -547,8 +552,7 @@ body {
   }
 }
 .sb-reader-toolbar-phone-only,
-.sb-reader-toolbar-more-button,
-.sb-drawer-backdrop {
+.sb-reader-toolbar-more-button {
   display: none;
 }
 /* A narrow phone: the actions after the chapter controls go under "More". */
@@ -2155,4 +2159,9 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 }
 .sb-friend-invite-agent {
   overflow-wrap: anywhere;
+}
+
+/* The drawer's own way out, top right: a phone has no other control in reach while it covers the toolbar. */
+.sb-sidebar-drawer-close {
+  margin-inline-start: auto;
 }
