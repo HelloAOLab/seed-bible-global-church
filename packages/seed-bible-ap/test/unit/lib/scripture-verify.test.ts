@@ -19,12 +19,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const AGENT = "0x3064d88922223881b206dcab68b992b9b2ba90b2";
 const fx = <T>(name: string): T =>
   JSON.parse(
-    readFileSync(
-      fileURLToPath(
-        new URL(`../../fixtures/scripture/${name}`, import.meta.url)
-      ),
-      "utf8"
-    )
+    readFileSync(join(HERE, "../../fixtures/scripture", name), "utf8")
   ) as T;
 type Chapter = {
   chapter: {
