@@ -2101,3 +2101,20 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-session-copy {
   flex: none;
 }
+
+/* A short line that goes by itself, above the foot of the screen and clear of the home bar. */
+.sb-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1500;
+  max-width: calc(100vw - 2rem);
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background, #fff);
+  font-size: 0.9375rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}

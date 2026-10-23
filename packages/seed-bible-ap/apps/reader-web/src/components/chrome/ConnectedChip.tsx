@@ -51,7 +51,7 @@ export function ConnectedChip({
         title={t("sign-in", { defaultValue: "Sign in" })}
         onClick={() =>
           void connectViaHome(DEFAULT_ESTATE)
-            .then((out) => out && state.signIn(out))
+            .then((out) => out && state.signIn(out, { announce: true }))
             .catch(() => (state.ui.pane.value = "account"))
         }
       >

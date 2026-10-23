@@ -500,5 +500,6 @@
   "session-share-how": "Send friends the link (it carries both), or have them open Live session and enter the Session ID and Code.",
   "session-record-saved": "A record of this session is kept in your Library.",
   "profile-publishing": "Publishing to your shelf…",
-  "profile-publish-failed": "Not published: {{reason}}"
+  "profile-publish-failed": "Not published: {{reason}}",
+  "signed-in-as": "Signed in as {{name}}"
 }

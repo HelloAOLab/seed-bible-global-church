@@ -78,7 +78,7 @@ export function Onboarding({ state }: { state: ReaderState }) {
               onClick={() => {
                 setBusy("signin");
                 void connectViaHome(DEFAULT_ESTATE)
-                  .then((s) => s && state.signIn(s))
+                  .then((s) => s && state.signIn(s, { announce: true }))
                   .finally(() => done());
               }}
             >

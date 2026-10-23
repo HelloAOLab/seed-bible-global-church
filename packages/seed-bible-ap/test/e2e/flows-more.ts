@@ -2241,4 +2241,70 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "A2",
+    timeoutMs: 240_000,
+    section: "2. Getting in",
+    title: "Sign in with your Home; sign out",
+    rows: ["Sign in with your Home", "Sign out"],
+    checks:
+      'Account → Sign in with faithnet opens the Home; a demo person approves the reader — the Account pane closes, "Signed in as …" shows and the reader is signed in with no refresh; Sign out returns to the start page, signed out. Then the same with popups blocked (the page goes to the Home and back)',
+    run: async (c) => {
+      const viaHome = async (
+        page: import("playwright").Page,
+        popup: boolean
+      ) => {
+        await c.open(CH, page);
+        await c.pressToolbar("Sign in", page);
+        const opened = popup
+          ? page.context().waitForEvent("page", { timeout: 15000 })
+          : null;
+        await page
+          .locator(".sb-app-pane")
+          .getByRole("button", { name: /sign in with faithnet/i })
+          .click();
+        const home = opened ? await opened : page;
+        if (!popup) await page.waitForURL(/faithnet\.me/, { timeout: 20000 });
+        await home
+          .getByText(/demo people/i)
+          .first()
+          .click();
+        await home
+          .getByText(/seed ?reader/i)
+          .first()
+          .click();
+        const allow = home.getByRole("button", { name: /^allow/i });
+        await allow.waitFor({ timeout: 30000 });
+        await allow.click();
+        const toast = page.locator(".sb-toast");
+        await toast.waitFor({ timeout: 45000 });
+        const said = (await toast.innerText()).trim();
+        if (await page.locator(".sb-app-pane").count())
+          throw new Error("the Account pane stayed open after signing in");
+        await page
+          .locator('.sb-reader-toolbar button[aria-label="Account settings"]')
+          .waitFor({ timeout: 5000 });
+        await c.pressToolbar("Account settings", page);
+        await page.getByRole("button", { name: /^sign out$/i }).click();
+        await page
+          .locator('.sb-reader-toolbar button[aria-label="Sign in"]')
+          .waitFor({ timeout: 20000 });
+        return said;
+      };
+      const popup = await viaHome(c.page, true);
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+      });
+      await ctx.addInitScript(() => {
+        if (location.host.startsWith("seed-reader"))
+          (window as unknown as { open: () => null }).open = () => null;
+      });
+      try {
+        const redirect = await viaHome(await ctx.newPage(), false);
+        return `popup: "${popup}", landed in the reader, signed out to the start page; popups blocked: "${redirect}", the same`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
 ];

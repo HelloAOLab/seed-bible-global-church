@@ -527,7 +527,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
         DEFAULT_ESTATE,
         (m) => (progress.value = m)
       );
-      if (out) await state.signIn(out);
+      if (out) await state.signIn(out, { announce: true });
     } catch (e) {
       report(e);
     } finally {
@@ -697,7 +697,7 @@ export function AccountPane({ state }: { state: ReaderState }) {
                       onClick={() => {
                         error.value = "";
                         connectAsSamplePerson(DEFAULT_ESTATE, p.handle).then(
-                          (out) => state.signIn(out),
+                          (out) => state.signIn(out, { announce: true }),
                           report
                         );
                       }}
@@ -720,7 +720,8 @@ export function AccountPane({ state }: { state: ReaderState }) {
                       className="sb-note-button"
                       onClick={() =>
                         void state.signIn(
-                          signInAsDevReader(r.handle, r.name, r.sa)
+                          signInAsDevReader(r.handle, r.name, r.sa),
+                          { announce: true }
                         )
                       }
                     >

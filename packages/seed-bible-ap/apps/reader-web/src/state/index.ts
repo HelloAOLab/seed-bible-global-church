@@ -421,6 +421,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     ),
     /** How to use the whole screen (Safari on an iPhone: add to the home screen); see FullScreenHelp. */
     fullScreenHelp: signal(false),
+    /** A short line at the foot of the screen that goes by itself ("Signed in as Ruth"); see Toast. */
+    toast: signal<{ key: string; values?: Record<string, string> } | null>(
+      null
+    ),
     /** A share link's session, joined once signed in. */
     pendingJoin: signal<{ sessionId: string; code?: string } | null>(null),
   };
@@ -452,8 +456,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (live.active.value) void live.presenceAt(first);
   });
 
-  async function signIn(s: ReaderSession) {
+  async function signIn(s: ReaderSession, opts: { announce?: boolean } = {}) {
     session.value = s;
+    // Signing in from the Account pane lands in the reader, not on the account settings that replace the sign-in.
+    if (opts.announce) {
+      if (ui.pane.value === "account") ui.pane.value = "none";
+      ui.toast.value = {
+        key: "signed-in-as",
+        values: { name: s.name || s.sub },
+      };
+    }
     await buckets.resync();
     void today.refresh();
     void playlists.refresh();
@@ -472,6 +484,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     forgetSession();
     session.value = null;
     buckets.reset();
+    // A fresh start page: nothing of the person stays on screen or in memory.
+    if (typeof location !== "undefined") location.assign("/");
   }
 
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.

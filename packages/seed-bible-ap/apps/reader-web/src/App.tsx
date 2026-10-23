@@ -2,6 +2,7 @@
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
 import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { ActivityBar } from "./components/chrome/ActivityBar";
+import { Toast } from "./components/chrome/Toast";
 import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
@@ -31,7 +32,7 @@ export function App({ state }: { state: ReaderState }) {
     let stop: (() => void) | undefined;
     void state.start().then((s) => (stop = s));
     completeRedirectIfReturning()
-      .then((s) => s && state.signIn(s))
+      .then((s) => s && state.signIn(s, { announce: true }))
       .catch((e: unknown) => console.warn("[connect]", e));
     return () => stop?.();
   }, []);
@@ -169,6 +170,7 @@ export function App({ state }: { state: ReaderState }) {
       <Tour state={state} />
       <FullScreenHelp state={state} />
       <ActivityBar />
+      <Toast state={state} />
       <Onboarding state={state} />
     </div>
   );
