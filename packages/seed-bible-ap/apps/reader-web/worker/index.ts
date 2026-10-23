@@ -13,7 +13,7 @@ import {
 } from "../src/state/social/sharedPage";
 import { parseRoute, routeOf, versesOf } from "../src/state/reading/route";
 import {
-  FREE_USE_BIBLE_API_ENDPOINT,
+  BIBLE_API_ENDPOINT,
   FreeUseBibleAPI,
 } from "../src/backend/bible";
 
@@ -56,7 +56,7 @@ export default {
         .caches?.default;
       const hit = await cache?.match(request);
       if (hit) return hit;
-      const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
+      const api = new FreeUseBibleAPI(BIBLE_API_ENDPOINT);
       const urls: string[] = [`${url.origin}/`];
       for (const t of SITEMAP_TRANSLATIONS) {
         const books = await api.getTranslationBooks(t).catch(() => null);

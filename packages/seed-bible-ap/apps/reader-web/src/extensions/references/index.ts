@@ -1,5 +1,5 @@
 // CROSS-REFERENCES — ported from packages/references-extension: the open cross-reference dataset the Bible API
-// hosts (`/api/d/open-cross-ref/<BOOK>/<ch>.json`; bible.helloao.org answers the browser with CORS, vmfnri does not), read per chapter and kept on the device, offered in Discover
+// hosts (`/api/d/open-cross-ref/<BOOK>/<ch>.json`), asked of the scripture agent through this reader's agent, read per chapter and kept on the device, offered in Discover
 // for the verses on screen (the selected ones first). Browser-local: the Bible API only.
 import type { DiscoverItem, ExtensionRegistration } from "../host";
 import { BIBLE_API_ENDPOINT } from "../../backend/bible";

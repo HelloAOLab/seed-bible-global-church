@@ -11,7 +11,7 @@ import { renderInHost } from "../helpers/TestHost";
 import { bibleResponses, BSB, JOHN } from "../helpers/bibleResponses";
 import type { TranslationBookChapter } from "../../apps/reader-web/src/backend/bible";
 
-const API = "https://bible.helloao.org/api";
+const API = "https://seed-reader-a2a.faithnet.io/bible/api";
 function johnChapter(n: number, rtl = false): TranslationBookChapter {
   return {
     translation: { ...BSB, textDirection: rtl ? "rtl" : "ltr" },

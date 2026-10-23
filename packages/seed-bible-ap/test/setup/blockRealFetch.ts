@@ -1,16 +1,10 @@
 // NO REAL NETWORK IN A UNIT TEST, and never to the estate's agents (ADR-0044: the browser talks only to reader-a2a,
-// and a test talks to nothing). `fetch` is wrapped: localhost, the Bible API hosts and Typesense pass (tests stub
-// those themselves when they matter); any other host is recorded, refused in words, and fails the test in
+// and a test talks to nothing). `fetch` is wrapped: localhost passes; any other host — Scripture included, which the
+// reader asks only of its own agent — is recorded, refused in words, and fails the test in
 // `afterEach`. A fixture that mounts a fake agent on a host calls `allowHostForThisTest(host)`.
 import { afterEach } from "vitest";
 
-const ALLOWED = new Set([
-  "127.0.0.1",
-  "localhost",
-  "bible.helloao.org",
-  "vmfnri.helloao.org",
-  "search.seedbible.org",
-]);
+const ALLOWED = new Set(["127.0.0.1", "localhost"]);
 const allowedForTest = new Set<string>();
 const blocked: string[] = [];
 

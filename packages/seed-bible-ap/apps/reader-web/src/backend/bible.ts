@@ -1263,7 +1263,6 @@ interface DatasetReference {
   score?: number;
 }
 
-export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
 /**
  * Where the reader reads Scripture: its own agent's `/bible/` (reader-a2a, routes/bible.ts), which asks the scripture
  * agent (scripture-resolver.svc) over A2A and answers in the Free Use Bible API's paths and shapes — every verse
@@ -1279,13 +1278,6 @@ export const BIBLE_API_ENDPOINT = (
   (import.meta as unknown as { env?: Record<string, string | undefined> })
     .env?.["VITE_BIBLE_API_URL"] ?? `${AGENT_ORIGIN}/bible/`
 ).replace(/\/?$/, "/");
-const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org/";
-
-export function getDefaultAPIEndpoint(url: URL): string {
-  return url.searchParams.has("useFreeBibleAPI")
-    ? FREE_USE_BIBLE_API_ENDPOINT
-    : PRIVATE_API_ENDPOINT;
-}
 
 /** The conventional path to a translation's complete-download file. */
 function completeTranslationPath(translationId: string): string {
