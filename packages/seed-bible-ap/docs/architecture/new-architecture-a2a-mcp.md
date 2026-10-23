@@ -145,7 +145,7 @@ Every action a signed-in reader takes becomes one harness run on reader-a2a: the
 
 ## Scripture from the scripture agent
 
-Scripture has one source: the scripture agent at scripture.faithnet.io. It serves, as whole chapters, every edition in its own `list-editions` that has a reader form in its store (today BSB, WEB, KJV and ASV), the cross-reference and Theographic datasets, audio timings, verse search and place geometry. The reader never sees its address; it asks reader-a2a's `/bible/api/*`, and reader-a2a asks the agent.
+Scripture has one source: the scripture agent at scripture.faithnet.io. It serves, as whole chapters, every edition in its own `list-editions` that has a reader form in its store (today BSB, WEB, KJV and ASV; RBS in English, Spanish and Tar Melbene, and the Kamano-Kafe pilot, laid out as chapters from their verses; and in Spanish Reina-Valera 1909 and Santa Biblia libre para el mundo), the cross-reference and Theographic datasets, audio timings, verse search and place geometry. The reader never sees its address; it asks reader-a2a's `/bible/api/*`, and reader-a2a asks the agent.
 
 **How a Bible path becomes an A2A call** (`apps/reader-a2a/src/routes/bible.ts`). reader-a2a maps each path to one skill and sends one standard A2A 1.0 `SendMessage` to the agent's `/api/a2a` over the `SCRIPTURE` service binding (`SCRIPTURE_A2A_URL` in dev). The message carries a single data part `{ skill, args }`. The agent's reply is a data part in the old Bible API's shape; reader-a2a rewrites its links from `/api/` to `/bible/api/`, caches it at the edge, and returns it. A request the agent refuses comes back as a 404 carrying the agent's words. Nothing else is tried.
 
