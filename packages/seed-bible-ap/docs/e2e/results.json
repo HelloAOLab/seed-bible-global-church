@@ -1,33 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-23 00:14 UTC",
+  "when": "2026-10-23 00:21 UTC",
   "results": [
     {
-      "id": "L1",
-      "section": "9. Reading together",
-      "title": "Start a session; a guest joins and follows",
-      "checks": "Signed in: Start a session → its Session ID and Code show; a second browser joins as a guest with id and code; the host moves to John 4 and the guest follows",
+      "id": "S4",
+      "section": "8. Today, Discover and publishing",
+      "title": "Your profile",
+      "checks": "Account → Your profile: a display name and a line → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished",
       "mark": "✅",
-      "note": "code WQAART; the guest followed to John 4",
-      "ms": 40476
-    },
-    {
-      "id": "L2",
-      "section": "9. Reading together",
-      "title": "Show everyone, the roster, chat, the record",
-      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
-      "mark": "✅",
-      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code 49YEMS)",
-      "ms": 13090
-    },
-    {
-      "id": "G7",
-      "section": "9. Reading together",
-      "title": "Session QR code",
-      "checks": "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image",
-      "mark": "✅",
-      "note": "QR 13 KB PNG with Save image",
-      "ms": 8603
+      "note": "\"Saved to your Library\" after 12.2s; profile line \"flow 002036\" kept across a reload; published, then withdrawn",
+      "ms": 54655
     }
   ]
 }

@@ -147,7 +147,7 @@ function ProfileCard({ state }: { state: ReaderState }) {
         </div>
       </form>
       <p
-        className={`sb-small${status === "failed" ? " sb-pane-error" : " sb-muted"}`}
+        className={`sb-small${status === "failed" || state.publishing.error.value ? " sb-pane-error" : " sb-muted"}`}
         role="status"
       >
         {status === "saving" &&
@@ -165,6 +165,16 @@ function ProfileCard({ state }: { state: ReaderState }) {
                 defaultValue:
                   "✓ Saved on this device — sign in to keep it in your Library",
               }))}
+        {state.publishing.busy.value === p?.["@id"] &&
+          t("profile-publishing", {
+            defaultValue: "Publishing to your shelf…",
+          })}
+        {state.publishing.error.value &&
+          state.publishing.busy.value === null &&
+          t("profile-publish-failed", {
+            defaultValue: "Not published: {{reason}}",
+            reason: state.publishing.error.value,
+          })}
         {status === "failed" &&
           t("profile-save-failed", {
             defaultValue:

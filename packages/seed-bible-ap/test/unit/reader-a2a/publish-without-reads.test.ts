@@ -155,4 +155,38 @@ describe("publishing without the Library reads", () => {
     expect(d["label"]).toBe("Lent");
     expect(d["@type"]).toBe("seed:Offering");
   });
+
+  it("publishes into the newest of two documents that share a name, instead of refusing every time", async () => {
+    const { library, backend } = await readerWith([]);
+    const folder = "seed-bible/public/profile";
+    const older = library.seed(READER, {
+      folder,
+      name: "profile.jsonld",
+      kind: "json-ld",
+      text: "{}",
+      createdAt: 1,
+    });
+    const newer = library.seed(READER, {
+      folder,
+      name: "profile.jsonld",
+      kind: "json-ld",
+      text: "{}",
+      createdAt: 2,
+    });
+    await backend.publishSlice({
+      kind: "profile",
+      title: "Ruth",
+      slug: "profile",
+      markdown: "# Ruth",
+    });
+    const twins = library
+      .entries(READER)
+      .filter((e) => e.folder === folder && e.name === "profile.jsonld");
+    expect(
+      twins.map((e) => [e.id, e.version, e.releases?.length ?? 0])
+    ).toEqual([
+      [older.id, 1, 0],
+      [newer.id, 2, 1],
+    ]);
+  });
 });

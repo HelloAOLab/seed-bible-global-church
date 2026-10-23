@@ -13,9 +13,11 @@ import {
   LIBRARY_FILE_SAVE,
   LIBRARY_FILE_PUBLISH,
   isMissing,
+  listStep,
   publishStep,
   readStep,
   visibilityStep,
+  type LibraryList,
   type LibraryRead,
   type LibrarySaved,
 } from "../../../../lib/library-client";
@@ -88,6 +90,19 @@ async function existingId(
       return undefined;
     if (e instanceof WireRefusal && READS_NOT_OFFERED.test(e.message))
       return { id: deterministicId(folder, name), version: 0 };
+    // Two documents under one name (two first saves that crossed): save into the newest by its id, rather than
+    // refusing every publish of it from now on.
+    if (e instanceof WireRefusal && /documents match/i.test(e.message)) {
+      const out = await agent.run<LibraryList>(
+        [listStep(folder)],
+        `find ${folder}/${name} on my shelf`
+      );
+      const newest = (out.result.files ?? []).find(
+        (f) => f.name === name && (f.folder ?? folder) === folder && f.id
+      );
+      if (newest?.id)
+        return { id: newest.id, version: Number(newest.version ?? 1) };
+    }
     throw e;
   }
 }
