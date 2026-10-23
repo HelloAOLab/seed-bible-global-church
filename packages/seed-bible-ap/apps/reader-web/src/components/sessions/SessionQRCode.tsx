@@ -69,7 +69,8 @@ export function SessionQRCode({ url }: { url: string }) {
       )}
       <figcaption className="sb-small sb-muted">
         {t("session-qr-hint", {
-          defaultValue: "Scan to join with the share code.",
+          defaultValue:
+            "Scan to join: the picture holds the invite link, which carries the Session ID and Code.",
         })}{" "}
         <button
           type="button"

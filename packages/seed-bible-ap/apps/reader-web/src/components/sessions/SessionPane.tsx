@@ -93,7 +93,7 @@ export function SessionPane({ state }: { state: ReaderState }) {
               <p className="sb-small">
                 {t("session-guest-blurb", {
                   defaultValue:
-                    "No Home? Join as a guest with the share code: you follow along and chat; nothing of yours is kept.",
+                    "No Home? Join as a guest with the Session ID and Code the leader sent you: you follow along and chat; nothing of yours is kept.",
                 })}
               </p>
               <input
@@ -150,13 +150,13 @@ export function SessionPane({ state }: { state: ReaderState }) {
           >
             <input
               className="sb-note-editor"
-              placeholder={t("session-id", { defaultValue: "Session id" })}
+              placeholder={t("session-id", { defaultValue: "Session ID" })}
               value={joinId}
               onInput={(e) => setJoinId((e.target as HTMLInputElement).value)}
             />
             <input
               className="sb-note-editor"
-              placeholder={t("session-code", { defaultValue: "Share code" })}
+              placeholder={t("session-code", { defaultValue: "Code" })}
               value={joinCode}
               onInput={(e) => setJoinCode((e.target as HTMLInputElement).value)}
             />
@@ -177,7 +177,7 @@ export function SessionPane({ state }: { state: ReaderState }) {
             <p className="sb-small">
               <strong>
                 {s.passage
-                  ? `${s.passage.bookId} ${s.passage.chapterNumber} · ${s.passage.translationId}`
+                  ? `${s.passage.bookId === state.reading.bookId.value ? state.reading.bookName.value : s.passage.bookId} ${s.passage.chapterNumber} · ${s.passage.translationId}`
                   : ""}
               </strong>
               <br />
@@ -194,33 +194,59 @@ export function SessionPane({ state }: { state: ReaderState }) {
                 })}
               </span>
             </p>
+            {/* What a friend needs to join, named plainly: the session's id and its code, each with Copy. */}
+            <dl className="sb-session-ids">
+              <dt>{t("session-id", { defaultValue: "Session ID" })}</dt>
+              <dd>
+                <code className="sb-session-id">{live.sessionId.value}</code>
+                <CopyButton text={live.sessionId.value ?? ""} />
+              </dd>
+              {live.code.value && (
+                <>
+                  <dt>{t("session-code", { defaultValue: "Code" })}</dt>
+                  <dd>
+                    <code className="sb-session-code">{live.code.value}</code>
+                    <CopyButton text={live.code.value} />
+                  </dd>
+                </>
+              )}
+            </dl>
             {live.shareLink.value && (
-              <p className="sb-small">
-                {t("session-share", { defaultValue: "Share code" })}{" "}
-                <code>{live.code.value}</code>{" "}
-                <button className="sb-note-button" onClick={() => void copy()}>
-                  {copied
-                    ? t("copied", { defaultValue: "Copied" })
-                    : t("copy-link", { defaultValue: "Copy link" })}
-                </button>{" "}
-                <button
-                  className="sb-note-button"
-                  aria-expanded={showQr}
-                  onClick={() => setShowQr((v) => !v)}
-                >
-                  {t("session-qr", { defaultValue: "QR code" })}
-                </button>
-              </p>
+              <>
+                <p className="sb-small sb-muted">
+                  {t("session-share-how", {
+                    defaultValue:
+                      "Send friends the link (it carries both), or have them open Live session and enter the Session ID and Code.",
+                  })}
+                </p>
+                <div className="sb-note-card-actions">
+                  <button
+                    className="sb-note-button"
+                    onClick={() => void copy()}
+                  >
+                    {copied
+                      ? t("copied", { defaultValue: "Copied" })
+                      : t("copy-link", { defaultValue: "Copy link" })}
+                  </button>
+                  <button
+                    className="sb-note-button"
+                    aria-expanded={showQr}
+                    onClick={() => setShowQr((v) => !v)}
+                  >
+                    {t("session-qr", { defaultValue: "QR code" })}
+                  </button>
+                </div>
+              </>
             )}
             {live.shareLink.value && showQr && (
               <SessionQRCode url={live.shareLink.value} />
             )}
             {live.recordRef.value && (
-              <p className="sb-small sb-muted">
-                {t("session-record-kept", {
-                  defaultValue: "The record is in your Library:",
-                })}{" "}
-                {live.recordRef.value}
+              <p className="sb-small sb-muted" title={live.recordRef.value}>
+                {t("session-record-saved", {
+                  defaultValue:
+                    "A record of this session is kept in your Library.",
+                })}
               </p>
             )}
             <div className="sb-note-card-actions sb-voice-controls">
@@ -284,7 +310,8 @@ export function SessionPane({ state }: { state: ReaderState }) {
                   }
                 />{" "}
                 {t("session-allow-guests", {
-                  defaultValue: "Let guests (no Home) join with the share code",
+                  defaultValue:
+                    "Let guests (no Home) join with the Session ID and Code",
                 })}
               </label>
             )}
@@ -413,5 +440,31 @@ export function SessionPane({ state }: { state: ReaderState }) {
         </>
       )}
     </section>
+  );
+}
+
+/** Copy one value; says Copied for a moment. */
+function CopyButton({ text }: { text: string }) {
+  const { t } = useI18n();
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className="sb-note-button sb-session-copy"
+      disabled={!text}
+      onClick={() =>
+        void navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            setDone(true);
+            setTimeout(() => setDone(false), 1500);
+          })
+          .catch(() => {})
+      }
+    >
+      {done
+        ? t("copied", { defaultValue: "Copied" })
+        : t("copy", { defaultValue: "Copy" })}
+    </button>
   );
 }

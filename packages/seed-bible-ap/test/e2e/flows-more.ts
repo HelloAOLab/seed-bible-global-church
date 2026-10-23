@@ -106,7 +106,14 @@ async function startSession(c: FlowContext) {
     .pane()
     .getByRole("button", { name: /start a session/i })
     .click();
-  await c.waitText(c.pane(), /share code/i, 20000);
+  // The tap shows the moving line at the top while the session is made.
+  await c.page
+    .locator(".sb-activity-bar")
+    .waitFor({ timeout: 3000 })
+    .catch(() => {
+      throw new Error("no progress line after Start a session");
+    });
+  await c.pane().locator(".sb-session-code").waitFor({ timeout: 20000 });
   await c
     .pane()
     .getByRole("button", { name: /copy link/i })
@@ -115,10 +122,13 @@ async function startSession(c: FlowContext) {
   const link = await c.page
     .evaluate(() => navigator.clipboard.readText())
     .catch(() => "");
-  const code = /share code\s*([A-Z0-9]{4,8})/i.exec(await c.paneText())?.[1];
+  const code = (await c.pane().locator(".sb-session-code").innerText()).trim();
   const sid = /session=([^&]+)/.exec(link)?.[1];
   if (!code || !sid)
     throw new Error(`no share code or session id (link "${link}")`);
+  const shown = (await c.pane().locator(".sb-session-id").innerText()).trim();
+  if (shown !== sid)
+    throw new Error(`Session ID shows "${shown}", the link names "${sid}"`);
   return { code, sid };
 }
 
@@ -693,14 +703,22 @@ export const MORE_FLOWS: Flow[] = [
       "The session as a record",
     ],
     checks:
-      "Host starts a session (its record path shows); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
+      "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
       const { sid, code } = await startSession(c);
-      const record = await c.paneText();
-      if (!/seed-bible\/sessions\//.test(record))
-        throw new Error(`no record path in: ${record.slice(0, 160)}`);
+      const record =
+        (await c
+          .pane()
+          .locator('[title*="seed-bible/sessions/"]')
+          .first()
+          .getAttribute("title")
+          .catch(() => null)) ?? "";
+      if (!record)
+        throw new Error(
+          `no record path in: ${(await c.paneText()).slice(0, 160)}`
+        );
       const guest = await joinAsGuest(c, sid, code);
       await c.waitText(c.pane(), /Flow guest/, 20000);
       await c.selectVerse(16, guest);

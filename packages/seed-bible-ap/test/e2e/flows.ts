@@ -571,7 +571,7 @@ const BASE_FLOWS: Flow[] = [
     section: "9. Reading together",
     title: "Start a session; a guest joins and follows",
     checks:
-      "Signed in: Start a session → share code; a second browser joins as a guest with id and code; the host moves to John 4 and the guest follows",
+      "Signed in: Start a session → its Session ID and Code show; a second browser joins as a guest with id and code; the host moves to John 4 and the guest follows",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -583,9 +583,11 @@ const BASE_FLOWS: Flow[] = [
         .pane()
         .getByRole("button", { name: /start a session/i })
         .click();
-      await c.waitText(c.pane(), /share code/i, 20000);
+      await c.pane().locator(".sb-session-code").waitFor({ timeout: 20000 });
       const text = await c.paneText();
-      const code = /share code\s*([A-Z0-9]{4,8})/i.exec(text)?.[1];
+      const code = (
+        await c.pane().locator(".sb-session-code").innerText()
+      ).trim();
       await c
         .pane()
         .getByRole("button", { name: /copy link/i })
