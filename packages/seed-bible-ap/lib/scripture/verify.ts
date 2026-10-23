@@ -1,7 +1,7 @@
-// CHECKING THE SCRIPTURE ON SCREEN. The scripture content service (scripture-api.faithnet.io) serves each chapter with a
-// commitment over every verse's words and the verse's leaf in its translation's corpus; `{n}.proofs.json` proves each
-// leaf into the corpus root; the translation's `verification.json` carries a CorpusAttestation over that root, signed
-// as scripture-resolver.svc through its key delegate. A reader checks all three here, on the device:
+// CHECKING THE SCRIPTURE ON SCREEN. The scripture agent (scripture-resolver.svc) answers each chapter (its A2A skill
+// read-chapter, relayed by the reader's agent) with a commitment over every verse's words, the verse's leaf in its
+// translation's corpus and that leaf's proof into the corpus root; its translation-attestation carries a
+// CorpusAttestation over that root, signed as scripture-resolver.svc through its key delegate. A reader checks all three here, on the device:
 //   1. the words SHOWN re-hash to the verse's commitment (nothing changed them on the way — a cache, a copy, a proxy);
 //   2. the commitment's leaf walks to the corpus root with its proof (the verse is part of that translation's corpus);
 //   3. the corpus root is the one the agent signed for that translation (the attestation's signer is the delegate the
@@ -58,6 +58,8 @@ export interface ChapterVerification {
   normalization: string;
   proofsLink: string;
   verses: Record<string, { commitment: string; leaf: number }>;
+  /** Each verse's proof into corpusRoot, when the chapter was read with its proofs. */
+  proofs?: ChapterProofs["verses"];
 }
 export interface ChapterProofs {
   corpusRoot: string;

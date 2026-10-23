@@ -1,3 +1,4 @@
+import { A2A_BASE } from "../api";
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -1264,14 +1265,19 @@ interface DatasetReference {
 
 export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
 /**
-^ * Where the reader reads scripture: the scripture content service (scripture-api.faithnet.io), which answers the Free Use Bible API's
- * own paths and shapes from a copy received from it — every verse committed, each translation's root attested by the
- * agent — so the reader can check what it shows (state/reading/verification.ts). `VITE_BIBLE_API_URL` overrides it.
+ * Where the reader reads Scripture: its own agent's `/bible/` (reader-a2a, routes/bible.ts), which asks the scripture
+ * agent (scripture-resolver.svc) over A2A and answers in the Free Use Bible API's paths and shapes — every verse
+ * committed, each translation's root attested by that agent — so the reader can check what it shows
+ * (state/reading/scriptureCheck.ts). The browser talks only to its agent's origin. `VITE_BIBLE_API_URL` overrides it.
  */
+const AGENT_ORIGIN = /^https?:\/\//.test(A2A_BASE)
+  ? A2A_BASE
+  : typeof location !== "undefined"
+    ? `${location.origin}${A2A_BASE}`
+    : "https://seed-reader-a2a.faithnet.io";
 export const BIBLE_API_ENDPOINT = (
-  ((import.meta as unknown as { env?: Record<string, string | undefined> })
-    .env?.["VITE_BIBLE_API_URL"] ??
-    "https://scripture-api.faithnet.io/") as string
+  (import.meta as unknown as { env?: Record<string, string | undefined> })
+    .env?.["VITE_BIBLE_API_URL"] ?? `${AGENT_ORIGIN}/bible/`
 ).replace(/\/?$/, "/");
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org/";
 

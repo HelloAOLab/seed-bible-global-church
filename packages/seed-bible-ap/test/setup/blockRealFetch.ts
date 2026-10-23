@@ -7,7 +7,6 @@ import { afterEach } from "vitest";
 const ALLOWED = new Set([
   "127.0.0.1",
   "localhost",
-  "scripture-api.faithnet.io",
   "bible.helloao.org",
   "vmfnri.helloao.org",
   "search.seedbible.org",

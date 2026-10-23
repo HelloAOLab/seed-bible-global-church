@@ -1,1 +1,183 @@
-{"translation":{"id":"ENGWEBP","name":"World English Bible","website":"https://ebible.org/Scriptures/details.php?id=engwebp","licenseUrl":"https://ebible.org/Scriptures/details.php?id=engwebp","license":{"attribution":"not-required","commercialUse":"allowed","derivatives":"allowed","copyleft":false,"publicDomain":true},"shortName":"WEB","englishName":"World English Bible","language":"eng","textDirection":"ltr","sha256":"72b3e6d83b3cd1c0a0e02a8b2254244d7568ca6c3235f52f93c71764590b8042","availableFormats":["json"],"listOfBooksApiLink":"/api/ENGWEBP/books.json","completeTranslationApiLink":"/api/ENGWEBP/complete.json","simpleCompleteTranslationApiLink":"/api/ENGWEBP/complete.simple.json","numberOfBooks":66,"totalNumberOfChapters":1189,"totalNumberOfVerses":31103,"languageName":"English","languageEnglishName":"English"},"book":{"id":"PSA","translationId":"ENGWEBP","name":"Psalms","commonName":"Psalms","title":"The Psalms","order":19,"numberOfChapters":150,"sha256":"f5d2d0283e52e5296e743c11faf44a9933777fa2ce386049cf50f78de33589aa","firstChapterNumber":1,"firstChapterApiLink":"/api/ENGWEBP/PSA/1.json","firstChapterReference":{"translationId":"ENGWEBP","book":"PSA","chapter":1},"lastChapterNumber":150,"lastChapterApiLink":"/api/ENGWEBP/PSA/150.json","lastChapterReference":{"translationId":"ENGWEBP","book":"PSA","chapter":150},"totalNumberOfVerses":2461},"chapter":{"number":23,"content":[{"type":"hebrew_subtitle","content":["A Psalm by David."]},{"type":"verse","number":1,"content":[{"text":"The LORD is my shepherd;","poem":1},{"text":"I shall lack nothing.","poem":2}]},{"type":"verse","number":2,"content":[{"text":"He makes me lie down in green pastures.","poem":1},{"text":"He leads me beside still waters.","poem":2}]},{"type":"verse","number":3,"content":[{"text":"He restores my soul.","poem":1},{"text":"He guides me in the paths of righteousness for his name’s sake.","poem":2}]},{"type":"verse","number":4,"content":[{"text":"Even though I walk through the valley of the shadow of death,","poem":1},{"text":"I will fear no evil, for you are with me.","poem":2},{"text":"Your rod and your staff,","poem":1},{"text":"they comfort me.","poem":2}]},{"type":"verse","number":5,"content":[{"text":"You prepare a table before me","poem":1},{"text":"in the presence of my enemies.","poem":2},{"text":"You anoint my head with oil.","poem":1},{"text":"My cup runs over.","poem":2}]},{"type":"verse","number":6,"content":[{"text":"Surely goodness and loving kindness shall follow me all the days of my life,","poem":1},{"text":"and I will dwell in the LORD’s house forever.","poem":2}]}],"footnotes":[]},"thisChapterLink":"/api/ENGWEBP/PSA/23.json","thisChapterReference":{"translationId":"ENGWEBP","book":"PSA","chapter":23},"thisChapterAudioLinks":{},"nextChapterApiLink":"/api/ENGWEBP/PSA/24.json","nextChapterReference":{"translationId":"ENGWEBP","book":"PSA","chapter":24},"nextChapterAudioLinks":{},"previousChapterApiLink":"/api/ENGWEBP/PSA/22.json","previousChapterReference":{"translationId":"ENGWEBP","book":"PSA","chapter":22},"previousChapterAudioLinks":{},"thisChapterAudioTimings":{},"nextChapterAudioTimings":{},"previousChapterAudioTimings":{},"numberOfVerses":6,"simpleChapterApiLink":"/api/ENGWEBP/PSA/23.simple.json","verification":{"edition":"ENGWEBP","version":"helloao-72b3e6d83b3c","corpusRef":"0xfacec35a97b73de6b03eee11b37a30bf09415f2a01d54666a2a872b635fcc930","corpusRoot":"0xc11f9d8430bc4724a6ed6cb33c4a83a14e8f7ac9323230d6f14644b8ba923f14","issuer":"0x3064d88922223881b206dcab68b992b9b2ba90b2","normalization":"ap:normalization:canonical-text-v1","proofsLink":"/api/ENGWEBP/PSA/23.proofs.json","verses":{"1":{"commitment":"0xdf27ee7820cfc8eccf28737963416ed18a3bcfb806b8f8c3230b08ce5e6d412c","leaf":14236},"2":{"commitment":"0x5fac52fade57bb8ba0bc0997f5ca0780ea41d18a05400dcef56c96ab1cc1b58a","leaf":14237},"3":{"commitment":"0x224cf2714b360302613231658feb668a45d12088828822cc266af7e2112389e4","leaf":14238},"4":{"commitment":"0x9a816470c05dd33009101a71514e68079e208183d8e6f154b1a8190ed2417bd4","leaf":14239},"5":{"commitment":"0x4d8748cfbd2aba66bb5a204f2a64374b3afb09f334948214a07b9853c8a967b2","leaf":14240},"6":{"commitment":"0x00865aa873f33443fd15a5831f78adb0c2e97c16207fd863ec2c27a9b766daab","leaf":14241}}}}
+{
+  "translation": {
+    "id": "ENGWEBP",
+    "name": "World English Bible",
+    "website": "https://ebible.org/Scriptures/details.php?id=engwebp",
+    "licenseUrl": "https://ebible.org/Scriptures/details.php?id=engwebp",
+    "license": {
+      "attribution": "not-required",
+      "commercialUse": "allowed",
+      "derivatives": "allowed",
+      "copyleft": false,
+      "publicDomain": true
+    },
+    "shortName": "WEB",
+    "englishName": "World English Bible",
+    "language": "eng",
+    "textDirection": "ltr",
+    "sha256": "72b3e6d83b3cd1c0a0e02a8b2254244d7568ca6c3235f52f93c71764590b8042",
+    "availableFormats": ["json"],
+    "listOfBooksApiLink": "/api/ENGWEBP/books.json",
+    "completeTranslationApiLink": "/api/ENGWEBP/complete.json",
+    "simpleCompleteTranslationApiLink": "/api/ENGWEBP/complete.simple.json",
+    "numberOfBooks": 66,
+    "totalNumberOfChapters": 1189,
+    "totalNumberOfVerses": 31103,
+    "languageName": "English",
+    "languageEnglishName": "English"
+  },
+  "book": {
+    "id": "PSA",
+    "translationId": "ENGWEBP",
+    "name": "Psalms",
+    "commonName": "Psalms",
+    "title": "The Psalms",
+    "order": 19,
+    "numberOfChapters": 150,
+    "sha256": "f5d2d0283e52e5296e743c11faf44a9933777fa2ce386049cf50f78de33589aa",
+    "firstChapterNumber": 1,
+    "firstChapterApiLink": "/api/ENGWEBP/PSA/1.json",
+    "firstChapterReference": {
+      "translationId": "ENGWEBP",
+      "book": "PSA",
+      "chapter": 1
+    },
+    "lastChapterNumber": 150,
+    "lastChapterApiLink": "/api/ENGWEBP/PSA/150.json",
+    "lastChapterReference": {
+      "translationId": "ENGWEBP",
+      "book": "PSA",
+      "chapter": 150
+    },
+    "totalNumberOfVerses": 2461
+  },
+  "chapter": {
+    "number": 23,
+    "content": [
+      { "type": "hebrew_subtitle", "content": ["A Psalm by David."] },
+      {
+        "type": "verse",
+        "number": 1,
+        "content": [
+          { "text": "The LORD is my shepherd;", "poem": 1 },
+          { "text": "I shall lack nothing.", "poem": 2 }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 2,
+        "content": [
+          { "text": "He makes me lie down in green pastures.", "poem": 1 },
+          { "text": "He leads me beside still waters.", "poem": 2 }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 3,
+        "content": [
+          { "text": "He restores my soul.", "poem": 1 },
+          {
+            "text": "He guides me in the paths of righteousness for his name’s sake.",
+            "poem": 2
+          }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 4,
+        "content": [
+          {
+            "text": "Even though I walk through the valley of the shadow of death,",
+            "poem": 1
+          },
+          { "text": "I will fear no evil, for you are with me.", "poem": 2 },
+          { "text": "Your rod and your staff,", "poem": 1 },
+          { "text": "they comfort me.", "poem": 2 }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 5,
+        "content": [
+          { "text": "You prepare a table before me", "poem": 1 },
+          { "text": "in the presence of my enemies.", "poem": 2 },
+          { "text": "You anoint my head with oil.", "poem": 1 },
+          { "text": "My cup runs over.", "poem": 2 }
+        ]
+      },
+      {
+        "type": "verse",
+        "number": 6,
+        "content": [
+          {
+            "text": "Surely goodness and loving kindness shall follow me all the days of my life,",
+            "poem": 1
+          },
+          { "text": "and I will dwell in the LORD’s house forever.", "poem": 2 }
+        ]
+      }
+    ],
+    "footnotes": []
+  },
+  "thisChapterLink": "/api/ENGWEBP/PSA/23.json",
+  "thisChapterReference": {
+    "translationId": "ENGWEBP",
+    "book": "PSA",
+    "chapter": 23
+  },
+  "thisChapterAudioLinks": {},
+  "nextChapterApiLink": "/api/ENGWEBP/PSA/24.json",
+  "nextChapterReference": {
+    "translationId": "ENGWEBP",
+    "book": "PSA",
+    "chapter": 24
+  },
+  "nextChapterAudioLinks": {},
+  "previousChapterApiLink": "/api/ENGWEBP/PSA/22.json",
+  "previousChapterReference": {
+    "translationId": "ENGWEBP",
+    "book": "PSA",
+    "chapter": 22
+  },
+  "previousChapterAudioLinks": {},
+  "thisChapterAudioTimings": {},
+  "nextChapterAudioTimings": {},
+  "previousChapterAudioTimings": {},
+  "numberOfVerses": 6,
+  "simpleChapterApiLink": "/api/ENGWEBP/PSA/23.simple.json",
+  "verification": {
+    "edition": "ENGWEBP",
+    "version": "helloao-72b3e6d83b3c",
+    "corpusRef": "0xfacec35a97b73de6b03eee11b37a30bf09415f2a01d54666a2a872b635fcc930",
+    "corpusRoot": "0xc11f9d8430bc4724a6ed6cb33c4a83a14e8f7ac9323230d6f14644b8ba923f14",
+    "issuer": "0x3064d88922223881b206dcab68b992b9b2ba90b2",
+    "normalization": "ap:normalization:canonical-text-v1",
+    "proofsLink": "/api/ENGWEBP/PSA/23.proofs.json",
+    "verses": {
+      "1": {
+        "commitment": "0xdf27ee7820cfc8eccf28737963416ed18a3bcfb806b8f8c3230b08ce5e6d412c",
+        "leaf": 14236
+      },
+      "2": {
+        "commitment": "0x5fac52fade57bb8ba0bc0997f5ca0780ea41d18a05400dcef56c96ab1cc1b58a",
+        "leaf": 14237
+      },
+      "3": {
+        "commitment": "0x224cf2714b360302613231658feb668a45d12088828822cc266af7e2112389e4",
+        "leaf": 14238
+      },
+      "4": {
+        "commitment": "0x9a816470c05dd33009101a71514e68079e208183d8e6f154b1a8190ed2417bd4",
+        "leaf": 14239
+      },
+      "5": {
+        "commitment": "0x4d8748cfbd2aba66bb5a204f2a64374b3afb09f334948214a07b9853c8a967b2",
+        "leaf": 14240
+      },
+      "6": {
+        "commitment": "0x00865aa873f33443fd15a5831f78adb0c2e97c16207fd863ec2c27a9b766daab",
+        "leaf": 14241
+      }
+    }
+  }
+}

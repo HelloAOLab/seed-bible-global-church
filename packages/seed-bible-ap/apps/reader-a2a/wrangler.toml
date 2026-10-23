@@ -83,6 +83,11 @@ A2A_PUBLIC_ORIGIN = "https://seed-reader-a2a.faithnet.io"
 binding = "MCP"
 service = "seed-bible-reader-mcp-faithnet"
 
+# The scripture agent (scripture-resolver.svc) — the Bible, asked over A2A (src/routes/bible.ts), over a service binding.
+[[env.faithnet.services]]
+binding = "SCRIPTURE"
+service = "demo-bible-a2a-faithnet"
+
 # seed-bible.svc — the serving plane (the Seed registry), over a service binding.
 [[env.faithnet.services]]
 binding = "PLATFORM"

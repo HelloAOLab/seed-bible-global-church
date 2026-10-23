@@ -81,8 +81,9 @@ export function createScriptureCheck(
   const failedAt = new Map<string, number>();
   const translations = new Map<string, Promise<TranslationVerification>>();
 
+  // A link the service gave is an absolute path on its host; anything else is relative to the endpoint.
   const getJson = async <T>(path: string): Promise<T> => {
-    const res = await fetchImpl(`${endpoint}${path.replace(/^\//, "")}`);
+    const res = await fetchImpl(new URL(path, endpoint).href);
     if (!res.ok) throw new Error(`${path}: ${res.status}`);
     return (await res.json()) as T;
   };
@@ -105,8 +106,11 @@ export function createScriptureCheck(
       return;
     }
     try {
+      // The proofs arrive with the chapter (the scripture agent's read-chapter, includeProofs); else they are asked for.
       const [proofs, tv] = await Promise.all([
-        getJson<ChapterProofs>(v.proofsLink),
+        v.proofs
+          ? { corpusRoot: v.corpusRoot, verses: v.proofs }
+          : getJson<ChapterProofs>(v.proofsLink),
         translationOf(c.translation.id),
       ]);
       const verses = checkChapterText(c.chapter.content, v, proofs);

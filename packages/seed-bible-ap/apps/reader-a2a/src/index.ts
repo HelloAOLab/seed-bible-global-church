@@ -15,6 +15,7 @@ import {
   type SessionEnv,
 } from "./session";
 import { servedEstates, TOWN } from "../../../estate/faithnet";
+import { bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
@@ -24,7 +25,7 @@ import { askingKeyAddress, type WireEnv } from "./wires";
 import { platformSend, type PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
 
-export interface Env extends SessionEnv, WireEnv, PlatformEnv {
+export interface Env extends SessionEnv, WireEnv, PlatformEnv, BibleEnv {
   /** The estate's agent runtime — a reader's own agent is asked there over their wire. */
   A2A_URL?: string;
   /** reader-mcp by URL (dev) or by service binding (deployed — same-account workers.dev fetches 1042). */
@@ -50,6 +51,7 @@ const DEV_AGENT: Address = "0x0000000000000000000000000000000000000001";
 const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors());
 app.route("/", connectRoutes);
+app.route("/", bibleRoutes);
 app.route("/", publicRoutes);
 // The rooms: people's devices join a session on this origin (realtime-collaboration.md rule 2).
 app.all("/agents/*", async (c) => {
