@@ -145,13 +145,13 @@ Every action a signed-in reader takes becomes one harness run on reader-a2a: the
 
 ## Scripture from the scripture agent
 
-Scripture has one source: the scripture agent at scripture.faithnet.io. It serves all 1,256 translations, the cross-reference and Theographic datasets, audio timings, verse search and place geometry. The reader never sees its address; it asks reader-a2a's `/bible/api/*`, and reader-a2a asks the agent.
+Scripture has one source: the scripture agent at scripture.faithnet.io. It serves the editions it publishes in its own `list-editions` (BSB, WEB, KJV and ASV in reader form), the cross-reference and Theographic datasets, audio timings, verse search and place geometry. The reader never sees its address; it asks reader-a2a's `/bible/api/*`, and reader-a2a asks the agent.
 
 **How a Bible path becomes an A2A call** (`apps/reader-a2a/src/routes/bible.ts`). reader-a2a maps each path to one skill and sends one standard A2A 1.0 `SendMessage` to the agent's `/api/a2a` over the `SCRIPTURE` service binding (`SCRIPTURE_A2A_URL` in dev). The message carries a single data part `{ skill, args }`. The agent's reply is a data part in the old Bible API's shape; reader-a2a rewrites its links from `/api/` to `/bible/api/`, caches it at the edge, and returns it. A request the agent refuses comes back as a 404 carrying the agent's words. Nothing else is tried.
 
 | Path under `/bible/api/`               | Skill                                         | Answer                                                                                                                                                |
 | -------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `available_translations.json`          | `list-translations`                           | The catalogue of 1,256 translations                                                                                                                   |
+| `available_translations.json`          | `list-translations`                           | The translations the agent serves (BSB, WEB, KJV, ASV); any other id is refused                                                                       |
 | `<t>/books.json`                       | `list-books`                                  | Books of one translation                                                                                                                              |
 | `<t>/<BOOK>/<ch>.json`                 | `read-chapter`                                | The chapter, with its per-verse proofs, and audio links                                                                                               |
 | `<t>/<BOOK>/<ch>.timing.<reader>.json` | `audio-timings`                               | Word timings for a recording                                                                                                                          |
