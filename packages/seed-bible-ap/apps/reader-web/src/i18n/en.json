@@ -503,7 +503,7 @@
   "friend-request-line": "wants to be friends",
   "friend-accept": "Accept",
   "friend-not-now": "Not now",
-  "friend-sign-at-home": "Sign at your Home to add {{name}} — the window that opened. This updates by itself when you are done.",
+  "friend-sign-at-home": "Sign at your Home to add {{name}} — the window that opened. Check the name there before you sign. This updates by itself when you are done.",
   "friend-open-home-again": "Open your Home again",
   "friend-now-friends": "✓ You and {{name}} are friends.",
   "friend-asked": "✓ Asked {{name}}. You are friends once they accept.",
@@ -519,5 +519,6 @@
   "friend-invite-sign-in": "Sign in to accept",
   "friend-invite-already": "You and {{name}} are already friends.",
   "friend-invite-accept": "Add {{name}} as a friend",
-  "done": "Done"
+  "done": "Done",
+  "friend-asked-before": "You asked {{name}} before; adding them again sends the request again."
 }

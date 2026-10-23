@@ -73,7 +73,9 @@ export function createFriendship(deps: {
   const waiting = signal<{
     who: string;
     label: string;
+    /** Their standing: before the Home step while `landed` is false, after it once true. */
     was: ReturnType<typeof standingOf>;
+    landed: boolean;
   } | null>(null);
   /** Everyone already a friend or asked, so the one who newly appears is the one just added, however they were typed. */
   const known = (v: FriendsView | null) =>
@@ -104,7 +106,7 @@ export function createFriendship(deps: {
       deps.openWindow ??
       ((u) => window.open(u, "_blank", "popup,width=520,height=760"))
     )(url);
-    waiting.value = { who, label: label || who, was };
+    waiting.value = { who, label: label || who, was, landed: false };
     stopWatching();
     const before = known(deps.friendsView());
     const start = (deps.now ?? Date.now)();
@@ -128,6 +130,7 @@ export function createFriendship(deps: {
               ...w,
               label: added?.name ?? w.label,
               was: now,
+              landed: true,
             };
           stopWatching();
         }

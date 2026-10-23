@@ -79,7 +79,16 @@ describe("adding a friend", () => {
       })
     );
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
-    expect(f.waiting.value?.was).toBe("you-asked");
+    expect(f.waiting.value).toMatchObject({ was: "you-asked", landed: true });
+  });
+
+  it("asking someone already asked is not reported as done", async () => {
+    vi.useFakeTimers();
+    const ruth = { agent: RUTH, name: "ruth.me", since: "2026-10-22" };
+    const { f } = setup(view({ requested: [ruth] }));
+    f.add("ruth");
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS * 3);
+    expect(f.waiting.value).toMatchObject({ was: "you-asked", landed: false });
   });
 
   it("recognises the one just added however they were typed", async () => {
@@ -109,7 +118,11 @@ describe("adding a friend", () => {
     f.add(EZRA, "ezra.me");
     set(view({ friends: [asked] }));
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
-    expect(f.waiting.value).toMatchObject({ label: "ezra.me", was: "friend" });
+    expect(f.waiting.value).toMatchObject({
+      label: "ezra.me",
+      was: "friend",
+      landed: true,
+    });
   });
 
   it("stops watching when nothing lands", async () => {

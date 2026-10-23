@@ -455,18 +455,26 @@ function FriendWaiting({ state }: { state: ReaderState }) {
   const { friendship } = state;
   const w = friendship.waiting.value;
   if (!w) return null;
-  const done = w.was === "friend" || w.was === "you-asked";
   return (
     <div className="sb-pane-notice sb-friend-waiting" role="status">
-      {!done ? (
+      {!w.landed ? (
         <>
           <p>
             {t("friend-sign-at-home", {
               name: w.label,
               defaultValue:
-                "Sign at your Home to add {{name}} — the window that opened. This updates by itself when you are done.",
+                "Sign at your Home to add {{name}} — the window that opened. Check the name there before you sign. This updates by itself when you are done.",
             })}
           </p>
+          {w.was === "you-asked" && (
+            <p className="sb-small sb-muted">
+              {t("friend-asked-before", {
+                name: w.label,
+                defaultValue:
+                  "You asked {{name}} before; adding them again sends the request again.",
+              })}
+            </p>
+          )}
           <div className="sb-note-card-actions">
             <button
               type="button"
