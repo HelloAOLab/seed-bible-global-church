@@ -117,7 +117,7 @@ export function PhoneNav({ state }: { state: ReaderState }) {
       ? "today"
       : you
         ? "you"
-        : pane === "content"
+        : ui.searchOpen.value
           ? "search"
           : pane === "none" && !ui.sidebarDrawer.value
             ? "bible"
@@ -295,12 +295,10 @@ export function PhoneNav({ state }: { state: ReaderState }) {
           icon="search"
           active={active === "search"}
           onClick={() => {
-            show("content");
-            requestAnimationFrame(() =>
-              document
-                .querySelector<HTMLInputElement>(".sb-content-search input")
-                ?.focus()
-            );
+            const opening = !ui.searchOpen.value;
+            clear();
+            ui.pane.value = "none";
+            ui.searchOpen.value = opening;
           }}
         />
         <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor sb-phone-more-tab">

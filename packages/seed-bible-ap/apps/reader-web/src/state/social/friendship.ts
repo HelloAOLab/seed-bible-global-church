@@ -138,6 +138,35 @@ export function createFriendship(deps: {
     }, WATCH_EVERY_MS);
   }
 
+  /** Someone the reader is removing at their Home (a friend, or a request they sent), until they are gone. */
+  const removing = signal<{ who: string; label: string; done: boolean } | null>(
+    null
+  );
+  let removeWatch: ReturnType<typeof setInterval> | undefined;
+  /** Remove a friend, or take back a request: the Home revokes the grant (its own flyout asks first). */
+  function remove(who: string, label?: string | null): void {
+    const url = `${deps.homeOrigin}/contacts?remove=${encodeURIComponent(who)}`;
+    (
+      deps.openWindow ??
+      ((u) => window.open(u, "_blank", "popup,width=520,height=760"))
+    )(url);
+    removing.value = { who, label: label || who, done: false };
+    clearInterval(removeWatch);
+    const start = (deps.now ?? Date.now)();
+    removeWatch = setInterval(() => {
+      void deps.refresh().then(() => {
+        const r = removing.value;
+        if (!r) return clearInterval(removeWatch);
+        const gone = standingOf(deps.friendsView(), r.who) === "none";
+        if (gone) removing.value = { ...r, done: true };
+        if (gone || (deps.now ?? Date.now)() - start > WATCH_MS) {
+          if (!gone) removing.value = null;
+          clearInterval(removeWatch);
+        }
+      });
+    }, WATCH_EVERY_MS);
+  }
+
   async function putAside(agent: string) {
     notNow.value = [...new Set([...notNow.value, agent.toLowerCase()])];
     await deps.prefs.set(NOT_NOW_KEY, notNow.value);
@@ -149,6 +178,12 @@ export function createFriendship(deps: {
     requests,
     notNow,
     add,
+    remove,
+    removing,
+    clearRemoving: () => {
+      clearInterval(removeWatch);
+      removing.value = null;
+    },
     putAside,
     stopWatching,
     /** Done with the "added" line. */

@@ -1,7 +1,9 @@
-// THE VERSE TOOLBAR — what the old BibleReaderToolbar shows over a selection: the reference, the highlight
-// swatches, note, clear and close (`sb-verse-toolbar-*` from the copied stylesheet).
+// THE VERSE TOOLBAR — what the old BibleReaderToolbar shows over a selection (`sb-verse-toolbar-*` from the copied
+// stylesheet): on a desktop it floats just above the selected verse and follows it as the page scrolls. Its row is
+// the old reader's — Highlight · Save · Note · Copy · the extensions' tools (Compare) · Share · Cancel — and
+// Highlight turns it into the colour picker (the reference with ‹ back, the swatches, Clear).
 import { handleHorizontalListKeyNav } from "../keyboardNav";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { passageOf } from "../../state/records/marks";
@@ -10,19 +12,41 @@ import { getVersePlainText } from "./chapterContent";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const verses = state.selection.verses.value;
-  if (!verses.length) return null;
-  const { reading } = state;
-  const chapterRef = reading.chapterRef.value;
-  const start = Math.min(...verses);
-  const end = Math.max(...verses);
-  const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 1800);
     return () => clearTimeout(t);
   }, [copied]);
+  const verses = state.selection.verses.value;
+  const [picker, setPicker] = useState(false);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const key = verses.join();
+  useEffect(() => setPicker(false), [key]);
+  // Just above the first line of the selection, kept there while the page or the reading column scrolls.
+  useLayoutEffect(() => {
+    if (!verses.length) return;
+    const place = () => {
+      const el = document.querySelector<HTMLElement>(
+        `.sb-bible-reader-active [data-verse-number="${Math.min(...verses)}"]`
+      );
+      const r = el?.getClientRects()[0];
+      setAnchor(r ? { x: r.left + r.width / 2, y: r.top } : null);
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [key]);
+  if (!verses.length) return null;
+  const { reading } = state;
+  const chapterRef = reading.chapterRef.value;
+  const start = Math.min(...verses);
+  const end = Math.max(...verses);
+  const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
   const current = state.highlights.forChapter(chapterRef).value.find((h) => {
     const v = h.verse;
     return typeof v === "number"
@@ -55,61 +79,239 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
     }
   };
   const menuAt = state.ui.verseMenuAt.value;
-  // As a right-click menu the toolbar opens at the pointer, kept on screen.
-  const menuStyle = menuAt
+  const phone = typeof window !== "undefined" && window.innerWidth <= 720;
+  // As a right-click menu the toolbar opens at the pointer, kept on screen; on a desktop it sits above the verse.
+  const style = menuAt
     ? {
         left: `${Math.max(8, Math.min(menuAt.x, window.innerWidth - 380))}px`,
         top: `${Math.max(8, Math.min(menuAt.y, window.innerHeight - 140))}px`,
         bottom: "auto",
         transform: "none",
       }
-    : undefined;
+    : !phone && anchor
+      ? {
+          left: `${Math.min(Math.max(anchor.x, 200), window.innerWidth - 200)}px`,
+          top: `${Math.min(Math.max(anchor.y - 12, picker ? 140 : 90), window.innerHeight - 8)}px`,
+        }
+      : undefined;
+  const saved =
+    state.saves.forPassage(passageOf(chapterRef, start, end)).length > 0;
+  const Action = (props: {
+    icon: string;
+    label: string;
+    onClick: () => void;
+    className?: string;
+    pressed?: boolean;
+    filled?: boolean;
+  }) => (
+    <div className="sb-verse-toolbar-action-item">
+      <button
+        type="button"
+        className={`sb-verse-toolbar-action${props.className ? ` ${props.className}` : ""}`}
+        aria-label={props.label}
+        title={props.label}
+        aria-pressed={props.pressed}
+        onClick={props.onClick}
+      >
+        <span className="sb-verse-toolbar-action-icon">
+          <span
+            className={`material-symbols-outlined${props.filled ? " sb-icon-filled" : ""}`}
+          >
+            {props.icon}
+          </span>
+        </span>
+        <span className="sb-verse-toolbar-action-label">{props.label}</span>
+      </button>
+    </div>
+  );
+  const tools = [...state.extensions.verseTools.value]
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+    .filter(
+      (tool) =>
+        !tool.isVisible || tool.isVisible({ chapterRef, start, end, verses })
+    );
+  const canShowEveryone =
+    state.live.active.value &&
+    (state.live.myRole.value === "leader" ||
+      state.live.myRole.value === "decorator");
 
   return (
     <div
-      className={`sb-verse-toolbar ${menuAt ? "sb-verse-toolbar-menu" : "sb-verse-toolbar-docked"}`}
+      className={`sb-verse-toolbar ${menuAt ? "sb-verse-toolbar-menu" : !phone && anchor ? "sb-verse-toolbar-draggable sb-verse-toolbar-anchored" : "sb-verse-toolbar-docked"}`}
       role={menuAt ? "menu" : "toolbar"}
-      style={menuStyle}
+      style={style}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
-      <div className="sb-verse-toolbar-ref">
-        <span className="sb-verse-toolbar-ref-text">{ref}</span>
-      </div>
-      <div
-        className="sb-verse-toolbar-tools"
-        onKeyDown={(e) =>
-          handleHorizontalListKeyNav(
-            e as KeyboardEvent,
-            e.currentTarget as HTMLElement
-          )
-        }
-      >
-        <div className="sb-verse-toolbar-swatches">
-          {state.highlights.colors.map((c) => (
+      {(picker || phone) && (
+        <div
+          className={`sb-verse-toolbar-ref${picker ? " sb-verse-toolbar-ref-with-back" : ""}`}
+        >
+          {picker && (
             <button
-              key={c}
-              className="sb-verse-toolbar-color-button"
-              aria-label={
-                t("highlight", { defaultValue: "Highlight" }) + ` ${c}`
-              }
-              aria-pressed={current?.colorId === c}
+              type="button"
+              className="sb-verse-toolbar-back"
+              aria-label={t("back", { defaultValue: "Back" })}
+              title={t("back", { defaultValue: "Back" })}
+              onClick={() => setPicker(false)}
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+          )}
+          <span className="sb-verse-toolbar-ref-text">{ref}</span>
+        </div>
+      )}
+      {picker ? (
+        <div
+          className="sb-verse-toolbar-tools sb-verse-toolbar-picker"
+          role="toolbar"
+          onKeyDown={(e) => {
+            if ((e as KeyboardEvent).key === "Escape") {
+              e.preventDefault();
+              setPicker(false);
+              return;
+            }
+            handleHorizontalListKeyNav(
+              e as KeyboardEvent,
+              e.currentTarget as HTMLElement
+            );
+          }}
+        >
+          <div
+            className="sb-verse-toolbar-swatches"
+            role="group"
+            aria-label={t("highlight-colors", {
+              defaultValue: "Highlight colors",
+            })}
+          >
+            {state.highlights.colors.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="sb-verse-toolbar-color-button"
+                aria-label={
+                  t("highlight", { defaultValue: "Highlight" }) + ` ${c}`
+                }
+                title={c}
+                aria-pressed={current?.colorId === c}
+                onClick={() => {
+                  void state.highlights.set(chapterRef, start, end, c);
+                  state.selection.clear();
+                }}
+              >
+                <span
+                  className={`sb-verse-toolbar-color${current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
+                  style={{ background: `var(--sb-highlight-${c}-color)` }}
+                />
+              </button>
+            ))}
+          </div>
+          <div className="sb-verse-toolbar-picker-actions">
+            <button
+              type="button"
+              className="sb-verse-toolbar-clear"
+              disabled={!current}
+              aria-label={t("clear-highlight", {
+                defaultValue: "Clear highlight",
+              })}
+              title={t("clear", { defaultValue: "Clear" })}
               onClick={() => {
-                void state.highlights.set(chapterRef, start, end, c);
+                void state.highlights.clear(chapterRef, start, end);
                 state.selection.clear();
               }}
             >
-              <span
-                className={`sb-verse-toolbar-color${current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
-                style={{ background: `var(--sb-highlight-${c}-color)` }}
-              />
+              <span className="material-symbols-outlined">ink_eraser</span>
+              <span className="sb-verse-toolbar-action-text">
+                {t("clear", { defaultValue: "Clear" })}
+              </span>
             </button>
-          ))}
+          </div>
         </div>
-        {state.live.active.value &&
-          (state.live.myRole.value === "leader" ||
-            state.live.myRole.value === "decorator") && (
-            <button
-              className="sb-verse-toolbar-action"
+      ) : (
+        <div
+          className="sb-verse-toolbar-tools"
+          onKeyDown={(e) =>
+            handleHorizontalListKeyNav(
+              e as KeyboardEvent,
+              e.currentTarget as HTMLElement
+            )
+          }
+        >
+          <Action
+            icon="format_ink_highlighter"
+            label={t("highlight", { defaultValue: "Highlight" })}
+            className="sb-verse-toolbar-highlight-trigger"
+            onClick={() => setPicker(true)}
+          />
+          <Action
+            icon="star"
+            filled={saved}
+            pressed={saved}
+            label={t("save-verses", { defaultValue: "Save" })}
+            className={`sb-verse-toolbar-save-trigger${saved ? " sb-verse-toolbar-save-trigger-active" : ""}`}
+            onClick={() => {
+              void state.saves.toggle(
+                chapterRef,
+                { start, end },
+                reading.translationId.value
+              );
+              state.selection.clear();
+            }}
+          />
+          <Action
+            icon="sticky_note_2"
+            label={t("note", { defaultValue: "Note" })}
+            className="sb-verse-toolbar-note"
+            onClick={() => {
+              state.ui.pane.value = "notes";
+              state.ui.noteDraft.value = { start, end };
+            }}
+          />
+          <Action
+            icon={copied ? "check" : "content_copy"}
+            label={
+              copied
+                ? t("link-copied", { defaultValue: "Copied" })
+                : t("copy-verse", { defaultValue: "Copy" })
+            }
+            className="sb-verse-toolbar-copy"
+            onClick={() => void copyText()}
+          />
+          {tools.map((tool) => (
+            <Action
+              key={tool.id}
+              icon={tool.icon}
+              label={tool.label}
+              onClick={() => {
+                tool.onSelect({ chapterRef, start, end, verses });
+                state.selection.clear();
+              }}
+            />
+          ))}
+          <Action
+            icon="share"
+            label={t("share-verses", { defaultValue: "Share" })}
+            onClick={() => {
+              state.ui.share.value = {
+                title: ref,
+                url: shareUrl(
+                  location.origin,
+                  {
+                    translationId: reading.translationId.value,
+                    bookId: reading.bookId.value,
+                    chapterNumber: reading.chapterNumber.value,
+                  },
+                  start,
+                  end
+                ),
+              };
+            }}
+          />
+          {canShowEveryone && (
+            <Action
+              icon="campaign"
+              label={t("session-show-everyone", {
+                defaultValue: "Show everyone",
+              })}
               onClick={() => {
                 void state.live.decorate(
                   start,
@@ -118,139 +320,16 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
                 );
                 state.selection.clear();
               }}
-            >
-              <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-                campaign
-              </span>
-              <span className="sb-verse-toolbar-action-label">
-                {t("session-show-everyone", { defaultValue: "Show everyone" })}
-              </span>
-            </button>
+            />
           )}
-        {[...state.extensions.verseTools.value]
-          .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-          .filter(
-            (tool) =>
-              !tool.isVisible ||
-              tool.isVisible({ chapterRef, start, end, verses })
-          )
-          .map((tool) => (
-            <button
-              key={tool.id}
-              className="sb-verse-toolbar-action"
-              onClick={() => {
-                tool.onSelect({ chapterRef, start, end, verses });
-                state.selection.clear();
-              }}
-            >
-              <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-                {tool.icon}
-              </span>
-              <span className="sb-verse-toolbar-action-label">
-                {tool.label}
-              </span>
-            </button>
-          ))}
-        {current && (
-          <button
-            className="sb-verse-toolbar-action sb-verse-toolbar-clear"
-            onClick={() => {
-              void state.highlights.clear(chapterRef, start, end);
-              state.selection.clear();
-            }}
-          >
-            <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-              format_color_reset
-            </span>
-            <span className="sb-verse-toolbar-action-label">
-              {t("clear-highlight", { defaultValue: "Clear highlight" })}
-            </span>
-          </button>
-        )}
-        <button
-          className="sb-verse-toolbar-action sb-verse-toolbar-note"
-          onClick={() => {
-            state.ui.pane.value = "notes";
-            state.ui.noteDraft.value = { start, end };
-          }}
-        >
-          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-            sticky_note_2
-          </span>
-          <span className="sb-verse-toolbar-action-label">
-            {t("note", { defaultValue: "Note" })}
-          </span>
-        </button>
-        <button
-          className="sb-verse-toolbar-action"
-          onClick={() => {
-            state.ui.share.value = {
-              title: ref,
-              url: shareUrl(
-                location.origin,
-                {
-                  translationId: reading.translationId.value,
-                  bookId: reading.bookId.value,
-                  chapterNumber: reading.chapterNumber.value,
-                },
-                start,
-                end
-              ),
-            };
-          }}
-          aria-label={t("share-verses", { defaultValue: "Share" })}
-        >
-          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-            share
-          </span>
-          <span className="sb-verse-toolbar-action-label">
-            {t("share-verses", { defaultValue: "Share" })}
-          </span>
-        </button>
-        <button
-          className="sb-verse-toolbar-action sb-verse-toolbar-copy"
-          onClick={() => void copyText()}
-        >
-          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-            {copied ? "check" : "content_copy"}
-          </span>
-          <span className="sb-verse-toolbar-action-label">
-            {copied
-              ? t("link-copied", { defaultValue: "Copied" })
-              : t("copy-verse", { defaultValue: "Copy" })}
-          </span>
-        </button>
-        <button
-          className="sb-verse-toolbar-action"
-          aria-pressed={
-            state.saves.forPassage(passageOf(chapterRef, start, end)).length > 0
-          }
-          onClick={() => {
-            void state.saves.toggle(
-              chapterRef,
-              { start, end },
-              reading.translationId.value
-            );
-            state.selection.clear();
-          }}
-        >
-          <span className="material-symbols-outlined sb-verse-toolbar-action-icon">
-            {state.saves.forPassage(passageOf(chapterRef, start, end)).length
-              ? "inventory_2"
-              : "archive"}
-          </span>
-          <span className="sb-verse-toolbar-action-label">
-            {t("save-verses", { defaultValue: "Save" })}
-          </span>
-        </button>
-        <button
-          className="sb-verse-toolbar-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => state.selection.clear()}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </div>
+          <Action
+            icon="close"
+            label={t("cancel", { defaultValue: "Cancel" })}
+            className="sb-verse-toolbar-cancel"
+            onClick={() => state.selection.clear()}
+          />
+        </div>
+      )}
     </div>
   );
 }

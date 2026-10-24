@@ -134,6 +134,30 @@ describe("adding a friend", () => {
   });
 });
 
+describe("removing a friend, or taking back a request", () => {
+  it("opens the Home to remove exactly that person and reports it once they are gone", async () => {
+    vi.useFakeTimers();
+    const ruth = { agent: RUTH, name: "ruth.me", since: "2026-10-22" };
+    const { f, opened, set } = setup(view({ friends: [ruth] }));
+    f.remove(RUTH, "ruth.me");
+    expect(opened).toEqual([`https://www.faithnet.me/contacts?remove=${RUTH}`]);
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.removing.value).toMatchObject({ label: "ruth.me", done: false });
+    set(view({}));
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.removing.value).toMatchObject({ done: true });
+  });
+
+  it("gives up when they never go", async () => {
+    vi.useFakeTimers();
+    const ezra = { agent: EZRA, name: null, since: "2026-10-22" };
+    const { f } = setup(view({ requested: [ezra] }));
+    f.remove(EZRA);
+    await vi.advanceTimersByTimeAsync(WATCH_MS + 2 * WATCH_EVERY_MS);
+    expect(f.removing.value).toBeNull();
+  });
+});
+
 describe("Not now", () => {
   it("puts a request aside on this device, and it stays aside after a reload", async () => {
     const asked = { agent: EZRA, name: "ezra.me", since: "2026-10-23" };

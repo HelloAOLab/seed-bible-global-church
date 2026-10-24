@@ -18,7 +18,13 @@ const KIND_ICON: Record<string, string> = {
   image: "image",
 };
 
-function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
+export function OfferingItem({
+  state,
+  o,
+}: {
+  state: ReaderState;
+  o: Offering;
+}) {
   const { t } = useI18n();
   const focused = state.discover.focus.value === o.descriptorId;
   const [open, setOpen] = useState(focused);
@@ -103,7 +109,7 @@ function OfferingItem({ state, o }: { state: ReaderState; o: Offering }) {
   );
 }
 
-function ProviderSection({
+export function ProviderSection({
   state,
   provider,
 }: {

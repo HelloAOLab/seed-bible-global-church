@@ -178,6 +178,243 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "FR1",
+    section: "8. Today, Discover and publishing",
+    title: "Friends: the old reader's full page",
+    rows: ["Friends pane"],
+    checks:
+      "Signed in: Profile → Friends opens a full page (the reading area gives way) with ← back to Profile: Friends (each with Remove), Add a friend (Send request; your friend link with Copy and Email it; your user ID with Copy) and, when there are any, Friend requests (Accept, Decline) and Sent requests (Cancel). Send request opens your Home's add-a-contact page for exactly that name; Remove asks first (Remove friend?) and then opens your Home's page to remove exactly that friend. (The test records the Home address instead of opening it, so nothing is signed)",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page.locator(".sb-sidebar-profile-button").click();
+      await c.pane().locator(".sb-profile-row", { hasText: "Friends" }).click();
+      const page = c.page.locator(".sb-friends-pane");
+      await page.waitFor({ timeout: 5000 });
+      if (await c.page.locator(".sb-app-main").isVisible())
+        throw new Error("Friends is not a full page");
+      await c.waitText(page, /add a friend/i, 20000);
+      const heads = (
+        await page.locator(".sb-friends-heading-text").allInnerTexts()
+      ).map((x) => x.trim());
+      if (!heads.includes("Friends") || !heads.includes("Add a friend"))
+        throw new Error(`headings: ${heads.join(", ")}`);
+      // The Home is never opened: the address the reader would open is recorded instead, so nothing can be signed.
+      await c.page.evaluate(() => {
+        (window as unknown as { __opened: string[] }).__opened = [];
+        window.open = ((u: string) => {
+          (window as unknown as { __opened: string[] }).__opened.push(
+            String(u)
+          );
+          return null;
+        }) as typeof window.open;
+      });
+      const popup = async (act: () => Promise<void>) => {
+        await act();
+        return c.page.evaluate(
+          () =>
+            (window as unknown as { __opened: string[] }).__opened.at(-1) ?? ""
+        );
+      };
+      await page.locator(".sb-friends-add-input").fill("flowtest-nobody.me");
+      const addUrl = await popup(() =>
+        page.getByRole("button", { name: /send request/i }).click()
+      );
+      if (!/\/contacts\?add=flowtest-nobody\.me$/.test(addUrl))
+        throw new Error(`Send request opened ${addUrl}`);
+      await c.page
+        .locator(".sb-friend-waiting")
+        .getByRole("button", { name: /cancel/i })
+        .click()
+        .catch(() => {});
+      const remove = page
+        .getByRole("button", { name: /^Remove .* as a friend$/ })
+        .first();
+      let removed = "no friends to remove";
+      if (await remove.count()) {
+        await remove.click();
+        const dialog = c.page.getByRole("dialog", { name: /remove friend\?/i });
+        await dialog.waitFor({ timeout: 3000 });
+        const rmUrl = await popup(() =>
+          dialog.getByRole("button", { name: /^remove$/i }).click()
+        );
+        if (!/\/contacts\?remove=0x[0-9a-f]{40}$/i.test(rmUrl))
+          throw new Error(`Remove opened ${rmUrl}`);
+        await c.page
+          .locator(".sb-friend-waiting")
+          .getByRole("button", { name: /cancel/i })
+          .click()
+          .catch(() => {});
+        removed =
+          "Remove asked first, then opened the Home to remove exactly that friend";
+      }
+      await page.getByRole("button", { name: "Back" }).click();
+      await c.page.locator(".sb-profile-screen").waitFor({ timeout: 3000 });
+      return `full page with ${heads.join(" · ")}; Send request opened the Home for that name; ${removed}; ← back to Profile`;
+    },
+  },
+  {
+    id: "YC1",
+    section: "5. Your Content and search",
+    title:
+      "Your content as the old reader's: chips, your own search, quotes and menus",
+    rows: ["Your content", "Search your own things"],
+    checks:
+      "With a note on John 3:16 and a highlight on 3:14, Your content shows + Create (Playlist, Reading plan) and the chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; the note's card quotes its verse ('For God so loved…') above the note; the highlight quotes its verse. Searching a word of the note finds only the note; a word of the highlighted verse finds the highlight; the Highlights chip shows only highlights; each item's ⋯ deletes it (Delete, Clear highlight)",
+    run: async (c) => {
+      await c.open(CH);
+      const word = `mustard${Date.now().toString(36)}`;
+      await writeNote(c, 16, `${word} seed`);
+      await c.selectVerse(14);
+      await c.pickColor(0);
+      await c.page.keyboard.press("Escape");
+      await c.pressToolbar("Your content");
+      const pane = c.pane();
+      await pane.locator(".sb-content-chips").waitFor({ timeout: 10000 });
+      const chips = (
+        await pane.locator(".sb-content-chip").allInnerTexts()
+      ).map((x) => x.trim());
+      const want = [
+        "All",
+        "Annotations",
+        "Highlights",
+        "Saves",
+        "Bookmarks",
+        "Playlists",
+        "Reading plans",
+        "Images",
+      ];
+      if (chips.join() !== want.join())
+        throw new Error(`chips: ${chips.join(", ")}`);
+      await pane.locator(".sb-content-create").click();
+      const create = (
+        await c.page.locator(".sb-context-menu [role=menuitem]").allInnerTexts()
+      ).join(" ");
+      if (!/playlist/i.test(create) || !/reading plan/i.test(create))
+        throw new Error(`+ Create offers: ${create}`);
+      await c.page.keyboard.press("Escape");
+      const card = pane
+        .locator(".sb-content-annotation", { hasText: word })
+        .first();
+      await card.waitFor({ timeout: 15000 });
+      await c.waitText(
+        card.locator(".sb-content-quote"),
+        /For God so loved/,
+        15000
+      );
+      const hl = pane
+        .locator(".sb-content-highlight-row", { hasText: "John 3:14" })
+        .first();
+      await c.waitText(hl, /Moses lifted up the snake/, 15000);
+      const search = pane.locator(".sb-content-search input");
+      await search.fill(word);
+      await c.page.waitForTimeout(400);
+      if ((await pane.locator(".sb-content-highlight-row").count()) !== 0)
+        throw new Error("a search for the note's word kept the highlights");
+      await card.waitFor({ timeout: 3000 });
+      await search.fill("Moses lifted up");
+      await hl.waitFor({ timeout: 15000 });
+      if (
+        await pane.locator(".sb-content-annotation", { hasText: word }).count()
+      )
+        throw new Error("a search for the verse's words kept the note");
+      await search.fill("");
+      await pane.locator(".sb-content-chip", { hasText: "Highlights" }).click();
+      await hl.waitFor({ timeout: 5000 });
+      if (await pane.locator(".sb-content-annotation").count())
+        throw new Error("the Highlights chip still shows notes");
+      await hl.locator(".sb-content-kebab").click();
+      await c.page
+        .locator(".sb-context-menu [role=menuitem]", {
+          hasText: /clear highlight/i,
+        })
+        .click();
+      await hl.waitFor({ state: "detached", timeout: 10000 });
+      await pane
+        .locator(".sb-content-chip", { hasText: "Annotations" })
+        .click();
+      await card.locator(".sb-content-kebab").click();
+      await c.page
+        .locator(".sb-context-menu [role=menuitem]", { hasText: /^delete$/i })
+        .click();
+      await card.waitFor({ state: "detached", timeout: 10000 });
+      return `chips ${chips.join(" · ")}; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note`;
+    },
+  },
+  {
+    id: "SR1",
+    section: "3. Reading",
+    title: "Search: the floating box above the toolbar",
+    rows: ["Search the Bible"],
+    checks:
+      "Search in the toolbar opens a box just above it, ready to type in. 'Gen 2' offers Genesis 2 under Books at once; ↓ then Enter opens it. 'loved the world' finds John 3:16 among the verses; tapping it opens John 3 with verse 16 selected; its ↗ opens it in a new tab. Esc closes the box",
+    run: async (c) => {
+      await c.open(CH);
+      await c.pressToolbar("Search");
+      const panel = c.page.locator(".sb-floating-search-panel");
+      const input = panel.locator("input");
+      await input.waitFor({ timeout: 5000 });
+      await c.page.waitForFunction(
+        () =>
+          document.activeElement?.classList.contains(
+            "sb-floating-search-input"
+          ),
+        undefined,
+        { timeout: 3000 }
+      );
+      const bar = (await c.page
+        .locator(".sb-reader-toolbar-desk")
+        .boundingBox())!;
+      const box = (await panel.boundingBox())!;
+      if (box.y + box.height > bar.y)
+        throw new Error("the search box is not above the toolbar");
+      await input.fill("Gen 2");
+      await c.waitText(
+        panel.locator(".sb-floating-search-book").first(),
+        /Genesis 2/,
+        5000
+      );
+      await input.press("ArrowDown");
+      await input.press("Enter");
+      await c.page.waitForURL(/\/read\/BSB\/GEN\/2$/, { timeout: 15000 });
+      await c.pressToolbar("Search");
+      await input.fill("loved the world");
+      const hit = panel
+        .locator(".sb-floating-search-result:not(.sb-floating-search-book)", {
+          hasText: "3:16",
+        })
+        .first();
+      await hit.waitFor({ timeout: 20000 });
+      await hit.click();
+      await c.page.waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 });
+      await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 15000 });
+      const tabsBefore = await c.page
+        .locator(".sb-sidebar-tab-list .sb-tab-main, .sb-sidebar-tab-list > *")
+        .count();
+      await c.pressToolbar("Search");
+      await input.fill("loved the world");
+      await hit.waitFor({ timeout: 20000 });
+      await hit.locator(".sb-floating-search-result-action").click();
+      await c.page
+        .waitForFunction(
+          (n) =>
+            document.querySelectorAll(
+              ".sb-sidebar-tab-list .sb-tab-main, .sb-sidebar-tab-list > *"
+            ).length > n,
+          tabsBefore,
+          { timeout: 10000 }
+        )
+        .catch(() => {
+          throw new Error("↗ did not open a new tab");
+        });
+      await c.pressToolbar("Search");
+      await input.waitFor({ timeout: 5000 });
+      await input.press("Escape");
+      await panel.waitFor({ state: "detached", timeout: 3000 });
+      return "the box opened above the toolbar, ready to type in; Gen 2 → Genesis 2 by ↓ Enter; 'loved the world' → John 3:16 opened with the verse selected; ↗ opened a new tab; Esc closed it";
+    },
+  },
+  {
     id: "SEL1",
     section: "3. Reading",
     title: "The book picker is laid out as the old reader's",
@@ -702,22 +939,30 @@ export const MORE_FLOWS: Flow[] = [
     title: "Bookmark names and colours, save folders",
     rows: ["Bookmark names and colours, save folders"],
     checks:
-      "Bookmark John 3 → Your Content → pencil → name 'Nicodemus' and a colour → shown; save the chapter → pencil → folder 'Study' → listed under Study",
+      "Bookmark John 3 → Your Content → its ⋯ → Edit bookmark → name 'Nicodemus' and a colour → shown; save the chapter → its ⋯ → Edit save → folder 'Study' → shown beside it",
     run: async (c) => {
       await c.open(CH);
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+        )
         .click();
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-save-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"
+        )
         .click();
       await c.pressToolbar("Your content");
       const pane = c.pane();
       await pane
-        .getByRole("button", { name: /all chapters/i })
-        .click()
-        .catch(() => undefined);
-      await pane.locator('button[aria-label="Edit bookmark"]').first().click();
+        .locator('button[aria-label="Bookmark options"]')
+        .first()
+        .click();
+      await c.page
+        .locator(".sb-context-menu [role=menuitem]", {
+          hasText: "Edit bookmark",
+        })
+        .click();
       await pane
         .locator('input[placeholder="Bookmark name"]')
         .fill("Nicodemus");
@@ -727,7 +972,10 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click();
       await c.waitText(pane, /Nicodemus/);
-      await pane.locator('button[aria-label="Edit save"]').first().click();
+      await pane.locator('button[aria-label="Save options"]').first().click();
+      await c.page
+        .locator(".sb-context-menu [role=menuitem]", { hasText: "Edit save" })
+        .click();
       await pane.locator('input[placeholder^="Folder"]').fill("Study");
       await pane
         .getByRole("button", { name: /^save$/i })
@@ -1754,7 +2002,7 @@ export const MORE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
-      await c.page.locator(".sb-verse-toolbar-color-button").first().click();
+      await c.pickColor(0);
       // The sidebar's ⋮ More menu holds it now, as in the old reader.
       await c.page
         .locator(".sb-sidebar-top-row")
@@ -2319,7 +2567,7 @@ export const MORE_FLOWS: Flow[] = [
       // With a pane open the reading area is narrower and the bar folds under More; read it with the pane closed.
       await pane.locator(".sb-pane-close").first().click();
       await c.page
-        .locator(".sb-reader-toolbar:not(.sb-reader-toolbar-folded)")
+        .locator(".sb-reader-toolbar-desk:not(.sb-reader-toolbar-folded)")
         .waitFor({ timeout: 5000 });
       const after = await labels();
       if (
@@ -2343,7 +2591,7 @@ export const MORE_FLOWS: Flow[] = [
         .click();
       await pane.locator(".sb-pane-close").first().click();
       await c.page
-        .locator(".sb-reader-toolbar:not(.sb-reader-toolbar-folded)")
+        .locator(".sb-reader-toolbar-desk:not(.sb-reader-toolbar-folded)")
         .waitFor({ timeout: 5000 });
       const reset = await labels();
       if (reset.join() !== before.join())
@@ -2569,7 +2817,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The old reader's bottom bar; every action within reach",
     rows: ["Every action within reach"],
     checks:
-      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens Your content with its search box ready; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
+      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
     run: async (c) => {
       const all = [
         "Live session",
@@ -2607,7 +2855,7 @@ export const MORE_FLOWS: Flow[] = [
         );
         return { inBar, inMore, missing };
       };
-      // A phone's five tabs (Sign in is You; Your content opens from Search) and its More sheet.
+      // A phone's five tabs (Sign in and Your content are under You) and its More sheet.
       const reachablePhone = async (page: import("playwright").Page) => {
         const tabs = await page
           .locator(".sb-phone-nav .sb-reader-toolbar-mobile-tab-button:visible")
@@ -2623,7 +2871,7 @@ export const MORE_FLOWS: Flow[] = [
         await page.locator(".sb-phone-more-tab > button").click();
         const via: Record<string, string> = {
           "Sign in": "You",
-          "Your content": "Search",
+          "Your content": "You",
         };
         const missing = all.filter(
           (a) =>
@@ -2651,7 +2899,9 @@ export const MORE_FLOWS: Flow[] = [
       await c.pressToolbar("Search");
       await c.page
         .waitForFunction(
-          () => document.activeElement?.closest(".sb-content-search") != null,
+          () =>
+            document.activeElement?.closest(".sb-floating-search-panel") !=
+            null,
           undefined,
           { timeout: 5000 }
         )
@@ -2800,13 +3050,17 @@ export const MORE_FLOWS: Flow[] = [
         .getByRole("button", { name: "Save chapter" })
         .click();
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+        )
         .click();
       await side.getByRole("button", { name: "Bookmarks" }).click();
       await c.waitText(side.locator(".sb-bookmarks-panel"), /john 3/i, 5000);
       // A bookmark opens in the translation on screen, so it goes before the saves are tried from WEB.
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+        )
         .click();
       await side.getByRole("button", { name: "Saves" }).click();
       const saves = side.locator(".sb-saves-section");
@@ -2912,6 +3166,7 @@ export const MORE_FLOWS: Flow[] = [
       };
       await pick(14);
       await pick(17, true);
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
       await c.page
         .locator('.sb-verse-toolbar button[aria-label="Highlight yellow"]')
         .click();
@@ -2920,7 +3175,7 @@ export const MORE_FLOWS: Flow[] = [
         if ((await colourOf(n)) !== "yellow")
           throw new Error(`verse ${n} not yellow after highlighting 14–17`);
       await pick(15);
-      await c.page.locator(".sb-verse-toolbar-clear").click();
+      await c.clearHighlight();
       await c.page.keyboard.press("Escape");
       // The change lands in a moment (the old highlight goes, the kept pieces follow): wait for it.
       const settle = async (verses: number[], want: string) => {
@@ -2936,6 +3191,7 @@ export const MORE_FLOWS: Flow[] = [
       if (after.join() !== "yellow,,yellow,yellow")
         throw new Error(`after clearing 15: ${after.join(", ")} (14–17)`);
       await pick(16);
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
       await c.page
         .locator('.sb-verse-toolbar button[aria-label="Highlight green"]')
         .click();
@@ -2947,7 +3203,7 @@ export const MORE_FLOWS: Flow[] = [
         );
       for (const n of [14, 16, 17]) {
         await pick(n);
-        await c.page.locator(".sb-verse-toolbar-clear").click();
+        await c.clearHighlight();
         await c.page.keyboard.press("Escape");
       }
       return "14–17 yellow; clearing 15 kept 14, 16, 17; colouring 16 green kept 17 yellow; cleared";
@@ -3248,8 +3504,8 @@ export const MORE_FLOWS: Flow[] = [
         await page.evaluate(() => window.scrollTo(0, 0));
         step = "await c.selectVerse(16 page)";
         await c.selectVerse(16, page);
-        step = "await page.locator( .sb-verse-toolbar-color ).first().click(";
-        await page.locator(".sb-verse-toolbar-color").first().click();
+        step = "pick a colour";
+        await c.pickColor(0, page);
         step = "await page.keyboard.press( Escape )";
         await page.keyboard.press("Escape");
         const you = page.locator('.sb-phone-nav button[aria-label="You"]');

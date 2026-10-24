@@ -71,8 +71,16 @@ export function getInlineText(part: Part): string {
   return "";
 }
 
+/** A verse's words: its parts joined with a space (a footnote or a line break between two words leaves none in the
+ *  text itself — "only" | note | "Son"), runs of space collapsed, none before closing punctuation. */
 export const getVersePlainText = (content: ChapterVerse["content"]) =>
-  content.map(getInlineText).join("");
+  content
+    .map(getInlineText)
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .replace(/ ([,.;:!?’”)\]])/g, "$1")
+    .trim();
 
 function splitVerseIntoSegments(
   content: ChapterVerse["content"]

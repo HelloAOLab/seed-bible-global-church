@@ -465,7 +465,7 @@ function FriendRequests({ state }: { state: ReaderState }) {
 }
 
 /** While a friend is being added at the Home: what to do there, then what came of it. */
-function FriendWaiting({ state }: { state: ReaderState }) {
+export function FriendWaiting({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { friendship } = state;
   const w = friendship.waiting.value;

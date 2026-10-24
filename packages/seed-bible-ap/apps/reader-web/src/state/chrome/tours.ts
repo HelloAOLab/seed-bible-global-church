@@ -140,7 +140,7 @@ export const TOURS: Record<
     desktop: [
       step(
         "search",
-        '.sb-app-pane input[type="search"]',
+        ".sb-floating-search-input-wrap",
         "selectorSearch",
         "Search by",
         "Search by chapter, verse or book from here."

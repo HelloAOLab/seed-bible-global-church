@@ -231,15 +231,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   });
   const shown = arrange(secondary, state.toolbar.layout.value);
   const more = underMore(secondary, state.toolbar.layout.value);
-  // Search opens Your content with its search box ready, until the old reader's floating search box is built.
-  const openSearch = () => {
-    ui.pane.value = "content";
-    requestAnimationFrame(() =>
-      document
-        .querySelector<HTMLInputElement>(".sb-content-search input")
-        ?.focus()
-    );
-  };
+  const openSearch = () => (ui.searchOpen.value = !ui.searchOpen.value);
 
   // Folded under More when the whole bar is wider than the reading area (the sidebar or a pane beside it leaves less
   // room than the window). Its full width can only be read while it is unfolded, so anything that changes it (the
@@ -364,7 +356,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         className="sb-reader-toolbar-desk-only"
         label={t("search", { defaultValue: "Search" })}
         labeled
-        active={ui.pane.value === "content"}
+        active={ui.searchOpen.value}
         onClick={openSearch}
       />
       {shown.map((a) => (

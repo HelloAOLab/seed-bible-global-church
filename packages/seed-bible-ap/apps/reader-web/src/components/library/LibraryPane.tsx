@@ -414,6 +414,15 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [refText, setRefText] = useState("");
   /** The plan open in the editor, or null. */
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  // A playlist or plan handed over to open here (Your content's Edit and Open).
+  const handed = state.ui.libraryOpen.value;
+  useEffect(() => {
+    if (!handed) return;
+    setTab(handed.tab);
+    setOpen(handed.id);
+    setEditingPlan(handed.tab === "plans" && handed.edit ? handed.id : null);
+    state.ui.libraryOpen.value = null;
+  }, [handed]);
   /** A typed reference ("John 3:16-18") as a scripture item in the open translation. */
   const scriptureFromText = (text: string): PlaylistItem | null => {
     const r = state.search.parseReference(text.trim(), reading.books.value);

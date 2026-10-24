@@ -123,3 +123,19 @@ describe("chapter content", () => {
     );
   });
 });
+
+describe("a verse's plain words", () => {
+  it("keeps a space where a footnote or a line break sat between two words, and none before punctuation", async () => {
+    const { getVersePlainText } =
+      await import("../../../apps/reader-web/src/components/reader/chapterContent");
+    expect(
+      getVersePlainText([
+        "He gave His one and only",
+        { noteId: 1 },
+        "Son , that everyone",
+        { lineBreak: true },
+        "who believes",
+      ] as never)
+    ).toBe("He gave His one and only Son, that everyone who believes");
+  });
+});

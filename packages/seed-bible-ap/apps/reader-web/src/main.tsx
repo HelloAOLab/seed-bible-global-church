@@ -28,6 +28,8 @@ import "./styles/today.css";
 import "./styles/discover.css";
 import "./styles/friends.css";
 import "./styles/huddle.css";
+import "./styles/floating-search.css";
+import "./styles/discover-panel.css";
 import "./styles/playlists.css";
 import "./styles/plans.css";
 import "./styles/onboarding.css";

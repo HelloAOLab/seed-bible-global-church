@@ -164,8 +164,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       typeof matchMedia !== "undefined" &&
       matchMedia("(max-width: 720px)").matches,
     prepare: (id) => {
-      // The search tour points into Your Content: open it first.
-      if (id === "search") ui.pane.value = "content";
+      // The search tour points at the floating search box: open it first.
+      if (id === "search") ui.searchOpen.value = true;
     },
   });
   /** The bottom toolbar's order and hidden buttons (the old toolbar customizer). */
@@ -457,6 +457,14 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** The bookmarks and saves panels above the sidebar's tab list (opened from its header, or the phone's More). */
     bookmarksPanel: signal(false),
     savesPanel: signal(false),
+    /** The old reader's floating search above the toolbar. */
+    searchOpen: signal(false),
+    /** A playlist or plan to open in the Library pane (Your content's Edit and Open hand it over). */
+    libraryOpen: signal<{
+      tab: "playlists" | "plans";
+      id: string;
+      edit?: boolean;
+    } | null>(null),
     /** The Settings list (or one of its pages) shown in the sidebar in place of the tabs; null when closed. */
     settingsView: signal<SettingsPage | null>(null),
     /** The reading area's width in px (App.tsx measures it); the toolbar folds into More when it's wider than this. */
@@ -687,7 +695,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       }
       e.preventDefault();
       if (action === "search") {
-        ui.pane.value = "content";
+        ui.searchOpen.value = true;
         return;
       }
       selection.clear();

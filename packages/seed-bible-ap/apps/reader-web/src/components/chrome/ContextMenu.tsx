@@ -18,6 +18,8 @@ export function MenuButton(props: {
   buttonClassName?: string;
   menuClassName?: string;
   iconClassName?: string;
+  /** Words on the button in place of the icon (Your content's "+ Create"). */
+  text?: string;
   children: ComponentChildren;
 }) {
   const [id] = useState(() => ++nextId);
@@ -80,11 +82,13 @@ export function MenuButton(props: {
           openMenu.value = open ? null : id;
         }}
       >
-        <span
-          className={`material-symbols-outlined ${props.iconClassName ?? "sb-context-more-icon"}`}
-        >
-          {props.icon ?? "more_vert"}
-        </span>
+        {props.text ?? (
+          <span
+            className={`material-symbols-outlined ${props.iconClassName ?? "sb-context-more-icon"}`}
+          >
+            {props.icon ?? "more_vert"}
+          </span>
+        )}
       </button>
       {open && (
         <div

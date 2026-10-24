@@ -3,6 +3,7 @@
 // Discover, Share and an orange Listen; the chapter column, the footnote modal, the skeleton and error states), over
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
+import { DiscoverPanel } from "../social/DiscoverPanel";
 import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
@@ -461,6 +462,7 @@ export function BibleReader({
           </h2>
           {body()}
         </div>
+        {active && <DiscoverPanel state={state} />}
       </div>
 
       {footnote && (

@@ -130,6 +130,20 @@ export class FlowContext {
     await this.settled(page.locator(".sb-verse-toolbar"));
   }
 
+  /** The verse toolbar's Highlight, then a colour (by its place in the picker). */
+  async pickColor(n: number, page: Page = this.page): Promise<void> {
+    const trigger = page.locator(".sb-verse-toolbar-highlight-trigger:visible");
+    if (await trigger.count()) await trigger.first().click();
+    await page.locator(".sb-verse-toolbar-color-button").nth(n).click();
+  }
+
+  /** The verse toolbar's Highlight, then Clear. */
+  async clearHighlight(page: Page = this.page): Promise<void> {
+    const trigger = page.locator(".sb-verse-toolbar-highlight-trigger:visible");
+    if (await trigger.count()) await trigger.first().click();
+    await page.locator(".sb-verse-toolbar-clear").click();
+  }
+
   /** Wait until an element stops moving (the verse toolbar slides into place after it appears). */
   async settled(locator: Locator, timeout = 3000): Promise<void> {
     const t0 = Date.now();

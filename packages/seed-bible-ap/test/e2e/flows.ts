@@ -107,7 +107,8 @@ const BASE_FLOWS: Flow[] = [
       await search.waitFor({ timeout: 10000 });
       await search.fill("World English");
       const row = c.page.locator(".sb-translation-row").first();
-      await row.waitFor({ timeout: 15000 });
+      // The list comes from the scripture agent, which can take a while on a cold start.
+      await row.waitFor({ timeout: 40000 });
       const label = (await row.innerText()).replace(/\s+/g, " ");
       await row.click();
       await c.page.waitForURL(/\/read\/(?!BSB\/)[A-Za-z0-9_]+\/JHN\/3$/, {
@@ -286,15 +287,13 @@ const BASE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
-      await c.page.locator(".sb-verse-toolbar-color-button").nth(1).click();
+      await c.pickColor(1);
       await c.page
         .locator(".sb-bible-reader-active [data-highlight-fill]")
         .first()
         .waitFor({ timeout: 5000 });
       await c.selectVerse(16);
-      await c.page
-        .locator(".sb-verse-toolbar-action", { hasText: /clear highlight/i })
-        .click();
+      await c.clearHighlight();
       await c.page.waitForTimeout(500);
       const left = await c.page
         .locator(".sb-bible-reader-active [data-highlight-fill]")
@@ -360,23 +359,22 @@ const BASE_FLOWS: Flow[] = [
     section: "4. Marking the text",
     title: "Bookmark and save a chapter; see them in Your Content",
     checks:
-      "Header bookmark and archive icons toggle; Your Content → All chapters lists John 3 under both",
+      "Header bookmark and ☆ toggle; Your Content lists John 3 under Bookmarks and Saves",
     run: async (c) => {
       await c.open(CH);
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+        )
         .click();
       await c.page
-        .locator(".sb-bible-reader-active .sb-bible-reader-save-button")
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"
+        )
         .click();
       await c.page.waitForTimeout(500);
       await c.pressToolbar("Your content");
       await c.pane().waitFor({ timeout: 5000 });
-      await c
-        .pane()
-        .getByRole("button", { name: /all chapters/i })
-        .click()
-        .catch(() => undefined);
       await c.waitText(c.pane(), /John 3/);
       const text = await c.paneText();
       if (!/bookmark/i.test(text) || !/save/i.test(text))
@@ -437,25 +435,6 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   // ── 5. Your Content and search ──────────────────────────────────────────────────────────────────────────
-  {
-    id: "C1",
-    rows: [],
-    section: "5. Your Content and search",
-    title: "Search verses",
-    checks:
-      "Your Content → search 'so loved the world' → John 3:16 among the results",
-    run: async (c) => {
-      await c.open(CH);
-      await c.pressToolbar("Your content");
-      const input = c
-        .pane()
-        .locator('input[type="search"], input[placeholder*="earch"]')
-        .first();
-      await input.fill("so loved the world");
-      await c.waitText(c.pane(), /John 3:16/, 20000);
-      return "John 3:16 found";
-    },
-  },
   // ── 8. Today, Discover ───────────────────────────────────────────────────────────────────────────────────
   {
     id: "S1",
@@ -584,7 +563,7 @@ const BASE_FLOWS: Flow[] = [
       await c.open(CH);
       const who = await c.signInAsSample();
       await c.selectVerse(16);
-      await c.page.locator(".sb-verse-toolbar-color-button").nth(2).click();
+      await c.pickColor(2);
       await c.openAccount();
       await c.pane().waitFor({ timeout: 5000 });
       try {

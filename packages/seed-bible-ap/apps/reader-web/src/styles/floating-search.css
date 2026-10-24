@@ -1,0 +1,249 @@
+/* Copied from the old reader (packages/seed-bible components/FloatingReaderPanels/FloatingReaderPanels.css, its search part), 2026-10-24. */
+/* ------------------------------------------------------------------ */
+/* Floating reader panels (search + chat). Anchored above the reader  */
+/* toolbar; the toolbar sits at ~18px from the bottom and is ~68px    */
+/* tall, so we anchor the panels at ~100px to leave a small gap.      */
+/* ------------------------------------------------------------------ */
+
+.sb-floating-search-panel,
+.sb-floating-chat-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Above the mobile reader toolbar wrap (z-index 101) so Ask AI / Chat are
+     not trapped under the bottom chrome after the verse sheet dismisses. */
+  z-index: 102;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.875rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+  animation: sb-floating-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-panel-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sb-floating-search-panel {
+  bottom: 6.25rem;
+  width: min(38.75rem, calc(100vw - 2rem));
+  padding: 0.625rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: min(35rem, calc(100vh - 12.5rem));
+}
+
+.sb-floating-search-panel-expanded {
+  padding-bottom: 0.75rem;
+}
+
+.sb-floating-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  background: var(--sb-reader-background);
+  flex-shrink: 0;
+}
+
+.sb-floating-search-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 1.375rem;
+}
+
+.sb-floating-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  outline: none;
+  font-size: 0.9375rem;
+  padding: 0.375rem 0;
+}
+
+.sb-floating-search-input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-floating-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: none;
+  border-radius: 62.4375rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-search-clear:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-clear .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-floating-search-results {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sb-floating-search-status {
+  padding: 0.875rem 0.75rem;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-floating-search-status-error {
+  color: #b42318;
+}
+
+.sb-floating-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sb-floating-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.75rem;
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-floating-search-result:hover,
+.sb-floating-search-result-highlighted {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-floating-search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sb-floating-search-result-ref {
+  font-weight: 700;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-sep {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.sb-floating-search-result-translation {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-search-result-action {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sb-floating-search-result:hover .sb-floating-search-result-action,
+.sb-floating-search-result-highlighted .sb-floating-search-result-action,
+.sb-floating-search-result-action:focus-visible {
+  opacity: 1;
+}
+
+.sb-floating-search-result-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-action svg {
+  display: block;
+}
+
+.sb-floating-search-result-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+/* --- Book / chapter matches section --- */
+
+.sb-floating-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-floating-search-section + .sb-floating-search-results-list,
+.sb-floating-search-section + .sb-floating-search-status {
+  margin-top: 0.75rem;
+}
+
+.sb-floating-search-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  padding-inline: 0.25rem;
+}
+
+.sb-floating-search-book-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  flex-shrink: 0;
+}
+
+/* --- Chat panel --- */
