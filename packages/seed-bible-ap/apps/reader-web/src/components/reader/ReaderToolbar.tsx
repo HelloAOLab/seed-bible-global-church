@@ -1,8 +1,8 @@
 // THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`). Off a phone it is the
 // old reader's labelled bar: ‹ · Books · Search · Discover · each extension's button · More · ›, with the audio
 // controls in front while a recording plays; what the reader took out of the bar is under More (play sits in the
-// chapter header). On a phone it is the bar at the top: the Tabs drawer, ‹ chapter ›, play or listen, More and the
-// account. Both are drawn and CSS picks one, so the page drawn on the edge matches the app.
+// chapter header). A phone has its own (PhoneNav.tsx); both are drawn and CSS picks one, so the page drawn on the
+// edge matches the app.
 import {
   canFullScreen,
   fullScreen,
@@ -279,16 +279,9 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   return (
     <nav
       ref={navRef}
-      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}${folded ? " sb-reader-toolbar-folded" : ""}${more.length || !state.session.value ? "" : " sb-reader-toolbar-more-empty"}`}
+      className={`sb-reader-toolbar sb-reader-toolbar-desk${audioActive ? " sb-reader-toolbar-has-audio" : ""}${folded ? " sb-reader-toolbar-folded" : ""}${more.length || !state.session.value ? "" : " sb-reader-toolbar-more-empty"}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
-      <Item
-        icon="menu"
-        className="sb-reader-toolbar-phone-only"
-        label={t("tabs", { defaultValue: "Tabs" })}
-        active={ui.sidebarDrawer.value}
-        onClick={() => (ui.sidebarDrawer.value = !ui.sidebarDrawer.value)}
-      />
       {audioActive && (
         <>
           <div className="sb-reader-toolbar-audio">
@@ -344,15 +337,6 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only"
         aria-hidden="true"
       />
-      <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item sb-reader-toolbar-phone-only">
-        <button
-          type="button"
-          className="sb-reader-toolbar-button sb-reader-toolbar-center-button"
-          onClick={() => (ui.selector.value = "books")}
-        >
-          {reading.bookName.value} {reading.chapterNumber.value}
-        </button>
-      </div>
       <span
         className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only sb-reader-toolbar-desk-end"
         aria-hidden="true"
@@ -364,31 +348,6 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         disabled={!reading.hasNext.value}
         onClick={() => void reading.next()}
       />
-      <span
-        className="sb-reader-toolbar-divider sb-reader-toolbar-phone-only"
-        aria-hidden="true"
-      />
-      {audio.available.value && !audioActive && (
-        <Item
-          icon="play_circle"
-          className="sb-reader-toolbar-phone-only"
-          label={t("play", { defaultValue: "Play" })}
-          onClick={() => audio.play()}
-        />
-      )}
-      {canListen && (
-        <Item
-          icon={speaking ? "stop_circle" : "record_voice_over"}
-          className="sb-reader-toolbar-phone-only"
-          label={
-            speaking
-              ? t("stop", { defaultValue: "Stop" })
-              : t("listen", { defaultValue: "Listen" })
-          }
-          active={speaking}
-          onClick={() => (speaking ? tts.stop() : state.listen())}
-        />
-      )}
       <Item
         icon="books"
         render={() => <SeedBibleIcon size={24} />}
@@ -475,37 +434,6 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           ))}
         </div>
       )}
-      {/* Who you are, always: your picture signed in, the account icon (filled, to stand out) signed out. Changes
-          still to send are a count on its corner, never a different icon in its place. */}
-      <Item
-        icon="account_circle"
-        {...(state.session.value
-          ? {
-              render: () => <Avatar state={state} />,
-              className: "sb-reader-toolbar-phone-only",
-            }
-          : {
-              className:
-                "sb-reader-toolbar-signin sb-reader-toolbar-phone-only",
-            })}
-        label={
-          state.session.value
-            ? t("profile", { defaultValue: "Profile" })
-            : t("sign-in", { defaultValue: "Sign in" })
-        }
-        active={ui.pane.value === (state.session.value ? "profile" : "account")}
-        badge={pending}
-        onClick={() =>
-          // Signed in it is the old reader's "You": Profile; signed out, the sign-in pane.
-          (ui.pane.value = state.session.value
-            ? ui.pane.value === "profile"
-              ? "none"
-              : "profile"
-            : ui.pane.value === "account"
-              ? "none"
-              : "account")
-        }
-      />
     </nav>
   );
 }

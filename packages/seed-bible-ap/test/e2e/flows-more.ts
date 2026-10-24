@@ -244,12 +244,7 @@ export const MORE_FLOWS: Flow[] = [
       const phone = await c.secondPage();
       await phone.setViewportSize({ width: 390, height: 844 });
       await c.open("/read/BSB/MAT/3", phone);
-      await phone
-        .locator(
-          ".sb-reader-toolbar-center-button, .sb-bible-reader-active .sb-bible-reader-title"
-        )
-        .first()
-        .click();
+      await phone.locator(".sb-reader-floating-nav-label").first().click();
       const head = phone.locator(
         ".sb-selector-panel .sb-bible-reader-mobile-header-title"
       );
@@ -2488,7 +2483,7 @@ export const MORE_FLOWS: Flow[] = [
             await page.goto(`${BASE}${CH}`, { waitUntil: "networkidle" });
             const just = page.getByRole("button", { name: /no, thanks/i });
             if (await just.count()) await just.first().click();
-            const bar = page.locator(".sb-reader-toolbar");
+            const bar = page.locator(".sb-reader-toolbar-desk");
             await bar.waitFor({ timeout: 20000 });
             await page.evaluate(() => document.fonts.ready);
             const at = `${type.name()} at ${width}px`;
@@ -2524,6 +2519,7 @@ export const MORE_FLOWS: Flow[] = [
               throw new Error(`${at}: the bar folded with room to spare`);
             if (fit.folded) {
               await page
+                .locator(".sb-reader-toolbar-desk")
                 .getByRole("button", { name: "More", exact: true })
                 .click();
               const menu = await page
@@ -2573,7 +2569,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The old reader's bottom bar; every action within reach",
     rows: ["Every action within reach"],
     checks:
-      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens Your content with its search box ready; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in the top bar or its More",
+      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens Your content with its search box ready; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
     run: async (c) => {
       const all = [
         "Live session",
@@ -2611,6 +2607,30 @@ export const MORE_FLOWS: Flow[] = [
         );
         return { inBar, inMore, missing };
       };
+      // A phone's five tabs (Sign in is You; Your content opens from Search) and its More sheet.
+      const reachablePhone = async (page: import("playwright").Page) => {
+        const tabs = await page
+          .locator(".sb-phone-nav .sb-reader-toolbar-mobile-tab-button:visible")
+          .evaluateAll((bs) =>
+            bs.map((b) => b.getAttribute("aria-label") ?? "")
+          );
+        await page.locator(".sb-phone-more-tab > button").click();
+        const inMore = (
+          await page
+            .locator(".sb-mobile-more-menu button:visible")
+            .allInnerTexts()
+        ).map((t) => t.replace(/\s+/g, " ").trim());
+        await page.locator(".sb-phone-more-tab > button").click();
+        const via: Record<string, string> = {
+          "Sign in": "You",
+          "Your content": "Search",
+        };
+        const missing = all.filter(
+          (a) =>
+            !tabs.includes(via[a] ?? a) && !inMore.some((m) => m.endsWith(a))
+        );
+        return { inBar: tabs, inMore, missing };
+      };
       await c.open(CH);
       const words = await c.page
         .locator(".sb-reader-toolbar .sb-reader-toolbar-button-label:visible")
@@ -2646,7 +2666,7 @@ export const MORE_FLOWS: Flow[] = [
       const phone = await ctx.newPage();
       try {
         await c.open(CH, phone);
-        const p = await reachable(phone);
+        const p = await reachablePhone(phone);
         if (p.missing.length)
           throw new Error(`not reachable on a phone: ${p.missing.join(", ")}`);
       } finally {
@@ -3102,10 +3122,10 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "PH1",
     section: "13. Links and embedding",
-    title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
+    title: "A phone: the old reader's phone shell",
     rows: ["Phone layout"],
     checks:
-      "On an iPhone 13: the reader's bar sits at the top; the Tabs drawer closes with its ✕ and with a tap beside it; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane",
+      "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 390, height: 664 },
@@ -3114,29 +3134,109 @@ export const MORE_FLOWS: Flow[] = [
         hasTouch: true,
       });
       const page = await ctx.newPage();
+      c.watch(page);
+      let step = "open";
       try {
+        step = "await c.open(CH page)";
         await c.open(CH, page);
-        const bar = page.locator(".sb-reader-toolbar").first();
-        await bar.waitFor({ timeout: 20000 });
-        const top = (await bar.boundingBox())!.y;
-        if (top > 40) throw new Error(`the bar is at y=${top}, not the top`);
-        // The Tabs drawer has a way out: its ✕, and a tap on the dimmed reader beside it.
+        const head = page.locator(
+          ".sb-bible-reader-active .sb-bible-reader-mobile-header"
+        );
+        step = "await head.waitFor( timeout 20000 )";
+        await head.waitFor({ timeout: 20000 });
+        const headBox = (await head.boundingBox())!;
+        if (headBox.y > 4 || headBox.height > 60)
+          throw new Error(
+            `the top bar is at y=${headBox.y}, ${headBox.height}px tall`
+          );
+        step = "const actions await head";
+        const actions = await head
+          .locator("button:visible")
+          .evaluateAll((bs) =>
+            bs.map((b) => b.getAttribute("aria-label") ?? "")
+          );
+        const wantHead = [
+          "Save chapter",
+          "Bookmark this chapter",
+          "Share",
+          "Text settings",
+        ];
+        if (
+          !wantHead.every((w) => actions.includes(w)) ||
+          !/^Change translation/.test(actions[0] ?? "")
+        )
+          throw new Error(`top bar: ${actions.join(", ")}`);
+        const title = page.locator(
+          ".sb-bible-reader-active .sb-bible-reader-mobile-content-title"
+        );
+        const t = (await title.innerText()).replace(/\s+/g, " ").trim();
+        if (t !== "John 3") throw new Error(`title reads "${t}"`);
+        step = "const tabs await page";
+        const tabs = await page
+          .locator(".sb-phone-nav .sb-reader-toolbar-mobile-tab-button")
+          .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+        if (tabs.join() !== "Today,You,Bible,Search,More")
+          throw new Error(`tabs: ${tabs.join(", ")}`);
+        const bible = page.locator('.sb-phone-nav button[aria-label="Bible"]');
+        if (!(await bible.getAttribute("class"))!.includes("active"))
+          throw new Error("Bible is not lit on the text");
+        const nav = page.locator(".sb-reader-floating-nav");
+        const navBox = (await nav.boundingBox())!;
+        const tabBox = (await page
+          .locator(".sb-phone-nav .sb-reader-toolbar-mobile-layout")
+          .boundingBox())!;
+        if (!(navBox.y < tabBox.y && tabBox.y + tabBox.height >= 660))
+          throw new Error(
+            "the chapter pill and the tabs are not along the bottom"
+          );
+        step = "await nav.getByRole( button name Next Chapter ).clic";
+        await nav.getByRole("button", { name: "Next Chapter" }).click();
+        step = "await page.waitForURL( JHN 4 timeout 15000 )";
+        await page.waitForURL(/\/JHN\/4$/, { timeout: 15000 });
+        step = "await nav.locator( .sb-reader-floating-nav-label ).click()";
+        await nav.locator(".sb-reader-floating-nav-label").click();
+        step = "await page.locator( .sb-selector-panel ).waitFor( timeout";
+        await page.locator(".sb-selector-panel").waitFor({ timeout: 5000 });
+        step = "await page";
+        await page
+          .locator(".sb-selector-panel .sb-selector-mobile-close")
+          .first()
+          .click();
+        step = "await bible.click()";
+        await bible.click();
+        step = "await page.locator( .sb-selector-panel ).waitFor( timeout";
+        await page.locator(".sb-selector-panel").waitFor({ timeout: 5000 });
+        step = "await page";
+        await page
+          .locator(".sb-selector-panel .sb-selector-mobile-close")
+          .first()
+          .click();
+        // More → Tabs: the drawer, closed by its ✕ and by a tap beside it.
         const drawer = page.locator(".sb-tabs-sidebar-drawer");
-        await page
-          .locator('.sb-reader-toolbar button[aria-label="Tabs"]')
-          .click();
-        await drawer.waitFor({ timeout: 3000 });
+        const openTabs = async () => {
+          await page.locator(".sb-phone-more-tab > button").click();
+          await page
+            .locator(".sb-mobile-more-menu button", { hasText: "Tabs" })
+            .click();
+          await drawer.waitFor({ timeout: 3000 });
+        };
+        step = "await openTabs()";
+        await openTabs();
+        step = "await page.locator( .sb-sidebar-drawer-close ).click()";
         await page.locator(".sb-sidebar-drawer-close").click();
+        step = "await drawer.waitFor( state detached timeout 3000 )";
         await drawer.waitFor({ state: "detached", timeout: 3000 });
-        await page
-          .locator('.sb-reader-toolbar button[aria-label="Tabs"]')
-          .click();
-        await drawer.waitFor({ timeout: 3000 });
-        await page.mouse.click(375, 500);
+        step = "await openTabs()";
+        await openTabs();
+        step = "await page.mouse.click(375 300)";
+        await page.mouse.click(375, 300);
+        step = "await drawer.waitFor( state detached timeout 3000 ).c";
         await drawer.waitFor({ state: "detached", timeout: 3000 }).catch(() => {
           throw new Error("a tap beside the Tabs drawer did not close it");
         });
+        step = "await page.mouse.wheel(0 900)";
         await page.mouse.wheel(0, 900);
+        step = "await page";
         await page
           .waitForFunction(() => window.scrollY > 100, undefined, {
             timeout: 5000,
@@ -3144,38 +3244,32 @@ export const MORE_FLOWS: Flow[] = [
           .catch(() => {
             throw new Error("reading down did not scroll the page");
           });
+        step = "await page.evaluate(() window.scrollTo(0 0))";
         await page.evaluate(() => window.scrollTo(0, 0));
+        step = "await c.selectVerse(16 page)";
         await c.selectVerse(16, page);
+        step = "await page.locator( .sb-verse-toolbar-color ).first().click(";
         await page.locator(".sb-verse-toolbar-color").first().click();
+        step = "await page.keyboard.press( Escape )";
         await page.keyboard.press("Escape");
-        const signin = page.locator(".sb-reader-toolbar-signin");
-        await signin
+        const you = page.locator('.sb-phone-nav button[aria-label="You"]');
+        step = "await you";
+        await you
           .locator(".sb-reader-toolbar-unread-indicator")
           .waitFor({ timeout: 5000 });
-        const icon = await signin
-          .locator(".material-symbols-outlined")
-          .innerText();
-        if (icon !== "account_circle")
-          throw new Error(
-            `with a change waiting the sign-in icon is "${icon}"`
-          );
-        const fill = await page
-          .locator(".sb-reader-toolbar-signin .sb-reader-toolbar-button")
-          .evaluate((b) => getComputedStyle(b).backgroundColor);
-        if (/rgba\(0, 0, 0, 0\)|transparent/.test(fill))
-          throw new Error("the sign-in button is not filled");
-        await page.locator(".sb-reader-toolbar-more-button button").click();
-        const first = page
-          .locator(".sb-reader-toolbar-more-menu > button")
-          .first();
-        if (!/sign in/i.test(await first.innerText()))
-          throw new Error(`More opens with "${await first.innerText()}"`);
-        await first.click();
+        step = "await you.click()";
+        await you.click();
+        step = "await page";
         await page
           .getByRole("button", { name: /sign in with faithnet/i })
           .waitFor({ timeout: 5000 });
-        return `bar at y=${Math.round(top)}; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; sign-in filled (${fill}) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane`;
+        return `top bar: ${actions.length} buttons; title "${t}"; tabs ${tabs.join(" · ")}; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in`;
+      } catch (e) {
+        throw new Error(
+          `at ${step}: ${e instanceof Error ? e.message.split("\n")[0] : String(e)}`
+        );
       } finally {
+        step = "await ctx.close()";
         await ctx.close();
       }
     },

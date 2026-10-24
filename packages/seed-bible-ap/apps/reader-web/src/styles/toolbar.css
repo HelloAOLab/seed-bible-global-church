@@ -555,7 +555,8 @@
   }
 }
 
-@media (max-width: 480px) {
+/* The old reader's phone layout (480px there): this reader's phone is anything to 720px. */
+@media (max-width: 720px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
     /* Pinned to both edges rather than centered with translateX(-50%): at

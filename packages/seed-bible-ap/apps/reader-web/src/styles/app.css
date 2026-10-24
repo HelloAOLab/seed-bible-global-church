@@ -628,12 +628,6 @@ body {
     inset-inline-start: 0.5rem;
     width: min(23.25rem, calc(100vw - 1rem));
   }
-  .sb-reader-toolbar-phone-only {
-    display: block;
-  }
-}
-.sb-reader-toolbar-phone-only {
-  display: none;
 }
 /* More holds what the reader took out of the bar, and the way to sign in; with neither it is not drawn, unless the
    bar folds (below). */
@@ -2001,28 +1995,33 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   margin-top: 0.5rem;
 }
 
-/* A PHONE: THE ACTIONS AT THE TOP. At the very bottom the toolbar sat over the text and against the browser's own
-   bottom bar (Safari's), and its More menu ran off the screen. On a phone it is a bar across the top, under the
-   browser's own; the page starts below it; the verse actions sit just under it; More opens as a panel beneath it
-   that wraps to the screen's width and scrolls when tall. */
+/* A PHONE: THE OLD READER'S PHONE SHELL (PhoneNav.tsx, the chapter header below). The chapter pill and the five
+   tabs sit fixed along the bottom, clear of the home bar; the page leaves room under the text for them; the verse
+   actions sit just above the chapter pill. The desktop bar is not drawn. */
 @media (max-width: 720px) {
-  .sb-app-main {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
+  .sb-reader-toolbar-desk,
+  .sb-bible-reader-header {
+    display: none;
   }
-  .sb-reader-toolbar {
-    top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-    bottom: auto;
-    left: 0.5rem;
-    right: 0.5rem;
-    width: auto;
-    max-width: none;
-    transform: none;
-    justify-content: space-between;
-    overflow: hidden;
+  .sb-phone-nav .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
+    padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* The old reader's play: its colour, the glyph cut out in white. */
+  .sb-phone-nav {
+    --sb-reader-floating-nav-play-background: var(--sb-primary-color);
+    --sb-reader-floating-nav-play-glyph: #fff;
+  }
+  /* Its phone margins: the text clear of the edges by the width of its note gutter. */
+  .sb-bible-reader .sb-chapter-content {
+    padding-inline: 2rem;
+  }
+  .sb-app-main {
+    padding-top: 0;
+    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
   }
   .sb-verse-toolbar-docked {
-    top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
-    bottom: auto;
+    top: auto;
+    bottom: calc(8.25rem + env(safe-area-inset-bottom, 0px));
     left: 0.5rem;
     right: 0.5rem;
     transform: none;
@@ -2034,15 +2033,16 @@ html[data-sb-margins="wide"] .sb-chapter-content {
     justify-content: center;
     row-gap: 0.25rem;
   }
-  .sb-reader-toolbar-more-menu {
-    top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
-    bottom: auto;
-    left: 0.5rem;
-    right: 0.5rem;
-    width: auto;
-    grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
-    max-height: calc(100dvh - 6rem);
+  .sb-mobile-more-menu {
+    max-height: calc(100dvh - 8rem);
     overflow-y: auto;
+  }
+}
+@media (min-width: 721px) {
+  .sb-phone-nav,
+  .sb-bible-reader-mobile-header,
+  .sb-bible-reader-mobile-content-title {
+    display: none;
   }
 }
 
@@ -2090,9 +2090,6 @@ html[data-sb-margins="wide"] .sb-chapter-content {
     padding-bottom: env(safe-area-inset-bottom, 0px);
     overscroll-behavior: contain;
   }
-  .sb-reader-toolbar-phone-only {
-    display: block;
-  }
 }
 
 .sb-fullscreen-steps {
@@ -2100,28 +2097,7 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   line-height: 1.5;
 }
 
-/* The phone's top bar holds the menu, the chapter and its arrows, play, More and the account: tight spacing, and the
-   chapter label takes what room is left (shortened with an ellipsis rather than pushing the account off the edge). */
 @media (max-width: 720px) {
-  .sb-reader-toolbar {
-    --sb-reader-toolbar-gap: 0;
-    padding: 0.125rem 0.25rem;
-  }
-  .sb-reader-toolbar .sb-reader-toolbar-button {
-    padding-inline: 0.4rem;
-    min-width: 0;
-  }
-  /* Block, not the buttons' centered flex: a centered flex row clips a long name at both ends ("›hn") instead of
-     ending it with an ellipsis. */
-  .sb-reader-toolbar .sb-reader-toolbar-center-button {
-    display: block;
-    width: 100%;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .sb-selector-overlay {
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -2142,29 +2118,6 @@ html[data-sb-margins="wide"] .sb-chapter-content {
     background: var(--sb-reader-background, var(--sb-background));
   }
 }
-/* The smallest phones (an iPhone SE is 320 px wide): smaller buttons so the account stays on the bar. */
-@media (max-width: 360px) {
-  .sb-reader-toolbar .sb-reader-toolbar-button {
-    padding-inline: 0.2rem;
-  }
-  .sb-reader-toolbar .material-symbols-outlined {
-    font-size: 1.25rem;
-  }
-  .sb-reader-toolbar-divider {
-    display: none;
-  }
-  .sb-reader-toolbar > .sb-reader-toolbar-item {
-    flex: 0 0 2.25rem;
-    min-width: 2.25rem;
-  }
-  .sb-reader-toolbar
-    > .sb-reader-toolbar-item:has(.sb-reader-toolbar-center-button) {
-    width: auto;
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-}
-
 /* Something the reader tapped is still working: a line moving across the very top, over everything. */
 .sb-activity-bar {
   position: fixed;
@@ -2333,12 +2286,7 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   color: var(--sb-muted-color, #6b7280);
   border-color: var(--sb-divider-color, #00000024);
 }
-.sb-verse-check-verified {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, #1a7f4b 55%, transparent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
-}
+/* A verse that checks out is drawn as any verse (the header badge says Verified); only a failed one is marked. */
 .sb-verse-number.sb-verse-check-text-differs,
 .sb-verse-number.sb-verse-check-not-in-corpus {
   color: #b42318;

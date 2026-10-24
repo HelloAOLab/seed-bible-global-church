@@ -44,8 +44,8 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
   const drawer = state.ui.sidebarDrawer.value;
   const collapsed = state.ui.sidebarCollapsed.value && !drawer;
   const settingsOpen = state.ui.settingsView.value !== null && !collapsed;
-  const [bookmarksOpen, setBookmarksOpen] = useState(false);
-  const [savesOpen, setSavesOpen] = useState(false);
+  const bookmarksOpen = state.ui.bookmarksPanel.value;
+  const savesOpen = state.ui.savesPanel.value;
   const shareTab = () => {
     const r = tabs.selected.value?.reading;
     if (!r) return;
@@ -215,7 +215,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                     ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
                     : t("show-bookmarks", { defaultValue: "Show bookmarks" })
                 }
-                onClick={() => setBookmarksOpen((o) => !o)}
+                onClick={() => (state.ui.bookmarksPanel.value = !bookmarksOpen)}
               >
                 <span
                   className={`material-symbols-outlined${bookmarksOpen ? " sb-icon-filled" : ""}`}
@@ -233,7 +233,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                     ? t("hide-saves", { defaultValue: "Hide saves" })
                     : t("show-saves", { defaultValue: "Show saves" })
                 }
-                onClick={() => setSavesOpen((o) => !o)}
+                onClick={() => (state.ui.savesPanel.value = !savesOpen)}
               >
                 <span
                   className={`material-symbols-outlined${savesOpen ? " sb-icon-filled" : ""}`}

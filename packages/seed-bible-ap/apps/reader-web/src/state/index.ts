@@ -454,6 +454,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarCollapsed: signal(false),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
+    /** The bookmarks and saves panels above the sidebar's tab list (opened from its header, or the phone's More). */
+    bookmarksPanel: signal(false),
+    savesPanel: signal(false),
     /** The Settings list (or one of its pages) shown in the sidebar in place of the tabs; null when closed. */
     settingsView: signal<SettingsPage | null>(null),
     /** The reading area's width in px (App.tsx measures it); the toolbar folds into More when it's wider than this. */

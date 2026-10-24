@@ -68,7 +68,7 @@ export function PanesLayout({ state }: { state: ReaderState }) {
       {tabs.slots.value.map((tab, index) => (
         <div
           key={tab?.id ?? `empty-${index}`}
-          className={`sb-pane-shell sb-pane-slot-${index + 1}${index === tabs.selectedSlot.value ? " sb-pane-shell-active" : ""}`}
+          className={`sb-pane-shell sb-pane-slot-${index + 1}${tabs.slots.value.length > 1 && index === tabs.selectedSlot.value ? " sb-pane-shell-active" : ""}`}
           onClickCapture={() => tabs.selectSlot(index)}
         >
           <div className="sb-pane-reader-outer">

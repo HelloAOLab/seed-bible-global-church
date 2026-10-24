@@ -23,6 +23,7 @@ import { YourContentPane } from "./components/records/YourContentPane";
 import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
 import { SessionPane } from "./components/sessions/SessionPane";
+import { PhoneNav } from "./components/reader/PhoneNav";
 import { HuddleBar } from "./components/sessions/HuddleCall";
 import { LibraryPane } from "./components/library/LibraryPane";
 import { Onboarding } from "./components/chrome/Onboarding";
@@ -195,6 +196,7 @@ export function App({ state }: { state: ReaderState }) {
       )}
       <VerseToolbar state={state} />
       <ReaderToolbar state={state} />
+      <PhoneNav state={state} />
       <BibleSelector state={state} />
       <ShareDialog state={state} />
       {state.ui.shared.value && <SharedPageView state={state} />}

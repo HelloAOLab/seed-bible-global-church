@@ -221,6 +221,74 @@ export function BibleReader({
     footnote &&
     chapter?.chapter.footnotes.find((f) => f.noteId === footnote.noteId);
 
+  // The chapter's own actions, the same on the desktop header and the phone's.
+  const saveButtons = (
+    <>
+      <button
+        type="button"
+        className={`sb-bible-reader-save-button${saved ? " sb-bible-reader-save-button-saved" : ""}`}
+        aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
+        title={t("save-chapter", { defaultValue: "Save chapter" })}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          void state.saves.toggle(
+            chapterRef,
+            null,
+            reading.translationId.value
+          );
+        }}
+      >
+        <span
+          className={`material-symbols-outlined${saved ? " sb-icon-filled" : ""}`}
+        >
+          star
+        </span>
+      </button>
+      <button
+        type="button"
+        className={`sb-bible-reader-bookmark-button${bookmarked ? " sb-bible-reader-save-button-saved" : ""}`}
+        aria-label={t("bookmark-this-chapter", {
+          defaultValue: "Bookmark this chapter",
+        })}
+        title={t("bookmark-this-chapter", {
+          defaultValue: "Bookmark this chapter",
+        })}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          void state.bookmarks.toggle(
+            chapterRef,
+            `${reading.bookName.value} ${reading.chapterNumber.value}`
+          );
+        }}
+      >
+        <span className="material-symbols-outlined">
+          {bookmarked ? "bookmark" : "bookmark_border"}
+        </span>
+      </button>
+    </>
+  );
+  const shareButton = (
+    <button
+      type="button"
+      className="sb-bible-reader-action-button"
+      aria-label={t("share", { defaultValue: "Share" })}
+      title={t("share", { defaultValue: "Share" })}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        ui.share.value = {
+          title: chapterLabel,
+          url: `${location.origin}${routeOf({
+            translationId: reading.translationId.value,
+            bookId: reading.bookId.value,
+            chapterNumber: reading.chapterNumber.value,
+          })}`,
+        };
+      }}
+    >
+      <span className="material-symbols-outlined">share</span>
+    </button>
+  );
+
   return (
     <div
       ref={root}
@@ -240,6 +308,43 @@ export function BibleReader({
       dir={reading.translation.value?.textDirection}
       onClick={() => selection.clear()}
     >
+      <div className="sb-bible-reader-mobile-header">
+        <div className="sb-bible-reader-mobile-header-text">
+          <h1 className="sb-bible-reader-mobile-header-title">
+            <button
+              type="button"
+              className="sb-bible-reader-mobile-header-translation"
+              aria-label={t("change-translation", {
+                name: translationLabel,
+                defaultValue: `Change translation (${translationLabel})`,
+              })}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.selector.value = "translations";
+              }}
+            >
+              {translationLabel}
+            </button>
+          </h1>
+        </div>
+        <div className="sb-bible-reader-mobile-header-actions">
+          {saveButtons}
+          {shareButton}
+          <button
+            type="button"
+            className="sb-bible-reader-mobile-header-settings"
+            aria-label={t("text-settings", { defaultValue: "Text settings" })}
+            title={t("text-settings", { defaultValue: "Text settings" })}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              ui.sidebarDrawer.value = true;
+              ui.settingsView.value = "display";
+            }}
+          >
+            <span className="material-symbols-outlined">tune</span>
+          </button>
+        </div>
+      </div>
       <div className="sb-bible-reader-header">
         <div className="sb-bible-reader-heading">
           <h2
@@ -293,47 +398,7 @@ export function BibleReader({
             </span>
           )}
           {/* The old reader's chapter actions, in its order. */}
-          <button
-            type="button"
-            className={`sb-bible-reader-save-button${saved ? " sb-bible-reader-save-button-saved" : ""}`}
-            aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
-            title={t("save-chapter", { defaultValue: "Save chapter" })}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              void state.saves.toggle(
-                chapterRef,
-                null,
-                reading.translationId.value
-              );
-            }}
-          >
-            <span
-              className={`material-symbols-outlined${saved ? " sb-icon-filled" : ""}`}
-            >
-              star
-            </span>
-          </button>
-          <button
-            type="button"
-            className={`sb-bible-reader-bookmark-button${bookmarked ? " sb-bible-reader-save-button-saved" : ""}`}
-            aria-label={t("bookmark-this-chapter", {
-              defaultValue: "Bookmark this chapter",
-            })}
-            title={t("bookmark-this-chapter", {
-              defaultValue: "Bookmark this chapter",
-            })}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              void state.bookmarks.toggle(
-                chapterRef,
-                `${reading.bookName.value} ${reading.chapterNumber.value}`
-              );
-            }}
-          >
-            <span className="material-symbols-outlined">
-              {bookmarked ? "bookmark" : "bookmark_border"}
-            </span>
-          </button>
+          {saveButtons}
           <button
             type="button"
             className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
@@ -348,25 +413,7 @@ export function BibleReader({
           >
             <span className="material-symbols-outlined">explore</span>
           </button>
-          <button
-            type="button"
-            className="sb-bible-reader-action-button"
-            aria-label={t("share", { defaultValue: "Share" })}
-            title={t("share", { defaultValue: "Share" })}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.share.value = {
-                title: chapterLabel,
-                url: `${location.origin}${routeOf({
-                  translationId: reading.translationId.value,
-                  bookId: reading.bookId.value,
-                  chapterNumber: reading.chapterNumber.value,
-                })}`,
-              };
-            }}
-          >
-            <span className="material-symbols-outlined">share</span>
-          </button>
+          {shareButton}
           {active && canPlay && (
             <button
               type="button"
@@ -397,7 +444,23 @@ export function BibleReader({
         </div>
       </div>
       <div className="sb-bible-reader-content">
-        <div className="sb-bible-reader-main-content">{body()}</div>
+        <div className="sb-bible-reader-main-content">
+          <h2
+            className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              ui.selector.value = "books";
+            }}
+          >
+            <span className="sb-bible-reader-book">
+              {reading.bookName.value}
+            </span>
+            <span className="sb-bible-reader-chapter">
+              {reading.chapterNumber.value}
+            </span>
+          </h2>
+          {body()}
+        </div>
       </div>
 
       {footnote && (

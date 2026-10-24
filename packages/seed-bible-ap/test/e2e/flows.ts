@@ -156,7 +156,7 @@ const BASE_FLOWS: Flow[] = [
         throw new Error("sidebar visible in embed");
       if (
         await c.page
-          .locator(".sb-reader-toolbar")
+          .locator(".sb-reader-toolbar-desk")
           .isVisible()
           .catch(() => false)
       )
@@ -485,7 +485,7 @@ const BASE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open(CH);
       const barCentre = () =>
-        c.page.locator(".sb-reader-toolbar").evaluate((n) => {
+        c.page.locator(".sb-reader-toolbar-desk").evaluate((n) => {
           const r = n.getBoundingClientRect();
           return Math.round((r.left + r.right) / 2);
         });

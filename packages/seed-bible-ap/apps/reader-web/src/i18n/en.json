@@ -628,5 +628,8 @@
   "huddle-camera-off": "Turn camera off",
   "huddle-camera-on": "Turn camera on",
   "huddle-camera-stop": "Stop video",
-  "huddle-camera-start": "Start video"
+  "huddle-camera-start": "Start video",
+  "bible": "Bible",
+  "chapter-navigation": "Chapter navigation",
+  "text-settings": "Text settings"
 }

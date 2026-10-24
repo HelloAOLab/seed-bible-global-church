@@ -168,6 +168,27 @@ export class FlowContext {
       await byAria.click();
       return;
     }
+    // A phone: its tabs (Sign in is the You tab), then its More sheet.
+    const phoneMore = page
+      .locator(".sb-phone-more-tab > button:visible")
+      .first();
+    if (await phoneMore.count()) {
+      const tab = page
+        .locator(
+          `.sb-phone-nav button[aria-label="${label === "Sign in" ? "You" : label}"]:visible`
+        )
+        .first();
+      if (await tab.count()) {
+        await tab.click();
+        return;
+      }
+      await phoneMore.click();
+      await page
+        .locator(`.sb-mobile-more-menu button:visible:has-text("${label}")`)
+        .first()
+        .click();
+      return;
+    }
     const more = page
       .locator(".sb-reader-toolbar-more-button button:visible")
       .first();
