@@ -88,7 +88,7 @@ export class FlowContext {
   async secondPage(): Promise<Page> {
     const ctx = await this.browser.newContext({
       viewport: { width: 1280, height: 900 },
-      permissions: ["microphone"],
+      permissions: ["microphone", "camera"],
     });
     const page = await ctx.newPage();
     this.watch(page);
@@ -294,7 +294,7 @@ export async function launch(): Promise<Browser> {
 export async function newFlowContext(browser: Browser): Promise<FlowContext> {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
-    permissions: ["clipboard-read", "clipboard-write", "microphone"],
+    permissions: ["clipboard-read", "clipboard-write", "microphone", "camera"],
   });
   const page = await context.newPage();
   return new FlowContext(browser, context, page);

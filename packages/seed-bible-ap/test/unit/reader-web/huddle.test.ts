@@ -20,6 +20,10 @@ function fakeMeeting(people: HuddlePerson[], log: string[]) {
       log.push(`mic ${on ? "on" : "off"}`);
       people = people.map((p) => (p.self ? { ...p, micOn: on } : p));
     },
+    setCamera: async (on) => {
+      log.push(`camera ${on ? "on" : "off"}`);
+      people = people.map((p) => (p.self ? { ...p, cameraOn: on } : p));
+    },
     leave: async () => void log.push("left meeting"),
   };
   return {
@@ -32,11 +36,18 @@ function fakeMeeting(people: HuddlePerson[], log: string[]) {
   };
 }
 
-const ME: HuddlePerson = { id: "p-me", name: "Ruth", micOn: false, self: true };
+const ME: HuddlePerson = {
+  id: "p-me",
+  name: "Ruth",
+  micOn: false,
+  cameraOn: false,
+  self: true,
+};
 const NAOMI: HuddlePerson = {
   id: "p-n",
   name: "Naomi",
   micOn: true,
+  cameraOn: false,
   self: false,
 };
 
@@ -69,7 +80,13 @@ describe("the session's call", () => {
     expect(huddle.status.value).toBe("in");
     expect(log).toEqual(["ask start", "open tok"]);
     expect(huddle.people.value.map((p) => p.name)).toEqual(["Ruth", "Naomi"]);
-    meeting.arrive({ id: "p-b", name: "Boaz", micOn: false, self: false });
+    meeting.arrive({
+      id: "p-b",
+      name: "Boaz",
+      micOn: false,
+      cameraOn: true,
+      self: false,
+    });
     expect(huddle.people.value.map((p) => p.name)).toContain("Boaz");
     await huddle.leave();
   });
@@ -101,13 +118,24 @@ describe("the session's call", () => {
     await huddle.leave();
   });
 
-  it("stops the microphone before telling the server it left", async () => {
+  it("turns the camera on and off", async () => {
+    const { huddle } = setup();
+    await huddle.join();
+    expect(huddle.cameraOn.value).toBe(false);
+    await huddle.toggleCamera();
+    expect(huddle.cameraOn.value).toBe(true);
+    await huddle.toggleCamera();
+    expect(huddle.cameraOn.value).toBe(false);
+    await huddle.leave();
+  });
+
+  it("stops the microphone and camera before telling the server it left", async () => {
     const { huddle, log } = setup();
     await huddle.join();
     await huddle.toggleMic();
     log.length = 0;
     await huddle.leave();
-    expect(log).toEqual(["mic off", "left meeting", "ask leave"]);
+    expect(log).toEqual(["mic off", "camera off", "left meeting", "ask leave"]);
     expect(huddle.status.value).toBe("idle");
     expect(huddle.people.value).toEqual([]);
   });

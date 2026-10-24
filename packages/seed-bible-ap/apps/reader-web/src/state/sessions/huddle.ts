@@ -20,8 +20,10 @@ export interface HuddlePerson {
   id: string;
   name: string;
   micOn: boolean;
+  cameraOn: boolean;
   self: boolean;
   audioTrack?: MediaStreamTrack;
+  videoTrack?: MediaStreamTrack;
 }
 
 /** The joined meeting, as the call needs it — the SDK's in the browser, a fake in tests. */
@@ -31,6 +33,7 @@ export interface HuddleMeetingPort {
   onChange(f: () => void): () => void;
   onSpeaker(f: (id: string) => void): () => void;
   setMic(on: boolean): Promise<void>;
+  setCamera(on: boolean): Promise<void>;
   leave(): Promise<void>;
 }
 
@@ -66,6 +69,9 @@ export function createHuddle(deps: HuddleDeps) {
   });
   const micOn = computed(
     () => people.value.find((p) => p.self)?.micOn ?? false
+  );
+  const cameraOn = computed(
+    () => people.value.find((p) => p.self)?.cameraOn ?? false
   );
 
   let meeting: HuddleMeetingPort | null = null;
@@ -119,8 +125,9 @@ export function createHuddle(deps: HuddleDeps) {
   async function leave() {
     const m = meeting;
     if (!m) return;
-    // The microphone stops here first; the server is told after, and may be slow.
+    // The microphone and camera stop here first; the server is told after, and may be slow.
     await m.setMic(false).catch(() => undefined);
+    await m.setCamera(false).catch(() => undefined);
     await m.leave().catch(() => undefined);
     drop();
     await deps.ask("leave").catch(() => undefined);
@@ -137,6 +144,17 @@ export function createHuddle(deps: HuddleDeps) {
     if (!m) return;
     try {
       await m.setMic(!micOn.value);
+    } catch (e) {
+      error.value = errorText(e);
+    }
+    people.value = m.people();
+  }
+
+  async function toggleCamera() {
+    const m = meeting;
+    if (!m) return;
+    try {
+      await m.setCamera(!cameraOn.value);
     } catch (e) {
       error.value = errorText(e);
     }
@@ -165,10 +183,12 @@ export function createHuddle(deps: HuddleDeps) {
     people,
     speaking,
     micOn,
+    cameraOn,
     join,
     leave,
     end,
     toggleMic,
+    toggleCamera,
     look,
   };
 }
@@ -180,6 +200,8 @@ interface SdkParticipant {
   name: string;
   audioEnabled: boolean;
   audioTrack?: MediaStreamTrack;
+  videoEnabled: boolean;
+  videoTrack?: MediaStreamTrack;
 }
 interface SdkEmitter {
   on(event: string, f: (...a: never[]) => void): void;
@@ -250,22 +272,33 @@ export async function openRealtimeKit(
   };
   return {
     people: () => [
-      { id: self.id, name: self.name, micOn: self.audioEnabled, self: true },
+      {
+        id: self.id,
+        name: self.name,
+        micOn: self.audioEnabled,
+        cameraOn: self.videoEnabled,
+        self: true,
+        ...(self.videoEnabled && self.videoTrack
+          ? { videoTrack: self.videoTrack }
+          : {}),
+      },
       ...joined.toArray().map((p) => ({
         id: p.id,
         name: p.name,
         micOn: p.audioEnabled,
+        cameraOn: p.videoEnabled,
         self: false,
         ...(p.audioTrack ? { audioTrack: p.audioTrack } : {}),
+        ...(p.videoEnabled && p.videoTrack ? { videoTrack: p.videoTrack } : {}),
       })),
     ],
     onChange: (f) => {
       const a = on(
         joined,
-        ["participantJoined", "participantLeft", "audioUpdate"],
+        ["participantJoined", "participantLeft", "audioUpdate", "videoUpdate"],
         f
       );
-      const b = on(self, ["audioUpdate"], f);
+      const b = on(self, ["audioUpdate", "videoUpdate"], f);
       return () => {
         a();
         b();
@@ -283,6 +316,10 @@ export async function openRealtimeKit(
     setMic: async (on) => {
       if (on && !self.audioEnabled) await m.self.enableAudio();
       if (!on && self.audioEnabled) await m.self.disableAudio();
+    },
+    setCamera: async (on) => {
+      if (on && !self.videoEnabled) await m.self.enableVideo();
+      if (!on && self.videoEnabled) await m.self.disableVideo();
     },
     leave: () => m.leave(),
   };

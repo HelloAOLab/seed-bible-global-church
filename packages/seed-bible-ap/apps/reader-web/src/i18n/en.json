@@ -620,9 +620,13 @@
   "huddle-end": "End call for everyone",
   "huddle-in-call-one": "1 person is in the call.",
   "huddle-in-call": "{{count}} people are in the call.",
-  "huddle-none": "Talk together while you read. Your microphone starts off.",
+  "huddle-none": "Talk and see each other while you read. Your microphone and camera start off.",
   "huddle-joining": "Joining…",
   "huddle-join": "Join the call",
   "huddle-start": "Start a call",
-  "testament": "Testament"
+  "testament": "Testament",
+  "huddle-camera-off": "Turn camera off",
+  "huddle-camera-on": "Turn camera on",
+  "huddle-camera-stop": "Stop video",
+  "huddle-camera-start": "Start video"
 }

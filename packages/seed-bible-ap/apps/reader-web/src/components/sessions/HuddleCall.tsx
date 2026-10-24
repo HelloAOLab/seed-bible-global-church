@@ -14,6 +14,24 @@ const initialsOf = (name: string) =>
     .join("")
     .toUpperCase();
 
+/** One person's camera, kept on its element while the track stays the same; your own is mirrored, as a mirror is. */
+function Video({ person }: { person: HuddlePerson }) {
+  return (
+    <video
+      className={`sb-huddle-video${person.self ? " sb-huddle-video-self" : ""}`}
+      autoPlay
+      muted
+      playsInline
+      ref={(el) => {
+        const track = person.videoTrack;
+        if (!el || !track) return;
+        if ((el.srcObject as MediaStream | null)?.getVideoTracks()[0] !== track)
+          el.srcObject = new MediaStream([track]);
+      }}
+    />
+  );
+}
+
 function Chip({ person, talking }: { person: HuddlePerson; talking: boolean }) {
   const { t } = useI18n();
   const name = person.self
@@ -29,8 +47,15 @@ function Chip({ person, talking }: { person: HuddlePerson; talking: boolean }) {
       }
       data-talking={talking ? "true" : undefined}
     >
-      <span className="sb-huddle-chip-avatar" aria-hidden="true">
-        {initialsOf(person.name) || "?"}
+      <span
+        className={`sb-huddle-chip-avatar${person.videoTrack ? " sb-huddle-chip-avatar-video" : ""}`}
+        aria-hidden="true"
+      >
+        {person.videoTrack ? (
+          <Video person={person} />
+        ) : (
+          initialsOf(person.name) || "?"
+        )}
       </span>
       <span className="sb-huddle-chip-name">{name}</span>
       {!person.micOn && (
@@ -105,6 +130,66 @@ function MicButton({ huddle }: { huddle: Huddle }) {
   );
 }
 
+function CameraButton({
+  huddle,
+  compact,
+}: {
+  huddle: Huddle;
+  compact?: boolean;
+}) {
+  const { t } = useI18n();
+  const on = huddle.cameraOn.value;
+  const label = on
+    ? t("huddle-camera-off", { defaultValue: "Turn camera off" })
+    : t("huddle-camera-on", { defaultValue: "Turn camera on" });
+  return (
+    <button
+      type="button"
+      className={
+        compact
+          ? `sb-huddle-bar-button${on ? " sb-huddle-mic-on" : ""}`
+          : `sb-note-button sb-huddle-camera${on ? " sb-huddle-mic-on" : ""}`
+      }
+      aria-pressed={on}
+      aria-label={label}
+      title={label}
+      onClick={() => void huddle.toggleCamera()}
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        {on ? "videocam" : "videocam_off"}
+      </span>
+      {compact ? null : (
+        <>
+          {" "}
+          {on
+            ? t("huddle-camera-stop", { defaultValue: "Stop video" })
+            : t("huddle-camera-start", { defaultValue: "Start video" })}
+        </>
+      )}
+    </button>
+  );
+}
+
+/** Everyone whose camera is on, as tiles big enough to see a face. */
+function VideoTiles({ huddle }: { huddle: Huddle }) {
+  const speaking = huddle.speaking.value;
+  const on = huddle.people.value.filter((p) => p.videoTrack);
+  if (!on.length) return null;
+  return (
+    <ul className="sb-huddle-tiles">
+      {on.map((p) => (
+        <li
+          key={p.id}
+          className={`sb-huddle-tile${speaking.has(p.id) ? " sb-huddle-tile-talking" : ""}`}
+        >
+          <Video person={p} />
+          <span className="sb-huddle-tile-name">{p.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function HuddleCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const huddle = state.huddle;
@@ -122,9 +207,11 @@ export function HuddleCard({ state }: { state: ReaderState }) {
       </h3>
       {status === "in" ? (
         <>
+          <VideoTiles huddle={huddle} />
           <Chips huddle={huddle} />
           <div className="sb-note-card-actions">
             <MicButton huddle={huddle} />
+            <CameraButton huddle={huddle} />
             <button
               type="button"
               className="sb-note-button"
@@ -157,7 +244,7 @@ export function HuddleCard({ state }: { state: ReaderState }) {
                   })
               : t("huddle-none", {
                   defaultValue:
-                    "Talk together while you read. Your microphone starts off.",
+                    "Talk and see each other while you read. Your microphone and camera start off.",
                 })}
           </p>
           <div className="sb-note-card-actions">
@@ -226,6 +313,7 @@ export function HuddleBar({ state }: { state: ReaderState }) {
           {huddle.micOn.value ? "mic" : "mic_off"}
         </span>
       </button>
+      <CameraButton huddle={huddle} compact />
       <button
         type="button"
         className="sb-huddle-bar-button sb-huddle-bar-leave"

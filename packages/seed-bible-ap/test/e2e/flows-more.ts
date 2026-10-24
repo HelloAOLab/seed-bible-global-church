@@ -269,10 +269,11 @@ export const MORE_FLOWS: Flow[] = [
     id: "HU1",
     timeoutMs: 240_000,
     section: "9. Reading together",
-    title: "A call in the session, with chips that light when someone talks",
+    title:
+      "A call in the session: chips that light when someone talks, and video",
     rows: ["Call in a live session"],
     checks:
-      "Signed in, the host starts a session and its call (Start a call); a bar of chips shows over the reading with their own chip, microphone off. A second signed-in person opens the session's link, sees the call is running and joins it: each bar shows both people. The second person unmutes and talks (a test tone): their chip lights on the host's bar, and goes dark when they mute. The host ends the call for everyone and both bars go",
+      "Signed in, the host starts a session and its call (Start a call); a bar of chips shows over the reading with their own chip, microphone off. A second signed-in person opens the session's link, sees the call is running and joins it: each bar shows both people. The second person unmutes and talks (a test tone): their chip lights on the host's bar, and goes dark when they mute. The friend turns their camera on: the host sees their picture move in their chip and in a tile in the session pane, and it goes when they turn it off. The host ends the call for everyone and both bars go",
     run: async (c) => {
       await c.open(CH);
       const host = await c.signInAsSample();
@@ -321,6 +322,38 @@ export const MORE_FLOWS: Flow[] = [
         .click();
       await chipTalking(c.page, first(friend), false, 20000);
 
+      // Video: the friend starts their camera; the host sees it move, in the friend's chip and in a tile.
+      await other
+        .locator(".sb-huddle-bar")
+        .getByRole("button", { name: /turn camera on/i })
+        .click();
+      const playing = async (sel: string) => {
+        const t0 = Date.now();
+        for (;;) {
+          const w = await c.page
+            .locator(sel)
+            .first()
+            .evaluate((v) => (v as HTMLVideoElement).videoWidth)
+            .catch(() => 0);
+          if (w > 0) return w;
+          if (Date.now() - t0 > 20000)
+            throw new Error(`no moving picture in ${sel}`);
+          await c.page.waitForTimeout(300);
+        }
+      };
+      await playing(
+        ".sb-huddle-bar .sb-huddle-chip:not([title*='(you)']) video"
+      );
+      await playing(".sb-app-pane .sb-huddle-tile video");
+      await other
+        .locator(".sb-huddle-bar")
+        .getByRole("button", { name: /turn camera off/i })
+        .click();
+      await c.page
+        .locator(".sb-app-pane .sb-huddle-tile")
+        .first()
+        .waitFor({ state: "detached", timeout: 20000 });
+
       await c
         .pane()
         .getByRole("button", { name: /end call for everyone/i })
@@ -330,7 +363,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-huddle-bar")
         .waitFor({ state: "detached", timeout: 30000 })
         .catch(() => undefined);
-      return `${host} and ${friend} in the call; ${friend}'s chip lit while talking and went dark on mute; the host ended it`;
+      return `${host} and ${friend} in the call; ${friend}'s chip lit while talking and went dark on mute; their camera showed in their chip and a tile, and went when turned off; the host ended it`;
     },
   },
   // ── 3. Reading ─────────────────────────────────────────────────────────────────────────────────────────────
