@@ -151,21 +151,28 @@ export const TOURS: Record<
     desktop: [
       step(
         "books",
-        ".sb-selector-books-grid",
+        ".sb-selector-panel .sidebar-results",
         "selectorBooks",
         "Select books and chapters",
         "Choose a chapter from here to begin reading."
       ),
       step(
+        "translation",
+        ".sidebar-translation-selector",
+        "selectorTranslation",
+        "Select a Bible text",
+        "Choose from any of the available versions."
+      ),
+      step(
         "testament",
-        ".sb-selector-testament-picker",
+        ".sb-selector-panel .dropdown",
         "selectorTestament",
         "Filter book options",
         "Show all books, or narrow to just the Old Testament, New Testament, or extra-biblical writings."
       ),
       step(
         "search",
-        ".sb-selector-search-input",
+        ".sb-selector-panel .searchbar",
         "selectorSearch",
         "Search by",
         "Search by chapter, verse or book from here."

@@ -178,6 +178,94 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "SEL1",
+    section: "3. Reading",
+    title: "The book picker is laid out as the old reader's",
+    rows: ["Open a book and chapter"],
+    checks:
+      "At 1495 px: one row of the translation (BSB ▾), the search box and All books; Old Testament in three columns filled down each column (Genesis, Exodus… then 2 Chronicles), New Testament in two; the book on screen open with its chapters as a full-width row of square buttons and the current chapter filled; Song Of Solomon by its full name. At 390 px: a header of ×, Books and the tabs, one column, and the current chapter in view",
+    run: async (c) => {
+      await c.open("/read/BSB/MAT/3");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-title")
+        .click();
+      const panel = c.page.locator(".sb-selector-panel");
+      await panel.locator(".sidebar-itm").first().waitFor({ timeout: 10000 });
+      const layout = await panel.evaluate((p) => {
+        const box = (sel: string) =>
+          p.querySelector(sel)!.getBoundingClientRect();
+        const head = [
+          ".sidebar-translation-selector",
+          ".searchbar",
+          ".dropdown",
+        ].map((s) => box(s));
+        const cols = (i: number) => {
+          const items = [...p.querySelectorAll(".testament-container")][
+            i
+          ]!.querySelectorAll(".sidebar-itm");
+          return new Set(
+            [...items].map((n) => Math.round(n.getBoundingClientRect().left))
+          ).size;
+        };
+        const names = [
+          ...p.querySelectorAll(".sidebar-itm .sb-selector-book-name"),
+        ].map((n) => n.textContent!.trim());
+        const grid = p
+          .querySelector(".show-sidebar-chapter")!
+          .getBoundingClientRect();
+        const nt = [
+          ...p.querySelectorAll(".testament-container"),
+        ][1]!.getBoundingClientRect();
+        const btn = p.querySelector(".chapter-btn")!.getBoundingClientRect();
+        return {
+          oneRow: head.every((r) => Math.abs(r.top - head[0]!.top) < 4),
+          ot: cols(0),
+          nt: cols(1),
+          second: names[1],
+          sixteenth: names[13],
+          song: names.some((n) => /^song of solomon$/i.test(n)),
+          fullWidth: grid.width > nt.width - 40,
+          square: Math.abs(btn.width - btn.height) < 2 && btn.width < 60,
+          current: p.querySelector(".chapter-btn-current")?.textContent?.trim(),
+        };
+      });
+      const bad = [
+        !layout.oneRow && "the translation, search and filter are not one row",
+        layout.ot !== 3 && `Old Testament in ${layout.ot} columns`,
+        layout.nt !== 2 && `New Testament in ${layout.nt} columns`,
+        layout.second !== "Exodus" &&
+          `second book ${layout.second} (not filled down the column)`,
+        !layout.song && "Song Of Solomon is not by its full name",
+        !layout.fullWidth && "the chapters are not a full-width row",
+        !layout.square && "chapter buttons are not small squares",
+        layout.current !== "3" && `current chapter ${layout.current}`,
+      ].filter(Boolean);
+      if (bad.length) throw new Error(bad.join("; "));
+      const phone = await c.secondPage();
+      await phone.setViewportSize({ width: 390, height: 844 });
+      await c.open("/read/BSB/MAT/3", phone);
+      await phone
+        .locator(
+          ".sb-reader-toolbar-center-button, .sb-bible-reader-active .sb-bible-reader-title"
+        )
+        .first()
+        .click();
+      const head = phone.locator(
+        ".sb-selector-panel .sb-bible-reader-mobile-header-title"
+      );
+      await head.waitFor({ timeout: 10000 });
+      const cur = phone.locator(".sb-selector-panel .chapter-btn-current");
+      await phone.waitForTimeout(400);
+      const inView = await cur.evaluate((n) => {
+        const r = n.getBoundingClientRect();
+        return r.top >= 0 && r.bottom <= innerHeight;
+      });
+      if (!inView)
+        throw new Error("on a phone the current chapter is not in view");
+      return `desktop: one header row, OT ${layout.ot} columns, NT ${layout.nt}, full-width chapter row, chapter 3 filled; phone: × Books ☰, current chapter in view`;
+    },
+  },
+  {
     id: "HU1",
     timeoutMs: 240_000,
     section: "9. Reading together",
@@ -1666,27 +1754,29 @@ export const MORE_FLOWS: Flow[] = [
     title: "Testament filter in the book picker",
     rows: ["Testament filter in the book picker"],
     checks:
-      "Open the book picker: All / Old / New Testament chips; New Testament starts at Matthew and has no Genesis; All shows both, titled",
+      "Open the book picker: its All books / Old / New Testament filter; New Testament starts at Matthew and has no Genesis; All books shows both, titled",
     run: async (c) => {
       await c.open(CH);
       await c.page
         .locator(".sb-bible-reader-active .sb-bible-reader-title")
         .click();
-      const picker = c.page.locator(".sb-selector-testament-picker");
+      const picker = c.page.locator(".sb-selector-testament-select");
       await picker.waitFor({ timeout: 10000 });
-      const chips = (await picker.locator("button").allInnerTexts()).map((x) =>
+      const chips = (await picker.locator("option").allInnerTexts()).map((x) =>
         x.trim()
       );
-      await picker.getByRole("tab", { name: "New Testament" }).click();
+      await picker.selectOption("new");
       const books = (
-        await c.page.locator(".sb-selector-book-button-name").allInnerTexts()
+        await c.page
+          .locator(".sidebar-itm .sb-selector-book-name")
+          .allInnerTexts()
       ).map((x) => x.trim());
       if (books[0] !== "Matthew" || books.includes("Genesis"))
         throw new Error(`New Testament lists ${books.slice(0, 3).join(", ")}`);
-      await picker.getByRole("tab", { name: "All books" }).click();
+      await picker.selectOption("all");
       const titles = (
         await c.page
-          .locator(".sb-selector-testament .sb-selector-section-title")
+          .locator(".sb-selector-panel .testament-title")
           .allInnerTexts()
       ).map((x) => x.trim());
       if (
@@ -1751,7 +1841,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.page
         .locator(".sb-bible-reader-active .sb-bible-reader-title")
         .click();
-      await c.page.locator(".sb-selector-book-button").first().focus();
+      await c.page.locator(".sb-selector-panel .sidebar-itm").first().focus();
       await c.page.keyboard.press("ArrowRight");
       const focused = await c.page.evaluate(
         () => (document.activeElement as HTMLElement | null)?.innerText ?? ""

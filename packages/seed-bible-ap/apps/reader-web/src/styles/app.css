@@ -1618,10 +1618,11 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 }
 
 /* The guided tour: the step's element spotlit by a ring and a dimming shadow around it, a card beside it. */
+/* Above the book picker (1000), whose own tour spotlights the picker's parts. */
 .sb-tour {
   position: fixed;
   inset: 0;
-  z-index: 150;
+  z-index: 1150;
 }
 .sb-tour-spot {
   position: fixed;
@@ -2370,4 +2371,21 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   .sb-scripture-check-label {
     display: none;
   }
+}
+
+/* The book picker's books and translation pill are buttons where the old reader used divs (keyboard and screen
+   readers reach them); its stylesheet assumes a div, so the button's own dress is taken off — at no specificity, so
+   every rule of that stylesheet still wins. */
+:where(
+  button.sidebar-itm,
+  button.sidebar-translation-selector,
+  button.sb-selector-mobile-close
+) {
+  font: inherit;
+  text-align: start;
+  background-color: transparent;
+  border: 0;
+}
+:where(button.sidebar-translation-selector) {
+  border: 1px solid var(--sb-divider-color);
 }

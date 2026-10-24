@@ -96,6 +96,8 @@ export class FlowContext {
   }
 
   async open(path: string, page: Page = this.page): Promise<void> {
+    // tsx names the functions a flow hands to page.evaluate with a `__name` helper the page does not have.
+    await page.addInitScript({ content: "window.__name = (f) => f;" });
     await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
     await this.dismissWelcome(page);
     await page.locator(".sb-app:not(.sb-app-ssr)").waitFor({ timeout: 20000 });

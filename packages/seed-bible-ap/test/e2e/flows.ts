@@ -81,10 +81,10 @@ const BASE_FLOWS: Flow[] = [
       const search = c.page.locator('input[type="search"]').first();
       await search.waitFor({ timeout: 10000 });
       await search.fill("Psalms");
-      await c.page
-        .getByRole("button", { name: /^Psalms$/ })
-        .first()
-        .click();
+      // A search down to one book opens it; tap it only if it is still shut.
+      const psalms = c.page.getByRole("button", { name: /^Psalms$/ }).first();
+      if ((await psalms.getAttribute("aria-expanded")) !== "true")
+        await psalms.click();
       await c.page.getByRole("button", { name: /^23$/ }).first().click();
       await c.page.waitForURL(/\/read\/BSB\/PSA\/23$/, { timeout: 15000 });
       await c.verse(1).waitFor({ timeout: 20000 });
