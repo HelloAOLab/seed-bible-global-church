@@ -10,7 +10,7 @@ import {
   HOME_SIGNIN_AVAILABLE,
   connectViaHome,
 } from "../../session";
-import { ProfileCard } from "./AccountPane";
+import { NeedsHomeHint, ProfileCard } from "./AccountPane";
 
 function Row(props: {
   icon: string;
@@ -74,6 +74,12 @@ function Header({
     </header>
   );
 }
+
+/** An agent's address as people read it: `0xd9ee…ab2c`, without the chain prefix. */
+const shortAddress = (sub: string) => {
+  const a = sub.replace(/^eip155:\d+:/, "");
+  return /^0x[0-9a-f]{40}$/i.test(a) ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+};
 
 const initialsOf = (name: string) =>
   name
@@ -205,7 +211,9 @@ export function ProfilePane({ state }: { state: ReaderState }) {
             </span>
           </button>
           <p className="sb-profile-contact">
-            <span className="sb-profile-email">{s.name || s.sub}</span>
+            <span className="sb-profile-email" title={s.sub}>
+              {s.name || shortAddress(s.sub)}
+            </span>
           </p>
           <button
             type="button"
@@ -229,6 +237,7 @@ export function ProfilePane({ state }: { state: ReaderState }) {
                     defaultValue: "Everything is in your Library.",
                   })}
           </p>
+          <NeedsHomeHint error={state.outbox.lastError.value} />
         </div>
         <Row
           icon="edit"

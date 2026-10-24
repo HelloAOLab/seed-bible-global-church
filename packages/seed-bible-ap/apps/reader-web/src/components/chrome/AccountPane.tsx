@@ -20,7 +20,7 @@ import type { Connector, Org } from "../../backend/ReaderBackend";
 import { useEffect, useState } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { QuickConnectIdentity } from "@agenticprimitives/connect-client";
-import type { ReaderState } from "../../state";
+import { NEEDS_HOME, type ReaderState } from "../../state";
 import { useI18n, AVAILABLE_LANGUAGES, setLanguage } from "../../i18n";
 import { listDevReaders, type DevReader } from "../../api";
 import {
@@ -39,6 +39,28 @@ const progress = signal("");
 const samplePeople = signal<QuickConnectIdentity[]>([]);
 const devReaders = signal<DevReader[]>([]);
 const error = signal("");
+
+/** What to do when the person's agent refuses one of the reader's acts because its playbook predates it (the Home
+ *  gives the agent the missing behaviour the next time it is opened): said in words, with the way there. */
+export function NeedsHomeHint({ error }: { error: string | null | undefined }) {
+  const { t } = useI18n();
+  if (!error || !NEEDS_HOME.test(error)) return null;
+  return (
+    <p className="sb-small sb-needs-home">
+      {t("first-run-playbook", {
+        defaultValue:
+          "Your agent does not offer the reader's behaviour yet. Open your Home once — it gives your agent the behaviour by itself — then come back here: the reader retries on its own.",
+      })}{" "}
+      <a
+        href={`${estateById(DEFAULT_ESTATE)!.home}/`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {t("open-home", { defaultValue: "Open your Home" })}
+      </a>
+    </p>
+  );
+}
 
 /** The reader's profile: a name, a line, a picture from the gallery; published to the public shelf for friends. */
 export function ProfileCard({ state }: { state: ReaderState }) {
@@ -177,12 +199,20 @@ export function ProfileCard({ state }: { state: ReaderState }) {
             reason: state.publishing.error.value,
           })}
         {status === "failed" &&
-          t("profile-save-failed", {
-            defaultValue:
-              "Saved on this device, but not yet in your Library: {{reason}} Tap Save to try again.",
-            reason: state.profile.error.value ?? "",
-          })}
+          (NEEDS_HOME.test(state.profile.error.value ?? "")
+            ? t("profile-save-needs-home", {
+                defaultValue:
+                  "Saved on this device, but not yet in your Library.",
+              })
+            : t("profile-save-failed", {
+                defaultValue:
+                  "Saved on this device, but not yet in your Library: {{reason}} Tap Save to try again.",
+                reason: state.profile.error.value ?? "",
+              }))}
       </p>
+      {status === "failed" && (
+        <NeedsHomeHint error={state.profile.error.value} />
+      )}
       <p className="sb-small sb-muted">
         {t("profile-note", {
           defaultValue:
@@ -596,20 +626,7 @@ export function AccountCard({ state }: { state: ReaderState }) {
               <> · {state.outbox.lastError.value}</>
             )}
           </p>
-          {state.outbox.lastError.value &&
-            /does not offer|playbook|assign|archetype/i.test(
-              state.outbox.lastError.value
-            ) && (
-              <p className="sb-small">
-                {t("first-run-playbook", {
-                  defaultValue:
-                    "Your agent does not offer the reader's behaviour yet. Open your Home once — it gives your agent the behaviour by itself — then come back here: the reader retries on its own.",
-                })}{" "}
-                <a href={`${estate.home}/`} target="_blank" rel="noreferrer">
-                  {t("open-home", { defaultValue: "Open your Home" })}
-                </a>
-              </p>
-            )}
+          <NeedsHomeHint error={state.outbox.lastError.value} />
           <div className="sb-note-card-actions">
             {pending > 0 && (
               <button

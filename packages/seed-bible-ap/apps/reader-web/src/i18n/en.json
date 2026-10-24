@@ -610,5 +610,6 @@
   "your-content-subtitle": "Create and manage your content",
   "account-settings-subtitle": "Sync, publishing, connected sources and more",
   "open-profile": "Open profile",
-  "open-profile-named": "Open profile ({{name}})"
+  "open-profile-named": "Open profile ({{name}})",
+  "profile-save-needs-home": "Saved on this device, but not yet in your Library."
 }
