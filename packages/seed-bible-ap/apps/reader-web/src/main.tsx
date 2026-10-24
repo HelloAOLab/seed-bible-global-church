@@ -33,6 +33,7 @@ import "./styles/onboarding.css";
 import "./styles/settings.css";
 import "./styles/context-menu.css";
 import "./styles/bookmarks.css";
+import "./styles/profile.css";
 import "leaflet/dist/leaflet.css";
 import "./styles/app.css";
 

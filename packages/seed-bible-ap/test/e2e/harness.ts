@@ -177,21 +177,27 @@ export class FlowContext {
       .click();
   }
 
-  /** The account pane, signed in or not: signed in, the sidebar's chip (the phone's bar has the account button);
-   *  signed out, More → Sign in. */
+  /** The account pane, signed in or not: signed in, Profile (the sidebar's profile circle, the phone's account button)
+   *  → Account settings; signed out, More → Sign in. */
   async openAccount(page: Page = this.page): Promise<Locator> {
     const signedIn = !!(await page.evaluate(() =>
-      document.querySelector(".sb-connected-chip:not(.sb-connected-chip-out)")
+      document.querySelector(".sb-sidebar-profile-button-in")
     ));
     const phoneAccount = page
-      .locator(
-        '.sb-reader-toolbar button[aria-label="Account settings"]:visible'
-      )
+      .locator('.sb-reader-toolbar button[aria-label="Profile"]:visible')
       .first();
-    if (signedIn && (await phoneAccount.count())) await phoneAccount.click();
-    else if (signedIn)
-      await page.locator(".sb-connected-chip:visible").first().click();
-    else await this.pressToolbar("Sign in", page);
+    if (signedIn) {
+      if (await phoneAccount.count()) await phoneAccount.click();
+      else
+        await page
+          .locator(".sb-sidebar-profile-button:visible")
+          .first()
+          .click();
+      await page
+        .locator(".sb-profile-row", { hasText: "Account settings" })
+        .click();
+      await page.locator(".sb-account-pane").waitFor({ timeout: 5000 });
+    } else await this.pressToolbar("Sign in", page);
     await this.pane(page).waitFor({ timeout: 5000 });
     return this.pane(page);
   }
@@ -245,7 +251,7 @@ export class FlowContext {
     if (idx < 0) idx = 0;
     await buttons.nth(idx).click();
     await page
-      .locator(".sb-connected-chip:not(.sb-connected-chip-out)")
+      .locator(".sb-sidebar-profile-button-in")
       .waitFor({ timeout: 30000 });
     await page
       .locator(".sb-pane-close")

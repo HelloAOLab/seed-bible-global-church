@@ -8,7 +8,7 @@ import { handleGridKeyNav } from "../keyboardNav";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
-import { ConnectedChip } from "../chrome/ConnectedChip";
+import { Avatar } from "../chrome/ConnectedChip";
 import { SettingsView } from "../chrome/SettingsView";
 import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import { BookmarksPanel, SavesPanel, TasksIcon } from "./SidebarPanels";
@@ -408,7 +408,39 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
         >
           <span className="material-symbols-outlined">settings</span>
         </button>
-        <ConnectedChip state={state} compact={collapsed} />
+        {/* The old reader's profile circle: your picture (or the account icon) opens Profile; changes still to send
+            are a count on its corner. */}
+        <button
+          type="button"
+          className={`sb-sidebar-icon-button sb-sidebar-profile-button${state.session.value ? " sb-sidebar-profile-button-in" : ""}${state.ui.pane.value === "profile" ? " sb-sidebar-icon-button-selected" : ""}`}
+          aria-label={
+            state.session.value
+              ? t("open-profile-named", {
+                  name:
+                    state.profile.mine.value?.displayName ||
+                    state.session.value.name ||
+                    "",
+                  defaultValue: "Open profile ({{name}})",
+                })
+              : t("open-profile", { defaultValue: "Open profile" })
+          }
+          title={t("profile", { defaultValue: "Profile" })}
+          onClick={() =>
+            (state.ui.pane.value =
+              state.ui.pane.value === "profile" ? "none" : "profile")
+          }
+        >
+          {state.session.value ? (
+            <Avatar state={state} />
+          ) : (
+            <span className="material-symbols-outlined">account_circle</span>
+          )}
+          {state.outbox.pending.value > 0 && (
+            <span className="sb-reader-toolbar-unread-indicator">
+              {state.outbox.pending.value}
+            </span>
+          )}
+        </button>
       </div>
     </aside>
   );

@@ -490,12 +490,21 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             })}
         label={
           state.session.value
-            ? t("account-settings", { defaultValue: "Account settings" })
+            ? t("profile", { defaultValue: "Profile" })
             : t("sign-in", { defaultValue: "Sign in" })
         }
-        active={ui.pane.value === "account"}
+        active={ui.pane.value === (state.session.value ? "profile" : "account")}
         badge={pending}
-        onClick={() => togglePane("account")}
+        onClick={() =>
+          // Signed in it is the old reader's "You": Profile; signed out, the sign-in pane.
+          (ui.pane.value = state.session.value
+            ? ui.pane.value === "profile"
+              ? "none"
+              : "profile"
+            : ui.pane.value === "account"
+              ? "none"
+              : "account")
+        }
       />
     </nav>
   );

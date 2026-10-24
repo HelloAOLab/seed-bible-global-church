@@ -599,7 +599,9 @@ const BASE_FLOWS: Flow[] = [
         .getByRole("button", { name: /sign out/i })
         .click();
       await c.page
-        .locator(".sb-connected-chip-out")
+        .locator(
+          ".sb-sidebar-profile-button:not(.sb-sidebar-profile-button-in)"
+        )
         .waitFor({ timeout: 10000 });
       return `signed in as ${who}; the highlight reached the Library; signed out`;
     },

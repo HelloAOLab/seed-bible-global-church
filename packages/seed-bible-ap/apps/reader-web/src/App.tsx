@@ -1,5 +1,6 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
+import { EditProfilePane, ProfilePane } from "./components/chrome/ProfilePane";
 import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { ActivityBar } from "./components/chrome/ActivityBar";
 import { Toast } from "./components/chrome/Toast";
@@ -29,7 +30,11 @@ import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
 import { completeRedirectIfReturning } from "./session";
 
 /** Panes that take the whole reading area, as in the old reader (its `fullscreen` placement). */
-const FULL_WIDTH_PANES: readonly string[] = ["today"];
+const FULL_WIDTH_PANES: readonly string[] = [
+  "today",
+  "profile",
+  "edit-profile",
+];
 
 export function App({ state }: { state: ReaderState }) {
   useEffect(() => {
@@ -169,6 +174,16 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "friends" && (
         <aside className={paneClass}>
           <FriendsPane state={state} />
+        </aside>
+      )}
+      {pane === "profile" && (
+        <aside className={paneClass}>
+          <ProfilePane state={state} />
+        </aside>
+      )}
+      {pane === "edit-profile" && (
+        <aside className={paneClass}>
+          <EditProfilePane state={state} />
         </aside>
       )}
       {pane === "account" && (

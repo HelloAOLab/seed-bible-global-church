@@ -1323,7 +1323,14 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-sidebar-footer {
   margin-top: auto;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--sb-divider-color, #00000014);
+}
+/* The profile circle carries the count of changes still to send on its corner. */
+.sb-sidebar-profile-button {
+  position: relative;
+}
+.sb-sidebar-profile-button .sb-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 /* The old reader's bottom row: ⚙ Settings, then who is connected taking the rest. */
 .sb-sidebar-footer.sb-sidebar-bottom-actions {

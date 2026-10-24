@@ -423,6 +423,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "about"
       | "map"
       | "friends"
+      | "profile"
+      | "edit-profile"
       | `ext:${string}`
     >("none"),
     selector: signal<"books" | "translations" | null>(null),

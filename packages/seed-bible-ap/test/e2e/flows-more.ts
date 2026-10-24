@@ -2834,6 +2834,59 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "PR1",
+    timeoutMs: 240_000,
+    section: "2. Getting in",
+    title: "Profile",
+    rows: ["Profile"],
+    checks:
+      "The profile circle at the bottom of the sidebar opens Profile as a full page: signed out, the old reader's card — Sign in to keep your highlights… — with Log in; signed in, the card with the name and the Home name, ✎ to Edit profile (← back to Profile), Your content, Friends (with its count line) and Account settings rows, and Sign out",
+    run: async (c) => {
+      await c.open(CH);
+      const circle = c.page.locator(".sb-sidebar-profile-button");
+      await circle.click();
+      const pane = c.pane();
+      await c.waitText(pane, /sign in to keep your highlights/i, 5000);
+      await pane
+        .getByRole("button", { name: /^log in$/i })
+        .waitFor({ timeout: 3000 });
+      await pane.locator(".sb-pane-close").first().click();
+      const who = await c.signInAsSample();
+      await circle.click();
+      await c.waitText(
+        pane,
+        /your content[\s\S]*friends[\s\S]*account settings/i,
+        10000
+      );
+      const card = (
+        await pane.locator(".sb-profile-identity").innerText()
+      ).replace(/\s+/g, " ");
+      await pane.getByRole("button", { name: "Edit profile" }).first().click();
+      await c.waitText(pane, /edit profile/i, 5000);
+      await pane.getByRole("button", { name: "Back" }).click();
+      await pane.locator(".sb-profile-row", { hasText: "Friends" }).click();
+      await c.page.locator(".sb-friends-pane").waitFor({ timeout: 5000 });
+      await circle.click();
+      await pane
+        .locator(".sb-profile-row", { hasText: "Your content" })
+        .click();
+      await c.waitText(c.pane(), /your content/i, 5000);
+      await circle.click();
+      await pane
+        .locator(".sb-profile-row", { hasText: "Account settings" })
+        .click();
+      await c.page.locator(".sb-account-pane").waitFor({ timeout: 5000 });
+      await circle.click();
+      await pane.getByRole("button", { name: /sign out/i }).click();
+      await c.page
+        .locator(
+          ".sb-sidebar-profile-button:not(.sb-sidebar-profile-button-in)"
+        )
+        .waitFor({ timeout: 30000 });
+      return `signed out: Log in card; signed in as ${who}: "${card.slice(0, 60)}"; Edit profile and back; Friends, Your content, Account settings opened; signed out`;
+    },
+  },
+  {
     id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
@@ -2955,14 +3008,16 @@ export const MORE_FLOWS: Flow[] = [
         if (await page.locator(".sb-app-pane").count())
           throw new Error("the Account pane stayed open after signing in");
         await page
-          .locator(".sb-connected-chip:not(.sb-connected-chip-out)")
+          .locator(".sb-sidebar-profile-button-in")
           .waitFor({ timeout: 5000 });
         await c.openAccount(page);
         await page.getByRole("button", { name: /^sign out$/i }).click();
         await page.waitForURL(/seed-reader\.faithnet\.io/, { timeout: 30000 });
         await c.dismissWelcome(page);
         await page
-          .locator(".sb-connected-chip-out")
+          .locator(
+            ".sb-sidebar-profile-button:not(.sb-sidebar-profile-button-in)"
+          )
           .waitFor({ timeout: 20000 });
         // Signed out of the Home too: signing in again asks who you are instead of reusing the last person.
         await c.pressToolbar("Sign in", page);
