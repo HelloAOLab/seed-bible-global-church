@@ -338,8 +338,7 @@ export function BibleReader({
             title={t("text-settings", { defaultValue: "Text settings" })}
             onClick={(e: MouseEvent) => {
               e.stopPropagation();
-              ui.sidebarDrawer.value = true;
-              ui.settingsView.value = "display";
+              ui.textSheet.value = true;
             }}
           >
             <span className="material-symbols-outlined">tune</span>

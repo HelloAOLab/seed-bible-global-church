@@ -702,5 +702,12 @@
   "show-fewer-verse-actions": "Show fewer actions",
   "show-more-verse-actions": "Show more actions",
   "swipe-to-see-more": "Swipe to see more",
-  "swipe-up-more": "Swipe up to see more"
+  "swipe-up-more": "Swipe up to see more",
+  "change-line-spacing": "Change line spacing",
+  "decrease-scripture-font-size": "Decrease scripture font size",
+  "go-to-all-settings": "Go to all settings",
+  "increase-scripture-font-size": "Increase scripture font size",
+  "scripture-settings": "Scripture settings",
+  "theme-and-text": "Theme & text",
+  "ui-size": "UI size"
 }

@@ -459,6 +459,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     savesPanel: signal(false),
     /** The old reader's floating search above the toolbar. */
     searchOpen: signal(false),
+    /** The phone's Theme & text sheet (the old MobileSettingsSheet), from the sliders in the chapter's top bar. */
+    textSheet: signal(false),
     /** A playlist or plan to open in the Library pane (Your content's Edit and Open hand it over). */
     libraryOpen: signal<{
       tab: "playlists" | "plans";

@@ -178,6 +178,83 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "MS1",
+    section: "3. Reading",
+    title: "The phone's Theme & text sheet",
+    rows: ["Margins, line height, UI scale, custom fonts"],
+    checks:
+      "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      try {
+        await c.open(CH, page);
+        await page
+          .getByRole("button", { name: "Text settings" })
+          .filter({ visible: true })
+          .first()
+          .tap();
+        const sheet = page.getByRole("dialog", { name: "Theme & text" });
+        await sheet.waitFor({ timeout: 5000 });
+        await c.settleTours(page);
+        const fontClass = () =>
+          page
+            .locator(".sb-bible-reader-active")
+            .first()
+            .evaluate((n) => /sb-font-size-(\w+)/.exec(n.className)?.[1]);
+        const before = await fontClass();
+        await sheet
+          .getByRole("button", { name: "Increase scripture font size" })
+          .tap();
+        const larger = await fontClass();
+        await sheet
+          .getByRole("button", { name: "Decrease scripture font size" })
+          .tap();
+        if (larger === before || (await fontClass()) !== before)
+          throw new Error(
+            `text size ${before} → ${larger} → ${await fontClass()}`
+          );
+        const lineOf = () =>
+          page.evaluate(() => document.documentElement.dataset["sbLine"]);
+        const l0 = await lineOf();
+        await sheet.getByRole("button", { name: "Change line spacing" }).tap();
+        const l1 = await lineOf();
+        if (l1 === l0) throw new Error(`line spacing stayed ${l0}`);
+        await sheet.getByRole("button", { name: "Change line spacing" }).tap();
+        await sheet.getByRole("button", { name: "Change line spacing" }).tap();
+        if ((await lineOf()) !== l0)
+          throw new Error("three taps did not come back to the first spacing");
+        await sheet.getByRole("button", { name: "L", exact: true }).tap();
+        if (
+          (await page.evaluate(
+            () => document.documentElement.dataset["sbScale"]
+          )) !== "l"
+        )
+          throw new Error("UI size L not applied");
+        await sheet.getByRole("button", { name: "M", exact: true }).tap();
+        const awake = sheet.getByLabel("Keep screen awake");
+        const was = await awake.isChecked();
+        await awake.tap();
+        if ((await awake.isChecked()) === was)
+          throw new Error("Keep screen awake did not toggle");
+        await awake.tap();
+        await sheet.getByRole("button", { name: "Go to all settings" }).tap();
+        await page
+          .locator(".sb-tabs-sidebar-drawer .sb-settings-nav-label")
+          .first()
+          .waitFor({ timeout: 5000 });
+        return `text ${before} → ${larger} → ${before}; spacing ${l0} → ${l1} and back; UI size L then M; keep awake toggled; Go to all settings opened Settings`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
+  {
     id: "VS1",
     section: "4. Marking the text",
     title: "The phone's verse sheet",

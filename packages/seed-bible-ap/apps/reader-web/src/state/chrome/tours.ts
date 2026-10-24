@@ -179,6 +179,17 @@ export const TOURS: Record<
       ),
     ],
   },
+  "text-sheet": {
+    desktop: [
+      step(
+        "text-sheet",
+        ".sb-mobile-settings-sheet",
+        "mobileSettings",
+        "Settings",
+        "Customize text, themes, and reading options here."
+      ),
+    ],
+  },
   "offline-download": {
     desktop: [
       step(
