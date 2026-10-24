@@ -154,7 +154,97 @@ async function joinAsGuest(c: FlowContext, sid: string, code: string) {
   return guest;
 }
 
+/** The call bar's chip for a name, and whether it is lit (its person talking). */
+async function chipTalking(
+  page: import("playwright").Page,
+  name: RegExp,
+  want: boolean,
+  timeout = 15000
+) {
+  const chip = page
+    .locator(".sb-huddle-bar .sb-huddle-chip", { hasText: name })
+    .first();
+  await chip.waitFor({ timeout });
+  const t0 = Date.now();
+  for (;;) {
+    if (((await chip.getAttribute("data-talking")) === "true") === want) return;
+    if (Date.now() - t0 > timeout)
+      throw new Error(
+        `the chip for ${name} ${want ? "never lit" : "stayed lit"}`
+      );
+    await page.waitForTimeout(200);
+  }
+}
+
 export const MORE_FLOWS: Flow[] = [
+  {
+    id: "HU1",
+    timeoutMs: 240_000,
+    section: "9. Reading together",
+    title: "A call in the session, with chips that light when someone talks",
+    rows: ["Call in a live session"],
+    checks:
+      "Signed in, the host starts a session and its call (Start a call); a bar of chips shows over the reading with their own chip, microphone off. A second signed-in person opens the session's link, sees the call is running and joins it: each bar shows both people. The second person unmutes and talks (a test tone): their chip lights on the host's bar, and goes dark when they mute. The host ends the call for everyone and both bars go",
+    run: async (c) => {
+      await c.open(CH);
+      const host = await c.signInAsSample();
+      const { code, sid } = await startSession(c);
+      await c
+        .pane()
+        .getByRole("button", { name: /start a call/i })
+        .click();
+      const bar = c.page.locator(".sb-huddle-bar");
+      await bar.waitFor({ timeout: 30000 });
+      await c.waitText(bar, /\(you\)/i, 15000);
+      if (!(await bar.locator(".sb-huddle-chip-muted").count()))
+        throw new Error("the host's microphone should start off");
+
+      const other = await c.secondPage();
+      await c.open(CH, other);
+      const friend = await c.signInAsSample(/^(?!.*seed ?reader)/i, other);
+      await c.open(`${CH}?session=${sid}&code=${code}`, other);
+      // Following the link opens the session pane already.
+      if (
+        !(await c
+          .pane(other)
+          .isVisible()
+          .catch(() => false))
+      )
+        await c.pressToolbar("Live session", other);
+      const join = c
+        .pane(other)
+        .getByRole("button", { name: /join the call/i });
+      await join.waitFor({ timeout: 30000 });
+      await join.click();
+      await other.locator(".sb-huddle-bar").waitFor({ timeout: 30000 });
+      const first = (n: string) =>
+        new RegExp(n.split(/\s+/)[0]!.replace(/[^\w]/g, ""), "i");
+      await chipTalking(c.page, first(friend), false, 30000);
+      await chipTalking(other, first(host), false, 30000);
+
+      await other
+        .locator(".sb-huddle-bar")
+        .getByRole("button", { name: /unmute/i })
+        .click();
+      await chipTalking(c.page, first(friend), true, 20000);
+      await other
+        .locator(".sb-huddle-bar")
+        .getByRole("button", { name: /^mute$/i })
+        .click();
+      await chipTalking(c.page, first(friend), false, 20000);
+
+      await c
+        .pane()
+        .getByRole("button", { name: /end call for everyone/i })
+        .click();
+      await bar.waitFor({ state: "detached", timeout: 15000 });
+      await other
+        .locator(".sb-huddle-bar")
+        .waitFor({ state: "detached", timeout: 30000 })
+        .catch(() => undefined);
+      return `${host} and ${friend} in the call; ${friend}'s chip lit while talking and went dark on mute; the host ended it`;
+    },
+  },
   // ── 3. Reading ─────────────────────────────────────────────────────────────────────────────────────────────
   {
     id: "R11",

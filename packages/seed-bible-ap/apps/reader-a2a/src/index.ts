@@ -18,6 +18,7 @@ import { servedEstates, TOWN } from "../../../estate/faithnet";
 import { askScripture, bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
+import { huddleRoutes, type HuddleEnv } from "./routes/huddle";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
 // the Worker runtime has, and this app is also imported by the in-process smoke (scripts/smoke.ts). The room class
 // itself is exported from worker.ts, the deploy entry.
@@ -25,7 +26,8 @@ import { askingKeyAddress, type WireEnv } from "./wires";
 import { platformSend, type PlatformEnv } from "./clients/platform";
 export { ReaderRunDO };
 
-export interface Env extends SessionEnv, WireEnv, PlatformEnv, BibleEnv {
+export interface Env
+  extends SessionEnv, WireEnv, PlatformEnv, BibleEnv, HuddleEnv {
   /** The estate's agent runtime — a reader's own agent is asked there over their wire. */
   A2A_URL?: string;
   /** reader-mcp by URL (dev) or by service binding (deployed — same-account workers.dev fetches 1042). */
@@ -53,6 +55,7 @@ app.use("*", cors());
 app.route("/", connectRoutes);
 app.route("/", bibleRoutes);
 app.route("/", publicRoutes);
+app.route("/", huddleRoutes);
 // The rooms: people's devices join a session on this origin (realtime-collaboration.md rule 2).
 app.all("/agents/*", async (c) => {
   const { routeAgentRequest } = await import("agents");

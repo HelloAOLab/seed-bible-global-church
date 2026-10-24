@@ -611,5 +611,17 @@
   "account-settings-subtitle": "Sync, publishing, connected sources and more",
   "open-profile": "Open profile",
   "open-profile-named": "Open profile ({{name}})",
-  "profile-save-needs-home": "Saved on this device, but not yet in your Library."
+  "profile-save-needs-home": "Saved on this device, but not yet in your Library.",
+  "huddle-talking": "{{name}} is talking",
+  "huddle-muted": "Microphone off",
+  "huddle-people": "In the call",
+  "huddle-title": "Call",
+  "huddle-leave": "Leave call",
+  "huddle-end": "End call for everyone",
+  "huddle-in-call-one": "1 person is in the call.",
+  "huddle-in-call": "{{count}} people are in the call.",
+  "huddle-none": "Talk together while you read. Your microphone starts off.",
+  "huddle-joining": "Joining…",
+  "huddle-join": "Join the call",
+  "huddle-start": "Start a call"
 }

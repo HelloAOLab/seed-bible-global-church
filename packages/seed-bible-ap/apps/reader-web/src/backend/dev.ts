@@ -333,6 +333,9 @@ export function createDevBackend(
         name: name || "Guest",
       };
     },
+    async sessionHuddle() {
+      throw new BackendError("huddles_not_configured", "unavailable");
+    },
     async sessionJoin(sessionId, code): Promise<SessionTicket> {
       guard();
       if (code !== "DEVCODE")

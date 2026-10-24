@@ -27,6 +27,7 @@ import {
   type Org,
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
+import type { HuddleAnswer } from "../state/sessions/huddle";
 import type { Contact } from "../state/social/today";
 import { agentAddress } from "../state/records/marks";
 
@@ -301,6 +302,23 @@ export function createA2aBackend(
         throw new BackendError(
           out?.error ?? `the room answered ${res.status}`,
           "refused"
+        );
+      return out;
+    },
+    async sessionHuddle(sessionId, op) {
+      const s = getSession();
+      if (!s) throw new BackendError("sign in to join the call", "signed-out");
+      const res = await fetchImpl(
+        `${A2A_BASE}/api/session/${encodeURIComponent(sessionId)}/huddle/${op}`,
+        { method: "POST", headers: { authorization: `Bearer ${s.token}` } }
+      );
+      const out = (await res.json().catch(() => null)) as
+        | (HuddleAnswer & { ok?: boolean; error?: string })
+        | null;
+      if (!res.ok || !out?.ok)
+        throw new BackendError(
+          out?.error ?? `the call answered ${res.status}`,
+          res.status === 401 ? "signed-out" : "refused"
         );
       return out;
     },

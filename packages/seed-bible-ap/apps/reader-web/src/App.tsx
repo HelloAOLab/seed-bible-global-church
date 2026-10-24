@@ -23,6 +23,7 @@ import { YourContentPane } from "./components/records/YourContentPane";
 import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
 import { SessionPane } from "./components/sessions/SessionPane";
+import { HuddleBar } from "./components/sessions/HuddleCall";
 import { LibraryPane } from "./components/library/LibraryPane";
 import { Onboarding } from "./components/chrome/Onboarding";
 import { AboutPane } from "./components/chrome/AboutPane";
@@ -106,6 +107,7 @@ export function App({ state }: { state: ReaderState }) {
       )}
       <main className="sb-app-main" ref={mainRef}>
         <PanesLayout state={state} />
+        <HuddleBar state={state} />
       </main>
       {pane === "notes" && (
         <aside className={paneClass}>

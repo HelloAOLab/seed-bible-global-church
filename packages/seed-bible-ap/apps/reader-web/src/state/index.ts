@@ -26,6 +26,7 @@ import { createFriendship, parseFriendLink } from "./social/friendship";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
 import { browserPeerFactory, createVoice } from "./sessions/voice";
+import { createHuddle, openRealtimeKit } from "./sessions/huddle";
 import { createPlaylists } from "./library/playlists";
 import { createPlans } from "./library/plans";
 import { createFiles } from "./library/files";
@@ -341,6 +342,26 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   // Leaving the session leaves voice.
   effect(() => {
     if (!live.active.value && voice.on.value) void voice.leave();
+  });
+  // The session's call (the estate's huddle) for the signed-in; a guest has the voice above.
+  const huddle = createHuddle({
+    ask: (op) => {
+      const id = live.sessionId.value;
+      if (!id) return Promise.reject(new Error("no live session"));
+      return backend.sessionHuddle(id, op);
+    },
+    openMeeting: openRealtimeKit,
+  });
+  // While in a session and not in its call, look every so often whether one is running (and how many are in it).
+  effect(() => {
+    if (!live.active.value || !session.value || live.guest.value) {
+      if (huddle.status.peek() !== "idle") void huddle.leave();
+      return;
+    }
+    if (huddle.status.value !== "idle") return;
+    void huddle.look();
+    const timer = setInterval(() => void huddle.look(), 10_000);
+    return () => clearInterval(timer);
   });
   // The leader's navigation moves the room.
   effect(() => {
@@ -757,6 +778,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     friendship,
     presence,
     live,
+    huddle,
     voice,
     setVoiceMuted,
     audio,

@@ -10,6 +10,7 @@ import type {
 } from "@seed/library-client";
 import type { BucketItem } from "@seed/seed-schema";
 import type { Offering } from "../state/social/discover";
+import type { HuddleAnswer, HuddleOp } from "../state/sessions/huddle";
 import type { Contact } from "../state/social/today";
 
 export interface PublishSliceArgs {
@@ -174,6 +175,8 @@ export interface ReaderBackend {
     code: string,
     name: string
   ): Promise<SessionTicket & { agent: string; name: string }>;
+  /** The live session's call (the estate's huddle): start or join it, look at it, leave it, or end it (the host). */
+  sessionHuddle(sessionId: string, op: HuddleOp): Promise<HuddleAnswer>;
   /** The reader's works (playlists, plans) in their Library: list a folder, read one, save one (private). */
   listWorks(folder: WorkFolder): Promise<WorkEntry[]>;
   readWork(folder: WorkFolder, name: string): Promise<unknown>;

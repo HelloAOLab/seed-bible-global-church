@@ -27,6 +27,7 @@ import "./styles/pane-layout.css";
 import "./styles/today.css";
 import "./styles/discover.css";
 import "./styles/friends.css";
+import "./styles/huddle.css";
 import "./styles/playlists.css";
 import "./styles/plans.css";
 import "./styles/onboarding.css";

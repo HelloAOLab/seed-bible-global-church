@@ -1,6 +1,7 @@
 // THE SESSION PANE — start or join a live reading, who is here and where, the share link, roles (host), chat,
 // and the end button. Participants and the room's decorations show in the reader; this is the roster and the chat.
 import { SessionQRCode } from "./SessionQRCode";
+import { HuddleCard } from "./HuddleCall";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -17,6 +18,8 @@ export function SessionPane({ state }: { state: ReaderState }) {
   const [showQr, setShowQr] = useState(false);
   const log = useRef<HTMLDivElement>(null);
   const s = live.state.value;
+  // The session's own voice (the peer mesh) is for guests, and for anyone where the estate's call is not offered.
+  const mesh = !signedIn || !!live.guest.value || !state.huddle.available.value;
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight });
@@ -249,40 +252,43 @@ export function SessionPane({ state }: { state: ReaderState }) {
                 })}
               </p>
             )}
-            <div className="sb-note-card-actions sb-voice-controls">
-              {!state.voice.on.value ? (
-                <button
-                  className="sb-note-button"
-                  onClick={() => void state.voice.join().catch(() => {})}
-                >
-                  <span className="material-symbols-outlined">mic</span>{" "}
-                  {t("voice-join", { defaultValue: "Join voice" })}
-                </button>
-              ) : (
-                <>
+            <HuddleCard state={state} />
+            {mesh && (
+              <div className="sb-note-card-actions sb-voice-controls">
+                {!state.voice.on.value ? (
                   <button
                     className="sb-note-button"
-                    onClick={() =>
-                      state.setVoiceMuted(!state.voice.muted.value)
-                    }
+                    onClick={() => void state.voice.join().catch(() => {})}
                   >
-                    <span className="material-symbols-outlined">
-                      {state.voice.muted.value ? "mic_off" : "mic"}
-                    </span>{" "}
-                    {state.voice.muted.value
-                      ? t("voice-unmute", { defaultValue: "Unmute" })
-                      : t("voice-mute", { defaultValue: "Mute" })}
+                    <span className="material-symbols-outlined">mic</span>{" "}
+                    {t("voice-join", { defaultValue: "Join voice" })}
                   </button>
-                  <button
-                    className="sb-note-button"
-                    onClick={() => void state.voice.leave()}
-                  >
-                    {t("voice-leave", { defaultValue: "Leave voice" })}
-                  </button>
-                </>
-              )}
-            </div>
-            {state.voice.on.value && (
+                ) : (
+                  <>
+                    <button
+                      className="sb-note-button"
+                      onClick={() =>
+                        state.setVoiceMuted(!state.voice.muted.value)
+                      }
+                    >
+                      <span className="material-symbols-outlined">
+                        {state.voice.muted.value ? "mic_off" : "mic"}
+                      </span>{" "}
+                      {state.voice.muted.value
+                        ? t("voice-unmute", { defaultValue: "Unmute" })
+                        : t("voice-mute", { defaultValue: "Mute" })}
+                    </button>
+                    <button
+                      className="sb-note-button"
+                      onClick={() => void state.voice.leave()}
+                    >
+                      {t("voice-leave", { defaultValue: "Leave voice" })}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {mesh && state.voice.on.value && (
               <p className="sb-small sb-muted">
                 {t("voice-note", {
                   count: state.voice.connected.value.length,

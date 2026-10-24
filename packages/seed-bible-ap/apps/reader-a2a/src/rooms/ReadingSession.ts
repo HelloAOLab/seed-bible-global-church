@@ -149,6 +149,32 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
         expiresInMs: INVITE_TTL_MS,
       });
     }
+    // Who this agent is in the session, for its huddle: the host, or someone the session let in (an invite was
+    // issued to them under the share code). A guest's identity is minted per invite and never asks.
+    if (request.method === "POST" && path === "/standing") {
+      const b = (await request.json().catch(() => ({}))) as { agent?: string };
+      const agent = String(b.agent ?? "").toLowerCase();
+      if (
+        !this.state.startedAt ||
+        this.state.endedAt ||
+        !/^0x[0-9a-f]{40}$/.test(agent)
+      )
+        return Response.json(
+          { ok: false, error: "no such session" },
+          { status: 404 }
+        );
+      if (this.state.host?.agent === agent)
+        return Response.json({ ok: true, standing: "host" });
+      const invited = this.sql<{
+        agent: string;
+      }>`SELECT agent FROM invites WHERE agent = ${agent} LIMIT 1`;
+      if (!invited.length)
+        return Response.json(
+          { ok: false, error: "no standing in this session" },
+          { status: 404 }
+        );
+      return Response.json({ ok: true, standing: "reader" });
+    }
     if (request.method === "GET" && path === "/snapshot") {
       const ops = this.sql<{
         seq: number;

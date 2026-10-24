@@ -88,6 +88,7 @@ export class FlowContext {
   async secondPage(): Promise<Page> {
     const ctx = await this.browser.newContext({
       viewport: { width: 1280, height: 900 },
+      permissions: ["microphone"],
     });
     const page = await ctx.newPage();
     this.watch(page);
@@ -279,13 +280,19 @@ export class FlowContext {
 }
 
 export async function launch(): Promise<Browser> {
-  return chromium.launch();
+  // A fake microphone (a steady tone) with no prompt, so the call's flows can talk.
+  return chromium.launch({
+    args: [
+      "--use-fake-ui-for-media-stream",
+      "--use-fake-device-for-media-stream",
+    ],
+  });
 }
 
 export async function newFlowContext(browser: Browser): Promise<FlowContext> {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
-    permissions: ["clipboard-read", "clipboard-write"],
+    permissions: ["clipboard-read", "clipboard-write", "microphone"],
   });
   const page = await context.newPage();
   return new FlowContext(browser, context, page);

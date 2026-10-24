@@ -204,6 +204,21 @@ export async function joinSession(
 }
 
 /** A guest's admission: the share code is the standing; the room mints a `guest:` identity for this session. */
+/** The reader's place in a live session — the host, or a reader it let in — or a 404 refusal. */
+export async function sessionStanding(
+  env: RoomsEnv,
+  sessionId: string,
+  agent: string
+): Promise<"host" | "reader"> {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId))
+    throw new WireRefusal(404, "no such session");
+  const out = await room(env, sessionId, "/standing", {
+    method: "POST",
+    body: JSON.stringify({ agent }),
+  });
+  return out.standing === "host" ? "host" : "reader";
+}
+
 export async function joinSessionAsGuest(
   env: RoomsEnv,
   sessionId: string,
