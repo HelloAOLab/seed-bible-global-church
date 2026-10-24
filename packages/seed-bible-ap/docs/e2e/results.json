@@ -1,33 +1,60 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 12:58 UTC",
+  "when": "2026-10-24 15:36 UTC",
   "results": [
     {
-      "id": "R4",
-      "section": "3. Reading",
-      "title": "Change translation",
-      "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
+      "id": "S2",
+      "section": "8. Today, Discover and publishing",
+      "title": "Today, signed out",
+      "checks": "Today opens as the old reader's full page — the whole area beside the sidebar, the bottom bar staying where it was — with its welcome — the date, Welcome!, John 1:1 in the open translation, Open Bible, Read John 1 and Take a tour — and asks for sign-in for friends rather than failing; Read John 1 opens John 1",
       "mark": "✅",
-      "note": "switched to WEB World English Bible English",
-      "ms": 674
+      "note": "full page beside the sidebar, the bar stayed at x=800; 24 OCT Welcome! JOHN 1:1 “In the beginning was the Word, and the Word was with G…; Read John 1 opened John 1",
+      "ms": 1498
     },
     {
-      "id": "M8",
-      "section": "4. Marking the text",
-      "title": "A note edited on two devices",
-      "checks": "Signed in on two browsers as Seed Reader: one note, edited differently on each while offline, comes back twice with Keep this version; keeping one leaves one",
+      "id": "R15",
+      "section": "3. Reading",
+      "title": "Reading history",
+      "checks": "Keep Romans 8 open ten seconds (signed out): Today → Recent reading lists Romans 8",
       "mark": "✅",
-      "note": "both edits kept with Keep this version; keeping one left one note",
-      "ms": 85680
+      "note": "Romans 8 under Recent reading after ten seconds open",
+      "ms": 12916
     },
     {
-      "id": "G5",
+      "id": "S3",
+      "section": "8. Today, Discover and publishing",
+      "title": "Friends (the pane)",
+      "checks": "Signed in as Seed Reader: Today shows the Friends section with Add a friend and Invite by email, and no error (the sample person has no mutual friends, so the list itself is not exercised)",
+      "mark": "✅",
+      "note": "Friends Refresh Friend requests (1) ezra.me wants to be friends Accept Not now person ruth.me 0x8421bd63c048506c629894ac",
+      "ms": 34485
+    },
+    {
+      "id": "G19",
+      "section": "8. Today, Discover and publishing",
+      "title": "Today in the side pane; friends that need a new sign-in",
+      "checks": "Signed in, with the workspace refusing the friends read for want of permission: Today's sections stack in one column inside the pane; Friends says what is wrong in words with Sign in again, which opens Account — never the raw refusal",
+      "mark": "✅",
+      "note": "5 sections in one column; the notice asked to sign in again, and its button opened Account",
+      "ms": 33567
+    },
+    {
+      "id": "TB1",
       "section": "3. Reading",
-      "title": "Download a whole translation for offline",
-      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
-      "mark": "❌",
-      "note": "locator.waitFor: Timeout 180000ms exceeded.",
-      "ms": 194439
+      "title": "The old reader's bottom bar; every action within reach",
+      "checks": "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens Your content with its search box ready; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in the top bar or its More",
+      "mark": "✅",
+      "note": "desktop bar: Books · Search · Discover · Places map · Study companion · More; under More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes; Books and Search open; on a phone all 9 actions reachable",
+      "ms": 1377
+    },
+    {
+      "id": "PH1",
+      "section": "13. Links and embedding",
+      "title": "A phone: the bar at the top, the page scrolls, sign-in stands out",
+      "checks": "On an iPhone 13: the reader's bar sits at the top; the Tabs drawer closes with its ✕ and with a tap beside it; reading down scrolls the page itself (so the browser's bars can fold away); signed out, the sign-in button is filled in the accent colour and keeps its account icon with a highlight waiting (the count on its corner), and More opens with a Sign in button first that opens the sign-in pane",
+      "mark": "✅",
+      "note": "bar at y=8; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; sign-in filled (rgb(224, 123, 76)) and kept its icon with a highlight waiting; More → Sign in opened the sign-in pane",
+      "ms": 1178
     }
   ]
 }

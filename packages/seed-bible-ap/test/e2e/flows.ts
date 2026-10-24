@@ -479,12 +479,40 @@ const BASE_FLOWS: Flow[] = [
     section: "8. Today, Discover and publishing",
     title: "Today, signed out",
     checks:
-      "A new reader's Today opens with the old reader's welcome — the date, Welcome!, John 1:1 in the open translation, Open Bible, Read John 1 and Take a tour — and asks for sign-in for friends rather than failing; Read John 1 opens John 1",
+      "Today opens as the old reader's full page — the whole area beside the sidebar, the bottom bar staying where it was — with its welcome — the date, Welcome!, John 1:1 in the open translation, Open Bible, Read John 1 and Take a tour — and asks for sign-in for friends rather than failing; Read John 1 opens John 1",
     run: async (c) => {
       await c.open(CH);
+      const barCentre = () =>
+        c.page.locator(".sb-reader-toolbar").evaluate((n) => {
+          const r = n.getBoundingClientRect();
+          return Math.round((r.left + r.right) / 2);
+        });
+      const before = await barCentre();
       await c.pressToolbar("Today");
       await c.pane().waitFor({ timeout: 5000 });
       await c.waitText(c.pane(), /sign in/i, 8000);
+      const fill = await c.page.evaluate(() => {
+        const side = document
+          .querySelector(".sb-tabs-sidebar")!
+          .getBoundingClientRect();
+        const pane = document
+          .querySelector(".sb-app-pane")!
+          .getBoundingClientRect();
+        return {
+          gap: Math.round(pane.left - side.right),
+          right: Math.round(innerWidth - pane.right),
+        };
+      });
+      if (Math.abs(fill.gap) > 2 || Math.abs(fill.right) > 2)
+        throw new Error(
+          `Today is not the full page beside the sidebar: ${JSON.stringify(fill)}`
+        );
+      await c.page.waitForTimeout(500);
+      const during = await barCentre();
+      if (Math.abs(during - before) > 2)
+        throw new Error(
+          `the bottom bar moved from x=${before} to x=${during} when Today opened`
+        );
       const welcome = c.pane().locator(".sb-today-welcome-screen");
       await c.waitText(welcome, /in the beginning was the word/i, 10000);
       const text = (await welcome.innerText()).replace(/\s+/g, " ");
@@ -498,7 +526,7 @@ const BASE_FLOWS: Flow[] = [
         if (!w.test(text)) throw new Error(`welcome: ${text.slice(0, 160)}`);
       await welcome.getByRole("button", { name: /read john 1/i }).click();
       await c.page.waitForURL(/\/JHN\/1(\?|$)/, { timeout: 10000 });
-      return `${text.slice(0, 90)}…; Read John 1 opened John 1`;
+      return `full page beside the sidebar, the bar stayed at x=${before}; ${text.slice(0, 80)}…; Read John 1 opened John 1`;
     },
   },
   // ── 12. Extensions ───────────────────────────────────────────────────────────────────────────────────────

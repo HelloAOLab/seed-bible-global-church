@@ -28,6 +28,9 @@ import { AboutPane } from "./components/chrome/AboutPane";
 import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
 import { completeRedirectIfReturning } from "./session";
 
+/** Panes that take the whole reading area, as in the old reader (its `fullscreen` placement). */
+const FULL_WIDTH_PANES: readonly string[] = ["today"];
+
 export function App({ state }: { state: ReaderState }) {
   useEffect(() => {
     let stop: (() => void) | undefined;
@@ -42,12 +45,20 @@ export function App({ state }: { state: ReaderState }) {
   const pane = state.ui.pane.value;
   const collapsed = state.ui.sidebarCollapsed.value;
   const embed = state.ui.embed.value;
-  // The floating toolbars centre on the READER column, not the window: its left edge and width go on the root
-  // as CSS variables (app.css), re-measured when a pane opens, the sidebar changes or the window resizes.
+  // The old reader's full-width panes: they take the reading area beside the sidebar (the chapter stays mounted
+  // underneath, hidden, so it comes back where it was); the rest open as a side pane beside the chapter.
+  const full = FULL_WIDTH_PANES.includes(pane);
+  const paneClass = `sb-app-pane${full ? " sb-app-pane-full" : ""}`;
+  // The floating toolbars centre on the READER column, not the window — or on a full-width pane, which has taken
+  // its place: its left edge and width go on the root as CSS variables (app.css), re-measured when a pane opens,
+  // the sidebar changes or the window resizes.
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
+    const area = () =>
+      document.querySelector<HTMLElement>(".sb-app-pane-full") ??
+      mainRef.current;
     const measure = () => {
-      const r = mainRef.current?.getBoundingClientRect();
+      const r = area()?.getBoundingClientRect();
       if (!r) return;
       const root = document.documentElement.style;
       root.setProperty("--sb-main-left", `${r.left}px`);
@@ -59,7 +70,8 @@ export function App({ state }: { state: ReaderState }) {
       typeof ResizeObserver !== "undefined" && mainRef.current
         ? new ResizeObserver(measure)
         : null;
-    if (mainRef.current) ro?.observe(mainRef.current);
+    const el = area();
+    if (el) ro?.observe(el);
     window.addEventListener("resize", measure);
     return () => {
       ro?.disconnect();
@@ -78,7 +90,7 @@ export function App({ state }: { state: ReaderState }) {
     );
   return (
     <div
-      className={`sb-app${pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
+      className={`sb-app${full ? " sb-app-with-full-pane" : pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
     >
       <TabsSidebar state={state} />
       {state.ui.sidebarDrawer.value && (
@@ -91,37 +103,37 @@ export function App({ state }: { state: ReaderState }) {
         <PanesLayout state={state} />
       </main>
       {pane === "notes" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <NotesPane state={state} />
         </aside>
       )}
       {pane === "content" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <YourContentPane state={state} />
         </aside>
       )}
       {pane === "today" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <TodayPane state={state} />
         </aside>
       )}
       {pane === "discover" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <DiscoverPane state={state} />
         </aside>
       )}
       {pane === "session" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <SessionPane state={state} />
         </aside>
       )}
       {pane === "library" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <LibraryPane state={state} />
         </aside>
       )}
       {typeof pane === "string" && pane.startsWith("ext:") && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           {(() => {
             const p = state.extensions.panes.value.find(
               (x) => `ext:${x.id}` === pane
@@ -145,22 +157,22 @@ export function App({ state }: { state: ReaderState }) {
         </aside>
       )}
       {pane === "about" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <AboutPane state={state} />
         </aside>
       )}
       {pane === "map" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <ScriptureMapPane state={state} />
         </aside>
       )}
       {pane === "friends" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <FriendsPane state={state} />
         </aside>
       )}
       {pane === "account" && (
-        <aside className="sb-app-pane">
+        <aside className={paneClass}>
           <AccountPane state={state} />
         </aside>
       )}

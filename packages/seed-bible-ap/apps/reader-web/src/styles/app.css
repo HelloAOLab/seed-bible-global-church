@@ -35,6 +35,38 @@ body {
   top: 0;
 }
 
+/* A full-width pane (Today, as in the old reader): it takes the reading area beside the sidebar, its header across
+   the top over a thin rule, its content in a centred column; the chapter waits underneath, hidden. */
+@media (min-width: 721px) {
+  .sb-app-with-full-pane .sb-app-main {
+    display: none;
+  }
+  .sb-app-pane-full {
+    height: 100dvh;
+    border-inline-start: none;
+    background: var(--sb-reader-background, var(--sb-background));
+    color: var(--sb-reader-font-color, var(--sb-font-color));
+  }
+  .sb-app-pane-full > .sb-pane {
+    padding: 0 0 7rem;
+  }
+  .sb-app-pane-full > .sb-pane > .sb-pane-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 0 1.5rem;
+    padding: 0.625rem 0.75rem 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--sb-divider-color, #00000024);
+    background: inherit;
+    background-color: var(--sb-reader-background, var(--sb-background, #fff));
+  }
+  .sb-app-pane-full > .sb-pane > :not(.sb-pane-header) {
+    max-width: 51.25rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+}
+
 @media (max-width: 720px) {
   .sb-app-with-pane {
     grid-template-columns: minmax(0, 1fr);
