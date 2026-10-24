@@ -12,10 +12,8 @@ import {
   parseSharedPath,
 } from "../src/state/social/sharedPage";
 import { parseRoute, routeOf, versesOf } from "../src/state/reading/route";
-import {
-  BIBLE_API_ENDPOINT,
-  FreeUseBibleAPI,
-} from "../src/backend/bible";
+import { legacyTarget } from "../src/state/reading/legacyRoute";
+import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../src/backend/bible";
 
 const SITEMAP_TRANSLATIONS = ["BSB"];
 
@@ -79,6 +77,10 @@ export default {
     const isNavigation =
       request.method === "GET" &&
       (request.headers.get("accept") ?? "").includes("text/html");
+    // An old reader's `?verse=` on a reading path goes to `?v=` here. Its other links (`/en/BSB/john/3`) do not reach
+    // the Worker (wrangler.toml runs it first only for /read/* and /shared/*): the page turns them (state/index.ts).
+    const legacy = isNavigation ? legacyTarget(url.pathname, url.search) : null;
+    if (legacy) return Response.redirect(new URL(legacy, url).toString(), 302);
     const shared = parseSharedPath(url.pathname);
     if (shared && isNavigation) {
       const shell = await env.ASSETS.fetch(

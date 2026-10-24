@@ -2792,6 +2792,48 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "LK1",
+    section: "13. Links and embedding",
+    title: "seedbible.org links open here",
+    rows: ["Links from seedbible.org"],
+    checks:
+      "The old reader's links land on the same place: /en/BSB/john/3?verse=16 opens John 3 with verse 16 selected; /BSB/romans/8 (no language) opens Romans 8; /en/BSB/1-samuel/17 opens 1 Samuel 17; /es/BSB/john/3 opens John 3 in Spanish; /?translation=BSB&book=genesis&chapter=12 opens Genesis 12",
+    run: async (c) => {
+      const seen: string[] = [];
+      const land = async (from: string, want: RegExp) => {
+        await c.page.goto(`${BASE}${from}`, { waitUntil: "domcontentloaded" });
+        await c.page.waitForURL(want, { timeout: 15000 }).catch(() => {
+          throw new Error(`${from} landed at ${c.page.url()}`);
+        });
+        await c.page
+          .locator(".sb-app:not(.sb-app-ssr)")
+          .waitFor({ timeout: 20000 });
+        seen.push(`${from} → ${new URL(c.page.url()).pathname}`);
+      };
+      await land("/en/BSB/john/3?verse=16", /\/read\/BSB\/JHN\/3/);
+      await c.dismissWelcome();
+      await c.waitText(c.page.locator(".sb-verse-toolbar"), /John 3:16/, 15000);
+      await land("/BSB/romans/8", /\/read\/BSB\/ROM\/8/);
+      await land("/en/BSB/1-samuel/17", /\/read\/BSB\/1SA\/17/);
+      await land("/es/BSB/john/3", /\/read\/BSB\/JHN\/3/);
+      await c.page
+        .waitForFunction(
+          () => document.documentElement.lang === "es",
+          undefined,
+          { timeout: 10000 }
+        )
+        .catch(() => {
+          throw new Error("/es/… did not switch the interface to Spanish");
+        });
+      await c.page.evaluate(() => localStorage.removeItem("sbr.language"));
+      await land(
+        "/?translation=BSB&book=genesis&chapter=12",
+        /\/read\/BSB\/GEN\/12/
+      );
+      return `${seen.join("; ")}; verse 16 selected; Spanish taken from /es/`;
+    },
+  },
+  {
     id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",

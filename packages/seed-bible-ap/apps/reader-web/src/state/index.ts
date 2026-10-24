@@ -8,7 +8,7 @@ import { createOfflineTranslations } from "./reading/offlineTranslations";
 import { isTypingTarget, readerKeyAction } from "./chrome/keys";
 import { defaultTranslationFor } from "./reading/defaultTranslation";
 import { bindWakeLock } from "./chrome/wakeLock";
-import { language } from "../i18n";
+import { AVAILABLE_LANGUAGES, language, setLanguage } from "../i18n";
 import { signal } from "@preact/signals";
 import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
 import type { ReaderBackend } from "../backend/ReaderBackend";
@@ -43,6 +43,7 @@ import { setVerseLinkTranslation } from "../components/records/tiptap/VerseRefer
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
 import { bindRoute, parseRoute, pushRoute, versesOf } from "./reading/route";
+import { legacyTarget } from "./reading/legacyRoute";
 import { createTabs, slotCountOf, type LayoutId } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
 import { createChapterAudio } from "./media/audio";
@@ -580,6 +581,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   /** Open the chapter the URL names, else where the reader left off, else John 1; wire history and the outbox. */
   async function start(): Promise<() => void> {
+    // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
+    if (typeof location !== "undefined") {
+      const legacy = legacyTarget(location.pathname, location.search);
+      if (legacy) history.replaceState(null, "", legacy);
+    }
     const fromUrl =
       typeof location !== "undefined" ? parseRoute(location.pathname) : null;
     // Read everything the link carries BEFORE the first navigation: opening the tab rewrites the URL (pushRoute),
@@ -682,6 +688,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (typeof location !== "undefined") {
       const q = new URLSearchParams(location.search);
       // Embed mode and a theme or customization named in the link (the old `?embed=`, `?theme=`, `?customization=`).
+      // `?lang=` (the old reader's, and the language segment of its links): the interface language, when we have it.
+      const lang = q.get("lang");
+      if (lang && AVAILABLE_LANGUAGES.includes(lang)) void setLanguage(lang);
       const embed = q.get("embed");
       if (embed === "minimal" || embed === "true") ui.embed.value = true;
       // `app.themeId` is the old reader's embed parameter; links made by it keep working.

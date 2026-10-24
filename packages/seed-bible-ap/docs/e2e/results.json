@@ -1,60 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 17:32 UTC",
+  "when": "2026-10-24 18:21 UTC",
   "results": [
     {
-      "id": "R4",
+      "id": "R1",
       "section": "3. Reading",
-      "title": "Change translation",
-      "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
+      "title": "Open a chapter",
+      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
       "mark": "✅",
-      "note": "switched to WEB World English Bible English",
-      "ms": 1570
+      "note": "edge-rendered, then live; header \"John3\"",
+      "ms": 589
     },
     {
-      "id": "X1",
-      "section": "12. Extensions",
-      "title": "Places map",
-      "checks": "On Genesis 12 the Places map pane shows a Leaflet map with at least one place marker",
-      "mark": "✅",
-      "note": "map with 4 marker(s)",
-      "ms": 3093
-    },
-    {
-      "id": "R14",
+      "id": "R5",
       "section": "3. Reading",
-      "title": "Offline reading",
-      "checks": "Open John 3 and John 4 online; go offline; reload John 4 and step back to John 3: both chapters show without a connection",
+      "title": "Share link selects verses",
+      "checks": "?v=16-18 opens with John 3:16–18 selected and the verse toolbar naming them",
       "mark": "✅",
-      "note": "reloaded offline; John 4 and John 3 read without a connection (served by the service worker's cache, so no pin)",
-      "ms": 6811
+      "note": "toolbar \"John 3:16–18\", 3 verses selected",
+      "ms": 490
     },
     {
-      "id": "G5",
-      "section": "3. Reading",
-      "title": "Download a whole translation for offline",
-      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
+      "id": "N1",
+      "section": "13. Links and embedding",
+      "title": "Chapter links with a preview",
+      "checks": "The chapter page's HTML carries og:title, og:description, og:image (which answers 200) and twitter:card",
       "mark": "✅",
-      "note": "BSB downloaded; offline, Obadiah 1 reads (\"1This is the vision of Obadiah:\n\nThis is\")",
-      "ms": 9452
+      "note": "\"John 3 · BSB · Seed Bible\" — \"Now there was a man of the Pharisees named Nicodem…\", image 200",
+      "ms": 492
     },
     {
-      "id": "G18",
-      "section": "12. Extensions",
-      "title": "People, places and events",
-      "checks": "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan; Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
+      "id": "N2",
+      "section": "13. Links and embedding",
+      "title": "Search engines",
+      "checks": "/robots.txt names the sitemap; /sitemap.xml lists John 3; the chapter page has a canonical link",
       "mark": "✅",
-      "note": "Abraham's card; Terah's card and Back; Genesis 11:29 opened at /read/BSB/GEN/11",
-      "ms": 1613
+      "note": "robots → sitemap of 1190 URLs, John 3 listed, canonical present",
+      "ms": 126
     },
     {
-      "id": "V1",
-      "section": "3. Reading",
-      "title": "Scripture checked on the device",
-      "checks": "John 3 (BSB) opens with a Verified badge beside the translation; every verse number is marked as checked; the badge's sheet says all verses match the published text, that each is part of the translation's published set, that the set is signed by the scripture agent, and where the text was received from",
+      "id": "LK1",
+      "section": "13. Links and embedding",
+      "title": "seedbible.org links open here",
+      "checks": "The old reader's links land on the same place: /en/BSB/john/3?verse=16 opens John 3 with verse 16 selected; /BSB/romans/8 (no language) opens Romans 8; /en/BSB/1-samuel/17 opens 1 Samuel 17; /es/BSB/john/3 opens John 3 in Spanish; /?translation=BSB&book=genesis&chapter=12 opens Genesis 12",
       "mark": "✅",
-      "note": "Verified; 36 verse numbers marked; the sheet names the published set, the signer and the source",
-      "ms": 806
+      "note": "/en/BSB/john/3?verse=16 → /read/BSB/JHN/3; /BSB/romans/8 → /read/BSB/ROM/8; /en/BSB/1-samuel/17 → /read/BSB/1SA/17; /es/BSB/john/3 → /read/BSB/JHN/3; /?translation=BSB&book=genesis&chapter=12 → /read/BSB/GEN/12; verse 16 selected; Spanish taken from /es/",
+      "ms": 1607
     }
   ]
 }
