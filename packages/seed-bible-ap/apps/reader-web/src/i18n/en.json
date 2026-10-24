@@ -568,5 +568,16 @@
   "greeting-night-named": "Good night, {{name}}!",
   "open-bible": "Open Bible",
   "take-a-tour": "Take a tour",
-  "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}"
+  "read-book-chapter-button": "Read {{bookName}} {{chapterNumber}}",
+  "settings": "Settings",
+  "open-settings": "Open settings",
+  "close-settings": "Close Settings",
+  "display-and-theme": "Display & Theme",
+  "toolbar": "Toolbar",
+  "install-app": "Install App",
+  "launch-tutorial": "Launch tutorial",
+  "customize": "Customize",
+  "install-body-post-settings": " or your phone's home screen to return anytime.",
+  "install-how": "How to install",
+  "customize-make-your-own": "Make your own in Library → Customizations"
 }

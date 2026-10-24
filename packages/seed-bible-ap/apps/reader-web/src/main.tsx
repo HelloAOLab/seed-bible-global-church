@@ -30,6 +30,7 @@ import "./styles/friends.css";
 import "./styles/playlists.css";
 import "./styles/plans.css";
 import "./styles/onboarding.css";
+import "./styles/settings.css";
 import "leaflet/dist/leaflet.css";
 import "./styles/app.css";
 

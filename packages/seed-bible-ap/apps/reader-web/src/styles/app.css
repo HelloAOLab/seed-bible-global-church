@@ -1325,6 +1325,18 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   padding-top: 0.5rem;
   border-top: 1px solid var(--sb-divider-color, #00000014);
 }
+/* The old reader's bottom row: ⚙ Settings, then who is connected taking the rest. */
+.sb-sidebar-footer.sb-sidebar-bottom-actions {
+  gap: 0.25rem;
+}
+.sb-sidebar-bottom-actions .sb-connected-chip {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.sb-sidebar-bottom-actions-collapsed .sb-connected-chip {
+  flex: 0 0 auto;
+}
 .sb-connected-chip {
   display: flex;
   align-items: center;

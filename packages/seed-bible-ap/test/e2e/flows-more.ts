@@ -2475,6 +2475,58 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "ST1",
+    section: "3. Reading",
+    title: "Settings in the sidebar",
+    rows: ["Settings"],
+    checks:
+      "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — Account settings, Display & Theme, Toolbar, Extensions, Install App, Launch tutorial, Customize, About Seed Bible, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
+    run: async (c) => {
+      await c.open(CH);
+      const side = c.page.locator(".sb-tabs-sidebar");
+      await side.getByRole("button", { name: "Open settings" }).click();
+      const labels = await side
+        .locator(".sb-settings-nav-label")
+        .allInnerTexts();
+      const want = [
+        "Account settings",
+        "Display & Theme",
+        "Toolbar",
+        "Extensions",
+        "Install App",
+        "Launch tutorial",
+        "Customize",
+        "About Seed Bible",
+      ];
+      if (labels.join() !== want.join())
+        throw new Error(`Settings lists: ${labels.join(", ")}`);
+      if (await side.locator(".sb-sidebar-tab-list").count())
+        throw new Error("the tabs are still showing beside Settings");
+      await side.getByLabel("Language").waitFor({ timeout: 3000 });
+      await side.getByText("Display & Theme").click();
+      const lineHeight = side
+        .locator("label", { hasText: "Line height" })
+        .locator("select");
+      await lineHeight.selectOption("relaxed");
+      await c.page
+        .locator('[data-sb-line="relaxed"]')
+        .first()
+        .waitFor({ state: "attached", timeout: 5000 })
+        .catch(() => {
+          throw new Error("the chapter did not take the line height");
+        });
+      await lineHeight.selectOption("normal");
+      await side.getByRole("button", { name: "Back" }).click();
+      await side
+        .locator(".sb-settings-nav-label")
+        .first()
+        .waitFor({ timeout: 3000 });
+      await side.getByRole("button", { name: "Close Settings" }).click();
+      await side.locator(".sb-sidebar-tab-list").waitFor({ timeout: 3000 });
+      return `⚙ → Settings: ${labels.join(" · ")}; Display & Theme's line height reached the chapter; ← back to the list; ✕ brought the tabs back`;
+    },
+  },
+  {
     id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",

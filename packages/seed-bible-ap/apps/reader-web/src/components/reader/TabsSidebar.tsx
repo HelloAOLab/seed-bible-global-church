@@ -1,11 +1,13 @@
 // THE TABS SIDEBAR — the old reader's left rail (`sb-tabs-sidebar`): the tab list with each tab's title and
-// translation, the add button, and the pane-layout picker with its little previews. Dressed by the copied
+// translation, the add button, and the pane-layout picker with its little previews; at the bottom the ⚙ that turns
+// the sidebar into Settings (components/chrome/SettingsView.tsx), and who is connected. Dressed by the copied
 // `tabs.css` / `pane-layout.css`.
 import { handleGridKeyNav } from "../keyboardNav";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { ConnectedChip } from "../chrome/ConnectedChip";
+import { SettingsView } from "../chrome/SettingsView";
 import {
   LAYOUT_OPTIONS,
   slotCountOf,
@@ -35,6 +37,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
   const [layoutOpen, setLayoutOpen] = useState(false);
   const drawer = state.ui.sidebarDrawer.value;
   const collapsed = state.ui.sidebarCollapsed.value && !drawer;
+  const settingsOpen = state.ui.settingsView.value !== null && !collapsed;
   /** Choosing a tab from the phone drawer closes it. */
   const pick = (id: string) => {
     tabs.selectTab(id);
@@ -155,7 +158,8 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
         )}
       </div>
 
-      {!collapsed && (
+      {settingsOpen && <SettingsView state={state} />}
+      {!collapsed && !settingsOpen && (
         <>
           <div className="sb-sidebar-tabs-header">
             <h3 className="sb-sidebar-tabs-title">
@@ -255,7 +259,24 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           </button>
         </div>
       )}
-      <div className="sb-sidebar-footer">
+      <div
+        className={`sb-sidebar-footer sb-sidebar-bottom-actions${collapsed ? " sb-sidebar-bottom-actions-collapsed" : ""}`}
+      >
+        <button
+          type="button"
+          data-tutorial="settings"
+          className={`sb-sidebar-icon-button sb-sidebar-settings-button${settingsOpen ? " sb-sidebar-icon-button-selected" : ""}`}
+          aria-label={t("open-settings", { defaultValue: "Open settings" })}
+          title={t("settings", { defaultValue: "Settings" })}
+          aria-pressed={settingsOpen}
+          onClick={() => {
+            // Settings needs the whole sidebar: from the collapsed rail it opens it first, as the old reader does.
+            if (collapsed) state.ui.sidebarCollapsed.value = false;
+            state.ui.settingsView.value = settingsOpen ? null : "main";
+          }}
+        >
+          <span className="material-symbols-outlined">settings</span>
+        </button>
         <ConnectedChip state={state} compact={collapsed} />
       </div>
     </aside>

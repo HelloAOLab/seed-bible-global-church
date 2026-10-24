@@ -40,7 +40,7 @@ const devReaders = signal<DevReader[]>([]);
 const error = signal("");
 
 /** The reader's profile: a name, a line, a picture from the gallery; published to the public shelf for friends. */
-function ProfileCard({ state }: { state: ReaderState }) {
+export function ProfileCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const p = state.profile.mine.value;
   const [name, setName] = useState(p?.displayName ?? "");
@@ -193,7 +193,7 @@ function ProfileCard({ state }: { state: ReaderState }) {
 }
 
 /** The MCP servers the reader attached at their Home — listed, never called from here (reads only, and at the Home). */
-function ConnectorsCard({ state }: { state: ReaderState }) {
+export function ConnectorsCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [rows, setRows] = useState<Connector[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -263,7 +263,7 @@ function ConnectorsCard({ state }: { state: ReaderState }) {
 }
 
 /** Whom the reader publishes as: themselves, or a church they steward (the slice lands on the church's shelf). */
-function PublishAsCard({ state }: { state: ReaderState }) {
+export function PublishAsCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [orgs, setOrgs] = useState<Org[] | null>(null);
   useEffect(() => {
@@ -312,7 +312,7 @@ function PublishAsCard({ state }: { state: ReaderState }) {
 
 /** Account → Toolbar: which buttons sit in the bottom toolbar (the rest are under More), and in what order (the old
  *  toolbar customizer). */
-function TextStyleCard({ state }: { state: ReaderState }) {
+export function TextStyleCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const style = state.settings.textStyle.value;
   const set = (s: TextSection, patch: SectionStyle) => {
@@ -420,7 +420,7 @@ function TextStyleCard({ state }: { state: ReaderState }) {
   );
 }
 
-function ToolbarCard({ state }: { state: ReaderState }) {
+export function ToolbarCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const actions = toolbarActions(state, t, {
     togglePane: () => undefined,
@@ -501,18 +501,13 @@ function ToolbarCard({ state }: { state: ReaderState }) {
   );
 }
 
-export function AccountPane({ state }: { state: ReaderState }) {
-  const { t, language } = useI18n();
+/** Account settings: signing in (the Home, the sample people), or who is signed in, where the marks stand, sync and sign out. */
+export function AccountCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
   const s = state.session.value;
   const estate = estateById(DEFAULT_ESTATE)!;
   const report = (e: unknown) =>
     (error.value = e instanceof Error ? e.message : String(e));
-  // The Church theme list is the registry's: read it again whenever the pane opens, so a theme published a moment ago
-  // (yours or anyone's) is there to pick without pressing refresh.
-  useEffect(
-    () => void state.customizations.refresh().catch(() => undefined),
-    []
-  );
 
   useEffect(() => {
     if (s) return;
@@ -537,24 +532,9 @@ export function AccountPane({ state }: { state: ReaderState }) {
   };
 
   const pending = state.outbox.pending.value;
-
   return (
-    <section
-      className="sb-pane sb-account-pane"
-      aria-label={t("account-settings", { defaultValue: "Account settings" })}
-    >
-      <header className="sb-pane-header">
-        <h2>{t("account-settings", { defaultValue: "Account settings" })}</h2>
-        <button
-          className="sb-pane-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </header>
+    <>
       {error.value && <p className="sb-pane-error">{error.value}</p>}
-
       {s ? (
         <div className="sb-account-card">
           <div className="sb-account-who">
@@ -739,218 +719,249 @@ export function AccountPane({ state }: { state: ReaderState }) {
           )}
         </div>
       )}
+    </>
+  );
+}
 
-      <div className="sb-account-card">
-        <label className="sb-small">
-          {t("church-theme", { defaultValue: "Church theme" })}{" "}
-          <select
-            value={state.customizations.selected.value?.descriptorId ?? ""}
-            onChange={(e) => {
-              const id = (e.target as HTMLSelectElement).value;
-              const entry =
-                state.customizations.available.value.find(
-                  (a) => a.offering.descriptorId === id
-                ) ?? null;
-              void state.customizations.select(entry);
-            }}
-          >
-            <option value="">
-              {t("church-theme-none", { defaultValue: "None (Seed Bible)" })}
-            </option>
-            {state.customizations.available.value.map((a) => (
-              <option
-                key={a.offering.descriptorId}
-                value={a.offering.descriptorId}
-              >
-                {a.customization.label} · {a.offering.shelf}
-              </option>
-            ))}
-            {state.customizations.selected.value &&
-              !state.customizations.available.value.some(
-                (a) =>
-                  a.offering.descriptorId ===
-                  state.customizations.selected.value?.descriptorId
-              ) && (
-                <option
-                  value={state.customizations.selected.value.descriptorId}
-                >
-                  {state.customizations.selected.value.label}
-                </option>
-              )}
-          </select>{" "}
-          <button
-            type="button"
-            className="sb-pane-close"
-            aria-label={t("refresh", { defaultValue: "Refresh" })}
-            onClick={() => void state.customizations.refresh()}
-          >
-            <span className="material-symbols-outlined">refresh</span>
-          </button>
-        </label>
-        {(() => {
-          const sel = state.customizations.selected.value;
-          const c = state.customizations.current.value;
-          if (!sel || !c || c.hasVariant.length < 2) return null;
-          return (
-            <div
-              className="sb-variant-gallery"
-              role="radiogroup"
-              aria-label={t("variant-gallery", { defaultValue: "Variant" })}
+/** Customize: the church theme and its variant. */
+export function ChurchThemeFields({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  // The Church theme list is the registry's: read it again whenever this opens, so a theme published a moment ago
+  // (yours or anyone's) is there to pick without pressing refresh.
+  useEffect(
+    () => void state.customizations.refresh().catch(() => undefined),
+    []
+  );
+  return (
+    <>
+      <label className="sb-small">
+        {t("church-theme", { defaultValue: "Church theme" })}{" "}
+        <select
+          value={state.customizations.selected.value?.descriptorId ?? ""}
+          onChange={(e) => {
+            const id = (e.target as HTMLSelectElement).value;
+            const entry =
+              state.customizations.available.value.find(
+                (a) => a.offering.descriptorId === id
+              ) ?? null;
+            void state.customizations.select(entry);
+          }}
+        >
+          <option value="">
+            {t("church-theme-none", { defaultValue: "None (Seed Bible)" })}
+          </option>
+          {state.customizations.available.value.map((a) => (
+            <option
+              key={a.offering.descriptorId}
+              value={a.offering.descriptorId}
             >
+              {a.customization.label} · {a.offering.shelf}
+            </option>
+          ))}
+          {state.customizations.selected.value &&
+            !state.customizations.available.value.some(
+              (a) =>
+                a.offering.descriptorId ===
+                state.customizations.selected.value?.descriptorId
+            ) && (
+              <option value={state.customizations.selected.value.descriptorId}>
+                {state.customizations.selected.value.label}
+              </option>
+            )}
+        </select>{" "}
+        <button
+          type="button"
+          className="sb-pane-close"
+          aria-label={t("refresh", { defaultValue: "Refresh" })}
+          onClick={() => void state.customizations.refresh()}
+        >
+          <span className="material-symbols-outlined">refresh</span>
+        </button>
+      </label>
+      {(() => {
+        const sel = state.customizations.selected.value;
+        const c = state.customizations.current.value;
+        if (!sel || !c || c.hasVariant.length < 2) return null;
+        return (
+          <div
+            className="sb-variant-gallery"
+            role="radiogroup"
+            aria-label={t("variant-gallery", { defaultValue: "Variant" })}
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!sel.variantId}
+              className={`sb-variant-option${!sel.variantId ? " sb-variant-option-on" : ""}`}
+              onClick={() => {
+                const entry = state.customizations.available.value.find(
+                  (x) => x.offering.descriptorId === sel.descriptorId
+                );
+                if (entry) void state.customizations.select(entry);
+              }}
+            >
+              <span
+                className="sb-cz-theme-thumb sb-variant-auto material-symbols-outlined"
+                aria-hidden="true"
+              >
+                contrast
+              </span>
+              <span className="sb-small">
+                {t("variant-automatic", { defaultValue: "Automatic" })}
+              </span>
+            </button>
+            {c.hasVariant.map((v) => (
               <button
+                key={v["@id"]}
                 type="button"
                 role="radio"
-                aria-checked={!sel.variantId}
-                className={`sb-variant-option${!sel.variantId ? " sb-variant-option-on" : ""}`}
+                aria-checked={sel.variantId === v["@id"]}
+                className={`sb-variant-option${sel.variantId === v["@id"] ? " sb-variant-option-on" : ""}`}
                 onClick={() => {
                   const entry = state.customizations.available.value.find(
                     (x) => x.offering.descriptorId === sel.descriptorId
                   );
-                  if (entry) void state.customizations.select(entry);
+                  if (entry) void state.customizations.select(entry, v["@id"]);
                 }}
               >
-                <span
-                  className="sb-cz-theme-thumb sb-variant-auto material-symbols-outlined"
-                  aria-hidden="true"
-                >
-                  contrast
-                </span>
-                <span className="sb-small">
-                  {t("variant-automatic", { defaultValue: "Automatic" })}
-                </span>
+                <ThemeThumbnail theme={themeFromVariant(c, v)} />
+                <span className="sb-small">{v.label}</span>
               </button>
-              {c.hasVariant.map((v) => (
-                <button
-                  key={v["@id"]}
-                  type="button"
-                  role="radio"
-                  aria-checked={sel.variantId === v["@id"]}
-                  className={`sb-variant-option${sel.variantId === v["@id"] ? " sb-variant-option-on" : ""}`}
-                  onClick={() => {
-                    const entry = state.customizations.available.value.find(
-                      (x) => x.offering.descriptorId === sel.descriptorId
-                    );
-                    if (entry)
-                      void state.customizations.select(entry, v["@id"]);
-                  }}
-                >
-                  <ThemeThumbnail theme={themeFromVariant(c, v)} />
-                  <span className="sb-small">{v.label}</span>
-                </button>
-              ))}
-            </div>
-          );
-        })()}
-        <label className="sb-small">
-          {t("language", { defaultValue: "Language" })}{" "}
+            ))}
+          </div>
+        );
+      })()}
+    </>
+  );
+}
+
+/** The interface language. */
+export function LanguageField({ state }: { state: ReaderState }) {
+  const { t, language } = useI18n();
+  return (
+    <>
+      <label className="sb-small">
+        {t("language", { defaultValue: "Language" })}{" "}
+        <select
+          value={language}
+          onChange={(e) =>
+            void setLanguage((e.target as HTMLSelectElement).value)
+          }
+        >
+          {AVAILABLE_LANGUAGES.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </label>
+    </>
+  );
+}
+
+/** Display: text size, line height, margins, interface size, and what the chapter shows. */
+export function ReadingFields({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  return (
+    <>
+      <label className="sb-small">
+        {t("scripture-settings-font-size-example", { defaultValue: "A" })}{" "}
+        <select
+          value={state.settings.fontSize.value}
+          onChange={(e) =>
+            (state.settings.fontSize.value = (e.target as HTMLSelectElement)
+              .value as "xs" | "s" | "m" | "l" | "xl")
+          }
+        >
+          {["xs", "s", "m", "l", "xl"].map((f) => (
+            <option key={f} value={f}>
+              {f.toUpperCase()}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {(
+        [
+          [
+            "lineHeight",
+            "Line height",
+            [
+              ["compact", "Compact"],
+              ["normal", "Normal"],
+              ["relaxed", "Relaxed"],
+            ],
+          ],
+          [
+            "margins",
+            "Margins",
+            [
+              ["narrow", "Narrow"],
+              ["normal", "Normal"],
+              ["wide", "Wide"],
+            ],
+          ],
+          [
+            "uiScale",
+            "Interface size",
+            [
+              ["s", "Small"],
+              ["m", "Normal"],
+              ["l", "Large"],
+            ],
+          ],
+        ] as const
+      ).map(([k, label, opts]) => (
+        <label key={k} className="sb-small sb-account-row">
+          <span>{t(`setting-${k}`, { defaultValue: label })}</span>
           <select
-            value={language}
+            value={state.settings[k].value}
             onChange={(e) =>
-              void setLanguage((e.target as HTMLSelectElement).value)
+              ((state.settings[k] as { value: string }).value = (
+                e.target as HTMLSelectElement
+              ).value)
             }
           >
-            {AVAILABLE_LANGUAGES.map((l) => (
-              <option key={l} value={l}>
-                {l}
+            {opts.map(([v, name]) => (
+              <option key={v} value={v}>
+                {t(`setting-${k}-${v}`, { defaultValue: name })}
               </option>
             ))}
           </select>
         </label>
-        <label className="sb-small">
-          {t("scripture-settings-font-size-example", { defaultValue: "A" })}{" "}
-          <select
-            value={state.settings.fontSize.value}
+      ))}
+      {(
+        [
+          ["showVerseNumbers", "Verse numbers"],
+          ["showHeadings", "Headings"],
+          ["showFootnotes", "Footnotes"],
+          ["showRedLettering", "Words of Jesus in red"],
+          ["showHighlights", "Highlights"],
+        ] as const
+      ).map(([k, label]) => (
+        <label key={k} className="sb-small sb-check">
+          <input
+            type="checkbox"
+            checked={state.settings.scripture.value[k]}
             onChange={(e) =>
-              (state.settings.fontSize.value = (e.target as HTMLSelectElement)
-                .value as "xs" | "s" | "m" | "l" | "xl")
+              (state.settings.scripture.value = {
+                ...state.settings.scripture.value,
+                [k]: (e.target as HTMLInputElement).checked,
+              })
             }
-          >
-            {["xs", "s", "m", "l", "xl"].map((f) => (
-              <option key={f} value={f}>
-                {f.toUpperCase()}
-              </option>
-            ))}
-          </select>
+          />{" "}
+          {label}
         </label>
+      ))}
+    </>
+  );
+}
 
-        {(
-          [
-            [
-              "lineHeight",
-              "Line height",
-              [
-                ["compact", "Compact"],
-                ["normal", "Normal"],
-                ["relaxed", "Relaxed"],
-              ],
-            ],
-            [
-              "margins",
-              "Margins",
-              [
-                ["narrow", "Narrow"],
-                ["normal", "Normal"],
-                ["wide", "Wide"],
-              ],
-            ],
-            [
-              "uiScale",
-              "Interface size",
-              [
-                ["s", "Small"],
-                ["m", "Normal"],
-                ["l", "Large"],
-              ],
-            ],
-          ] as const
-        ).map(([k, label, opts]) => (
-          <label key={k} className="sb-small sb-account-row">
-            <span>{t(`setting-${k}`, { defaultValue: label })}</span>
-            <select
-              value={state.settings[k].value}
-              onChange={(e) =>
-                ((state.settings[k] as { value: string }).value = (
-                  e.target as HTMLSelectElement
-                ).value)
-              }
-            >
-              {opts.map(([v, name]) => (
-                <option key={v} value={v}>
-                  {t(`setting-${k}-${v}`, { defaultValue: name })}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-        {(
-          [
-            ["showVerseNumbers", "Verse numbers"],
-            ["showHeadings", "Headings"],
-            ["showFootnotes", "Footnotes"],
-            ["showRedLettering", "Words of Jesus in red"],
-            ["showHighlights", "Highlights"],
-          ] as const
-        ).map(([k, label]) => (
-          <label key={k} className="sb-small sb-check">
-            <input
-              type="checkbox"
-              checked={state.settings.scripture.value[k]}
-              onChange={(e) =>
-                (state.settings.scripture.value = {
-                  ...state.settings.scripture.value,
-                  [k]: (e.target as HTMLInputElement).checked,
-                })
-              }
-            />{" "}
-            {label}
-          </label>
-        ))}
-      </div>
-
-      {state.session.value && <ProfileCard state={state} />}
-      {state.session.value && <PublishAsCard state={state} />}
-      {state.session.value && <ConnectorsCard state={state} />}
-
+/** Listening: keep the screen on, play on into the next chapter, the recording's reader. */
+export function ListeningCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  return (
+    <>
       <div className="sb-account-card">
         <p className="sb-small">
           <strong>{t("listening", { defaultValue: "Listening" })}</strong>
@@ -1006,35 +1017,43 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </label>
         )}
       </div>
+    </>
+  );
+}
 
-      {state.session.value && (
-        <div className="sb-account-card">
-          <label className="sb-small sb-check">
-            <input
-              type="checkbox"
-              checked={state.presence.share.value}
-              onChange={(e) =>
-                void state.presence.setShare(
-                  (e.target as HTMLInputElement).checked
-                )
-              }
-            />{" "}
-            {t("presence-share", {
-              defaultValue: "Let friends see what I am reading right now",
-            })}
-          </label>
-          <p className="sb-small sb-muted">
-            {t("presence-share-note", {
-              defaultValue:
-                "Only people who have added you back see it, and only while this tab is open; it fades by itself.",
-            })}
-          </p>
-        </div>
-      )}
+/** Sharing what you are reading now with friends (signed in). */
+export function PresenceCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  if (!state.session.value) return null;
+  return (
+    <div className="sb-account-card">
+      <label className="sb-small sb-check">
+        <input
+          type="checkbox"
+          checked={state.presence.share.value}
+          onChange={(e) =>
+            void state.presence.setShare((e.target as HTMLInputElement).checked)
+          }
+        />{" "}
+        {t("presence-share", {
+          defaultValue: "Let friends see what I am reading right now",
+        })}
+      </label>
+      <p className="sb-small sb-muted">
+        {t("presence-share-note", {
+          defaultValue:
+            "Only people who have added you back see it, and only while this tab is open; it fades by itself.",
+        })}
+      </p>
+    </div>
+  );
+}
 
-      <TextStyleCard state={state} />
-      <ToolbarCard state={state} />
-
+/** Launch tutorial: the introduction tour, and contextual tours turned back on. */
+export function TutorialsCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  return (
+    <>
       <div className="sb-account-card">
         <p className="sb-small">
           <strong>{t("tutorials", { defaultValue: "Tutorials" })}</strong>{" "}
@@ -1065,7 +1084,15 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </button>
         </div>
       </div>
+    </>
+  );
+}
 
+/** Extensions: each one switched on or off. */
+export function ExtensionsCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  return (
+    <>
       <div className="sb-account-card">
         <p className="sb-small">
           <strong>{t("extensions", { defaultValue: "Extensions" })}</strong>
@@ -1095,6 +1122,47 @@ export function AccountPane({ state }: { state: ReaderState }) {
           </label>
         ))}
       </div>
+    </>
+  );
+}
+
+export function AccountPane({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  return (
+    <section
+      className="sb-pane sb-account-pane"
+      aria-label={t("account-settings", { defaultValue: "Account settings" })}
+    >
+      <header className="sb-pane-header">
+        <h2>{t("account-settings", { defaultValue: "Account settings" })}</h2>
+        <button
+          className="sb-pane-close"
+          aria-label={t("close", { defaultValue: "Close" })}
+          onClick={() => (state.ui.pane.value = "none")}
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </header>
+      <AccountCard state={state} />
+
+      <div className="sb-account-card">
+        <ChurchThemeFields state={state} />
+        <LanguageField state={state} />
+        <ReadingFields state={state} />
+      </div>
+
+      {state.session.value && <ProfileCard state={state} />}
+      {state.session.value && <PublishAsCard state={state} />}
+      {state.session.value && <ConnectorsCard state={state} />}
+
+      <ListeningCard state={state} />
+      <PresenceCard state={state} />
+
+      <TextStyleCard state={state} />
+      <ToolbarCard state={state} />
+
+      <TutorialsCard state={state} />
+      <ExtensionsCard state={state} />
     </section>
   );
 }
