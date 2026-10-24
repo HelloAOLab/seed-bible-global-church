@@ -251,9 +251,45 @@ body {
 .sb-reader-toolbar .sb-reader-toolbar-item {
   width: 2.75rem;
 }
-.sb-reader-toolbar .sb-reader-toolbar-center-item,
-.sb-reader-toolbar-labeled .sb-reader-toolbar-item {
+.sb-reader-toolbar .sb-reader-toolbar-center-item {
   width: auto;
+}
+/* Off a phone: the old reader's labelled bar (toolbar.css's `.sb-reader-toolbar-labeled` rules, for the layout the
+   old reader gives that class): a word under each icon, the chapter arrows at the two ends. */
+@media (min-width: 721px) {
+  .sb-reader-toolbar
+    .sb-reader-toolbar-item:not(.sb-reader-toolbar-item-arrow) {
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+  }
+  .sb-reader-toolbar
+    .sb-reader-toolbar-item:not(.sb-reader-toolbar-item-arrow)
+    > .sb-reader-toolbar-button {
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.1875rem;
+    border-radius: var(--sb-reader-toolbar-button-border-radius);
+    height: var(--sb-reader-toolbar-button-height);
+    padding: var(--sb-reader-toolbar-button-padding);
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-button > svg,
+  .sb-reader-toolbar .sb-reader-toolbar-button > .material-symbols-outlined {
+    width: var(--sb-reader-toolbar-button-icon-size);
+    height: var(--sb-reader-toolbar-button-icon-size);
+    font-size: var(--sb-reader-toolbar-button-icon-size);
+    flex-shrink: 0;
+  }
+  .sb-reader-toolbar-desk-end,
+  .sb-reader-toolbar-next {
+    order: 1;
+  }
+}
+@media (max-width: 720px) {
+  .sb-reader-toolbar-desk-only,
+  .sb-reader-toolbar-button-label {
+    display: none;
+  }
 }
 .sb-verse-toolbar-docked {
   left: calc(var(--sb-main-left, 0px) + var(--sb-main-width, 100vw) / 2);
@@ -564,9 +600,20 @@ body {
     display: block;
   }
 }
-.sb-reader-toolbar-phone-only,
-.sb-reader-toolbar-more-button {
+.sb-reader-toolbar-phone-only {
   display: none;
+}
+/* More holds what the reader took out of the bar, and the way to sign in; with neither it is not drawn, unless the
+   bar folds (below). */
+.sb-reader-toolbar-more-empty .sb-reader-toolbar-more-button {
+  display: none;
+}
+/* The buttons still in the bar are listed in More only while the bar is folded. */
+.sb-reader-toolbar-more-item.sb-reader-toolbar-more-item-in-bar {
+  display: none;
+}
+.sb-reader-toolbar-folded .sb-reader-toolbar-more-item-in-bar {
+  display: flex;
 }
 /* A narrow phone, or a bar wider than its reading area (ReaderToolbar measures that): the actions after the chapter
    controls go under "More". */
@@ -580,8 +627,11 @@ body {
   .sb-reader-toolbar-secondary {
     display: none;
   }
-  .sb-reader-toolbar-more-button {
+  .sb-reader-toolbar .sb-reader-toolbar-more-button {
     display: block;
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-more-item-in-bar {
+    display: flex;
   }
 }
 .sb-reader-toolbar-more-menu {

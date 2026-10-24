@@ -73,8 +73,14 @@ async function writeNote(c: FlowContext, verse: number, text: string) {
   );
 }
 
+/** Delete every note on the chapter — the Notes pane is opened for it, so one a failed run left behind goes too. */
 async function deleteAllNotes(c: FlowContext) {
   c.page.on("dialog", (d) => void d.accept().catch(() => undefined));
+  if (!(await c.page.locator(".sb-note-card").count())) {
+    await c.pressToolbar("Notes");
+    await c.pane().waitFor({ timeout: 5000 });
+    await c.page.waitForTimeout(1500);
+  }
   for (let i = 0; i < 10; i++) {
     const del = c.page
       .locator(".sb-note-card")
@@ -1425,30 +1431,43 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "N3",
     section: "13. Links and embedding",
-    title: "First-visit card",
+    title: "First visit: the tour offer",
     rows: ["First-visit card"],
     checks:
-      "A fresh browser sees the welcome card with Sign in and Just read; Just read closes it for good; an embed never shows it",
+      "A fresh browser shows the chapter at once, with the old reader's card in the top-right corner — Would you like a tutorial? — No, thanks and Take the tour; the verses can be tapped while it is up; No, thanks closes it for good; Take the tour (a second fresh browser) starts the tour; an embed never shows it",
     run: async (c) => {
       await c.page.goto(`${BASE}${CH}`, { waitUntil: "domcontentloaded" });
-      const justRead = c.page.getByRole("button", { name: /just read/i });
-      await justRead.waitFor({ timeout: 15000 });
-      const card = (
-        await c.page
-          .locator('[role="dialog"], .sb-onboarding')
-          .first()
-          .innerText()
-      ).replace(/\s+/g, " ");
-      if (!/sign in/i.test(card))
-        throw new Error(`card: ${card.slice(0, 100)}`);
-      await justRead.click();
+      const offer = c.page.locator(".sb-tutorial-prompt");
+      await offer.waitFor({ timeout: 15000 });
+      const text = (await offer.innerText()).replace(/\s+/g, " ");
+      if (!/would you like a tutorial/i.test(text) || !/no, thanks/i.test(text))
+        throw new Error(`offer: ${text.slice(0, 100)}`);
+      const box = (await offer.boundingBox())!;
+      const vw = c.page.viewportSize()!.width;
+      if (box.x + box.width < vw - 40 || box.y > 40)
+        throw new Error(
+          `the offer is not in the top-right corner: ${JSON.stringify(box)}`
+        );
+      await c.selectVerse(16);
+      await c.page.keyboard.press("Escape");
+      await offer.getByRole("button", { name: /no, thanks/i }).click();
+      const later = c.page.getByRole("button", { name: /maybe later|got it/i });
+      if (await later.count()) await later.first().click();
       await c.page.reload({ waitUntil: "domcontentloaded" });
       await c.page
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(1500);
-      if (await justRead.count())
-        throw new Error("the card came back after Just read");
+      if (await offer.count())
+        throw new Error("the offer came back after No, thanks");
+      const second = await c.secondPage();
+      await c.keepTours(second);
+      await second.goto(`${BASE}${CH}`, { waitUntil: "domcontentloaded" });
+      await second
+        .locator(".sb-tutorial-prompt")
+        .getByRole("button", { name: /take the tour/i })
+        .click({ timeout: 15000 });
+      await second.locator(".sb-tour-card").waitFor({ timeout: 8000 });
       const embed = await c.secondPage();
       await embed.goto(`${BASE}${CH}?embed=minimal`, {
         waitUntil: "domcontentloaded",
@@ -1457,9 +1476,9 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       await embed.waitForTimeout(2000);
-      if (await embed.getByRole("button", { name: /just read/i }).count())
+      if (await embed.locator(".sb-tutorial-prompt").count())
         throw new Error("shown in an embed");
-      return "shown once with Sign in and Just read; gone after Just read; never in an embed";
+      return "the chapter readable with the offer in the corner; a verse selected under it; gone for good after No, thanks; Take the tour started the tour; never in an embed";
     },
   },
   {
@@ -2030,41 +2049,78 @@ export const MORE_FLOWS: Flow[] = [
     title: "Customize the bottom toolbar",
     rows: ["Customize the bottom toolbar"],
     checks:
-      "Account → Toolbar: untick Today and move Notes up; the bottom toolbar drops Today and shows Notes before Discover; kept after a reload; Reset restores it",
+      "Account → Toolbar: tick Today into the bar, move Discover up twice; the bar shows Discover then Today and More no longer lists Today; kept after a reload; Reset puts Today back under More",
     run: async (c) => {
       await c.open(CH);
       const labels = () =>
         c.page
-          .locator(".sb-reader-toolbar .sb-reader-toolbar-secondary button")
+          .locator(
+            ".sb-reader-toolbar .sb-reader-toolbar-secondary button:visible"
+          )
           .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+      const inMore = async () => {
+        await c.page
+          .locator(".sb-reader-toolbar-more-button button:visible")
+          .click();
+        const names = await c.page
+          .locator(".sb-reader-toolbar-more-menu button:visible")
+          .allInnerTexts();
+        await c.page
+          .locator(".sb-reader-toolbar-more-button button:visible")
+          .click();
+        await c.page
+          .locator(".sb-reader-toolbar-more-menu")
+          .waitFor({ state: "detached" });
+        return names.map((n) => n.replace(/\s+/g, " ").trim());
+      };
       const before = await labels();
+      if (
+        before.includes("Today") ||
+        !(await inMore()).some((n) => /today/i.test(n))
+      )
+        throw new Error(
+          `a new bar: ${before.join(", ")}; Today should be under More`
+        );
       let pane = await c.openAccount();
       const card = pane.locator(".sb-toolbar-card");
-      await c.check(card, "Today").uncheck();
-      await card.locator('button[aria-label="Move up Notes"]').click();
-      await card.locator('button[aria-label="Move up Notes"]').click();
+      await c.check(card, "Today").check();
+      for (let i = 0; i < 2; i++)
+        await card.locator('button[aria-label="Move up Discover"]').click();
+      // With a pane open the reading area is narrower and the bar folds under More; read it with the pane closed.
+      await pane.locator(".sb-pane-close").first().click();
+      await c.page
+        .locator(".sb-reader-toolbar:not(.sb-reader-toolbar-folded)")
+        .waitFor({ timeout: 5000 });
       const after = await labels();
       if (
-        after.includes("Today") ||
-        after.indexOf("Notes") > after.indexOf("Discover")
+        !after.includes("Today") ||
+        after.indexOf("Discover") > after.indexOf("Today")
       )
         throw new Error(`toolbar: ${after.join(", ")}`);
+      if ((await inMore()).some((n) => /^today/i.test(n)))
+        throw new Error("Today is both in the bar and under More");
       await c.page.reload();
       await c.page
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(500);
       const kept = await labels();
-      if (kept.includes("Today")) throw new Error("not kept after a reload");
+      if (!kept.includes("Today")) throw new Error("not kept after a reload");
       pane = await c.openAccount();
       await pane
         .locator(".sb-toolbar-card")
         .getByRole("button", { name: /^reset$/i })
         .click();
+      await pane.locator(".sb-pane-close").first().click();
+      await c.page
+        .locator(".sb-reader-toolbar:not(.sb-reader-toolbar-folded)")
+        .waitFor({ timeout: 5000 });
       const reset = await labels();
       if (reset.join() !== before.join())
         throw new Error(`after reset: ${reset.join(", ")}`);
-      return `${before.length} buttons; Today hidden and Notes before Discover, kept after a reload; Reset restored`;
+      if (!(await inMore()).some((n) => /today/i.test(n)))
+        throw new Error("after Reset, Today is not under More");
+      return `bar ${before.join(", ")}; Today ticked in, Discover moved before it, kept after a reload; Reset put it back under More`;
     },
   },
   {
@@ -2195,7 +2251,7 @@ export const MORE_FLOWS: Flow[] = [
               await browser.newContext({ viewport: { width, height: 760 } })
             ).newPage();
             await page.goto(`${BASE}${CH}`, { waitUntil: "networkidle" });
-            const just = page.getByText("Just read");
+            const just = page.getByRole("button", { name: /no, thanks/i });
             if (await just.count()) await just.first().click();
             const bar = page.locator(".sb-reader-toolbar");
             await bar.waitFor({ timeout: 20000 });
@@ -2277,6 +2333,148 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "TB1",
+    section: "3. Reading",
+    title: "The old reader's bottom bar; every action within reach",
+    rows: ["Every action within reach"],
+    checks:
+      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens Your content with its search box ready; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in the top bar or its More",
+    run: async (c) => {
+      const all = [
+        "Live session",
+        "Today",
+        "Discover",
+        "Notes",
+        "Library",
+        "Your content",
+        "Full screen",
+        "Themes",
+        "Sign in",
+      ];
+      const reachable = async (page: import("playwright").Page) => {
+        const inBar = await page
+          .locator(".sb-reader-toolbar button:visible")
+          .evaluateAll((bs) =>
+            bs.map((b) => b.getAttribute("aria-label") ?? "")
+          );
+        await page
+          .locator(".sb-reader-toolbar-more-button button:visible")
+          .click();
+        const inMore = (
+          await page
+            .locator(".sb-reader-toolbar-more-menu button:visible")
+            .allInnerTexts()
+        ).map((t) => t.replace(/\s+/g, " ").trim());
+        await page
+          .locator(".sb-reader-toolbar-more-button button:visible")
+          .click();
+        await page
+          .locator(".sb-reader-toolbar-more-menu")
+          .waitFor({ state: "detached" });
+        const missing = all.filter(
+          (a) => !inBar.includes(a) && !inMore.some((m) => m.endsWith(a))
+        );
+        return { inBar, inMore, missing };
+      };
+      await c.open(CH);
+      const words = await c.page
+        .locator(".sb-reader-toolbar .sb-reader-toolbar-button-label:visible")
+        .allInnerTexts();
+      if (words.slice(0, 3).join() !== "Books,Search,Discover")
+        throw new Error(`the bar reads: ${words.join(", ")}`);
+      const desk = await reachable(c.page);
+      if (desk.missing.length)
+        throw new Error(
+          `not reachable on a desktop: ${desk.missing.join(", ")}`
+        );
+      await c.pressToolbar("Books");
+      await c.page
+        .locator(".sb-selector-panel")
+        .first()
+        .waitFor({ timeout: 5000 });
+      await c.page.keyboard.press("Escape");
+      await c.pressToolbar("Search");
+      await c.page
+        .waitForFunction(
+          () => document.activeElement?.closest(".sb-content-search") != null,
+          undefined,
+          { timeout: 5000 }
+        )
+        .catch(() => {
+          throw new Error("Search did not open a search box ready to type in");
+        });
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      try {
+        await c.open(CH, phone);
+        const p = await reachable(phone);
+        if (p.missing.length)
+          throw new Error(`not reachable on a phone: ${p.missing.join(", ")}`);
+      } finally {
+        await ctx.close();
+      }
+      return `desktop bar: ${words.join(" · ")}; under More: ${desk.inMore.join(", ")}; Books and Search open; on a phone all ${all.length} actions reachable`;
+    },
+  },
+  {
+    id: "H1",
+    section: "3. Reading",
+    title: "The chapter header's actions",
+    rows: ["Chapter actions in the header"],
+    checks:
+      "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+    run: async (c) => {
+      await c.open(CH);
+      const head = c.page.locator(
+        ".sb-bible-reader-active .sb-bible-reader-actions"
+      );
+      const order = await head
+        .locator("button:visible")
+        .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+      const want = [
+        "Save chapter",
+        "Bookmark this chapter",
+        "Discover",
+        "Share",
+        "Listen",
+      ];
+      if (order.join() !== want.join())
+        throw new Error(`header: ${order.join(", ")}`);
+      await head.getByRole("button", { name: "Save chapter" }).click();
+      await head
+        .locator(".sb-bible-reader-save-button .sb-icon-filled")
+        .waitFor({ timeout: 5000 });
+      await head.getByRole("button", { name: "Save chapter" }).click();
+      await head.getByRole("button", { name: "Discover" }).click();
+      await c.pane().waitFor({ timeout: 5000 });
+      if (!/discover/i.test(await c.paneText()))
+        throw new Error("Discover did not open the Discover pane");
+      await head.getByRole("button", { name: "Share" }).click();
+      const dialog = c.page.getByRole("dialog");
+      await dialog.waitFor({ timeout: 5000 });
+      const shown = await dialog.innerText();
+      if (
+        !/\/read\/BSB\/JHN\/3/.test(shown) &&
+        !(await dialog.locator("input").count())
+      )
+        throw new Error(`Share: ${shown.slice(0, 120)}`);
+      await c.page.keyboard.press("Escape");
+      await head.getByRole("button", { name: "Listen" }).click();
+      await head
+        .getByRole("button", { name: "Pause" })
+        .waitFor({ timeout: 15000 })
+        .catch(() => {
+          throw new Error("Listen did not start the recording");
+        });
+      await head.getByRole("button", { name: "Pause" }).click();
+      return `header: ${order.join(" · ")}; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused`;
+    },
+  },
+  {
     id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",
@@ -2299,11 +2497,15 @@ export const MORE_FLOWS: Flow[] = [
         if (top > 40) throw new Error(`the bar is at y=${top}, not the top`);
         // The Tabs drawer has a way out: its ✕, and a tap on the dimmed reader beside it.
         const drawer = page.locator(".sb-tabs-sidebar-drawer");
-        await page.locator(".sb-reader-toolbar-phone-only button").click();
+        await page
+          .locator('.sb-reader-toolbar button[aria-label="Tabs"]')
+          .click();
         await drawer.waitFor({ timeout: 3000 });
         await page.locator(".sb-sidebar-drawer-close").click();
         await drawer.waitFor({ state: "detached", timeout: 3000 });
-        await page.locator(".sb-reader-toolbar-phone-only button").click();
+        await page
+          .locator('.sb-reader-toolbar button[aria-label="Tabs"]')
+          .click();
         await drawer.waitFor({ timeout: 3000 });
         await page.mouse.click(375, 500);
         await drawer.waitFor({ state: "detached", timeout: 3000 }).catch(() => {
@@ -2394,14 +2596,14 @@ export const MORE_FLOWS: Flow[] = [
         if (await page.locator(".sb-app-pane").count())
           throw new Error("the Account pane stayed open after signing in");
         await page
-          .locator('.sb-reader-toolbar button[aria-label="Account settings"]')
+          .locator(".sb-connected-chip:not(.sb-connected-chip-out)")
           .waitFor({ timeout: 5000 });
-        await c.pressToolbar("Account settings", page);
+        await c.openAccount(page);
         await page.getByRole("button", { name: /^sign out$/i }).click();
         await page.waitForURL(/seed-reader\.faithnet\.io/, { timeout: 30000 });
         await c.dismissWelcome(page);
         await page
-          .locator('.sb-reader-toolbar button[aria-label="Sign in"]')
+          .locator(".sb-connected-chip-out")
           .waitFor({ timeout: 20000 });
         // Signed out of the Home too: signing in again asks who you are instead of reusing the last person.
         await c.pressToolbar("Sign in", page);

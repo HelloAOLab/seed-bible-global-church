@@ -478,13 +478,27 @@ const BASE_FLOWS: Flow[] = [
     rows: ["Today pane"],
     section: "8. Today, Discover and publishing",
     title: "Today, signed out",
-    checks: "The Today pane opens and asks for sign-in rather than failing",
+    checks:
+      "A new reader's Today opens with the old reader's welcome — the date, Welcome!, John 1:1 in the open translation, Open Bible, Read John 1 and Take a tour — and asks for sign-in for friends rather than failing; Read John 1 opens John 1",
     run: async (c) => {
       await c.open(CH);
       await c.pressToolbar("Today");
       await c.pane().waitFor({ timeout: 5000 });
       await c.waitText(c.pane(), /sign in/i, 8000);
-      return (await c.paneText()).slice(0, 100);
+      const welcome = c.pane().locator(".sb-today-welcome-screen");
+      await c.waitText(welcome, /in the beginning was the word/i, 10000);
+      const text = (await welcome.innerText()).replace(/\s+/g, " ");
+      for (const w of [
+        /welcome!/i,
+        /john 1:1/i,
+        /open bible/i,
+        /read john 1/i,
+        /take a tour/i,
+      ])
+        if (!w.test(text)) throw new Error(`welcome: ${text.slice(0, 160)}`);
+      await welcome.getByRole("button", { name: /read john 1/i }).click();
+      await c.page.waitForURL(/\/JHN\/1(\?|$)/, { timeout: 10000 });
+      return `${text.slice(0, 90)}…; Read John 1 opened John 1`;
     },
   },
   // ── 12. Extensions ───────────────────────────────────────────────────────────────────────────────────────
@@ -541,7 +555,7 @@ const BASE_FLOWS: Flow[] = [
       const who = await c.signInAsSample();
       await c.selectVerse(16);
       await c.page.locator(".sb-verse-toolbar-color-button").nth(2).click();
-      await c.pressToolbar("Account settings");
+      await c.openAccount();
       await c.pane().waitFor({ timeout: 5000 });
       try {
         await c.waitText(c.pane(), /everything is in your library/i, 120000);

@@ -17,6 +17,13 @@ const READER = privateKeyToAccount(TEST_READER_KEY).address.toLowerCase();
 
 afterEach(() => vi.unstubAllGlobals());
 
+/** `want` appears in `seen` in this order, other entries allowed between (a read left over from boot, under load). */
+const inOrder = (seen: readonly string[], want: readonly string[]) => {
+  let i = 0;
+  for (const s of seen) if (s === want[i]) i++;
+  return i === want.length;
+};
+
 describe("the test fixtures", () => {
   it("sign in with a fake token, highlight, flush, read back from the fake Library — no network", async () => {
     const home = fakeHomeJwks();
@@ -39,6 +46,8 @@ describe("the test fixtures", () => {
     const { state } = await createTestReaderState({ backend, session });
     expect(backend.identity()).toMatchObject({ agent: READER, name: "Ruth" });
 
+    const asksBefore = workspace.asks.length;
+    const stepsBefore = agent.asks.flatMap((a) => a.steps).length;
     await state.highlights.set("JHN.3", 16, 16, "yellow");
     const report = await state.outbox.flush();
     expect(report.error).toBeUndefined();
@@ -63,21 +72,22 @@ describe("the test fixtures", () => {
     expect(back["@graph"].map((it) => it.aboutPassage)).toEqual(["JHN.3.16"]);
 
     // Every hop was in-process: the workspace's door, then the person's agent under the wire, then the Home's keys.
-    // (The state read its collections at boot; the merge and the read-back come last.)
-    expect(workspace.asks.map((a) => a.toolId).slice(-2)).toEqual([
-      "seed.bucket.merge",
-      "seed.bucket.read",
-    ]);
+    // (The state read its collections at boot; after the highlight come the merge and the read-back.)
+    const asks = workspace.asks.slice(asksBefore).map((a) => a.toolId);
+    expect(inOrder(asks, ["seed.bucket.merge", "seed.bucket.read"])).toBe(true);
     expect(agent.refusals).toEqual([]);
+    const steps = agent.asks
+      .flatMap((a) => a.steps.map((s) => s.toolId))
+      .slice(stepsBefore);
     expect(
-      agent.asks.flatMap((a) => a.steps.map((s) => s.toolId)).slice(-5)
-    ).toEqual([
-      "library.file.read",
-      "library.file.save",
-      "library.file.read",
-      "library.file.save",
-      "library.file.read",
-    ]);
+      inOrder(steps, [
+        "library.file.read",
+        "library.file.save",
+        "library.file.read",
+        "library.file.save",
+        "library.file.read",
+      ])
+    ).toBe(true);
     expect(
       network.requests.some(
         (r) => r.host === "www.faithnet.me" && r.path === "/jwks"

@@ -1,133 +1,166 @@
-// FIRST VISIT — ported in shape from packages/seed-bible Onboarding: one card over the reader on the first visit of
-// a device: what this is, sign in with the Home or just read, and install the app where the browser offers it.
-// Dismissed once; the flag is a device preference. Signing in by any road dismisses it — a sign-in that finishes after
-// the card came up (the return from a full-page redirect, when the popup was blocked) included.
-import { installPrompt } from "../../state/chrome/fullScreen";
+// FIRST VISIT — the old reader's (packages/seed-bible TutorialPrompt and Onboarding's install step): the chapter is
+// readable at once, with a small card in the top-right corner offering the guided tour. Answered once on a device (the
+// flag is a device preference). Turning the tour down then offers, once, to install the reader — where the browser can
+// install it, or on an iPhone with the Share-sheet steps. Signing in is not asked for here: it is in the sidebar, the
+// phone's account button and More.
+import {
+  install,
+  installPrompt,
+  runningAsApp,
+} from "../../state/chrome/fullScreen";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
-import {
-  DEFAULT_ESTATE,
-  HOME_SIGNIN_AVAILABLE,
-  connectViaHome,
-} from "../../session";
-import { estateById } from "../../../../../estate/faithnet";
 
 export const ONBOARDING_KEY = "onboarding:done";
+export const INSTALL_OFFER_KEY = "onboarding:install-offered";
+
+const isIos = () =>
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export function Onboarding({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState("");
-  const estate = estateById(DEFAULT_ESTATE)!;
-  const standalone =
-    typeof matchMedia !== "undefined" &&
-    matchMedia("(display-mode: standalone)").matches;
+  const [stage, setStage] = useState<"none" | "tour" | "install">("none");
+  const { prefs } = state.stores;
 
   useEffect(() => {
-    if (state.ui.embed.value || state.session.value) return;
-    void state.stores.prefs.get(ONBOARDING_KEY).then((v) => {
-      if (!v) setShow(true);
+    if (state.ui.embed.value) return;
+    void prefs.get(ONBOARDING_KEY).then((v) => {
+      if (!v) setStage("tour");
     });
   }, []);
 
-  const done = async () => {
-    setShow(false);
-    await state.stores.prefs.set(ONBOARDING_KEY, new Date().toISOString());
+  const answered = () => prefs.set(ONBOARDING_KEY, new Date().toISOString());
+  const canInstall = () =>
+    !runningAsApp() && (!!installPrompt.value || isIos());
+  const offerInstall = async () => {
+    if (!canInstall() || (await prefs.get(INSTALL_OFFER_KEY)))
+      return setStage("none");
+    await prefs.set(INSTALL_OFFER_KEY, new Date().toISOString());
+    setStage("install");
   };
-  const signedIn = !!state.session.value;
-  useEffect(() => {
-    if (signedIn && show) void done();
-  }, [signedIn, show]);
-  if (!show || signedIn) return null;
 
+  if (stage === "tour")
+    return (
+      <div
+        className="sb-tutorial-prompt"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="sb-tutorial-prompt-title"
+      >
+        <h3 className="sb-tutorial-prompt-title" id="sb-tutorial-prompt-title">
+          {t("tutorial.promptTitle", {
+            defaultValue: "Welcome to Seed Bible. Would you like a tutorial?",
+          })}
+        </h3>
+        <p className="sb-tutorial-prompt-body">
+          {t("tutorial.promptBody", {
+            defaultValue:
+              "A guided tour is available to help you learn the ins and outs of Seed Bible.",
+          })}
+        </p>
+        <div className="sb-tutorial-prompt-actions">
+          <button
+            type="button"
+            className="sb-tutorial-prompt-btn sb-tutorial-prompt-btn-secondary"
+            onClick={() => void answered().then(offerInstall)}
+          >
+            {t("tutorial.promptDecline", { defaultValue: "No, thanks" })}
+          </button>
+          <button
+            type="button"
+            className="sb-tutorial-prompt-btn sb-tutorial-prompt-btn-primary"
+            onClick={() => {
+              setStage("none");
+              void answered().then(() => state.tours.start("introduction"));
+            }}
+          >
+            {t("tutorial.promptAccept", { defaultValue: "Take the tour" })}
+            <span className="sb-tutorial-prompt-arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+
+  if (stage !== "install") return null;
+  const phone =
+    typeof matchMedia !== "undefined" &&
+    matchMedia("(pointer: coarse)").matches;
+  const close = () => setStage("none");
   return (
     <div
       className="sb-onboarding-overlay"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="sb-onboarding-title"
+      aria-labelledby="sb-onboarding-install"
     >
       <div className="sb-onboarding-card">
         <div className="sb-onboarding-icon">
-          <span className="material-symbols-outlined">menu_book</span>
+          <span className="material-symbols-outlined">
+            {isIos() ? "ios_share" : "install_desktop"}
+          </span>
         </div>
-        <h2 id="sb-onboarding-title" className="sb-onboarding-title">
-          {t("onboarding-title", { defaultValue: "Welcome to Seed Bible" })}
-        </h2>
-        <div className="sb-onboarding-body">
-          <p>
-            {t("onboarding-read", {
-              defaultValue:
-                "Read any translation, highlight, write notes, keep bookmarks — it all works right here on this device, even offline.",
-            })}
-          </p>
-          <p>
-            {t("onboarding-home", {
-              defaultValue:
-                "Sign in with your Home and your marks go to your own Library, through your own agent — nothing of yours is kept by this app.",
-            })}
-          </p>
-          <p>
-            {t("onboarding-together", {
-              defaultValue:
-                "Read together: start a live session and friends follow you; publish a note and it reaches their Today.",
-            })}
-          </p>
-        </div>
-        <div className="sb-onboarding-actions">
-          {HOME_SIGNIN_AVAILABLE && (
+        <p className="sb-onboarding-body" id="sb-onboarding-install">
+          {t("onboarding.installBodyPre", {
+            defaultValue: "Add Seed Bible to your ",
+          })}
+          <strong>
+            {phone || isIos()
+              ? t("onboarding.installTargetMobile", {
+                  defaultValue: "home screen",
+                })
+              : t("onboarding.installTargetDesktop", {
+                  defaultValue: "desktop",
+                })}
+          </strong>
+          {t("onboarding.installBodyPost", {
+            defaultValue:
+              " to return anytime. You can always find this option later in Settings.",
+          })}
+        </p>
+        {installPrompt.value ? (
+          <div className="sb-onboarding-actions">
             <button
+              type="button"
               className="sb-onboarding-btn sb-onboarding-btn-primary"
-              disabled={!!busy}
-              onClick={() => {
-                setBusy("signin");
-                // the card is done the moment the Home answers — not after the reader has pulled the person's marks
-                void connectViaHome(DEFAULT_ESTATE)
-                  .then(async (s) => {
-                    if (!s) return;
-                    await done();
-                    await state.signIn(s, { announce: true });
-                  })
-                  .finally(() => setBusy(""));
-              }}
+              onClick={() => void install().finally(close)}
             >
-              {t("sign-in-with", {
-                name: estate.label,
-                defaultValue: `Sign in with ${estate.label}`,
-              })}
+              {t("onboarding.installApp", { defaultValue: "Install App" })}
             </button>
-          )}
-          <button
-            className="sb-onboarding-btn sb-onboarding-btn-secondary"
-            onClick={() => void done()}
-          >
-            {t("onboarding-just-read", { defaultValue: "Just read" })}
-          </button>
-          <button
-            className="sb-onboarding-btn sb-onboarding-btn-tertiary"
-            onClick={() =>
-              void done().then(() => state.tours.start("introduction"))
-            }
-          >
-            {t("onboarding-tour", { defaultValue: "Take the tour" })}
-          </button>
-          {installPrompt.value && !standalone && (
             <button
-              className="sb-onboarding-btn sb-onboarding-btn-tertiary"
-              onClick={() => {
-                const p = installPrompt.value;
-                installPrompt.value = null;
-                void p?.prompt().then(() => done());
-              }}
+              type="button"
+              className="sb-onboarding-btn sb-onboarding-btn-secondary"
+              onClick={close}
             >
-              <span className="material-symbols-outlined sb-onboarding-inline-icon">
-                install_mobile
-              </span>{" "}
-              {t("onboarding-install", { defaultValue: "Install the app" })}
+              {t("onboarding.maybeLater", { defaultValue: "Maybe later" })}
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            <p className="sb-onboarding-ios-steps">
+              {t("onboarding.iosStepsPre", { defaultValue: "Tap " })}
+              <span className="material-symbols-outlined sb-onboarding-inline-icon">
+                ios_share
+              </span>
+              {t("onboarding.iosStepsPost", {
+                defaultValue:
+                  " in the toolbar, then choose “Add to Home Screen”.",
+              })}
+            </p>
+            <div className="sb-onboarding-actions">
+              <button
+                type="button"
+                className="sb-onboarding-btn sb-onboarding-btn-primary"
+                onClick={close}
+              >
+                {t("onboarding.gotIt", { defaultValue: "Got it" })}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

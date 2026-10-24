@@ -135,4 +135,28 @@ describe("theographic", () => {
       `${THEOGRAPHIC_ORIGIN}/api/d/theographic/GEN/12.json`,
     ]);
   });
+
+  it("follows a link the agent gives under its /bible/ route (a person opened from a chapter)", async () => {
+    const asked: string[] = [];
+    const store = new Map<string, unknown>();
+    const cache = {
+      get: async (k: string) => store.get(k),
+      set: async (k: string, v: unknown) => void store.set(k, v),
+    };
+    const person = { person: { id: "abraham_58", name: "Abraham" } };
+    const fake = (async (url: string) => {
+      asked.push(url);
+      return new Response(JSON.stringify(person));
+    }) as unknown as typeof fetch;
+    expect(
+      await readTheographic(
+        "/bible/api/d/theographic/people/abraham_58.json",
+        cache,
+        fake
+      )
+    ).toEqual(person);
+    expect(asked).toEqual([
+      `${THEOGRAPHIC_ORIGIN}/api/d/theographic/people/abraham_58.json`,
+    ]);
+  });
 });

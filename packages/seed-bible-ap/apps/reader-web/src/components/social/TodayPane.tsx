@@ -1,4 +1,4 @@
-// TODAY — the old TodayPane in outline: pick up where you left off, your recent bookmarks and saves, your friends
+// TODAY — the old TodayPane in outline: its welcome (or a greeting, once there is reading), pick up where you left off, your recent bookmarks and saves, your friends
 // from the Home and what they released lately. Dressed by the copied `today.css` / `friends.css` where the
 // classes match, and `app.css` for the rest.
 import { useEffect, useState } from "preact/hooks";
@@ -9,6 +9,7 @@ import { DEFAULT_ESTATE } from "../../session";
 import { estateById } from "../../../../../estate/faithnet";
 import { parseRoute } from "../../state/reading/route";
 import { friendLink } from "../../state/social/friendship";
+import { TodayWelcome } from "./TodayWelcome";
 
 function label(state: ReaderState, chapter: string) {
   const [book, ch] = chapter.split(".");
@@ -25,9 +26,13 @@ export function TodayPane({ state }: { state: ReaderState }) {
     if (signedIn && !today.loadedFor.value) void today.refresh();
   }, [signedIn]);
   const [recent, setRecent] = useState<RecentReading[]>([]);
+  const [recentRead, setRecentRead] = useState(false);
   const changed = state.buckets.changed.value;
   useEffect(() => {
-    void state.history.recent(8).then(setRecent);
+    void state.history.recent(8).then((r) => {
+      setRecent(r);
+      setRecentRead(true);
+    });
   }, [changed]);
 
   const open = (chapter: string, start?: number, end?: number) => {
@@ -59,6 +64,16 @@ export function TodayPane({ state }: { state: ReaderState }) {
           <span className="material-symbols-outlined">close</span>
         </button>
       </header>
+
+      {recentRead && (
+        // The chapter on screen does not count: everyone arrives on a chapter.
+        <TodayWelcome
+          state={state}
+          hasReading={recent.some(
+            (r) => r.chapterRef !== reading.chapterRef.value
+          )}
+        />
+      )}
 
       <div className="sb-content-section">
         <div className="sb-content-section-head">

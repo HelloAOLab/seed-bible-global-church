@@ -118,12 +118,11 @@ const md = [
   "",
 ].join("\n");
 writeFileSync(`${outDir}/results.md`, md);
-if (!only.length) {
-  const m = writeManualTests();
-  console.log(
-    `training manual: ${m.tested} of ${m.rows} feature rows carry a flow result`
-  );
-}
+// A run of some flows (E2E_ONLY) updates only those flows' entries; the rest of the manual stays as it was.
+const m = writeManualTests();
+console.log(
+  `training manual: ${m.tested} of ${m.rows} feature rows carry a flow result`
+);
 const failed = results.filter((r) => r.mark === "❌").length;
 console.log(
   `\n${results.length - failed}/${results.length} flows passed; ${outDir}/results.md`

@@ -20,6 +20,7 @@
 }
 
 .sb-bible-reader-bookmark-button,
+.sb-bible-reader-action-button,
 .sb-bible-reader-save-button {
   position: relative;
   width: 2.25rem;
@@ -65,18 +66,21 @@
 }
 
 .sb-bible-reader-bookmark-button:hover,
+.sb-bible-reader-action-button:hover,
 .sb-bible-reader-save-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
 .sb-bible-reader-bookmark-button:disabled,
+.sb-bible-reader-action-button:disabled,
 .sb-bible-reader-save-button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
 .sb-bible-reader-bookmark-button svg,
+.sb-bible-reader-action-button svg,
 .sb-bible-reader-save-button svg {
   width: 1.375rem; /* 22px */
   height: 1.375rem;
@@ -1436,5 +1440,35 @@
   .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
     > .sb-bible-reader-discover-panel {
     width: 22.5rem;
+  }
+}
+
+/* The old reader's Listen in the chapter header: a filled circle in the accent colour. */
+.sb-bible-reader-play-button {
+  width: 2rem;
+  height: 2rem;
+  margin-inline-start: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color, #fff);
+  cursor: pointer;
+}
+.sb-bible-reader-play-button .material-symbols-outlined {
+  font-size: 1.375rem;
+}
+.sb-bible-reader-play-button:hover {
+  filter: brightness(0.95);
+}
+.sb-icon-filled {
+  font-variation-settings: "FILL" 1;
+}
+/* A phone's bar at the top has its own play button. */
+@media (max-width: 720px) {
+  .sb-bible-reader-play-button {
+    display: none;
   }
 }

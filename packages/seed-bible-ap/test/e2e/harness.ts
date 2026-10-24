@@ -100,14 +100,17 @@ export class FlowContext {
     await page.locator(".sb-app:not(.sb-app-ssr)").waitFor({ timeout: 20000 });
   }
 
+  /** Turn down the first visit's tour offer, and the install offer that can follow it. */
   async dismissWelcome(page: Page = this.page): Promise<void> {
-    const justRead = page.getByRole("button", { name: /just read/i });
+    const noThanks = page.getByRole("button", { name: /no, thanks/i });
     try {
-      await justRead.waitFor({ timeout: 4000 });
-      await justRead.click();
+      await noThanks.waitFor({ timeout: 4000 });
+      await noThanks.click();
     } catch {
-      /* no dialog this time (a returning device) */
+      return; /* no offer this time (a returning device) */
     }
+    const later = page.getByRole("button", { name: /maybe later|got it/i });
+    if (await later.count()) await later.first().click();
   }
 
   verse(n: number, page: Page = this.page): Locator {
@@ -154,29 +157,41 @@ export class FlowContext {
   }
 
   async pressToolbar(label: string, page: Page = this.page): Promise<void> {
+    // Only what is on screen: the phone's and the desktop's buttons are both in the page, CSS shows one set.
     const byAria = page
-      .locator(`.sb-reader-toolbar button[aria-label="${label}"]`)
+      .locator(`.sb-reader-toolbar button[aria-label="${label}"]:visible`)
       .first();
     if (await byAria.count()) {
       await byAria.click();
       return;
     }
-    const more = page.locator(".sb-reader-toolbar-more-button button").first();
+    const more = page
+      .locator(".sb-reader-toolbar-more-button button:visible")
+      .first();
     if (await more.count()) await more.click();
     await page
       .locator(
-        `.sb-reader-toolbar-more-menu button[aria-label="${label}"], .sb-reader-toolbar-more-menu button:has-text("${label}")`
+        `.sb-reader-toolbar-more-menu button[aria-label="${label}"]:visible, .sb-reader-toolbar-more-menu button:visible:has-text("${label}")`
       )
       .first()
       .click();
   }
 
-  /** The account pane, signed in or not (the toolbar item is "Sign in" or "Account settings"). */
+  /** The account pane, signed in or not: signed in, the sidebar's chip (the phone's bar has the account button);
+   *  signed out, More → Sign in. */
   async openAccount(page: Page = this.page): Promise<Locator> {
-    const signedIn = await page
-      .locator('.sb-reader-toolbar button[aria-label="Account settings"]')
-      .count();
-    await this.pressToolbar(signedIn ? "Account settings" : "Sign in", page);
+    const signedIn = !!(await page.evaluate(() =>
+      document.querySelector(".sb-connected-chip:not(.sb-connected-chip-out)")
+    ));
+    const phoneAccount = page
+      .locator(
+        '.sb-reader-toolbar button[aria-label="Account settings"]:visible'
+      )
+      .first();
+    if (signedIn && (await phoneAccount.count())) await phoneAccount.click();
+    else if (signedIn)
+      await page.locator(".sb-connected-chip:visible").first().click();
+    else await this.pressToolbar("Sign in", page);
     await this.pane(page).waitFor({ timeout: 5000 });
     return this.pane(page);
   }

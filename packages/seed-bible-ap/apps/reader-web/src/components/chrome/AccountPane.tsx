@@ -310,7 +310,8 @@ function PublishAsCard({ state }: { state: ReaderState }) {
   );
 }
 
-/** Account → Toolbar: which buttons the bottom toolbar shows, and in what order (the old toolbar customizer). */
+/** Account → Toolbar: which buttons sit in the bottom toolbar (the rest are under More), and in what order (the old
+ *  toolbar customizer). */
 function TextStyleCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const style = state.settings.textStyle.value;
@@ -436,7 +437,7 @@ function ToolbarCard({ state }: { state: ReaderState }) {
         <span className="sb-muted">
           {t("toolbar-customize-hint", {
             defaultValue:
-              "Choose the buttons after the chapter controls, and their order.",
+              "Choose which tools sit in the toolbar, and their order. The others are under More.",
           })}
         </span>
       </p>

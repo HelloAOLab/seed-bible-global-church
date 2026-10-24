@@ -1,6 +1,7 @@
-// THE BOTTOM TOOLBAR, AS THE READER WANTS IT — the old Settings → Toolbar customizer: which buttons show and in what
-// order (a device preference). Buttons the reader never placed (a new extension's, say) come after the placed ones
-// in their own order; hiding never removes a button from the list, so it can be shown again.
+// THE BOTTOM TOOLBAR, AS THE READER WANTS IT — the old Settings → Toolbar customizer: which buttons sit in the bar and
+// in what order (a device preference). A button taken out of the bar goes under More, never away, so every action
+// stays one tap from the bar. Buttons the reader never placed (a new extension's, say) come after the placed ones in
+// their own order.
 import { signal } from "@preact/signals";
 import type { KeyValueStore } from "../../backend/offline/db";
 
@@ -9,10 +10,24 @@ export interface ToolbarLayout {
   hidden: string[];
 }
 
-const KEY = "toolbar:layout";
-export const EMPTY_LAYOUT: ToolbarLayout = { order: [], hidden: [] };
+// A new key: layouts saved under "toolbar:layout" meant "hidden is gone", made before the bar took the old reader's
+// short shape.
+const KEY = "toolbar:layout:2";
+/** The old reader's bar: Books, Search and Discover (and each extension's button) in it; the rest under More. */
+export const DEFAULT_LAYOUT: ToolbarLayout = {
+  order: [],
+  hidden: [
+    "session",
+    "today",
+    "notes",
+    "library",
+    "content",
+    "fullscreen",
+    "theme",
+  ],
+};
 
-/** The buttons in the reader's order, hidden ones left out. */
+/** The buttons in the reader's order, the ones under More left out. */
 export function arrange<T extends { id: string }>(
   items: readonly T[],
   layout: ToolbarLayout
@@ -28,7 +43,17 @@ export function arrange<T extends { id: string }>(
     .filter((it) => !layout.hidden.includes(it.id));
 }
 
-/** Every button in the reader's order, hidden ones included (for the customizer). */
+/** The buttons under More, in the reader's order. */
+export function underMore<T extends { id: string }>(
+  items: readonly T[],
+  layout: ToolbarLayout
+): T[] {
+  return arrange(items, { ...layout, hidden: [] }).filter((it) =>
+    layout.hidden.includes(it.id)
+  );
+}
+
+/** Every button in the reader's order, the ones under More included (for the customizer). */
 export function ordered(
   ids: readonly string[],
   layout: ToolbarLayout
@@ -40,7 +65,7 @@ export function ordered(
 }
 
 export function createToolbarLayout(prefs: KeyValueStore<unknown>) {
-  const layout = signal<ToolbarLayout>(EMPTY_LAYOUT);
+  const layout = signal<ToolbarLayout>(DEFAULT_LAYOUT);
   void prefs
     .get(KEY)
     .then((v) => {
@@ -69,7 +94,7 @@ export function createToolbarLayout(prefs: KeyValueStore<unknown>) {
       save({ ...layout.value, order: list });
     },
     reset() {
-      save(EMPTY_LAYOUT);
+      save(DEFAULT_LAYOUT);
     },
   };
 }

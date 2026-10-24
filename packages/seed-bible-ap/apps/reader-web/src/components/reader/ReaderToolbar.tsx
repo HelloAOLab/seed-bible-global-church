@@ -1,19 +1,22 @@
-// THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`): the audio controls
-// when a recording is playing (scrubber, pause, stop — the old desktop layout), previous / book and chapter / next,
-// then play or listen, notes, Your Content, theme, and the account.
+// THE READER TOOLBAR — the floating pill at the bottom of the old reader (`sb-reader-toolbar`). Off a phone it is the
+// old reader's labelled bar: ‹ · Books · Search · Discover · each extension's button · More · ›, with the audio
+// controls in front while a recording plays; what the reader took out of the bar is under More (play sits in the
+// chapter header). On a phone it is the bar at the top: the Tabs drawer, ‹ chapter ›, play or listen, More and the
+// account. Both are drawn and CSS picks one, so the page drawn on the edge matches the app.
 import {
   canFullScreen,
   fullScreen,
   runningAsApp,
   toggleFullScreen,
 } from "../../state/chrome/fullScreen";
-import { arrange } from "../../state/chrome/toolbarLayout";
+import { arrange, underMore } from "../../state/chrome/toolbarLayout";
 import { handleGridKeyNav } from "../keyboardNav";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
 import { Avatar } from "../chrome/ConnectedChip";
+import { SeedBibleIcon } from "../chrome/icons";
 import type { ComponentChildren } from "preact";
 
 interface ToolbarAction {
@@ -35,6 +38,8 @@ function Item(props: {
   badge?: number;
   /** Drawn instead of the icon (the signed-in reader's avatar). */
   render?: () => ComponentChildren;
+  /** The word under the icon, off a phone (the old reader's labelled bar). */
+  labeled?: boolean;
 }) {
   return (
     <div
@@ -53,6 +58,9 @@ function Item(props: {
           props.render()
         ) : (
           <span className="material-symbols-outlined">{props.icon}</span>
+        )}
+        {props.labeled && (
+          <span className="sb-reader-toolbar-button-label">{props.label}</span>
         )}
         {props.badge ? (
           <span className="sb-reader-toolbar-unread-indicator">
@@ -222,6 +230,16 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     notes,
   });
   const shown = arrange(secondary, state.toolbar.layout.value);
+  const more = underMore(secondary, state.toolbar.layout.value);
+  // Search opens Your content with its search box ready, until the old reader's floating search box is built.
+  const openSearch = () => {
+    ui.pane.value = "content";
+    requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLInputElement>(".sb-content-search input")
+        ?.focus()
+    );
+  };
 
   // Folded under More when the whole bar is wider than the reading area (the sidebar or a pane beside it leaves less
   // room than the window). Its full width can only be read while it is unfolded, so anything that changes it (the
@@ -239,6 +257,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     mainWidth,
     fontsLoaded,
     shown.map((a) => a.id).join(),
+    more.length,
     audioActive,
     audioPlaying,
     audio.available.value,
@@ -260,7 +279,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   return (
     <nav
       ref={navRef}
-      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}${folded ? " sb-reader-toolbar-folded" : ""}`}
+      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}${folded ? " sb-reader-toolbar-folded" : ""}${more.length || !state.session.value ? "" : " sb-reader-toolbar-more-empty"}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
       <Item
@@ -321,7 +340,11 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         disabled={!reading.hasPrev.value}
         onClick={() => void reading.prev()}
       />
-      <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item">
+      <span
+        className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only"
+        aria-hidden="true"
+      />
+      <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item sb-reader-toolbar-phone-only">
         <button
           type="button"
           className="sb-reader-toolbar-button sb-reader-toolbar-center-button"
@@ -330,17 +353,25 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           {reading.bookName.value} {reading.chapterNumber.value}
         </button>
       </div>
+      <span
+        className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only sb-reader-toolbar-desk-end"
+        aria-hidden="true"
+      />
       <Item
         icon="chevron_right"
-        className="sb-reader-toolbar-item-arrow"
+        className="sb-reader-toolbar-item-arrow sb-reader-toolbar-next"
         label={t("next-chapter", { defaultValue: "Next Chapter" })}
         disabled={!reading.hasNext.value}
         onClick={() => void reading.next()}
       />
-      <span className="sb-reader-toolbar-divider" aria-hidden="true" />
+      <span
+        className="sb-reader-toolbar-divider sb-reader-toolbar-phone-only"
+        aria-hidden="true"
+      />
       {audio.available.value && !audioActive && (
         <Item
           icon="play_circle"
+          className="sb-reader-toolbar-phone-only"
           label={t("play", { defaultValue: "Play" })}
           onClick={() => audio.play()}
         />
@@ -348,6 +379,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       {canListen && (
         <Item
           icon={speaking ? "stop_circle" : "record_voice_over"}
+          className="sb-reader-toolbar-phone-only"
           label={
             speaking
               ? t("stop", { defaultValue: "Stop" })
@@ -357,11 +389,31 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => (speaking ? tts.stop() : state.listen())}
         />
       )}
+      <Item
+        icon="books"
+        render={() => <SeedBibleIcon size={24} />}
+        className="sb-reader-toolbar-desk-only"
+        label={t("books", { defaultValue: "Books" })}
+        labeled
+        active={ui.selector.value === "books"}
+        onClick={() =>
+          (ui.selector.value = ui.selector.value === "books" ? null : "books")
+        }
+      />
+      <Item
+        icon="search"
+        className="sb-reader-toolbar-desk-only"
+        label={t("search", { defaultValue: "Search" })}
+        labeled
+        active={ui.pane.value === "content"}
+        onClick={openSearch}
+      />
       {shown.map((a) => (
         <Item
           key={a.id}
           icon={a.icon}
           label={a.label}
+          labeled
           active={a.active}
           badge={a.badge}
           className="sb-reader-toolbar-secondary"
@@ -371,6 +423,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       <Item
         icon="more_horiz"
         className="sb-reader-toolbar-more-button"
+        labeled
         label={t("more", { defaultValue: "More" })}
         active={moreOpen}
         onClick={() => setMoreOpen((o) => !o)}
@@ -397,12 +450,15 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
               <span>{t("sign-in", { defaultValue: "Sign in" })}</span>
             </button>
           )}
-          {shown.map((a) => (
+          {[
+            ...shown.map((a) => ({ a, inBar: true })),
+            ...more.map((a) => ({ a, inBar: false })),
+          ].map(({ a, inBar }) => (
             <button
               key={a.id}
               type="button"
               role="menuitem"
-              className={`sb-reader-toolbar-more-item${a.active ? " sb-reader-toolbar-more-item-active" : ""}`}
+              className={`sb-reader-toolbar-more-item${inBar ? " sb-reader-toolbar-more-item-in-bar" : ""}${a.active ? " sb-reader-toolbar-more-item-active" : ""}`}
               onClick={() => {
                 setMoreOpen(false);
                 a.onClick();
@@ -424,8 +480,14 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       <Item
         icon="account_circle"
         {...(state.session.value
-          ? { render: () => <Avatar state={state} /> }
-          : { className: "sb-reader-toolbar-signin" })}
+          ? {
+              render: () => <Avatar state={state} />,
+              className: "sb-reader-toolbar-phone-only",
+            }
+          : {
+              className:
+                "sb-reader-toolbar-signin sb-reader-toolbar-phone-only",
+            })}
         label={
           state.session.value
             ? t("account-settings", { defaultValue: "Account settings" })

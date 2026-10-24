@@ -28,8 +28,9 @@ if (typeof window !== "undefined") {
 export function runningAsApp(): boolean {
   if (typeof window === "undefined") return false;
   const nav = navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone === true) return true;
+  if (typeof matchMedia !== "function") return false;
   return (
-    nav.standalone === true ||
     matchMedia("(display-mode: standalone)").matches ||
     matchMedia("(display-mode: fullscreen)").matches
   );

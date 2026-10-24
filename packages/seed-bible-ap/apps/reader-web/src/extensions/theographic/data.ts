@@ -54,12 +54,14 @@ type Cache = {
   set: (k: string, v: unknown) => Promise<void>;
 };
 
-/** A dataset record, from the device if read before; null for a path outside the dataset or one it lacks. */
+/** A dataset record, from the device if read before; null for a path outside the dataset or one it lacks. The
+ *  agent's records link each other under its `/bible/` route; the path here is the one below it. */
 export async function readTheographic(
-  path: string,
+  link: string,
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<unknown> {
+  const path = link.startsWith("/bible/") ? link.slice("/bible".length) : link;
   if (!PATH.test(path) || path.includes("..")) return null;
   const key = `theo:${path}`;
   const hit = await cache.get(key);
