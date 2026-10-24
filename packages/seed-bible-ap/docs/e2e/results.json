@@ -1,25 +1,7 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 17:21 UTC",
+  "when": "2026-10-24 17:32 UTC",
   "results": [
-    {
-      "id": "R1",
-      "section": "3. Reading",
-      "title": "Open a chapter",
-      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
-      "mark": "✅",
-      "note": "edge-rendered, then live; header \"John3\"",
-      "ms": 544
-    },
-    {
-      "id": "R2",
-      "section": "3. Reading",
-      "title": "Next / previous chapter",
-      "checks": "The toolbar arrows move to John 4 and back; the URL follows",
-      "mark": "✅",
-      "note": "John 3 → 4 → 3, and browser back → 4",
-      "ms": 673
-    },
     {
       "id": "R4",
       "section": "3. Reading",
@@ -27,25 +9,52 @@
       "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
       "mark": "✅",
       "note": "switched to WEB World English Bible English",
-      "ms": 790
+      "ms": 1570
+    },
+    {
+      "id": "X1",
+      "section": "12. Extensions",
+      "title": "Places map",
+      "checks": "On Genesis 12 the Places map pane shows a Leaflet map with at least one place marker",
+      "mark": "✅",
+      "note": "map with 4 marker(s)",
+      "ms": 3093
+    },
+    {
+      "id": "R14",
+      "section": "3. Reading",
+      "title": "Offline reading",
+      "checks": "Open John 3 and John 4 online; go offline; reload John 4 and step back to John 3: both chapters show without a connection",
+      "mark": "✅",
+      "note": "reloaded offline; John 4 and John 3 read without a connection (served by the service worker's cache, so no pin)",
+      "ms": 6811
     },
     {
       "id": "G5",
       "section": "3. Reading",
       "title": "Download a whole translation for offline",
       "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
-      "mark": "❌",
-      "note": "locator.waitFor: Timeout 180000ms exceeded.",
-      "ms": 192548
+      "mark": "✅",
+      "note": "BSB downloaded; offline, Obadiah 1 reads (\"1This is the vision of Obadiah:\n\nThis is\")",
+      "ms": 9452
     },
     {
-      "id": "NT1",
-      "section": "3. Reading",
-      "title": "A link to a translation that isn't served",
-      "checks": "A link to a translation the scripture agent does not serve (/read/WEB/ROM/8) says so instead of a dead Retry, with Read in BSB — which opens Romans 8 in BSB — and Choose a translation",
+      "id": "G18",
+      "section": "12. Extensions",
+      "title": "People, places and events",
+      "checks": "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan; Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
       "mark": "✅",
-      "note": "WEB said it isn't available here; Read in BSB opened Romans 8 in BSB",
-      "ms": 2395
+      "note": "Abraham's card; Terah's card and Back; Genesis 11:29 opened at /read/BSB/GEN/11",
+      "ms": 1613
+    },
+    {
+      "id": "V1",
+      "section": "3. Reading",
+      "title": "Scripture checked on the device",
+      "checks": "John 3 (BSB) opens with a Verified badge beside the translation; every verse number is marked as checked; the badge's sheet says all verses match the published text, that each is part of the translation's published set, that the set is signed by the scripture agent, and where the text was received from",
+      "mark": "✅",
+      "note": "Verified; 36 verse numbers marked; the sheet names the published set, the signer and the source",
+      "ms": 806
     }
   ]
 }

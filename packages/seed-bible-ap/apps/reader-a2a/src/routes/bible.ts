@@ -19,6 +19,8 @@ export interface BibleEnv {
   };
   /** Its A2A endpoint (the card's JSON-RPC interface). */
   SCRIPTURE_A2A_URL?: string;
+  /** How long one ask may take, in ms (default ASK_TIMEOUT_MS); a test sets it short. */
+  SCRIPTURE_ASK_TIMEOUT_MS?: number;
 }
 
 const DEFAULT_ENDPOINT = "https://scripture.faithnet.io/api/a2a";
@@ -27,17 +29,53 @@ const ID = /^[A-Za-z0-9_-]{1,64}$/;
 /** A refusal the agent gave (a translation it does not hold, a bad argument): the reader is told 404, with its words. */
 class Refused extends Error {}
 
+/** How long one ask may take before it is given up and asked again: a skill answers in well under a second, but now
+ *  and then a call to the scripture agent never answers (seen 2026-10-24: half of fresh chapter reads hung past 90 s,
+ *  and the same read asked again came back in 0.25 s). */
+export const ASK_TIMEOUT_MS = 8000;
+export const ASK_ATTEMPTS = 3;
+
 export async function askScripture(
   env: BibleEnv,
   skill: string,
   args: Record<string, unknown>
 ): Promise<unknown> {
+  let last: unknown;
+  for (let i = 0; i < ASK_ATTEMPTS; i++) {
+    try {
+      return await askOnce(env, skill, args);
+    } catch (e) {
+      // A refusal is the agent's answer; only a call that hung or failed on the way is asked again.
+      if (e instanceof Refused) throw e;
+      last = e;
+    }
+  }
+  throw last instanceof Error
+    ? last
+    : new Error(`${skill}: the scripture agent did not answer`);
+}
+
+async function askOnce(
+  env: BibleEnv,
+  skill: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
   const binding = env.SCRIPTURE;
+  const timed = (fetcher: typeof fetch): typeof fetch =>
+    ((input: RequestInfo | URL, init?: RequestInit) =>
+      fetcher(input, {
+        ...init,
+        signal: AbortSignal.timeout(
+          env.SCRIPTURE_ASK_TIMEOUT_MS ?? ASK_TIMEOUT_MS
+        ),
+      })) as typeof fetch;
   const client = createStandardA2aClient({
     endpoint: env.SCRIPTURE_A2A_URL ?? DEFAULT_ENDPOINT,
-    ...(binding
-      ? { fetch: ((input, init) => binding.fetch(input, init)) as typeof fetch }
-      : {}),
+    fetch: timed(
+      binding
+        ? (((input, init) => binding.fetch(input, init)) as typeof fetch)
+        : fetch
+    ),
   });
   const out = await client.sendMessage([
     { data: { skill, args }, mediaType: "application/json" },

@@ -149,6 +149,75 @@ describe("asking the scripture agent", () => {
   });
 });
 
+describe("a scripture agent that does not answer", () => {
+  it("is given up on and asked again: a call that hangs does not hang the reader", async () => {
+    let calls = 0;
+    const env: BibleEnv = {
+      SCRIPTURE_ASK_TIMEOUT_MS: 50,
+      SCRIPTURE: {
+        fetch: async (_input, init) => {
+          calls++;
+          if (calls === 1)
+            // The first ask never answers; only the timeout ends it.
+            return new Promise<Response>((_, reject) =>
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("timed out", "TimeoutError"))
+              )
+            );
+          const body = JSON.parse(String(init?.body));
+          return Response.json({
+            jsonrpc: "2.0",
+            id: body.id,
+            result: {
+              message: {
+                messageId: "m",
+                role: "ROLE_AGENT",
+                parts: [{ data: { books: [] } }],
+              },
+            },
+          });
+        },
+      },
+    };
+    const a = new Hono<{ Bindings: BibleEnv }>();
+    a.route("/", bibleRoutes);
+    const res = await a.fetch(
+      new Request("https://reader.test/bible/api/BSB/books.json"),
+      env,
+      { waitUntil: () => {}, passThroughOnException: () => {} } as never
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ books: [] });
+    expect(calls).toBe(2);
+  });
+
+  it("asks at most three times, then says the agent did not answer", async () => {
+    let calls = 0;
+    const env: BibleEnv = {
+      SCRIPTURE_ASK_TIMEOUT_MS: 20,
+      SCRIPTURE: {
+        fetch: async (_input, init) => {
+          calls++;
+          return new Promise<Response>((_, reject) =>
+            init?.signal?.addEventListener("abort", () =>
+              reject(new DOMException("timed out", "TimeoutError"))
+            )
+          );
+        },
+      },
+    };
+    const a = new Hono<{ Bindings: BibleEnv }>();
+    a.route("/", bibleRoutes);
+    const res = await a.fetch(
+      new Request("https://reader.test/bible/api/BSB/JHN/3.json"),
+      env,
+      { waitUntil: () => {}, passThroughOnException: () => {} } as never
+    );
+    expect(res.status).toBe(502);
+    expect(calls).toBe(3);
+  });
+});
+
 describe("the edge cache", () => {
   const g = globalThis as { caches?: unknown };
   const before = g.caches;
