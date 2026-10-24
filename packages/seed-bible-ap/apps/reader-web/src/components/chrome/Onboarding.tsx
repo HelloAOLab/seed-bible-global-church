@@ -1,6 +1,7 @@
 // FIRST VISIT — ported in shape from packages/seed-bible Onboarding: one card over the reader on the first visit of
 // a device: what this is, sign in with the Home or just read, and install the app where the browser offers it.
-// Dismissed once; the flag is a device preference.
+// Dismissed once; the flag is a device preference. Signing in by any road dismisses it — a sign-in that finishes after
+// the card came up (the return from a full-page redirect, when the popup was blocked) included.
 import { installPrompt } from "../../state/chrome/fullScreen";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
@@ -34,7 +35,11 @@ export function Onboarding({ state }: { state: ReaderState }) {
     setShow(false);
     await state.stores.prefs.set(ONBOARDING_KEY, new Date().toISOString());
   };
-  if (!show) return null;
+  const signedIn = !!state.session.value;
+  useEffect(() => {
+    if (signedIn && show) void done();
+  }, [signedIn, show]);
+  if (!show || signedIn) return null;
 
   return (
     <div
@@ -77,9 +82,14 @@ export function Onboarding({ state }: { state: ReaderState }) {
               disabled={!!busy}
               onClick={() => {
                 setBusy("signin");
+                // the card is done the moment the Home answers — not after the reader has pulled the person's marks
                 void connectViaHome(DEFAULT_ESTATE)
-                  .then((s) => s && state.signIn(s, { announce: true }))
-                  .finally(() => done());
+                  .then(async (s) => {
+                    if (!s) return;
+                    await done();
+                    await state.signIn(s, { announce: true });
+                  })
+                  .finally(() => setBusy(""));
               }}
             >
               {t("sign-in-with", {
