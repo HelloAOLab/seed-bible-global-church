@@ -23,6 +23,7 @@ import {
   PublishAsCard,
   ReadingFields,
   TextStyleCard,
+  ThemeGallery,
   ToolbarCard,
   TutorialsCard,
 } from "./AccountPane";
@@ -107,6 +108,7 @@ export function SettingsView({ state }: { state: ReaderState }) {
       case "display":
         return (
           <>
+            <ThemeGallery state={state} />
             <div className="sb-account-card">
               <ReadingFields state={state} />
             </div>

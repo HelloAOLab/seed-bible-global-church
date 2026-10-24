@@ -758,7 +758,7 @@ export const MORE_FLOWS: Flow[] = [
       "Play a playlist",
     ],
     checks:
-      "Library → Playlists → a title → Create (starts with John 3); add Romans 8:28 by reference; move it up; Play playlist opens Romans 8 then Next opens John 3; remove an item; delete the playlist",
+      "Library → Playlists → a title → Create (starts with John 3); add Romans 8:28 by reference; move it up; Play playlist opens Romans 8 then Next opens John 3; a passage typed across chapters (John 3:16-4:2) keeps both ends; remove an item; delete the playlist",
     run: async (c) => {
       await c.open(CH);
       const pane = await c.openLibrary("Playlists");
@@ -796,6 +796,18 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click()
         .catch(() => undefined);
+      // A passage across chapters keeps its end: "John 3:16–4:2", not John 3:16 alone.
+      await card
+        .locator(
+          'input[placeholder*="John 3:16" i], input[placeholder*="reference" i]'
+        )
+        .first()
+        .fill("John 3:16-4:2");
+      await card
+        .getByRole("button", { name: /^add item$/i })
+        .first()
+        .click();
+      await c.waitText(card, /John 3:16–4:2/);
       const before = await card
         .locator('button[aria-label*="remove" i]')
         .count();
@@ -809,7 +821,7 @@ export const MORE_FLOWS: Flow[] = [
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
       await card.waitFor({ state: "detached", timeout: 10000 });
-      return "created, Romans 8:28 added and moved first, played Romans 8 → John 3, an item removed, deleted";
+      return "created, Romans 8:28 added and moved first, played Romans 8 → John 3, John 3:16–4:2 kept both ends, an item removed, deleted";
     },
   },
   {
@@ -2634,6 +2646,129 @@ export const MORE_FLOWS: Flow[] = [
         .getByRole("button", { name: "More" })
         .waitFor({ timeout: 2000 });
       return "Tasks opened Today; the tab's ☆ saved John 3 and the bookmarks and saves panels listed it; the BSB save opened in BSB from the KJV (panel and Your content); Open in new panel added a pane; ⊞ and ⋮ at the top";
+    },
+  },
+  {
+    id: "HL1",
+    section: "4. Marking the text",
+    title: "Clearing or re-colouring part of a highlight keeps the rest",
+    rows: ["Highlight and clear"],
+    checks:
+      "Highlight John 3:14–17 yellow; clear verse 15: 14, 16 and 17 stay yellow; colour 16 green: 17 stays yellow; clear them all",
+    run: async (c) => {
+      await c.open(CH);
+      const colourOf = (n: number) =>
+        c.page
+          .locator(`.sb-bible-reader-active [data-verse-number="${n}"]`)
+          .first()
+          .evaluate((el) => {
+            const h = el.closest(".sb-highlight");
+            return h
+              ? (h.className.match(/sb-highlight-([a-z]+)/)?.[1] ?? "")
+              : "";
+          });
+      // A verse is picked by its number: a verse that starts mid-line has the one before it at its left edge.
+      const pick = async (n: number, shift = false) => {
+        await c.page
+          .locator(
+            `.sb-bible-reader-active [data-verse-number="${n}"] .sb-verse-number`
+          )
+          .first()
+          .click(shift ? { modifiers: ["Shift"] } : {});
+        await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 5000 });
+      };
+      await pick(14);
+      await pick(17, true);
+      await c.page
+        .locator('.sb-verse-toolbar button[aria-label="Highlight yellow"]')
+        .click();
+      await c.page.keyboard.press("Escape");
+      for (const n of [14, 15, 16, 17])
+        if ((await colourOf(n)) !== "yellow")
+          throw new Error(`verse ${n} not yellow after highlighting 14–17`);
+      await pick(15);
+      await c.page.locator(".sb-verse-toolbar-clear").click();
+      await c.page.keyboard.press("Escape");
+      // The change lands in a moment (the old highlight goes, the kept pieces follow): wait for it.
+      const settle = async (verses: number[], want: string) => {
+        let got = "";
+        for (let t = 0; t < 30; t++) {
+          got = (await Promise.all(verses.map(colourOf))).join();
+          if (got === want) break;
+          await c.page.waitForTimeout(100);
+        }
+        return got.split(",");
+      };
+      const after = await settle([14, 15, 16, 17], "yellow,,yellow,yellow");
+      if (after.join() !== "yellow,,yellow,yellow")
+        throw new Error(`after clearing 15: ${after.join(", ")} (14–17)`);
+      await pick(16);
+      await c.page
+        .locator('.sb-verse-toolbar button[aria-label="Highlight green"]')
+        .click();
+      await c.page.keyboard.press("Escape");
+      const recoloured = await settle([16, 17], "green,yellow");
+      if (recoloured.join() !== "green,yellow")
+        throw new Error(
+          `after colouring 16 green: 16 ${recoloured[0]}, 17 ${recoloured[1]}`
+        );
+      for (const n of [14, 16, 17]) {
+        await pick(n);
+        await c.page.locator(".sb-verse-toolbar-clear").click();
+        await c.page.keyboard.press("Escape");
+      }
+      return "14–17 yellow; clearing 15 kept 14, 16, 17; colouring 16 green kept 17 yellow; cleared";
+    },
+  },
+  {
+    id: "TH1",
+    section: "3. Reading",
+    title: "Theme: Light, Dark or System",
+    rows: ["Light / dark theme"],
+    checks:
+      "Settings → Display & Theme shows the old reader's gallery — Light, Dark, System; Dark makes the reader dark; More → Themes flips it; System brings back the device's choice (light in this browser)",
+    run: async (c) => {
+      await c.open(CH);
+      const theme = () =>
+        c.page.evaluate(() => document.documentElement.dataset["sbTheme"]);
+      const side = c.page.locator(".sb-tabs-sidebar");
+      await side.getByRole("button", { name: "Open settings" }).click();
+      await side.getByText("Display & Theme").click();
+      const cards = side.locator(".sb-theme-ready-card");
+      if ((await cards.count()) !== 3)
+        throw new Error(`${await cards.count()} theme cards`);
+      await cards.filter({ hasText: "Dark" }).click();
+      await c.page.waitForFunction(
+        () => document.documentElement.dataset["sbTheme"] === "dark",
+        undefined,
+        { timeout: 5000 }
+      );
+      await side.getByRole("button", { name: "Close Settings" }).click();
+      await c.pressToolbar("Themes");
+      await c.page.waitForFunction(
+        () => document.documentElement.dataset["sbTheme"] === "light",
+        undefined,
+        { timeout: 5000 }
+      );
+      await c.pressToolbar("Themes");
+      if ((await theme()) !== "dark")
+        throw new Error("More → Themes did not flip back to dark");
+      await side.getByRole("button", { name: "Open settings" }).click();
+      await side.getByText("Display & Theme").click();
+      await side
+        .locator(".sb-theme-ready-card")
+        .filter({ hasText: /^System/ })
+        .click();
+      await c.page
+        .waitForFunction(
+          () => document.documentElement.dataset["sbTheme"] === "light",
+          undefined,
+          { timeout: 5000 }
+        )
+        .catch(() => {
+          throw new Error("System did not bring back the device's light theme");
+        });
+      return "three cards; Dark → dark; More → Themes flipped it; System → light again (the device's choice)";
     },
   },
   {

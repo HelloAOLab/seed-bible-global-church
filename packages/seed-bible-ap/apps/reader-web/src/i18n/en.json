@@ -593,5 +593,6 @@
   "delete-bookmark": "Delete bookmark",
   "my-saves": "My Saves",
   "save-folder-empty": "No saves here yet.",
-  "save-options": "Save options"
+  "save-options": "Save options",
+  "theme-system-card": "System"
 }

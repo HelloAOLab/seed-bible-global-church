@@ -1,5 +1,6 @@
 import { Avatar } from "./ConnectedChip";
 import { ThemeThumbnail } from "./ThemePreview";
+import { DARK_THEME, LIGHT_THEME } from "../../state/chrome/theme";
 import { themeFromVariant } from "../../state/chrome/customizations";
 import {
   TEXT_FONTS,
@@ -1163,6 +1164,106 @@ export function AccountPane({ state }: { state: ReaderState }) {
 
       <TutorialsCard state={state} />
       <ExtensionsCard state={state} />
+    </section>
+  );
+}
+
+/** Display & Theme: the old reader's theme gallery — Light, Dark, and System (follows the device). */
+export function ThemeGallery({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const choice = state.settings.theme.value;
+  const label = (name: string, on: boolean) => (
+    <div className="sb-theme-ready-label">
+      <span>{name}</span>
+      <span
+        className={`material-symbols-outlined sb-theme-ready-check${on ? "" : " sb-theme-ready-check-hidden"}`}
+        aria-hidden="true"
+      >
+        check_circle
+      </span>
+    </div>
+  );
+  const swatches = (v: (typeof LIGHT_THEME)["variables"]) => (
+    <>
+      <div
+        className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+        style={{ background: v.primaryColor }}
+      />
+      <div
+        className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+        style={{ background: v.secondaryColor }}
+      />
+      <div
+        className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+        style={{ background: v.tertiaryColor }}
+      />
+    </>
+  );
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("themes", { defaultValue: "Themes" })}
+      </h3>
+      <div className="sb-theme-ready-gallery" role="radiogroup">
+        {[LIGHT_THEME, DARK_THEME].map((th) => (
+          <button
+            key={th.id}
+            type="button"
+            role="radio"
+            aria-checked={choice === th.id}
+            className={`sb-theme-ready-card${choice === th.id ? " sb-theme-ready-card-selected" : ""}`}
+            onClick={() =>
+              (state.settings.theme.value = th.id as "light" | "dark")
+            }
+          >
+            <div
+              className="sb-theme-ready-preview"
+              style={{
+                background:
+                  th.variables.readerBackground ?? th.variables.background,
+              }}
+            >
+              {swatches(th.variables)}
+            </div>
+            {label(
+              th.id === "dark"
+                ? t("theme-dark", { defaultValue: "Dark" })
+                : t("theme-light", { defaultValue: "Light" }),
+              choice === th.id
+            )}
+          </button>
+        ))}
+        <button
+          type="button"
+          role="radio"
+          aria-checked={choice === "system"}
+          className={`sb-theme-ready-card${choice === "system" ? " sb-theme-ready-card-selected" : ""}`}
+          onClick={() => (state.settings.theme.value = "system")}
+        >
+          <div className="sb-theme-ready-preview sb-theme-ready-preview-system">
+            {[LIGHT_THEME, DARK_THEME].map((half) => (
+              <div
+                key={half.id}
+                className="sb-theme-ready-system-half"
+                style={{
+                  background:
+                    half.variables.readerBackground ??
+                    half.variables.background,
+                }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: half.variables.primaryColor }}
+                />
+              </div>
+            ))}
+          </div>
+          {label(
+            t("theme-system-card", { defaultValue: "System" }),
+            choice === "system"
+          )}
+        </button>
+      </div>
     </section>
   );
 }

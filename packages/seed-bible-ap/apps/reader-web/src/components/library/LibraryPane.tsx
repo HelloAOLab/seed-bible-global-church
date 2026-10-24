@@ -27,14 +27,24 @@ import {
 } from "../../state/chrome/customizations";
 import type { LinkPreview } from "../../backend/ReaderBackend";
 
+/** The chapter a passage ends in when it runs on past its first ("JHN.3.16-JHN.4.2" → "4"), else null. */
+function endChapterOf(passage: string): string | null {
+  const [from, to] = passage.split("-");
+  const a = (from ?? "").split(".")[1];
+  const b = (to ?? "").split(".")[1];
+  return to && b && b !== a ? b : null;
+}
+
 function itemLabel(state: ReaderState, it: PlaylistItem): string {
   if (it["@type"] === "seed:ScriptureItem") {
     const { chapter, start, end } = spanOf(it.aboutPassage);
     const [book, ch] = chapter.split(".");
     const name =
       state.reading.books.value.find((b) => b.id === book)?.name ?? book;
-    const verses =
-      it.aboutPassage.split(".").length > 2
+    const endChapter = endChapterOf(it.aboutPassage);
+    const verses = endChapter
+      ? `:${start}–${endChapter}:${end}`
+      : it.aboutPassage.split(".").length > 2
         ? `:${start}${end !== start ? `–${end}` : ""}`
         : "";
     return `${name} ${ch}${verses}${it.ofEdition ? ` · ${it.ofEdition}` : ""}`;
@@ -48,10 +58,19 @@ function openItem(state: ReaderState, it: PlaylistItem) {
   const { chapter, start, end } = spanOf(it.aboutPassage);
   const [book, ch] = chapter.split(".");
   const verses = it.aboutPassage.split(".").length > 2;
+  // A passage that runs into the next chapter opens at its start, selected to the end of that chapter.
+  const runsOn = !!endChapterOf(it.aboutPassage);
   void state.reading
     .goTo(it.ofEdition ?? state.reading.translationId.value, book!, Number(ch))
     .then(() => {
-      if (verses) state.selection.select(start, end);
+      if (!verses) return;
+      const last = Math.max(
+        start,
+        ...(state.reading.chapterData.value?.chapter.content ?? []).map((c) =>
+          c.type === "verse" ? c.number : 0
+        )
+      );
+      state.selection.select(start, runsOn ? last : end);
     });
 }
 
@@ -401,15 +420,11 @@ export function LibraryPane({ state }: { state: ReaderState }) {
     // The parser passes an unknown book name through as typed ("Nowhere 99"); only this Bible's books are readings.
     if (!r || !reading.books.value.some((b) => b.id === r.book)) return null;
     const chapter = `${r.book}.${r.chapter}`;
-    const passage = r.verse
-      ? passageOf(
-          chapter,
-          r.verse,
-          r.endChapter && r.endChapter !== r.chapter
-            ? r.verse
-            : (r.endVerse ?? r.verse)
-        )
-      : chapter;
+    const passage = !r.verse
+      ? chapter
+      : r.endChapter && r.endChapter !== r.chapter
+        ? `${chapter}.${r.verse}-${r.book}.${r.endChapter}.${r.endVerse ?? 1}`
+        : passageOf(chapter, r.verse, r.endVerse ?? r.verse);
     return {
       "@type": "seed:ScriptureItem",
       aboutPassage: passage,

@@ -175,6 +175,8 @@ export function BibleReader({
         ui.verseMenuAt.value = { x: e.clientX, y: e.clientY };
       }}
       className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
+      // The translation's own direction (Hebrew, Arabic run right to left), as the old reader sets it.
+      dir={reading.translation.value?.textDirection}
       onClick={() => selection.clear()}
     >
       <div className="sb-bible-reader-header">
