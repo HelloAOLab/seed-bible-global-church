@@ -2772,6 +2772,26 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "NT1",
+    section: "3. Reading",
+    title: "A link to a translation that isn't served",
+    rows: ["Open a book and chapter"],
+    checks:
+      "A link to a translation the scripture agent does not serve (/read/WEB/ROM/8) says so instead of a dead Retry, with Read in BSB — which opens Romans 8 in BSB — and Choose a translation",
+    run: async (c) => {
+      await c.open("/read/WEB/ROM/8");
+      const err = c.page.locator(".sb-bible-reader-active .sb-reader-error");
+      await c.waitText(err, /isn't available here/i, 20000);
+      await err
+        .getByRole("button", { name: /choose a translation/i })
+        .waitFor({ timeout: 3000 });
+      await err.getByRole("button", { name: /read in bsb/i }).click();
+      await c.page.waitForURL(/\/read\/BSB\/ROM\/8/, { timeout: 15000 });
+      await c.verse(28).waitFor({ timeout: 20000 });
+      return "WEB said it isn't available here; Read in BSB opened Romans 8 in BSB";
+    },
+  },
+  {
     id: "PH1",
     section: "13. Links and embedding",
     title: "A phone: the bar at the top, the page scrolls, sign-in stands out",

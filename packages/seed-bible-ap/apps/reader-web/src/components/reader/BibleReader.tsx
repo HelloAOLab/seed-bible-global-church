@@ -13,6 +13,7 @@ import { renderChapterContent } from "./chapterContent";
 import { ChapterColumn } from "./ChapterColumn";
 import { attachReaderViewport } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
+import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
 
 interface SelectedFootnote {
   noteId: number;
@@ -28,7 +29,7 @@ export function BibleReader({
   reading: Reading;
   active?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { settings, ui, selection } = state;
   const chapter = reading.chapterData.value;
   const chapterRef = reading.chapterRef.value;
@@ -58,6 +59,23 @@ export function BibleReader({
     audio.available.value || state.tts.canSpeakLanguage(state.speechLang());
   const chapterLabel = `${reading.bookName.value} ${reading.chapterNumber.value}`;
 
+  // A chapter that fails: is its translation one the scripture agent serves at all? (A link to one it does not —
+  // `/read/WEB/…` once WEB became ENGWEBP — can never load, so Retry alone would be a dead end.)
+  const failed = !!reading.error.value && !chapter;
+  const [served, setServed] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!failed) return setServed(null);
+    let live = true;
+    void reading.loadTranslations().then((list) => {
+      if (live && list.length)
+        setServed(list.some((x) => x.id === reading.translationId.value));
+    });
+    return () => {
+      live = false;
+    };
+  }, [failed, reading.translationId.value]);
+  const fallbackTranslation = defaultTranslationFor(language);
+
   const onVerseClick = (verseNumber: number, event: MouseEvent) => {
     event.stopPropagation();
     selection.toggle(verseNumber, event.shiftKey);
@@ -71,15 +89,58 @@ export function BibleReader({
             cloud_off
           </span>
           <h3 className="sb-reader-error-title">
-            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
+            {served === false
+              ? t("translation-not-served", {
+                  defaultValue: "This translation isn't available here",
+                })
+              : t("chapter-unavailable", {
+                  defaultValue: "Chapter unavailable",
+                })}
           </h3>
-          <p className="sb-reader-error-message">{reading.error.value}</p>
+          <p className="sb-reader-error-message">
+            {served === false
+              ? t("translation-not-served-body", {
+                  id: reading.translationId.value,
+                  defaultValue:
+                    "{{id}} is not among the Bibles this reader serves. Read this chapter in another translation.",
+                })
+              : reading.error.value}
+          </p>
           <div className="sb-reader-error-actions">
+            {served === false ? (
+              <button
+                className="sb-reader-error-retry"
+                onClick={() =>
+                  void reading.goTo(
+                    fallbackTranslation,
+                    reading.bookId.value,
+                    reading.chapterNumber.value
+                  )
+                }
+              >
+                {t("read-in-translation", {
+                  id: fallbackTranslation,
+                  defaultValue: "Read in {{id}}",
+                })}
+              </button>
+            ) : (
+              <button
+                className="sb-reader-error-retry"
+                onClick={() => void reading.retry()}
+              >
+                {t("retry", { defaultValue: "Retry" })}
+              </button>
+            )}
             <button
-              className="sb-reader-error-retry"
-              onClick={() => void reading.retry()}
+              className="sb-reader-error-switch"
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.selector.value = "translations";
+              }}
             >
-              {t("retry", { defaultValue: "Retry" })}
+              {t("choose-translation", {
+                defaultValue: "Choose a translation",
+              })}
             </button>
           </div>
         </div>

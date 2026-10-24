@@ -594,5 +594,9 @@
   "my-saves": "My Saves",
   "save-folder-empty": "No saves here yet.",
   "save-options": "Save options",
-  "theme-system-card": "System"
+  "theme-system-card": "System",
+  "translation-not-served": "This translation isn't available here",
+  "translation-not-served-body": "{{id}} is not among the Bibles this reader serves. Read this chapter in another translation.",
+  "read-in-translation": "Read in {{id}}",
+  "choose-translation": "Choose a translation"
 }

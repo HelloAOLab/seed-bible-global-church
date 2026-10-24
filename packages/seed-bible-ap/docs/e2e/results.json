@@ -1,24 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 17:14 UTC",
+  "when": "2026-10-24 17:21 UTC",
   "results": [
     {
-      "id": "HL1",
-      "section": "4. Marking the text",
-      "title": "Clearing or re-colouring part of a highlight keeps the rest",
-      "checks": "Highlight John 3:14–17 yellow; clear verse 15: 14, 16 and 17 stay yellow; colour 16 green: 17 stays yellow; clear them all",
+      "id": "R1",
+      "section": "3. Reading",
+      "title": "Open a chapter",
+      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
       "mark": "✅",
-      "note": "14–17 yellow; clearing 15 kept 14, 16, 17; colouring 16 green kept 17 yellow; cleared",
-      "ms": 1302
+      "note": "edge-rendered, then live; header \"John3\"",
+      "ms": 544
     },
     {
-      "id": "TH1",
+      "id": "R2",
       "section": "3. Reading",
-      "title": "Theme: Light, Dark or System",
-      "checks": "Settings → Display & Theme shows the old reader's gallery — Light, Dark, System; Dark makes the reader dark; More → Themes flips it; System brings back the device's choice (light in this browser)",
+      "title": "Next / previous chapter",
+      "checks": "The toolbar arrows move to John 4 and back; the URL follows",
       "mark": "✅",
-      "note": "three cards; Dark → dark; More → Themes flipped it; System → light again (the device's choice)",
-      "ms": 900
+      "note": "John 3 → 4 → 3, and browser back → 4",
+      "ms": 673
+    },
+    {
+      "id": "R4",
+      "section": "3. Reading",
+      "title": "Change translation",
+      "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
+      "mark": "✅",
+      "note": "switched to WEB World English Bible English",
+      "ms": 790
+    },
+    {
+      "id": "G5",
+      "section": "3. Reading",
+      "title": "Download a whole translation for offline",
+      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
+      "mark": "❌",
+      "note": "locator.waitFor: Timeout 180000ms exceeded.",
+      "ms": 192548
+    },
+    {
+      "id": "NT1",
+      "section": "3. Reading",
+      "title": "A link to a translation that isn't served",
+      "checks": "A link to a translation the scripture agent does not serve (/read/WEB/ROM/8) says so instead of a dead Retry, with Read in BSB — which opens Romans 8 in BSB — and Choose a translation",
+      "mark": "✅",
+      "note": "WEB said it isn't available here; Read in BSB opened Romans 8 in BSB",
+      "ms": 2395
     }
   ]
 }
