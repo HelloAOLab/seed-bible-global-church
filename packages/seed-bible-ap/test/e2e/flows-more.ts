@@ -178,6 +178,93 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "VS1",
+    section: "4. Marking the text",
+    title: "The phone's verse sheet",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      try {
+        await c.open(CH, page);
+        const sheet = page.locator(".sb-verse-toolbar-mobile");
+        const tap3 = async () => {
+          await c.verse(3, page).locator(".sb-verse-number").first().tap();
+          await sheet.waitFor({ timeout: 5000 });
+          await c.settleTours(page);
+        };
+        await tap3();
+        if (await page.locator(".sb-phone-nav").count())
+          throw new Error("the tabs still show under the sheet");
+        const cards = await sheet
+          .locator(
+            ".sb-verse-toolbar-cards > .sb-verse-toolbar-action-item .sb-verse-toolbar-action-label"
+          )
+          .allInnerTexts();
+        if (cards.join() !== "Highlight,Save,Note,Copy")
+          throw new Error(`cards: ${cards.join(", ")}`);
+        if (
+          (
+            await sheet.locator(".sb-verse-toolbar-ref-text").innerText()
+          ).trim() !== "John 3:3"
+        )
+          throw new Error("the sheet does not name John 3:3");
+        await c.waitText(sheet, /swipe up to see more/i, 3000);
+        await sheet.locator(".sb-verse-toolbar-handle-area").tap();
+        await sheet
+          .getByRole("button", { name: "Share" })
+          .waitFor({ timeout: 3000 });
+        await sheet
+          .getByRole("button", { name: "Compare" })
+          .waitFor({ timeout: 3000 });
+        await sheet.locator(".sb-verse-toolbar-handle-area").tap();
+        const box = (await sheet
+          .locator(".sb-verse-toolbar-ref")
+          .boundingBox())!;
+        await page.mouse.move(195, box.y + 5);
+        await page.mouse.down();
+        await page.mouse.move(195, box.y + 220, { steps: 10 });
+        await page.mouse.up();
+        await sheet.waitFor({ state: "detached", timeout: 3000 }).catch(() => {
+          throw new Error("a swipe down did not close the sheet");
+        });
+        await page.locator(".sb-phone-nav").waitFor({ timeout: 3000 });
+        await tap3();
+        await sheet.locator(".sb-verse-toolbar-highlight-trigger").tap();
+        await sheet
+          .locator(".sb-verse-toolbar-swatches")
+          .waitFor({ timeout: 3000 });
+        await sheet
+          .getByRole("button", { name: "Back" })
+          .waitFor({ timeout: 3000 });
+        await sheet
+          .locator(".sb-verse-toolbar-clear")
+          .waitFor({ timeout: 3000 });
+        await sheet.locator(".sb-verse-toolbar-color-button").first().tap();
+        await sheet.waitFor({ state: "detached", timeout: 3000 });
+        await page
+          .locator(
+            '.sb-bible-reader-active [data-verse-number="3"] [data-highlight-fill], .sb-bible-reader-active [data-highlight-fill]'
+          )
+          .first()
+          .waitFor({ timeout: 5000 });
+        // Leave the page as it was.
+        await c.verse(3, page).locator(".sb-verse-number").first().tap();
+        await c.clearHighlight(page);
+        return `cards ${cards.join(" · ")} in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
+  {
     id: "TD1",
     section: "8. Today, Discover and publishing",
     title: "Today's Community card",

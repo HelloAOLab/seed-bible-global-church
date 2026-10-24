@@ -1961,10 +1961,24 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   .sb-floating-search-panel {
     bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
   }
+  /* On a phone the chapter and the Discover card stack at the screen's width (the old reader lays them out as plain
+     blocks there); a centred column would let either grow to its widest line and run off the edge. */
+  .sb-bible-reader-content {
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .sb-bible-reader-main-content {
+    min-width: 0;
+    max-width: 100%;
+  }
   /* The Discover card follows the chapter on a phone, a deliberate scroll away (the old reader's mobile margins). */
   .sb-bible-reader-discover-panel {
     margin: 6rem 1rem 2rem;
     justify-self: auto;
+    align-self: stretch;
+    flex: none;
+    width: auto;
+    min-width: 0;
     max-width: none;
   }
   .sb-discover-content-panel {

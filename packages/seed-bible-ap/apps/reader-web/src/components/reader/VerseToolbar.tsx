@@ -1,9 +1,11 @@
 // THE VERSE TOOLBAR — what the old BibleReaderToolbar shows over a selection (`sb-verse-toolbar-*` from the copied
 // stylesheet): on a desktop it floats just above the selected verse and follows it as the page scrolls. Its row is
 // the old reader's — Highlight · Save · Note · Copy · the extensions' tools (Compare) · Share · Cancel — and
-// Highlight turns it into the colour picker (the reference with ‹ back, the swatches, Clear).
+// Highlight turns it into the colour picker (the reference with ‹ back, the swatches, Clear). On a phone it is the old
+// reader's sheet along the bottom: a handle, ×, the reference and four cards (Highlight · Save · Note · Copy); the
+// rest (Share, Compare, …) is a row a swipe up — or a tap on the handle — reveals, and a swipe down closes it.
 import { handleHorizontalListKeyNav } from "../keyboardNav";
-import { useEffect, useLayoutEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { passageOf } from "../../state/records/marks";
@@ -22,7 +24,24 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const [picker, setPicker] = useState(false);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const key = verses.join();
-  useEffect(() => setPicker(false), [key]);
+  // The phone sheet: how much of its second row shows (px), how far a downward swipe has pulled it, and the drag.
+  const [reveal, setReveal] = useState(0);
+  const [full, setFull] = useState(0);
+  const [dismiss, setDismiss] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ y: number; reveal: number; moved: boolean } | null>(
+    null
+  );
+  const row = useRef<HTMLDivElement>(null);
+  const swiped = useRef(false);
+  useEffect(() => {
+    setPicker(false);
+    setReveal(0);
+    setDismiss(0);
+  }, [key]);
+  useLayoutEffect(() => {
+    if (row.current) setFull(row.current.scrollHeight);
+  });
   // Just above the first line of the selection, kept there while the page or the reading column scrolls.
   useLayoutEffect(() => {
     if (!verses.length) return;
@@ -135,97 +154,351 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
     (state.live.myRole.value === "leader" ||
       state.live.myRole.value === "decorator");
 
+  const highlightA = (
+    <Action
+      key="highlight"
+      icon="format_ink_highlighter"
+      label={t("highlight", { defaultValue: "Highlight" })}
+      className="sb-verse-toolbar-highlight-trigger"
+      onClick={() => setPicker(true)}
+    />
+  );
+  const saveA = (
+    <Action
+      key="save"
+      icon="star"
+      filled={saved}
+      pressed={saved}
+      label={t("save-verses", { defaultValue: "Save" })}
+      className={`sb-verse-toolbar-save-trigger${saved ? " sb-verse-toolbar-save-trigger-active" : ""}`}
+      onClick={() => {
+        void state.saves.toggle(
+          chapterRef,
+          { start, end },
+          reading.translationId.value
+        );
+        state.selection.clear();
+      }}
+    />
+  );
+  const noteA = (
+    <Action
+      key="note"
+      icon="sticky_note_2"
+      label={t("note", { defaultValue: "Note" })}
+      className="sb-verse-toolbar-note"
+      onClick={() => {
+        state.ui.pane.value = "notes";
+        state.ui.noteDraft.value = { start, end };
+      }}
+    />
+  );
+  const copyA = (
+    <Action
+      key="copy"
+      icon={copied ? "check" : "content_copy"}
+      label={
+        copied
+          ? t("link-copied", { defaultValue: "Copied" })
+          : t("copy-verse", { defaultValue: "Copy" })
+      }
+      className="sb-verse-toolbar-copy"
+      onClick={() => void copyText()}
+    />
+  );
+  const toolsA = tools.map((tool) => (
+    <Action
+      key={tool.id}
+      icon={tool.icon}
+      label={tool.label}
+      onClick={() => {
+        tool.onSelect({ chapterRef, start, end, verses });
+        state.selection.clear();
+      }}
+    />
+  ));
+  const shareA = (
+    <Action
+      key="share"
+      icon="share"
+      label={t("share-verses", { defaultValue: "Share" })}
+      onClick={() => {
+        state.ui.share.value = {
+          title: ref,
+          url: shareUrl(
+            location.origin,
+            {
+              translationId: reading.translationId.value,
+              bookId: reading.bookId.value,
+              chapterNumber: reading.chapterNumber.value,
+            },
+            start,
+            end
+          ),
+        };
+      }}
+    />
+  );
+  const everyoneA = canShowEveryone ? (
+    <Action
+      key="everyone"
+      icon="campaign"
+      label={t("session-show-everyone", {
+        defaultValue: "Show everyone",
+      })}
+      onClick={() => {
+        void state.live.decorate(start, end, current?.colorId ?? "yellow");
+        state.selection.clear();
+      }}
+    />
+  ) : null;
+  const cancelA = (
+    <Action
+      key="cancel"
+      icon="close"
+      label={t("cancel", { defaultValue: "Cancel" })}
+      className="sb-verse-toolbar-cancel"
+      onClick={() => state.selection.clear()}
+    />
+  );
+  const pickerEl = (
+    <div
+      className="sb-verse-toolbar-tools sb-verse-toolbar-picker"
+      role="toolbar"
+      onKeyDown={(e) => {
+        if ((e as KeyboardEvent).key === "Escape") {
+          e.preventDefault();
+          setPicker(false);
+          return;
+        }
+        handleHorizontalListKeyNav(
+          e as KeyboardEvent,
+          e.currentTarget as HTMLElement
+        );
+      }}
+    >
+      <div
+        className="sb-verse-toolbar-swatches"
+        role="group"
+        aria-label={t("highlight-colors", {
+          defaultValue: "Highlight colors",
+        })}
+      >
+        {state.highlights.colors.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className="sb-verse-toolbar-color-button"
+            aria-label={t("highlight", { defaultValue: "Highlight" }) + ` ${c}`}
+            title={c}
+            aria-pressed={current?.colorId === c}
+            onClick={() => {
+              void state.highlights.set(chapterRef, start, end, c);
+              state.selection.clear();
+            }}
+          >
+            <span
+              className={`sb-verse-toolbar-color${current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
+              style={{ background: `var(--sb-highlight-${c}-color)` }}
+            />
+          </button>
+        ))}
+      </div>
+      <div className="sb-verse-toolbar-picker-actions">
+        <button
+          type="button"
+          className="sb-verse-toolbar-clear"
+          disabled={!current}
+          aria-label={t("clear-highlight", {
+            defaultValue: "Clear highlight",
+          })}
+          title={t("clear", { defaultValue: "Clear" })}
+          onClick={() => {
+            void state.highlights.clear(chapterRef, start, end);
+            state.selection.clear();
+          }}
+        >
+          <span className="material-symbols-outlined">ink_eraser</span>
+          <span className="sb-verse-toolbar-action-text">
+            {t("clear", { defaultValue: "Clear" })}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (phone && !menuAt) {
+    const more = [shareA, ...toolsA, everyoneA].filter(Boolean);
+    const open = reveal > 0;
+    const end_ = () => {
+      const d = drag.current;
+      drag.current = null;
+      setDragging(false);
+      if (!d) return;
+      if (d.moved) {
+        swiped.current = true;
+        setTimeout(() => (swiped.current = false), 0);
+      }
+      if (dismiss > 80) {
+        setDismiss(0);
+        state.selection.clear();
+        return;
+      }
+      setDismiss(0);
+      setReveal(reveal > full / 2 ? full : 0);
+    };
+    return (
+      <div
+        className={`sb-verse-toolbar sb-verse-toolbar-mobile${dragging ? " sb-verse-sheet-dragging" : ""}`}
+        role="toolbar"
+        aria-label={ref}
+        style={dismiss ? { transform: `translateY(${dismiss}px)` } : undefined}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
+        onClickCapture={(e: MouseEvent) => {
+          // A swipe that ended over a card is not a tap on it.
+          if (!swiped.current) return;
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        onPointerDown={(e: PointerEvent) => {
+          drag.current = { y: e.clientY, reveal, moved: false };
+        }}
+        onPointerMove={(e: PointerEvent) => {
+          const d = drag.current;
+          if (!d) return;
+          const dy = e.clientY - d.y;
+          if (!d.moved && Math.abs(dy) < 8) return;
+          if (!d.moved) {
+            d.moved = true;
+            setDragging(true);
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+          }
+          const r = Math.max(0, Math.min(full, d.reveal - dy));
+          setReveal(picker ? 0 : r);
+          setDismiss(d.reveal - dy < 0 ? Math.max(0, dy - d.reveal) : 0);
+        }}
+        onPointerUp={end_}
+        onPointerCancel={end_}
+      >
+        <div
+          className="sb-verse-toolbar-handle-area"
+          role="button"
+          tabIndex={more.length ? 0 : -1}
+          aria-expanded={open}
+          aria-label={
+            open
+              ? t("show-fewer-verse-actions", {
+                  defaultValue: "Show fewer actions",
+                })
+              : t("show-more-verse-actions", {
+                  defaultValue: "Show more actions",
+                })
+          }
+          onClick={() => setReveal(open ? 0 : full)}
+          onKeyDown={(e) => {
+            const k = (e as KeyboardEvent).key;
+            if (k === "Enter" || k === " ") {
+              e.preventDefault();
+              setReveal(open ? 0 : full);
+            }
+          }}
+        >
+          <div className="sb-verse-toolbar-handle" />
+        </div>
+        <button
+          type="button"
+          className="sb-verse-toolbar-close"
+          aria-label={
+            picker
+              ? t("back", { defaultValue: "Back" })
+              : t("close", { defaultValue: "Close" })
+          }
+          title={
+            picker
+              ? t("back", { defaultValue: "Back" })
+              : t("close", { defaultValue: "Close" })
+          }
+          onClick={() => (picker ? setPicker(false) : state.selection.clear())}
+        >
+          <span className="material-symbols-outlined">
+            {picker ? "arrow_back" : "close"}
+          </span>
+        </button>
+        <div className="sb-verse-toolbar-ref">
+          <span className="sb-verse-toolbar-ref-text" aria-live="polite">
+            {ref}
+          </span>
+        </div>
+        {picker ? (
+          pickerEl
+        ) : (
+          <div className="sb-verse-toolbar-tools sb-verse-toolbar-cards">
+            {highlightA}
+            {saveA}
+            {noteA}
+            {copyA}
+            {more.length > 0 && (
+              <div
+                className={`sb-verse-toolbar-overflow${open ? "" : " sb-verse-toolbar-overflow-closed"}`}
+                style={{ height: `${reveal}px` }}
+              >
+                <div className="sb-verse-toolbar-overflow-row" ref={row}>
+                  <div className="sb-verse-toolbar-overflow-pinned">{more}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {!picker && more.length > 0 && !open && (
+          <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
+            <span className="material-symbols-outlined">
+              keyboard_double_arrow_up
+            </span>
+            <span>
+              {t("swipe-up-more", { defaultValue: "Swipe up to see more" })}
+            </span>
+          </div>
+        )}
+        {picker && (
+          <div
+            className="sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-colors"
+            aria-hidden="true"
+          >
+            <span className="material-symbols-outlined">
+              keyboard_double_arrow_right
+            </span>
+            <span>
+              {t("swipe-to-see-more", { defaultValue: "Swipe to see more" })}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`sb-verse-toolbar ${menuAt ? "sb-verse-toolbar-menu" : !phone && anchor ? "sb-verse-toolbar-draggable sb-verse-toolbar-anchored" : "sb-verse-toolbar-docked"}`}
+      className={`sb-verse-toolbar ${menuAt ? "sb-verse-toolbar-menu" : anchor ? "sb-verse-toolbar-draggable sb-verse-toolbar-anchored" : "sb-verse-toolbar-docked"}`}
       role={menuAt ? "menu" : "toolbar"}
       style={style}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
-      {(picker || phone) && (
-        <div
-          className={`sb-verse-toolbar-ref${picker ? " sb-verse-toolbar-ref-with-back" : ""}`}
-        >
-          {picker && (
-            <button
-              type="button"
-              className="sb-verse-toolbar-back"
-              aria-label={t("back", { defaultValue: "Back" })}
-              title={t("back", { defaultValue: "Back" })}
-              onClick={() => setPicker(false)}
-            >
-              <span className="material-symbols-outlined">chevron_left</span>
-            </button>
-          )}
+      {picker && (
+        <div className="sb-verse-toolbar-ref sb-verse-toolbar-ref-with-back">
+          <button
+            type="button"
+            className="sb-verse-toolbar-back"
+            aria-label={t("back", { defaultValue: "Back" })}
+            title={t("back", { defaultValue: "Back" })}
+            onClick={() => setPicker(false)}
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
           <span className="sb-verse-toolbar-ref-text">{ref}</span>
         </div>
       )}
       {picker ? (
-        <div
-          className="sb-verse-toolbar-tools sb-verse-toolbar-picker"
-          role="toolbar"
-          onKeyDown={(e) => {
-            if ((e as KeyboardEvent).key === "Escape") {
-              e.preventDefault();
-              setPicker(false);
-              return;
-            }
-            handleHorizontalListKeyNav(
-              e as KeyboardEvent,
-              e.currentTarget as HTMLElement
-            );
-          }}
-        >
-          <div
-            className="sb-verse-toolbar-swatches"
-            role="group"
-            aria-label={t("highlight-colors", {
-              defaultValue: "Highlight colors",
-            })}
-          >
-            {state.highlights.colors.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className="sb-verse-toolbar-color-button"
-                aria-label={
-                  t("highlight", { defaultValue: "Highlight" }) + ` ${c}`
-                }
-                title={c}
-                aria-pressed={current?.colorId === c}
-                onClick={() => {
-                  void state.highlights.set(chapterRef, start, end, c);
-                  state.selection.clear();
-                }}
-              >
-                <span
-                  className={`sb-verse-toolbar-color${current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
-                  style={{ background: `var(--sb-highlight-${c}-color)` }}
-                />
-              </button>
-            ))}
-          </div>
-          <div className="sb-verse-toolbar-picker-actions">
-            <button
-              type="button"
-              className="sb-verse-toolbar-clear"
-              disabled={!current}
-              aria-label={t("clear-highlight", {
-                defaultValue: "Clear highlight",
-              })}
-              title={t("clear", { defaultValue: "Clear" })}
-              onClick={() => {
-                void state.highlights.clear(chapterRef, start, end);
-                state.selection.clear();
-              }}
-            >
-              <span className="material-symbols-outlined">ink_eraser</span>
-              <span className="sb-verse-toolbar-action-text">
-                {t("clear", { defaultValue: "Clear" })}
-              </span>
-            </button>
-          </div>
-        </div>
+        pickerEl
       ) : (
         <div
           className="sb-verse-toolbar-tools"
@@ -236,98 +509,14 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             )
           }
         >
-          <Action
-            icon="format_ink_highlighter"
-            label={t("highlight", { defaultValue: "Highlight" })}
-            className="sb-verse-toolbar-highlight-trigger"
-            onClick={() => setPicker(true)}
-          />
-          <Action
-            icon="star"
-            filled={saved}
-            pressed={saved}
-            label={t("save-verses", { defaultValue: "Save" })}
-            className={`sb-verse-toolbar-save-trigger${saved ? " sb-verse-toolbar-save-trigger-active" : ""}`}
-            onClick={() => {
-              void state.saves.toggle(
-                chapterRef,
-                { start, end },
-                reading.translationId.value
-              );
-              state.selection.clear();
-            }}
-          />
-          <Action
-            icon="sticky_note_2"
-            label={t("note", { defaultValue: "Note" })}
-            className="sb-verse-toolbar-note"
-            onClick={() => {
-              state.ui.pane.value = "notes";
-              state.ui.noteDraft.value = { start, end };
-            }}
-          />
-          <Action
-            icon={copied ? "check" : "content_copy"}
-            label={
-              copied
-                ? t("link-copied", { defaultValue: "Copied" })
-                : t("copy-verse", { defaultValue: "Copy" })
-            }
-            className="sb-verse-toolbar-copy"
-            onClick={() => void copyText()}
-          />
-          {tools.map((tool) => (
-            <Action
-              key={tool.id}
-              icon={tool.icon}
-              label={tool.label}
-              onClick={() => {
-                tool.onSelect({ chapterRef, start, end, verses });
-                state.selection.clear();
-              }}
-            />
-          ))}
-          <Action
-            icon="share"
-            label={t("share-verses", { defaultValue: "Share" })}
-            onClick={() => {
-              state.ui.share.value = {
-                title: ref,
-                url: shareUrl(
-                  location.origin,
-                  {
-                    translationId: reading.translationId.value,
-                    bookId: reading.bookId.value,
-                    chapterNumber: reading.chapterNumber.value,
-                  },
-                  start,
-                  end
-                ),
-              };
-            }}
-          />
-          {canShowEveryone && (
-            <Action
-              icon="campaign"
-              label={t("session-show-everyone", {
-                defaultValue: "Show everyone",
-              })}
-              onClick={() => {
-                void state.live.decorate(
-                  start,
-                  end,
-                  current?.colorId ?? "yellow"
-                );
-                state.selection.clear();
-              }}
-            />
-          )}
-          <Action
-            icon="close"
-            label={t("cancel", { defaultValue: "Cancel" })}
-            className="sb-verse-toolbar-cancel"
-            onClick={() => state.selection.clear()}
-          />
+          {highlightA}
+          {saveA}
+          {noteA}
+          {copyA}
+          {toolsA}
+          {shareA}
+          {everyoneA}
+          {cancelA}
         </div>
       )}
     </div>

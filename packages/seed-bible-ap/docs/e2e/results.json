@@ -1,24 +1,78 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 22:06 UTC",
+  "when": "2026-10-24 22:37 UTC",
   "results": [
     {
-      "id": "YC1",
-      "section": "5. Your Content and search",
-      "title": "Your content as the old reader's: chips, your own search, quotes and menus",
-      "checks": "With a note on John 3:16 and a highlight on 3:14, Your content shows + Create (Playlist, Reading plan) and the chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; the note's card quotes its verse ('For God so loved…') above the note; the highlight quotes its verse. Searching a word of the note finds only the note; a word of the highlighted verse finds the highlight; the Highlights chip shows only highlights; each item's ⋯ deletes it (Delete, Clear highlight)",
+      "id": "R5",
+      "section": "3. Reading",
+      "title": "Share link selects verses",
+      "checks": "?v=16-18 opens with John 3:16–18 selected and the verse toolbar's Highlight naming them",
       "mark": "✅",
-      "note": "chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note",
-      "ms": 2171
+      "note": "toolbar \"John 3:16–18\", 3 verses selected",
+      "ms": 989
     },
     {
-      "id": "G3",
-      "section": "3. Reading",
-      "title": "Keyboard navigation",
-      "checks": "Right arrow opens John 4, Left goes back; Escape clears a selection and then closes the side pane; arrows move focus in the book picker",
+      "id": "M1",
+      "section": "4. Marking the text",
+      "title": "Highlight and clear",
+      "checks": "Select 3:16, tap a colour → a ribbon appears; select again → Clear highlight → gone",
       "mark": "✅",
-      "note": "→ John 4, ← John 3; Escape cleared the selection then closed the pane; arrow focus moved to \"2 Chronicles\nexpand_\"",
-      "ms": 1848
+      "note": "ribbon drawn, then cleared",
+      "ms": 1651
+    },
+    {
+      "id": "M4",
+      "section": "4. Marking the text",
+      "title": "Share a verse: link and embed code",
+      "checks": "Select 3:16 → Share opens the Share dialog; Copy link copies a link ending in ?v=16; the embed code is an iframe of the compact reader, dark when Dark is chosen",
+      "mark": "✅",
+      "note": "https://seed-reader.faithnet.io/read/BSB/JHN/3?v=16; embed <iframe src=\"https://seed-reader.faithnet.io/read/BSB/JHN/3?…",
+      "ms": 1229
+    },
+    {
+      "id": "M5",
+      "section": "4. Marking the text",
+      "title": "Save a verse range",
+      "checks": "Select 3:15–16 → Save in the verse toolbar; Your Content lists John 3:15–16",
+      "mark": "✅",
+      "note": "John 3:15–16 saved",
+      "ms": 1080
+    },
+    {
+      "id": "VS1",
+      "section": "4. Marking the text",
+      "title": "The phone's verse sheet",
+      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
+      "mark": "✅",
+      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
+      "ms": 2894
+    },
+    {
+      "id": "TB1",
+      "section": "3. Reading",
+      "title": "The old reader's bottom bar; every action within reach",
+      "checks": "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
+      "mark": "✅",
+      "note": "desktop bar: Books · Search · Discover · Places map · Study companion · More; under More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes; Books and Search open; on a phone all 9 actions reachable",
+      "ms": 1276
+    },
+    {
+      "id": "HL1",
+      "section": "4. Marking the text",
+      "title": "Clearing or re-colouring part of a highlight keeps the rest",
+      "checks": "Highlight John 3:14–17 yellow; clear verse 15: 14, 16 and 17 stay yellow; colour 16 green: 17 stays yellow; clear them all",
+      "mark": "✅",
+      "note": "14–17 yellow; clearing 15 kept 14, 16, 17; colouring 16 green kept 17 yellow; cleared",
+      "ms": 1544
+    },
+    {
+      "id": "PH1",
+      "section": "13. Links and embedding",
+      "title": "A phone: the old reader's phone shell",
+      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
+      "mark": "✅",
+      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
+      "ms": 1413
     }
   ]
 }

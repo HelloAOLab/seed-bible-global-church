@@ -188,6 +188,8 @@ export function PhoneNav({ state }: { state: ReaderState }) {
     },
   ];
 
+  // The verse sheet takes the bottom of the screen while verses are chosen, as in the old reader.
+  if (state.selection.verses.value.length > 0) return null;
   return (
     <div className="sb-reader-toolbar-wrap sb-phone-nav">
       {active === "bible" && (

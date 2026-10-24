@@ -698,5 +698,9 @@
   "feed-reading-now": "{{name}} is reading {{reference}}",
   "feed-shared-plan": "{{name}} shared a reading plan at {{reference}}",
   "feed-shared-playlist": "{{name}} shared a playlist at {{reference}}",
-  "see-more": "See more"
+  "see-more": "See more",
+  "show-fewer-verse-actions": "Show fewer actions",
+  "show-more-verse-actions": "Show more actions",
+  "swipe-to-see-more": "Swipe to see more",
+  "swipe-up-more": "Swipe up to see more"
 }
