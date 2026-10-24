@@ -46,28 +46,6 @@
   }
 }
 
-/* Compact desktop (just above the mobile breakpoint): the row is too narrow
-   to dock a 320px sidebar beside the reader without squashing it. So the
-   *expanded* sidebar floats over the reader (fixed, full-height, anchored to
-   the inline-start edge) instead of taking layout space. The collapsed rail
-   stays in flow so the expand button remains reachable. Mirrors the
-   SIDEBAR_OVERLAY_MAX_WIDTH band in SeedBibleStateManager. */
-@media (min-width: 481px) and (max-width: 768px) {
-  .sb-tabs-sidebar:not(.sb-tabs-sidebar-collapsed) {
-    position: fixed;
-    inset-block: 0;
-    inset-inline-start: 0;
-    z-index: 121;
-    height: 100%;
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
-    /* The docked sidebar's `--sb-sidebar-background` is transparent in the
-       light theme (it blends with the page behind it). Floating over the
-       reader there's text behind it, so paint the opaque page background —
-       same approach as the mobile drawer (`.sb-tabs-sidebar-mobile-open`). */
-    background: var(--sb-background);
-  }
-}
-
 .sb-sidebar-scrim {
   position: fixed;
   inset: 0;

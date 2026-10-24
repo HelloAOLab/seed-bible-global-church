@@ -419,6 +419,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarCollapsed: signal(false),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
+    /** The reading area's width in px (App.tsx measures it); the toolbar folds into More when it's wider than this. */
+    mainWidth: signal(0),
     /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
     embed: signal(false),
     /** What the Share dialog is sharing (components/chrome/ShareDialog.tsx); null when closed. */

@@ -2,6 +2,7 @@
 // plans, church themes, the extensions, links and first visit. Signed-in flows use the Home's sample person Seed
 // Reader and tidy up after themselves (what they publish is withdrawn, what they make is deleted). Rows that need
 // two Homes that are friends with each other are skipped with the reason: the sample people have no friends.
+import { chromium, firefox } from "playwright";
 import type { Flow, FlowContext } from "./harness";
 import { BASE } from "./harness";
 
@@ -2174,6 +2175,105 @@ export const MORE_FLOWS: Flow[] = [
         headers: { accept: "text/html" },
       });
       return `${link.replace(BASE, "")}: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers ${gone.status()}`;
+    },
+  },
+  {
+    id: "PH2",
+    timeoutMs: 240_000,
+    section: "13. Links and embedding",
+    title: "The bottom toolbar fits its window, in Firefox and Chrome",
+    rows: ["The bottom toolbar fits its window"],
+    checks:
+      "In Firefox and in Chrome, at 1440, 1100, 900 and 740 px wide: every button sits inside the bar and on screen, and the bar keeps clear of the sidebar; where the whole bar is wider than the reading area it folds under More, and More opens on screen and clear of the sidebar; widened to 1600 px the bar unfolds again",
+    run: async () => {
+      const seen: string[] = [];
+      for (const type of [firefox, chromium]) {
+        const browser = await type.launch();
+        try {
+          for (const width of [1440, 1100, 900, 740]) {
+            const page = await (
+              await browser.newContext({ viewport: { width, height: 760 } })
+            ).newPage();
+            await page.goto(`${BASE}${CH}`, { waitUntil: "networkidle" });
+            const just = page.getByText("Just read");
+            if (await just.count()) await just.first().click();
+            const bar = page.locator(".sb-reader-toolbar");
+            await bar.waitFor({ timeout: 20000 });
+            await page.evaluate(() => document.fonts.ready);
+            const at = `${type.name()} at ${width}px`;
+            const fit = await bar.evaluate((n) => {
+              const r = n.getBoundingClientRect();
+              const side = document
+                .querySelector(".sb-tabs-sidebar")!
+                .getBoundingClientRect();
+              const items = [...n.querySelectorAll(".sb-reader-toolbar-item")]
+                .map((k) => k.getBoundingClientRect())
+                .filter((k) => k.width);
+              return {
+                out: items.filter(
+                  (k) =>
+                    k.right > r.right + 1 ||
+                    k.left < r.left - 1 ||
+                    k.right > innerWidth
+                ).length,
+                overSidebar: r.left < side.right - 1,
+                sidebarFixed:
+                  getComputedStyle(document.querySelector(".sb-tabs-sidebar")!)
+                    .position === "fixed",
+                folded: n.classList.contains("sb-reader-toolbar-folded"),
+              };
+            });
+            if (fit.out)
+              throw new Error(`${at}: ${fit.out} buttons fall outside the bar`);
+            if (fit.overSidebar)
+              throw new Error(`${at}: the bar runs under the sidebar`);
+            if (fit.sidebarFixed)
+              throw new Error(`${at}: the sidebar floats over the text`);
+            if (width === 1440 && fit.folded)
+              throw new Error(`${at}: the bar folded with room to spare`);
+            if (fit.folded) {
+              await page
+                .getByRole("button", { name: "More", exact: true })
+                .click();
+              const menu = await page
+                .locator(".sb-reader-toolbar-more-menu")
+                .evaluate((m) => {
+                  const r = m.getBoundingClientRect();
+                  const side = document
+                    .querySelector(".sb-tabs-sidebar")!
+                    .getBoundingClientRect();
+                  return (
+                    r.left >= side.right && r.right <= innerWidth && r.top >= 0
+                  );
+                });
+              if (!menu)
+                throw new Error(
+                  `${at}: More opens off screen or over the sidebar`
+                );
+              await page.setViewportSize({ width: 1600, height: 760 });
+              await page
+                .waitForFunction(
+                  () =>
+                    !document
+                      .querySelector(".sb-reader-toolbar")!
+                      .classList.contains("sb-reader-toolbar-folded"),
+                  undefined,
+                  { timeout: 5000 }
+                )
+                .catch(() => {
+                  throw new Error(
+                    `${at}: widened to 1600px the bar stayed folded`
+                  );
+                });
+            }
+            seen.push(`${at} ${fit.folded ? "folded under More" : "whole"}`);
+            await page.context().close();
+          }
+        } finally {
+          await browser.close();
+        }
+      }
+      return `every button inside the bar, clear of the sidebar: ${seen.join("; ")}`;
     },
   },
   {

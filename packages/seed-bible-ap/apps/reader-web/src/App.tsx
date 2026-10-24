@@ -52,6 +52,7 @@ export function App({ state }: { state: ReaderState }) {
       const root = document.documentElement.style;
       root.setProperty("--sb-main-left", `${r.left}px`);
       root.setProperty("--sb-main-width", `${r.width}px`);
+      state.ui.mainWidth.value = r.width;
     };
     measure();
     const ro =

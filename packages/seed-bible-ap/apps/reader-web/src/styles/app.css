@@ -239,8 +239,21 @@ body {
 /* The verse toolbar, docked above the reader toolbar in this cut (the old one is positioned at the selection). */
 /* The floating toolbars sit over the reader column (App.tsx measures it into --sb-main-left / --sb-main-width), so
    a side pane or the sidebar never has the pill running underneath it. */
+/* Centred on the reading area. Sized to its buttons outright: left to shrink-to-fit, Firefox caps a fixed box at the
+   room between `left` and the viewport's edge (half the reading area), and the last buttons spill out of the pill. */
 .sb-reader-toolbar {
   left: calc(var(--sb-main-left, 0px) + var(--sb-main-width, 100vw) / 2);
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+}
+/* The same size as toolbar.css's flex basis, said as a width too: Firefox counts a flex item's width, not its fixed
+   flex basis, when it works out the bar's own width. */
+.sb-reader-toolbar .sb-reader-toolbar-item {
+  width: 2.75rem;
+}
+.sb-reader-toolbar .sb-reader-toolbar-center-item,
+.sb-reader-toolbar-labeled .sb-reader-toolbar-item {
+  width: auto;
 }
 .sb-verse-toolbar-docked {
   left: calc(var(--sb-main-left, 0px) + var(--sb-main-width, 100vw) / 2);
@@ -555,7 +568,14 @@ body {
 .sb-reader-toolbar-more-button {
   display: none;
 }
-/* A narrow phone: the actions after the chapter controls go under "More". */
+/* A narrow phone, or a bar wider than its reading area (ReaderToolbar measures that): the actions after the chapter
+   controls go under "More". */
+.sb-reader-toolbar-folded .sb-reader-toolbar-secondary {
+  display: none;
+}
+.sb-reader-toolbar-folded .sb-reader-toolbar-more-button {
+  display: block;
+}
 @media (max-width: 480px) {
   .sb-reader-toolbar-secondary {
     display: none;
@@ -580,6 +600,17 @@ body {
     var(--sb-background-color, #fff)
   );
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+/* Off a phone the bar is moved into place with a transform, which makes it the box a fixed menu inside it is placed
+   in: the menu sits just above the bar, centred on it, and as wide as the reading area allows. */
+@media (min-width: 721px) {
+  .sb-reader-toolbar .sb-reader-toolbar-more-menu {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+    width: min(24rem, calc(var(--sb-main-width, 100vw) - 1rem));
+  }
 }
 .sb-reader-toolbar-more-item {
   position: relative;

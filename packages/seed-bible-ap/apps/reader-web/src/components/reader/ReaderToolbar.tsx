@@ -9,7 +9,7 @@ import {
 } from "../../state/chrome/fullScreen";
 import { arrange } from "../../state/chrome/toolbarLayout";
 import { handleGridKeyNav } from "../keyboardNav";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
@@ -214,7 +214,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     };
   }, [moreOpen]);
 
-  // Everything after the chapter controls: inline on a wide screen, under "More" on a narrow phone; in the order
+  // Everything after the chapter controls: inline when the bar fits, otherwise under "More"; in the order
   // and with the buttons the reader chose (Account → Toolbar).
   const secondary: ToolbarAction[] = toolbarActions(state, t, {
     togglePane,
@@ -223,9 +223,44 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   });
   const shown = arrange(secondary, state.toolbar.layout.value);
 
+  // Folded under More when the whole bar is wider than the reading area (the sidebar or a pane beside it leaves less
+  // room than the window). Its full width can only be read while it is unfolded, so anything that changes it (the
+  // buttons, the audio controls, the chapter's name, the room, the web fonts arriving) unfolds it for one measure
+  // before the paint.
+  const navRef = useRef<HTMLElement>(null);
+  const fullWidth = useRef(0);
+  const [folded, setFolded] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  useEffect(() => {
+    void document.fonts?.ready.then(() => setFontsLoaded(true));
+  }, []);
+  const mainWidth = ui.mainWidth.value;
+  const contentKey = [
+    mainWidth,
+    fontsLoaded,
+    shown.map((a) => a.id).join(),
+    audioActive,
+    audioPlaying,
+    audio.available.value,
+    canListen,
+    reading.bookName.value,
+    reading.chapterNumber.value,
+  ].join("|");
+  useLayoutEffect(() => setFolded(false), [contentKey]);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    if (!folded) fullWidth.current = nav.scrollWidth;
+    const fold = mainWidth > 0 && fullWidth.current > mainWidth - 16;
+    if (fold === folded) return;
+    setFolded(fold);
+    if (!fold) setMoreOpen(false);
+  });
+
   return (
     <nav
-      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}`}
+      ref={navRef}
+      className={`sb-reader-toolbar${audioActive ? " sb-reader-toolbar-has-audio" : ""}${folded ? " sb-reader-toolbar-folded" : ""}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
       <Item
