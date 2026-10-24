@@ -2652,7 +2652,7 @@ export const MORE_FLOWS: Flow[] = [
     id: "HL1",
     section: "4. Marking the text",
     title: "Clearing or re-colouring part of a highlight keeps the rest",
-    rows: ["Highlight and clear"],
+    rows: ["Highlight (6 colours)"],
     checks:
       "Highlight John 3:14–17 yellow; clear verse 15: 14, 16 and 17 stay yellow; colour 16 green: 17 stays yellow; clear them all",
     run: async (c) => {
