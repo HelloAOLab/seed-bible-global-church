@@ -116,16 +116,40 @@ export class FlowContext {
     if (await later.count()) await later.first().click();
   }
 
+  /** Let a tour that is about to show come up, and skip it (Esc closes a tour and nothing else). */
+  async settleTours(page: Page = this.page): Promise<void> {
+    await page.waitForTimeout(700);
+    const card = page.locator(".sb-tour-card");
+    if (await card.isVisible().catch(() => false)) {
+      await page.keyboard.press("Escape");
+      await card.waitFor({ state: "detached", timeout: 3000 }).catch(() => {});
+    }
+  }
+
+  /** Tap a verse at its number (its text when it has none drawn). */
+  async tapVerse(
+    n: number,
+    page: Page = this.page,
+    opts: { shift?: boolean } = {}
+  ): Promise<void> {
+    const num = this.verse(n, page).locator(".sb-verse-number").first();
+    const mods = opts.shift ? { modifiers: ["Shift" as const] } : {};
+    if (await num.isVisible().catch(() => false)) await num.click(mods);
+    else
+      await this.verse(n, page).click({ position: { x: 40, y: 8 }, ...mods });
+  }
+
   verse(n: number, page: Page = this.page): Locator {
     return page
       .locator(`.sb-bible-reader-active [data-verse-number="${n}"]`)
       .first();
   }
 
-  /** Select a verse by tapping its text (blank space in a poetry line does not select, by design). */
+  /** Select a verse by tapping its number, which is always where the verse starts (a verse that starts mid-line has
+   *  the one before it at its left edge; blank space in a poetry line does not select, by design). */
   async selectVerse(n: number, page: Page = this.page): Promise<void> {
     await this.verse(n, page).waitFor({ timeout: 20000 });
-    await this.verse(n, page).click({ position: { x: 40, y: 8 } });
+    await this.tapVerse(n, page);
     await page.locator(".sb-verse-toolbar").waitFor({ timeout: 5000 });
     await this.settled(page.locator(".sb-verse-toolbar"));
   }

@@ -701,9 +701,21 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       selection.clear();
       void (action === "next" ? r.next() : r.prev());
     };
+    // While a tour shows, Esc is the tour's alone: caught before the search box, the picker or a menu under it
+    // sees it, so skipping the tour leaves what it was pointing at open.
+    const onTourEsc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !tours.active.value) return;
+      tours.done();
+      e.preventDefault();
+      e.stopPropagation();
+    };
     const keysOn = typeof window !== "undefined";
-    if (keysOn) window.addEventListener("keydown", onKey);
+    if (keysOn) {
+      window.addEventListener("keydown", onTourEsc, true);
+      window.addEventListener("keydown", onKey);
+    }
     const stops = [
+      () => keysOn && window.removeEventListener("keydown", onTourEsc, true),
       () => keysOn && window.removeEventListener("keydown", onKey),
       bindWakeLock(settings.keepScreenAwake),
       bindRoute(readingOf),

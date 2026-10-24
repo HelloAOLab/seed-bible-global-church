@@ -1,15 +1,24 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 21:21 UTC",
+  "when": "2026-10-24 22:06 UTC",
   "results": [
     {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
+      "id": "YC1",
+      "section": "5. Your Content and search",
+      "title": "Your content as the old reader's: chips, your own search, quotes and menus",
+      "checks": "With a note on John 3:16 and a highlight on 3:14, Your content shows + Create (Playlist, Reading plan) and the chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; the note's card quotes its verse ('For God so loved…') above the note; the highlight quotes its verse. Searching a word of the note finds only the note; a word of the highlighted verse finds the highlight; the Highlights chip shows only highlights; each item's ⋯ deletes it (Delete, Clear highlight)",
       "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1470
+      "note": "chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note",
+      "ms": 2171
+    },
+    {
+      "id": "G3",
+      "section": "3. Reading",
+      "title": "Keyboard navigation",
+      "checks": "Right arrow opens John 4, Left goes back; Escape clears a selection and then closes the side pane; arrows move focus in the book picker",
+      "mark": "✅",
+      "note": "→ John 4, ← John 3; Escape cleared the selection then closed the pane; arrow focus moved to \"2 Chronicles\nexpand_\"",
+      "ms": 1848
     }
   ]
 }

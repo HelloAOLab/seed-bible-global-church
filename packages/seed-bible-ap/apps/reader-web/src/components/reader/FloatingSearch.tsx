@@ -161,7 +161,9 @@ export function FloatingSearch({ state }: { state: ReaderState }) {
         }).reading
       : state.reading;
     void target.goTo(reading.translationId.value, book, chapter).then(() => {
-      if (verse) state.selection.select(verse, verse);
+      if (!verse) return;
+      target.scrollToVerse.value = verse;
+      state.selection.select(verse, verse);
     });
   };
   const chapterOf = (m: BookMatch) =>

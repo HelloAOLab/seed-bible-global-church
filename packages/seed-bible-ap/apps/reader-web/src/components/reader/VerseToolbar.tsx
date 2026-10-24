@@ -91,7 +91,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
     : !phone && anchor
       ? {
           left: `${Math.min(Math.max(anchor.x, 200), window.innerWidth - 200)}px`,
-          top: `${Math.min(Math.max(anchor.y - 12, picker ? 140 : 90), window.innerHeight - 8)}px`,
+          top: `${Math.min(Math.max(anchor.y - 12, picker ? 140 : 90), window.innerHeight - 100)}px`,
         }
       : undefined;
   const saved =

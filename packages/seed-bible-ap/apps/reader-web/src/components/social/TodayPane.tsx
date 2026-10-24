@@ -3,6 +3,7 @@
 // classes match, and `app.css` for the rest.
 import { useEffect, useState } from "preact/hooks";
 import type { RecentReading } from "../../state/records/history";
+import { CommunityFeed } from "./CommunityFeed";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { DEFAULT_ESTATE } from "../../session";
@@ -42,11 +43,6 @@ export function TodayPane({ state }: { state: ReaderState }) {
       .then(() => {
         if (start) state.selection.select(start, end ?? start);
       });
-  };
-  const openOffering = (passage: string) => {
-    const [from] = passage.split("-");
-    const parts = (from ?? "").split(".");
-    open(`${parts[0]}.${parts[1]}`, parts[2] ? Number(parts[2]) : undefined);
   };
 
   return (
@@ -195,42 +191,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
 
       <FriendsSection state={state} />
 
-      <div className="sb-content-section">
-        <div className="sb-content-section-head">
-          <h3 className="sb-content-section-title">
-            {t("today-friends-released", {
-              defaultValue: "What your friends released",
-            })}
-          </h3>
-        </div>
-        {today.feedError.value && (
-          <p className="sb-pane-error">{today.feedError.value}</p>
-        )}
-        {signedIn &&
-          today.friends.value.length > 0 &&
-          !today.releases.value.length &&
-          !today.feedLoading.value && (
-            <p className="sb-content-empty">
-              {t("today-feed-empty", {
-                defaultValue: "Nothing released by your friends yet.",
-              })}
-            </p>
-          )}
-        {today.releases.value.map((o) => (
-          <button
-            key={o.descriptorId}
-            className="sb-content-quote"
-            onClick={() => openOffering(o.passage)}
-          >
-            <span className="sb-content-quote-ref">
-              {o.title} · {o.shelf}
-            </span>
-            <span className="sb-content-quote-text">
-              {o.kind} · {o.passage} · {o.indexedAt.slice(0, 10)}
-            </span>
-          </button>
-        ))}
-      </div>
+      <CommunityFeed state={state} />
       <p className="sb-small sb-muted">
         {t("today-how", {
           defaultValue:

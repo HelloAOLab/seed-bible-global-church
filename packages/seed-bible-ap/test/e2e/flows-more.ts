@@ -178,6 +178,44 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "TD1",
+    section: "8. Today, Discover and publishing",
+    title: "Today's Community card",
+    rows: ["Today's community feed"],
+    checks:
+      "After John 3 stays open a while, Today shows the COMMUNITY card with All · Notes · Reading and History: 'You read John 3' under All and Reading, none under Notes ('No notes in this time frame yet.'); History lists today with John 3; tapping John 3 opens it",
+    run: async (c) => {
+      await c.open(CH);
+      await c.page.waitForTimeout(10_000);
+      await c.pressToolbar("Today");
+      const card = c.page.locator(".sb-today-community");
+      await card.waitFor({ timeout: 10000 });
+      const chips = (
+        await card.locator(".sb-today-feed-kind-option").allInnerTexts()
+      ).map((x) => x.trim());
+      if (chips.join() !== "All,Notes,Reading")
+        throw new Error(`chips: ${chips.join(", ")}`);
+      const row = card
+        .locator(".sb-today-feed-row-reading", { hasText: /You read John 3/ })
+        .first();
+      await row.waitFor({ timeout: 10000 });
+      await card
+        .locator(".sb-today-feed-kind-option", { hasText: "Notes" })
+        .click();
+      await c.waitText(card, /No notes in this time frame yet/, 5000);
+      await card
+        .locator(".sb-today-feed-kind-option", { hasText: "Reading" })
+        .click();
+      await row.waitFor({ timeout: 5000 });
+      await card.getByRole("button", { name: "History" }).click();
+      const hist = card.locator(".sb-today-history");
+      await c.waitText(hist, /John 3/, 5000);
+      await hist.getByRole("button", { name: "John 3" }).first().click();
+      await c.page.waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 10000 });
+      return `chips ${chips.join(" · ")}; 'You read John 3' under All and Reading; Notes empty; History listed John 3 and opened it`;
+    },
+  },
+  {
     id: "FR1",
     section: "8. Today, Discover and publishing",
     title: "Friends: the old reader's full page",
@@ -335,7 +373,7 @@ export const MORE_FLOWS: Flow[] = [
         .click();
       await card.locator(".sb-content-kebab").click();
       await c.page
-        .locator(".sb-context-menu [role=menuitem]", { hasText: /^delete$/i })
+        .getByRole("menuitem", { name: "Delete", exact: true })
         .click();
       await card.waitFor({ state: "detached", timeout: 10000 });
       return `chips ${chips.join(" · ")}; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note`;
@@ -1137,7 +1175,8 @@ export const MORE_FLOWS: Flow[] = [
     section: "8. Today, Discover and publishing",
     title: "Friends' notes in Today",
     rows: ["Friends' notes in Today"],
-    checks: "A friend's released note lists under What your friends released",
+    checks:
+      "A friend's released note shows in Today's Community card ('Ruth noted on John 3:16', with its title)",
     skip: "needs two Homes that are mutual friends; the sample people have none",
     run: async () => undefined,
   },
@@ -2106,6 +2145,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.verse(16).waitFor({ timeout: 20000 });
       await c.selectVerse(16);
       await c.pressToolbar("Notes");
+      await c.settleTours();
       await c.page.keyboard.press("Escape");
       await c.page
         .locator(".sb-verse-toolbar")

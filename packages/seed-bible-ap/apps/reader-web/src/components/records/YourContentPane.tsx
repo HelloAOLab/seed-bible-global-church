@@ -505,7 +505,9 @@ export function YourContentPane({ state }: { state: ReaderState }) {
     void reading
       .goTo(translationId || reading.translationId.value, book!, Number(ch))
       .then(() => {
-        if (start) state.selection.select(start, end ?? start);
+        if (!start) return;
+        reading.scrollToVerse.value = start;
+        state.selection.select(start, end ?? start);
       });
   };
   const openNote = (chapter: string, n: Annotation) => {

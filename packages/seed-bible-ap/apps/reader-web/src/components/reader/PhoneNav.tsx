@@ -88,14 +88,17 @@ export function PhoneNav({ state }: { state: ReaderState }) {
       if (!el?.closest?.(".sb-mobile-more-menu, .sb-phone-more-tab"))
         setMoreOpen(false);
     };
+    // Esc closes More and nothing else (caught before the reader's keys, which would close a pane).
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMoreOpen(false);
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setMoreOpen(false);
     };
     document.addEventListener("pointerdown", onDown, true);
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     return () => {
       document.removeEventListener("pointerdown", onDown, true);
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
     };
   }, [moreOpen]);
 

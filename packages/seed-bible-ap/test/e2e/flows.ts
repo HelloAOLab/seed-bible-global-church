@@ -124,10 +124,12 @@ const BASE_FLOWS: Flow[] = [
     section: "3. Reading",
     title: "Share link selects verses",
     checks:
-      "?v=16-18 opens with John 3:16–18 selected and the verse toolbar naming them",
+      "?v=16-18 opens with John 3:16–18 selected and the verse toolbar's Highlight naming them",
     run: async (c) => {
       await c.open(`${CH}?v=16-18`);
       await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 15000 });
+      // The verse toolbar names the verses in its colour picker (the old reader's desktop row has no reference).
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
       const ref = await c.page
         .locator(".sb-verse-toolbar-ref-text")
         .innerText();
@@ -423,7 +425,7 @@ const BASE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(15);
-      await c.verse(16).click({ position: { x: 40, y: 8 } });
+      await c.tapVerse(16);
       await c.settled(c.page.locator(".sb-verse-toolbar"));
       await c.page
         .locator(".sb-verse-toolbar-action", { hasText: "Save" })
