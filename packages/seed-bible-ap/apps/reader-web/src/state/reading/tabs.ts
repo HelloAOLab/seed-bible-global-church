@@ -135,6 +135,23 @@ export function createTabs(deps: TabsDeps) {
     });
   }
 
+  /** The old reader's "Open in new panel": the tab gets a pane of its own, one more column (up to four); with four
+   *  on screen it takes the selected pane. */
+  function openInNewPanel(id: string) {
+    if (!byId(id)) return;
+    if (shown(id) >= 0) return selectTab(id);
+    const grow: Partial<Record<number, LayoutId>> = {
+      1: "split-2v",
+      2: "split-3v",
+      3: "split-4v",
+    };
+    const next = grow[slotTabIds.value.length];
+    if (!next) return selectTab(id);
+    layout.value = next;
+    slotTabIds.value = [...slotTabIds.value, id];
+    selectedSlot.value = slotTabIds.value.length - 1;
+  }
+
   function closeTab(id: string) {
     const remaining = tabs.value.filter((t) => t.id !== id);
     tabs.value = remaining;
@@ -166,6 +183,7 @@ export function createTabs(deps: TabsDeps) {
     selectTab,
     selectSlot,
     setLayout,
+    openInNewPanel,
     closeTab,
   };
 }

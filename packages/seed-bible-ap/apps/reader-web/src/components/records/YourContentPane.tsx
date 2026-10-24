@@ -35,10 +35,16 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   const [searchError, setSearchError] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
 
-  const open = (chapter: string, start?: number, end?: number) => {
+  /** A chapter opened at its verses; a save opens in the translation it was saved in. */
+  const open = (
+    chapter: string,
+    start?: number,
+    end?: number,
+    translationId?: string
+  ) => {
     const [book, ch] = chapter.split(".");
     void reading
-      .goTo(reading.translationId.value, book!, Number(ch))
+      .goTo(translationId || reading.translationId.value, book!, Number(ch))
       .then(() => {
         if (start) state.selection.select(start, end ?? start);
       });
@@ -355,7 +361,8 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                           open(
                             s.chapter,
                             s.start ?? undefined,
-                            s.end ?? undefined
+                            s.end ?? undefined,
+                            s.edition
                           )
                         }
                       >

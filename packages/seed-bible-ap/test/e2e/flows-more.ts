@@ -1487,10 +1487,14 @@ export const MORE_FLOWS: Flow[] = [
     title: "About and the legal texts",
     rows: ["About and the legal texts"],
     checks:
-      "Tap Seed Bible at the top of the sidebar: the About pane; Terms of service, Privacy policy and Code of conduct each open their text",
+      "Settings (the ⚙ in the sidebar) → About Seed Bible: the About pane; Terms of service, Privacy policy and Code of conduct each open their text",
     run: async (c) => {
       await c.open(CH);
-      await c.page.locator(".sb-sidebar-logo-button").click();
+      await c.page
+        .locator(".sb-tabs-sidebar")
+        .getByRole("button", { name: "Open settings" })
+        .click();
+      await c.page.getByText("About Seed Bible").click();
       await c.waitText(c.pane(), /about seed bible/i);
       const seen: string[] = [];
       for (const doc of [
@@ -1528,14 +1532,17 @@ export const MORE_FLOWS: Flow[] = [
     title: "Scripture map",
     rows: ["Scripture map"],
     checks:
-      "The grid icon opens the Scripture map with John 3 outlined; a highlight there marks its square; tapping Romans 8 opens it",
+      "The sidebar's ⋮ → Scripture map opens it with John 3 outlined; a highlight there marks its square; tapping Romans 8 opens it",
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
       await c.page.locator(".sb-verse-toolbar-color-button").first().click();
+      // The sidebar's ⋮ More menu holds it now, as in the old reader.
       await c.page
-        .locator('.sb-tabs-sidebar button[aria-label="Scripture map"]')
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
         .click();
+      await c.page.getByRole("menuitem", { name: "Scripture map" }).click();
       const here = c.page.locator(".sb-map-chapter-here").first();
       await here.waitFor({ timeout: 10000 });
       const hereTitle = (await here.getAttribute("title")) ?? "";
@@ -1849,13 +1856,16 @@ export const MORE_FLOWS: Flow[] = [
     title: "Friends pane",
     rows: ["Friends pane"],
     checks:
-      "Signed in: the people icon at the top of the sidebar opens the Friends pane with the friends list, Add a friend and Invite by email",
+      "Signed in: the sidebar's ⋮ → Friends opens the Friends pane with the friends list, Add a friend and Invite by email",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
+      // The sidebar's ⋮ More menu holds it now, as in the old reader.
       await c.page
-        .locator('.sb-tabs-sidebar button[aria-label="Friends"]')
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
         .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
       const pane = c.page.locator(".sb-friends-pane");
       await pane.waitFor({ timeout: 5000 });
       await c.waitText(pane, /add a friend|invite by email/i, 20000);
@@ -2524,6 +2534,106 @@ export const MORE_FLOWS: Flow[] = [
       await side.getByRole("button", { name: "Close Settings" }).click();
       await side.locator(".sb-sidebar-tab-list").waitFor({ timeout: 3000 });
       return `⚙ → Settings: ${labels.join(" · ")}; Display & Theme's line height reached the chapter; ← back to the list; ✕ brought the tabs back`;
+    },
+  },
+  {
+    id: "SB1",
+    section: "6. Tabs and panes",
+    title:
+      "The old reader's sidebar: Tasks, Bookmarks, Saves, the tab's star and menu",
+    rows: ["Sidebar buttons"],
+    checks:
+      "Beside Tabs: ☑ Tasks opens Today, 🔖 shows the bookmarks above the tabs, ☆ shows the saves in My Saves; the open tab's ☆ saves the chapter; a save made in BSB opens in BSB from the Saves panel and from Your content while the KJV is open; the tab's ⋮ → Open in new panel adds a pane; the top row has ⊞ Panels and ⋮ More",
+    run: async (c) => {
+      await c.open("/read/BSB/JHN/3");
+      const side = c.page.locator(".sb-tabs-sidebar");
+      await side.getByRole("button", { name: "Tasks" }).click();
+      await c.waitText(c.pane(), /today/i, 5000);
+      await side.getByRole("button", { name: "Tasks" }).click();
+      await side
+        .locator(".sb-tab-row-selected")
+        .getByRole("button", { name: "Save chapter" })
+        .click();
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .click();
+      await side.getByRole("button", { name: "Bookmarks" }).click();
+      await c.waitText(side.locator(".sb-bookmarks-panel"), /john 3/i, 5000);
+      // A bookmark opens in the translation on screen, so it goes before the saves are tried from WEB.
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-bookmark-button")
+        .click();
+      await side.getByRole("button", { name: "Saves" }).click();
+      const saves = side.locator(".sb-saves-section");
+      await c.waitText(saves, /my saves[\s\S]*john 3/i, 5000);
+      await c.page.goto(`${BASE}/read/eng_kjv/ROM/8`, {
+        waitUntil: "domcontentloaded",
+      });
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await side.getByRole("button", { name: "Saves" }).click();
+      await saves
+        .locator(".sb-save-item-button", { hasText: /john 3/i })
+        .first()
+        .click();
+      await c.page
+        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 })
+        .catch(() => {
+          throw new Error(`the save opened at ${c.page.url()}, not in BSB`);
+        });
+      await c.page.goto(`${BASE}/read/eng_kjv/ROM/8`, {
+        waitUntil: "domcontentloaded",
+      });
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await c.pressToolbar("Your content");
+      await c
+        .pane()
+        .locator(".sb-content-save", { hasText: /john 3/i })
+        .first()
+        .click();
+      await c.page
+        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 })
+        .catch(() => {
+          throw new Error(
+            `Your content opened the save at ${c.page.url()}, not in BSB`
+          );
+        });
+      await side
+        .locator(".sb-tab-row-selected")
+        .getByRole("button", { name: "Save chapter" })
+        .click();
+      await side.getByRole("button", { name: "New tab" }).first().click();
+      // A new tab brings the one-time "Open more passages" tip, which the harness closes with Esc — and Esc closes
+      // menus too: open the tab's menu once it has gone.
+      await c.page.waitForTimeout(1500);
+      const newPanel = c.page.getByRole("menuitem", {
+        name: /open in new panel/i,
+      });
+      for (let i = 0; i < 3 && !(await newPanel.isVisible()); i++) {
+        await side.getByRole("button", { name: "Tab options" }).first().click();
+        await newPanel.waitFor({ timeout: 2000 }).catch(() => undefined);
+      }
+      await newPanel.click();
+      await c.page
+        .waitForFunction(
+          () => document.querySelectorAll(".sb-bible-reader").length >= 2,
+          undefined,
+          { timeout: 5000 }
+        )
+        .catch(() => {
+          throw new Error("Open in new panel did not add a pane");
+        });
+      const top = c.page.locator(".sb-sidebar-top-row");
+      await top
+        .getByRole("button", { name: "Pane layout" })
+        .waitFor({ timeout: 2000 });
+      await top
+        .getByRole("button", { name: "More" })
+        .waitFor({ timeout: 2000 });
+      return "Tasks opened Today; the tab's ☆ saved John 3 and the bookmarks and saves panels listed it; the BSB save opened in BSB from the KJV (panel and Your content); Open in new panel added a pane; ⊞ and ⋮ at the top";
     },
   },
   {

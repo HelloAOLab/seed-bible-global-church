@@ -263,10 +263,12 @@ const BASE_FLOWS: Flow[] = [
       await c.page.waitForTimeout(800);
       const n1 = await tabs.count();
       if (n1 <= n0) throw new Error(`tabs ${n0} → ${n1}`);
+      // The old reader's tab ⋮ → Close.
       await c.page
-        .locator('.sb-tabs-sidebar button[aria-label="Close tab"]')
+        .locator('.sb-tabs-sidebar button[aria-label="Tab options"]')
         .last()
         .click();
+      await c.page.getByRole("menuitem", { name: /^close$/i }).click();
       await c.page.waitForTimeout(500);
       const n2 = await tabs.count();
       if (n2 !== n0) throw new Error(`tabs after close ${n2}, expected ${n0}`);
