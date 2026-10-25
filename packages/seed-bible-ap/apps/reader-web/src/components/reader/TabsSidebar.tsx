@@ -20,6 +20,8 @@ import {
   type LayoutId,
 } from "../../state/reading/tabs";
 import { openSavePicker } from "../records/SavePicker";
+import { requestEndSession } from "../sessions/SessionSettings";
+import { colorOf } from "../sessions/PresenceGutter";
 
 function LayoutPreview({ layout }: { layout: LayoutId }) {
   return (
@@ -268,10 +270,14 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               const saved = state.saves.forPassage(chapterRef).length > 0;
               const saveChapter = () =>
                 openSavePicker(state, chapterRef, null, r.translationId.value);
+              // The old reader's Shared tab: the one the live session lives in.
+              const shared =
+                state.live.active.value && state.sessionTabId.value === tab.id;
               return (
                 <div
                   key={tab.id}
-                  className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}
+                  className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}${shared ? " sb-tab-row-shared" : ""}`}
+                  data-shared={shared ? "true" : undefined}
                 >
                   <button
                     type="button"
@@ -300,8 +306,9 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                         </span>
                       )}
                     </div>
+                    {shared && <SessionPeople state={state} />}
                   </button>
-                  {isSelected && (
+                  {isSelected && !shared && (
                     <button
                       type="button"
                       className={`sb-tab-save-button${saved ? " sb-tab-save-button-saved" : ""}`}
@@ -328,15 +335,61 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                     menuClassName="sb-tab-menu"
                     iconClassName="sb-tab-more-icon"
                   >
-                    <MenuItem
-                      icon="star"
-                      className="sb-tab-menu-item"
-                      onSelect={saveChapter}
-                    >
-                      {saved
-                        ? t("remove-save", { defaultValue: "Remove save" })
-                        : t("save-chapter", { defaultValue: "Save chapter" })}
-                    </MenuItem>
+                    {shared ? (
+                      <>
+                        <MenuItem
+                          icon="settings"
+                          className="sb-tab-menu-item"
+                          onSelect={() =>
+                            (state.ui.sessionSettings.value = true)
+                          }
+                        >
+                          {t("session-settings", {
+                            defaultValue: "Session settings",
+                          })}
+                        </MenuItem>
+                        <MenuItem
+                          icon="ios_share"
+                          className="sb-tab-menu-item"
+                          onSelect={() => {
+                            const url = state.live.shareLink.value;
+                            if (url)
+                              state.ui.share.value = {
+                                title: t("share-session", {
+                                  defaultValue: "Share session",
+                                }),
+                                url,
+                              };
+                          }}
+                        >
+                          {t("share-session", {
+                            defaultValue: "Share session",
+                          })}
+                        </MenuItem>
+                        <MenuItem
+                          icon="chat_bubble_outline"
+                          className="sb-tab-menu-item"
+                          onSelect={() => {
+                            state.ui.chatView.value = "session";
+                            state.ui.chatOpen.value = true;
+                          }}
+                        >
+                          {t("open-chat", { defaultValue: "Open chat" })}
+                        </MenuItem>
+                      </>
+                    ) : (
+                      <MenuItem
+                        icon="star"
+                        className="sb-tab-menu-item"
+                        onSelect={saveChapter}
+                      >
+                        {saved
+                          ? t("remove-save", { defaultValue: "Remove save" })
+                          : t("save-chapter", {
+                              defaultValue: "Save chapter",
+                            })}
+                      </MenuItem>
+                    )}
                     <MenuItem
                       icon="splitscreen_right"
                       className="sb-tab-menu-item"
@@ -349,7 +402,17 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                     <MenuItem
                       icon="close"
                       className="sb-tab-menu-item"
-                      onSelect={() => tabs.closeTab(tab.id)}
+                      onSelect={() => {
+                        // Closing the Shared tab leaves the session (the host is asked whether to end it).
+                        if (shared) {
+                          if (state.live.isHost.value) {
+                            requestEndSession(state);
+                            return;
+                          }
+                          state.live.leave();
+                        }
+                        tabs.closeTab(tab.id);
+                      }}
                     >
                       {t("close", { defaultValue: "Close" })}
                     </MenuItem>
@@ -370,6 +433,12 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               title={`${tab.reading.bookName.value} ${tab.reading.chapterNumber.value}`}
               onClick={() => tabs.selectTab(tab.id)}
             >
+              {state.live.active.value &&
+                state.sessionTabId.value === tab.id && (
+                  <span className="sb-collapsed-tab-tag">
+                    {t("shared", { defaultValue: "Shared" })}
+                  </span>
+                )}
               {tab.reading.bookId.value.slice(0, 3)}
             </button>
           ))}
@@ -440,5 +509,56 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
         </button>
       </div>
     </aside>
+  );
+}
+
+/** The people in the session, on its tab: host first, then co-hosts, each with their badge. */
+function SessionPeople({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const s = state.live.state.value;
+  if (!s) return null;
+  const rank = (agent: string) =>
+    s.host?.agent === agent ? 0 : (s.coHosts ?? []).includes(agent) ? 1 : 2;
+  const people = s.participants
+    .filter((p) => p.connections > 0)
+    .sort((a, b) => rank(a.agent) - rank(b.agent));
+  return (
+    <div className="sb-tab-users-section">
+      <span className="sb-tab-shared-tag">
+        {t("shared", { defaultValue: "Shared" })}
+      </span>
+      <div className="sb-tab-users-list">
+        {people.map((p) => {
+          const r = rank(p.agent);
+          const role =
+            r === 0
+              ? t("host", { defaultValue: "Host" })
+              : r === 1
+                ? t("co-host", { defaultValue: "Co-host" })
+                : null;
+          return (
+            <span key={p.agent} className="sb-tab-user">
+              <span
+                className={`sb-tab-user-icon sb-tab-user-icon-animal${p.agent === state.live.me.value ? " sb-tab-user-icon-self" : ""}`}
+                title={role ? `${p.name} · ${role}` : p.name}
+                style={{
+                  borderColor: colorOf(p.agent),
+                  backgroundColor: colorOf(p.agent),
+                }}
+              >
+                <span className="material-symbols-outlined">person</span>
+              </span>
+              {role && (
+                <span
+                  className={`sb-tab-user-role sb-tab-user-role-${r === 1 ? "cohost" : "host"}`}
+                >
+                  {role}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </div>
   );
 }

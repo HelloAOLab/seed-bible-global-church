@@ -70,7 +70,8 @@ function visibleRange(
 }
 
 export function PresenceGutter({ state }: { state: ReaderState }) {
-  const { live, reading } = state;
+  const { live } = state;
+  const reading = live.sessionReading();
   const ref = useRef<HTMLDivElement>(null);
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [view, setView] = useState({ top: 0, bottom: 0 });

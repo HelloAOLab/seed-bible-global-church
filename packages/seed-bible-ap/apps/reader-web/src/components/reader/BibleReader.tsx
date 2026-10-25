@@ -39,6 +39,9 @@ export function BibleReader({
   const chapterRef = reading.chapterRef.value;
   const highlights = state.highlights.forChapter(chapterRef).value;
   const notes = state.annotations.forChapter(chapterRef).value;
+  // This pane shows the live session's tab: the room's marks and where everyone is are drawn here.
+  const inSession =
+    state.live.active.value && state.live.sessionReading() === reading;
   const [footnote, setFootnote] = useState<SelectedFootnote | null>(null);
   const root = useRef<HTMLDivElement>(null);
   // Scroll memory, the linked verse and the swipe, for this pane on this tab's reading.
@@ -172,11 +175,7 @@ export function BibleReader({
       <ChapterColumn
         chapterId={`${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`}
         stale={reading.loading.value}
-        gutter={
-          active && state.live.active.value ? (
-            <PresenceGutter state={state} />
-          ) : undefined
-        }
+        gutter={inSession ? <PresenceGutter state={state} /> : undefined}
       >
         {renderChapterContent(chapter, {
           selectedVerses: active ? selection.verses.value : [],
@@ -184,7 +183,7 @@ export function BibleReader({
             ? (state.audio.currentVerse.value ?? state.tts.currentVerse.value)
             : null,
           highlights,
-          decorations: active
+          decorations: inSession
             ? state.live.decorations.value.map((d) => ({
                 id: `session:${d.id}`,
                 colorId: d.colorId,
@@ -194,7 +193,7 @@ export function BibleReader({
                     : ([d.start, d.end] as [number, number]),
               }))
             : [],
-          flares: active
+          flares: inSession
             ? state.live.flares.value
                 .filter((f) => f.chapter === reading.chapterRef.value)
                 .map((f) => ({

@@ -471,6 +471,80 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "SH1",
+    section: "9. Reading together",
+    title: "The session's Shared tab",
+    rows: ["Live session settings"],
+    checks:
+      "The host starts a session in John 3 and a guest joins: that tab is marked Shared with the people on it (Host first); its ⋮ has Session settings, Share session and Open chat instead of Save. A new tab moved to Romans 8 does not move the session (the guest stays in John 3). Closing the Shared tab from its ⋮ ends the session for the guest",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "start and join";
+        await c.open(CH);
+        await c.signInAsSample();
+        const { code, sid } = await startSession(c);
+        const guest = await joinAsGuest(c, sid, code);
+        await c.page.keyboard.press("Escape");
+        const side = c.page.locator(".sb-tabs-sidebar");
+        const sharedTab = side.locator('.sb-tab-row[data-shared="true"]');
+        step = "the Shared tab";
+        await sharedTab.waitFor({ timeout: 10000 });
+        await c.waitText(sharedTab, /shared[\s\S]*host/i, 15000);
+        await sharedTab
+          .locator(".sb-tab-user")
+          .nth(1)
+          .waitFor({ timeout: 15000 });
+        await sharedTab.getByRole("button", { name: "Tab options" }).click();
+        const menu = c.page.locator(".sb-context-menu");
+        await c.waitText(
+          menu,
+          /session settings[\s\S]*share session[\s\S]*open chat/i,
+          3000
+        );
+        if (/save chapter/i.test(await menu.innerText()))
+          throw new Error("the Shared tab still offers Save chapter");
+        await c.page.keyboard.press("Escape");
+
+        step = "another tab does not move the session";
+        await side.getByRole("button", { name: "New tab" }).first().click();
+        await c.page.waitForTimeout(1200);
+        await c.page.keyboard.press("ArrowRight");
+        await c.page.waitForURL(/\/JHN\/4/, { timeout: 15000 });
+        await guest.waitForTimeout(2500);
+        if (!/\/JHN\/3/.test(guest.url()))
+          throw new Error(`the guest was moved to ${guest.url()}`);
+
+        step = "closing the Shared tab ends it";
+        await sharedTab
+          .getByRole("button", { name: "Tab options" })
+          .click({ timeout: 8000 })
+          .catch(async (e: Error) => {
+            throw new Error(
+              `${e.message
+                .split("\n")
+                .filter((l) => /intercepts|waiting for/.test(l))
+                .slice(-2)
+                .join(
+                  " / "
+                )} | dialogs: ${(await c.page.locator("[role=dialog]").allInnerTexts()).map((x) => x.replace(/\s+/g, " ").slice(0, 60)).join(" / ")}`
+            );
+          });
+        await c.page.getByRole("menuitem", { name: /^close$/i }).click();
+        if (!(await guest.locator(".sb-app-pane").isVisible()))
+          await c.pressToolbar("Live session", guest);
+        await c.waitText(
+          guest.locator(".sb-app-pane"),
+          /start a session|join a session|session id/i,
+          20000
+        );
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "the session's tab showed Shared with its people and the session menu; another tab left the guest in John 3; closing the tab ended it";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",

@@ -298,10 +298,22 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     readingOf().chapterData.value;
     if (session.value) void presence.beat();
   });
+  // A session lives in the tab it was started or joined in (the old reader's Shared tab): that tab follows the room
+  // and moves it, whichever tab is on screen.
+  const sessionTabId = signal<string | null>(null);
+  const sessionReading = () =>
+    tabs.tabs.value.find((t) => t.id === sessionTabId.value)?.reading ??
+    readingOf();
   const live = createLiveSession({
     backend,
-    reading: () => readingOf(),
+    reading: sessionReading,
     identity: () => backend.identity(),
+  });
+  effect(() => {
+    const id = live.sessionId.value;
+    if (!id) sessionTabId.value = null;
+    else if (!sessionTabId.value)
+      sessionTabId.value = tabs.selected.peek()?.id ?? null;
   });
   // Voice in the session: the microphone once, one peer connection per other device on voice, the room relaying.
   let mic: MediaStream | null = null;
@@ -365,7 +377,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   // The leader's navigation moves the room.
   effect(() => {
-    readingOf().chapterRef.value;
+    const r = sessionReading();
+    r.chapterRef.value;
+    r.translationId.value;
     live.leaderMoved();
   });
   // A chapter that stays open counts as read: today's reading event for it, on the device and then in the Library.
@@ -852,6 +866,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     friendship,
     presence,
     live,
+    /** The tab the live session lives in (its Shared tab); null when not in one. */
+    sessionTabId,
     huddle,
     voice,
     setVoiceMuted,

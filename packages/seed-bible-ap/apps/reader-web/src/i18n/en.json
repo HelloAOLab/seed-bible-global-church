@@ -811,5 +811,7 @@
   "x-and-x-are-typing": "{{first}} and {{second}} are typing...",
   "x-is-typing": "{{name}} is typing...",
   "x-is-typing-and-more": "{{name}} and {{count}} others are typing...",
-  "session-chat-title": "Session chat"
+  "session-chat-title": "Session chat",
+  "share-session": "Share session",
+  "shared": "Shared"
 }

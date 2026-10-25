@@ -405,6 +405,8 @@ export function createLiveSession(deps: LiveDeps) {
     isHostLike,
     settings,
     flares,
+    /** The reading the session drives (its tab's). */
+    sessionReading: () => deps.reading(),
     typing,
     chatEvents,
     unread,
