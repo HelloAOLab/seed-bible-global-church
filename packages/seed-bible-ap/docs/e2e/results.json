@@ -1,24 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 13:42 UTC",
+  "when": "2026-10-25 13:56 UTC",
   "results": [
     {
-      "id": "YC1",
-      "section": "5. Your Content and search",
-      "title": "Your content as the old reader's: chips, your own search, quotes and menus",
-      "checks": "With a note on John 3:16 and a highlight on 3:14, Your content shows + Create (Playlist, Reading plan) and the chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; the note's card quotes its verse ('For God so loved…') above the note; the highlight quotes its verse. Searching a word of the note finds only the note; a word of the highlighted verse finds the highlight; the Highlights chip shows only highlights; each item's ⋯ deletes it (Delete, Clear highlight)",
+      "id": "PL2",
+      "section": "10. Playlists and reading plans",
+      "title": "A playlist as the old reader has it",
+      "checks": "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, the bar shows Stop · Previous · the item · Next, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
       "mark": "✅",
-      "note": "chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note",
-      "ms": 2183
+      "note": "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside; the bar showed Stop, Previous, the item and Next) → 2 of 2 → finished, deleted after the check",
+      "ms": 5180
     },
     {
-      "id": "YC2",
-      "section": "5. Your Content and search",
-      "title": "A plan still being written says Draft",
-      "checks": "Library → Reading plans → Start a blank plan, then Your content → Reading plans: the blank plan's card says Draft, as the old reader marks a plan still being written",
+      "id": "G11",
+      "section": "13. Getting started",
+      "title": "Guided tour",
+      "checks": "A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it",
       "mark": "✅",
-      "note": "'Flow draft 134230' listed as Draft",
-      "ms": 3769
+      "note": "5 steps walked to Done; a link with tutorialStep=2 opened on 3 of 5; Escape closed it",
+      "ms": 5623
+    },
+    {
+      "id": "G12",
+      "section": "8. Today, Discover and publishing",
+      "title": "Shared page for a published playlist",
+      "checks": "Signed in: publish a playlist; its card's Share playlist copies the link ('Playlist URL copied'); Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
+      "mark": "✅",
+      "note": "/shared/seedreader.me/playlist/playlist-d4afa062-e50: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers 404",
+      "ms": 86953
+    },
+    {
+      "id": "PL3",
+      "section": "10. Playlists and reading plans",
+      "title": "Playlist items: bad input, dragging, a rich note",
+      "checks": "In a new playlist, 'Nowhere 99' says 'Couldn't find that reference' and 'notaurl' says 'Enter a valid URL'; John 3:16 and Romans 8:28 added, dragging Romans onto John puts it first; John's ✎ gives a title and a note in the rich editor, and playing shows the title and the note beside the reading",
+      "mark": "✅",
+      "note": "both messages; a drag moved the lower item up; John 3:16's title and rich note showed beside the reading",
+      "ms": 8271
     }
   ]
 }

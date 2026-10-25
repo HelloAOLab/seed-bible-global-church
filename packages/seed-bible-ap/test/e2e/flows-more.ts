@@ -4354,7 +4354,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Shared page for a published playlist",
     rows: ["Shared pages"],
     checks:
-      "Signed in: publish a playlist; Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
+      "Signed in: publish a playlist; its card's Share playlist copies the link ('Playlist URL copied'); Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
     run: async (c) => {
       await c.open("/read/BSB/GEN/1");
       await c.signInAsSample();
@@ -4369,6 +4369,18 @@ export const MORE_FLOWS: Flow[] = [
       await card
         .locator("button", { hasText: /(^|\s)Published\s*$/ })
         .waitFor({ timeout: 120000 });
+      // Published, its card offers Share playlist: the link goes to the clipboard ("Playlist URL copied").
+      await card.getByRole("button", { name: "Share playlist" }).click();
+      await c.waitText(
+        c.page.locator(".sb-toast"),
+        /playlist url copied/i,
+        20000
+      );
+      const shared = await c.page
+        .evaluate(() => navigator.clipboard.readText())
+        .catch(() => "");
+      if (!shared.startsWith("http"))
+        throw new Error(`Share playlist copied "${shared}"`);
       await c.pressToolbar("Discover");
       const item = c.pane().locator(".sb-discover-item", { hasText: title });
       for (let i = 0; i < 12 && !(await item.count()); i++) {
@@ -6830,6 +6842,112 @@ export const MORE_FLOWS: Flow[] = [
             .click()
             .catch(() => undefined);
           await c.confirmDelete().catch(() => undefined);
+        }
+      }
+    },
+  },
+  {
+    id: "PL3",
+    section: "10. Playlists and reading plans",
+    title: "Playlist items: bad input, dragging, a rich note",
+    rows: ["Add, reorder, remove, edit items"],
+    checks:
+      "In a new playlist, 'Nowhere 99' says 'Couldn't find that reference' and 'notaurl' says 'Enter a valid URL'; John 3:16 and Romans 8:28 added, dragging Romans onto John puts it first; John's ✎ gives a title and a note in the rich editor, and playing shows the title and the note beside the reading",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openLibrary("Playlists");
+      const title = `Flow items ${stamp()}`;
+      await pane.locator('input[placeholder^="New playlist"]').fill(title);
+      await pane.getByRole("button", { name: /^create$/i }).click();
+      const card = pane.locator(".sb-note-card", { hasText: title }).first();
+      await card.waitFor({ timeout: 10000 });
+      await ensureOpen(card);
+      try {
+        const ref = card.getByPlaceholder(/John 3 or John 3:16/i);
+        await ref.fill("Nowhere 99");
+        await ref.press("Enter");
+        await c.waitText(card, /Couldn't find that reference/, 3000);
+        const link = card.getByPlaceholder(/add a link/i);
+        await link.fill("notaurl");
+        await link.press("Enter");
+        await c.waitText(card, /Enter a valid URL/, 3000);
+        await link.fill("");
+        const items = card.locator(".sb-library-item");
+        for (const [n, r] of ["John 3:16", "Romans 8:28"].entries()) {
+          await ref.fill(r);
+          await ref.press("Enter");
+          await items
+            .nth(n)
+            .waitFor({ timeout: 8000 })
+            .catch(async () => {
+              throw new Error(
+                `${r} was not added: ${(await card.innerText()).slice(0, 200)}`
+              );
+            });
+        }
+        // The two items in the list as it shows them, then the second dragged onto the first.
+        const labels = async () =>
+          (await items.locator(".sb-note-card-ref").allInnerTexts()).map((t) =>
+            t.replace(/^(menu_book|sticky_note_2|link)/, "").trim()
+          );
+        const before = await labels();
+        const ia = before.findIndex((l) => /John 3:16/.test(l));
+        const ib = before.findIndex((l) => /Romans 8:28/.test(l));
+        if (ia < 0 || ib < 0) throw new Error(`items: ${before.join(" | ")}`);
+        const [top, low] = ia < ib ? [ia, ib] : [ib, ia];
+        await items.nth(low).dragTo(items.nth(top));
+        let after = await labels();
+        for (let i = 0; i < 30 && after[top] === before[top]; i++) {
+          await c.page.waitForTimeout(100);
+          after = await labels();
+        }
+        if (after[top] !== before[low])
+          throw new Error(
+            `the drag did not move it up: ${before.join(" | ")} → ${after.join(" | ")}`
+          );
+        const john = after.findIndex((l) => /John 3:16/.test(l));
+        await items
+          .nth(john)
+          .getByRole("button", { name: "Edit item" })
+          .click();
+        const editor = card.locator(".sb-item-editor");
+        await editor.getByPlaceholder("Title (optional)").fill("Born again");
+        const rich = editor.locator("[contenteditable]").first();
+        await rich.waitFor({ timeout: 20000 });
+        await rich.click();
+        await c.page.keyboard.type("God so loved the world");
+        await editor
+          .getByRole("button", { name: /^save (item|changes)$/i })
+          .click();
+        await editor.waitFor({ state: "detached", timeout: 5000 });
+        await card.getByRole("button", { name: /play playlist/i }).click();
+        await c.page
+          .locator(".sb-library-pane .sb-pane-close[aria-label='Close']")
+          .click();
+        const note = c.page.locator(".sb-playlist-note");
+        await note.waitFor({ timeout: 10000 });
+        for (let i = 0; i < 3 && !/John 3:16/.test(await note.innerText()); i++)
+          await note.getByRole("button", { name: /next/i }).click();
+        await c.waitText(note, /Born again[\s\S]*God so loved the world/, 8000);
+        await c.page.keyboard.press("Escape");
+        await c.page
+          .locator(".sb-reader-toolbar-desk")
+          .getByRole("button", { name: "Stop" })
+          .click()
+          .catch(() => undefined);
+        return "both messages; a drag moved the lower item up; John 3:16's title and rich note showed beside the reading";
+      } finally {
+        try {
+          await c.open(CH);
+          const lib = await c.openLibrary("Playlists");
+          const pl = lib.locator(".sb-note-card", { hasText: title }).first();
+          if (await pl.count()) {
+            await ensureOpen(pl);
+            await pl.getByRole("button", { name: /^delete$/i }).click();
+            await c.confirmDelete();
+          }
+        } catch {
+          /* left for the next run's housekeeping */
         }
       }
     },

@@ -2,18 +2,19 @@
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
 
+import { sharedLinkOf } from "../../state/social/sharedPage";
 import { ThemeLivePreview } from "../chrome/ThemePreview";
 import { PictureField } from "./PictureField";
 import { COVER_IMAGE, LOGO } from "../../state/library/crop";
 import { PlanEditor } from "./PlanEditor";
 import { PlanCard } from "./PlanCard";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { PlaylistItem } from "@seed/seed-schema";
 import { spanOf } from "../../state/records/marks";
 import { noteText, sanitizeNoteHtml } from "../records/noteHtml";
-import { NoteEditor } from "../records/NotesPane";
+import { NoteEditor, bodyHtml } from "../records/NotesPane";
 import {
   dayKind,
   groupPlayHistoryByDay,
@@ -114,9 +115,6 @@ function ItemEditor({
       ? (item.noteTitle ?? "")
       : (item.label ?? "")
   );
-  const [note, setNote] = useState(
-    item["@type"] === "seed:ScriptureItem" ? (item.note ?? "") : ""
-  );
   const [embed, setEmbed] = useState(
     item["@type"] === "seed:LinkItem" ? item.embed === true : false
   );
@@ -130,6 +128,27 @@ function ItemEditor({
       onInput={(e) => setLabel((e.target as HTMLInputElement).value)}
     />
   );
+  // A passage's note is rich text with a title, as the old reader's ScriptureNote.
+  if (item["@type"] === "seed:ScriptureItem")
+    return (
+      <div className="sb-item-editor">
+        {labelInput}
+        <NoteEditor
+          initial={item.note ? bodyHtml(item.note) : ""}
+          saveLabel={t("playlist-save-item", { defaultValue: "Save item" })}
+          cancelLabel={t("cancel", { defaultValue: "Cancel" })}
+          onCancel={onCancel}
+          onSave={(html) => {
+            const { note: _n, noteTitle: _t, ...rest } = item;
+            onSave({
+              ...rest,
+              ...(label.trim() ? { noteTitle: label.trim() } : {}),
+              ...(noteText(html).trim() ? { note: html } : {}),
+            });
+          }}
+        />
+      </div>
+    );
   if (item["@type"] === "seed:HtmlItem")
     return (
       <div className="sb-item-editor">
@@ -154,33 +173,15 @@ function ItemEditor({
       className="sb-item-editor"
       onSubmit={(e) => {
         e.preventDefault();
-        if (item["@type"] === "seed:ScriptureItem")
-          onSave({
-            ...item,
-            ...(label.trim() ? { noteTitle: label.trim() } : {}),
-            ...(note.trim() ? { note: note.trim() } : {}),
-          });
-        else
-          onSave({
-            ...item,
-            ...(label.trim() ? { label: label.trim() } : {}),
-            embed,
-          });
+        onSave({
+          ...item,
+          ...(label.trim() ? { label: label.trim() } : {}),
+          embed,
+        });
       }}
     >
       {labelInput}
-      {item["@type"] === "seed:ScriptureItem" && (
-        <textarea
-          className="sb-note-editor"
-          rows={3}
-          placeholder={t("playlist-scripture-note-label", {
-            defaultValue: "A note to show with this passage",
-          })}
-          value={note}
-          onInput={(e) => setNote((e.target as HTMLTextAreaElement).value)}
-        />
-      )}
-      {item["@type"] === "seed:LinkItem" && (
+      {
         <label className="sb-small sb-check">
           <input
             type="checkbox"
@@ -191,7 +192,7 @@ function ItemEditor({
             defaultValue: "Show the page itself (video players embed)",
           })}
         </label>
-      )}
+      }
       <div className="sb-note-card-actions">
         <button type="submit" className="sb-note-button sb-note-button-primary">
           {t("playlist-save-item", { defaultValue: "Save item" })}
@@ -255,7 +256,15 @@ export function PlayingItem({
           <p className="sb-small">
             <strong>{itemLabel(state, it)}</strong>
           </p>
-          {it.note && <p className="sb-small">{it.note}</p>}
+          {it.noteTitle && (
+            <p className="sb-small sb-playlist-note-title">{it.noteTitle}</p>
+          )}
+          {it.note && (
+            <div
+              className="sb-note-card-body sb-small"
+              dangerouslySetInnerHTML={{ __html: bodyHtml(it.note) }}
+            />
+          )}
         </>
       )}
       {it["@type"] === "seed:HtmlItem" && (
@@ -440,6 +449,36 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   /** `${playlistId}:${index}` of the item being edited, "note:${playlistId}" for a new note. */
   const [editing, setEditing] = useState<string | null>(null);
   const [refText, setRefText] = useState("");
+  /** A published playlist's link: the device's share sheet, else the clipboard ("Playlist URL copied"). */
+  const sharePlaylist = async (pl: { "@id": string; label: string }) => {
+    const url = await sharedLinkOf(
+      state.publishing,
+      state.discover,
+      pl["@id"],
+      location.origin
+    );
+    if (!url) return;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: pl.label, url });
+        return;
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      state.ui.toast.value = { key: "playlist-url-copied" };
+    } catch {
+      /* the clipboard refused */
+    }
+  };
+  const dragFrom = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  /** The old reader's messages for a reference or a link that will not do. */
+  const [inputError, setInputError] = useState<"reference" | "url" | null>(
+    null
+  );
   // The open playlist is the one the verse toolbar's Add to Playlist adds to, while this pane shows it.
   useEffect(() => {
     state.ui.editingPlaylist.value = tab === "playlists" ? open : null;
@@ -677,7 +716,38 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                     )}
                     <ol className="sb-library-items">
                       {pl.hasItem.map((it, i) => (
-                        <li key={i} className="sb-library-item">
+                        <li
+                          key={i}
+                          className={`sb-library-item${dragOver === i ? " sb-library-item-drop" : ""}`}
+                          // Dragged into place, as in the old reader; the arrows stay for the keyboard.
+                          draggable={editing !== `${pl["@id"]}:${i}`}
+                          onDragStart={(e: DragEvent) => {
+                            dragFrom.current = i;
+                            e.dataTransfer?.setData("text/plain", String(i));
+                            if (e.dataTransfer)
+                              e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragOver={(e: DragEvent) => {
+                            if (dragFrom.current === null) return;
+                            e.preventDefault();
+                            if (dragOver !== i) setDragOver(i);
+                          }}
+                          onDragLeave={() =>
+                            setDragOver((d) => (d === i ? null : d))
+                          }
+                          onDrop={(e: DragEvent) => {
+                            e.preventDefault();
+                            const from = dragFrom.current;
+                            dragFrom.current = null;
+                            setDragOver(null);
+                            if (from !== null && from !== i)
+                              void playlists.moveItem(pl["@id"], from, i);
+                          }}
+                          onDragEnd={() => {
+                            dragFrom.current = null;
+                            setDragOver(null);
+                          }}
+                        >
                           {editing === `${pl["@id"]}:${i}` ? (
                             <ItemEditor
                               item={it}
@@ -839,7 +909,11 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         onSubmit={(e) => {
                           e.preventDefault();
                           const item = scriptureFromText(refText);
-                          if (!item) return;
+                          if (!item) {
+                            setInputError("reference");
+                            return;
+                          }
+                          setInputError(null);
                           void playlists.addItem(pl["@id"], item);
                           setRefText("");
                         }}
@@ -858,17 +932,28 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         <button
                           type="submit"
                           className="sb-note-button"
-                          disabled={!scriptureFromText(refText)}
+                          disabled={!refText.trim()}
                         >
                           {t("playlist-add-button", { defaultValue: "Add" })}
                         </button>
                       </form>
+                      {inputError === "reference" && (
+                        <p className="sb-pane-error" role="alert">
+                          {t("playlist-reference-not-found", {
+                            defaultValue: "Couldn't find that reference",
+                          })}
+                        </p>
+                      )}
                       <form
                         className="sb-inline-form"
                         onSubmit={(e) => {
                           e.preventDefault();
                           const u = linkUrl.trim();
-                          if (!/^https?:\/\//.test(u)) return;
+                          if (!/^https?:\/\/\S+\.\S+/.test(u)) {
+                            setInputError("url");
+                            return;
+                          }
+                          setInputError(null);
                           void state.files
                             .preview(u)
                             .catch(() => ({ url: u }) as LinkPreview)
@@ -895,11 +980,18 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         <button
                           type="submit"
                           className="sb-note-button"
-                          disabled={!/^https?:\/\//.test(linkUrl.trim())}
+                          disabled={!linkUrl.trim()}
                         >
                           {t("add-link", { defaultValue: "Add link" })}
                         </button>
                       </form>
+                      {inputError === "url" && (
+                        <p className="sb-pane-error" role="alert">
+                          {t("playlist-invalid-url", {
+                            defaultValue: "Enter a valid URL",
+                          })}
+                        </p>
+                      )}
                     </div>
                     <div className="sb-note-card-actions">
                       <button
@@ -936,6 +1028,16 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                           {published
                             ? t("published", { defaultValue: "Published" })
                             : t("publish", { defaultValue: "Publish" })}
+                        </button>
+                      )}
+                      {published && (
+                        <button
+                          className="sb-note-button"
+                          onClick={() => void sharePlaylist(pl)}
+                        >
+                          {t("share-playlist", {
+                            defaultValue: "Share playlist",
+                          })}
                         </button>
                       )}
                       <button

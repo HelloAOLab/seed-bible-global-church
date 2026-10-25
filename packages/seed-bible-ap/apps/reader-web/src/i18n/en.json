@@ -112,7 +112,6 @@
   "audio-playback-time": "{{current}} of {{total}}",
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-scrub-verse": "Verse {{verse}}",
-  "playlist-scripture-note-label": "Note",
   "playlist-scripture-note-add": "Add a note",
   "policy-unavailable": "This text is not available in your language yet.",
   "on-this-estate": "On this estate",
@@ -977,5 +976,7 @@
   "annotation-conflict-theirs": "The other version",
   "annotation-conflict-title": "This note changed in two places",
   "annotation-conflict-yours": "Your version",
-  "reading-plan-draft": "Draft"
+  "reading-plan-draft": "Draft",
+  "playlist-invalid-url": "Enter a valid URL",
+  "playlist-reference-not-found": "Couldn't find that reference"
 }

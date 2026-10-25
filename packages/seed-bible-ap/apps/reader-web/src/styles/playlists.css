@@ -218,3 +218,11 @@
 .sb-playlist-cancel-edit {
   margin-top: 8px;
 }
+
+/* A playlist item being dragged over: where the dragged one will land. */
+.sb-library-item[draggable="true"] {
+  cursor: grab;
+}
+.sb-library-item-drop {
+  box-shadow: inset 0 2px 0 var(--sb-primary-color);
+}
