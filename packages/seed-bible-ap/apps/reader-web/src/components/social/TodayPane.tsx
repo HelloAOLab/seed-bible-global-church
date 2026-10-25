@@ -436,7 +436,43 @@ export function FriendWaiting({ state }: { state: ReaderState }) {
   if (!w) return null;
   return (
     <div className="sb-pane-notice sb-friend-waiting" role="status">
-      {!w.landed ? (
+      {!w.landed && w.how === "here" ? (
+        w.problem ? (
+          <>
+            <p>
+              {t("friend-add-here-failed", {
+                name: w.label,
+                problem: w.problem,
+                defaultValue:
+                  "Couldn't add {{name}} here ({{problem}}). Your Home can do it.",
+              })}
+            </p>
+            <div className="sb-note-card-actions">
+              <button
+                type="button"
+                className="sb-note-button sb-note-button-primary"
+                onClick={() => friendship.add(w.who, w.label, { atHome: true })}
+              >
+                {t("friend-open-home", { defaultValue: "Open your Home" })}
+              </button>
+              <button
+                type="button"
+                className="sb-note-button"
+                onClick={() => friendship.clearWaiting()}
+              >
+                {t("cancel", { defaultValue: "Cancel" })}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>
+            {t("friend-adding-here", {
+              name: w.label,
+              defaultValue: "Adding {{name}}…",
+            })}
+          </p>
+        )
+      ) : !w.landed ? (
         <>
           <p>
             {t("friend-sign-at-home", {
@@ -458,7 +494,7 @@ export function FriendWaiting({ state }: { state: ReaderState }) {
             <button
               type="button"
               className="sb-note-button"
-              onClick={() => friendship.add(w.who, w.label)}
+              onClick={() => friendship.add(w.who, w.label, { atHome: true })}
             >
               {t("friend-open-home-again", {
                 defaultValue: "Open your Home again",

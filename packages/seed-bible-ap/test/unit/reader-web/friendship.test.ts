@@ -12,6 +12,7 @@ import {
   friendLink,
   parseFriendLink,
   standingOf,
+  type FriendActing,
 } from "../../../apps/reader-web/src/state/social/friendship";
 
 const RUTH = "0x" + "ab".repeat(20);
@@ -26,11 +27,12 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
 
 afterEach(() => vi.useRealTimers());
 
-function setup(start: FriendsView) {
+function setup(start: FriendsView, acting?: FriendActing) {
   let current = start;
   const opened: string[] = [];
   const stores = memoryStores();
   const f = createFriendship({
+    ...(acting ? { acting } : {}),
     prefs: stores.prefs,
     friendsView: () => current,
     refresh: async () => {},
@@ -175,5 +177,73 @@ describe("Not now", () => {
     });
     await tick();
     expect(again.requests.value).toEqual([]);
+  });
+});
+
+describe("adding and removing here, once allowed", () => {
+  function acting(answer: {
+    ok: boolean;
+    needsSignature?: boolean;
+    error?: string;
+  }) {
+    const calls: Array<[string, string]> = [];
+    const a: FriendActing = {
+      allowed: () => true,
+      run: async (kind, who) => {
+        calls.push([kind, who]);
+        return answer;
+      },
+    };
+    return { a, calls };
+  }
+
+  it("adds without opening the Home and reports it once it lands", async () => {
+    vi.useFakeTimers();
+    const { a, calls } = acting({ ok: true });
+    const { f, opened, set } = setup(view({}), a);
+    f.add("ruth.me");
+    expect(f.waiting.value?.how).toBe("here");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toEqual([["add", "ruth.me"]]);
+    set(
+      view({
+        requested: [{ agent: RUTH, name: "ruth.me", since: "2026-10-25" }],
+      })
+    );
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.waiting.value).toMatchObject({ landed: true, was: "you-asked" });
+    expect(opened).toEqual([]);
+  });
+
+  it("when it can't be done here it says why, and the Home's window is one tap away", async () => {
+    const { a } = acting({
+      ok: false,
+      needsSignature: true,
+      error: "no standing wire covers person.contact.invite",
+    });
+    const { f, opened } = setup(view({}), a);
+    f.add("ruth.me");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(f.waiting.value?.problem).toMatch(/no standing wire/);
+    expect(opened).toEqual([]);
+    f.add("ruth.me", "ruth.me", { atHome: true });
+    expect(opened).toEqual(["https://www.faithnet.me/contacts?add=ruth.me"]);
+    expect(f.waiting.value?.how).toBe("home");
+  });
+
+  it("removes here and says so once they are gone", async () => {
+    vi.useFakeTimers();
+    const { a, calls } = acting({ ok: true });
+    const { f, opened, set } = setup(
+      view({ friends: [{ agent: RUTH, name: "ruth.me" }] }),
+      a
+    );
+    f.remove(RUTH, "Ruth");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toEqual([["remove", RUTH]]);
+    set(view({}));
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.removing.value).toMatchObject({ done: true, how: "here" });
+    expect(opened).toEqual([]);
   });
 });

@@ -1021,5 +1021,16 @@
   "friend-request-from-invite": "accepted your invitation to {{email}}",
   "resend": "Resend",
   "resend-invitation-to": "Send the invitation to {{email}} again",
-  "send-friend-invitation": "Send invitation"
+  "send-friend-invitation": "Send invitation",
+  "friend-acts-allow": "Allow",
+  "friend-acts-asking": "Waiting for your Home…",
+  "friend-acts-offer": "Add friends in one tap: let Seed Bible add and remove friends for you, without opening your Home each time. You approve it once at your Home; it lasts 30 days, and you can take it back there.",
+  "friend-acts-on": "✓ Friends are added and removed right here, with no Home window.",
+  "friend-acts-on-until": "✓ Friends are added and removed right here, with no Home window, until {{date}}.",
+  "friend-acts-stop": "Stop",
+  "friend-add-here-failed": "Couldn't add {{name}} here ({{problem}}). Your Home can do it.",
+  "friend-adding-here": "Adding {{name}}…",
+  "friend-open-home": "Open your Home",
+  "friend-remove-here-failed": "Couldn't remove {{name}} here ({{problem}}). Your Home can do it.",
+  "friend-removing-here": "Removing {{name}}…"
 }

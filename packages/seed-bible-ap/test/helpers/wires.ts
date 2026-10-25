@@ -61,11 +61,19 @@ export async function syntheticAskAsMeWire(opts: {
   return { ...unsigned, caveats, salt: salt.toString(), signature };
 }
 
-/** A D1 stand-in for the one table the wire store uses. Only the statements `wires/index.ts` issues are answered. */
+/** A D1 stand-in for the tables the wire stores use (`wires`, `act_grants`): only the statements `wires/index.ts` and
+ *  `wires/act.ts` issue are answered — an upsert of (key, json, time), a select of the json by key, a delete by key. */
 export function fakeWireDb(): WireDb {
-  const rows = new Map<string, { wire_json: string; connected_at: number }>();
+  const tables = new Map<string, Map<string, string>>();
+  const table = (sql: string) => {
+    const name = /act_grants/.test(sql) ? "act_grants" : "wires";
+    if (!tables.has(name)) tables.set(name, new Map());
+    return { name, rows: tables.get(name)! };
+  };
   const prepare = (sql: string) => {
     let args: unknown[] = [];
+    const { name, rows } = table(sql);
+    const column = name === "act_grants" ? "standing_json" : "wire_json";
     const stmt = {
       bind: (...a: unknown[]) => {
         args = a;
@@ -73,14 +81,11 @@ export function fakeWireDb(): WireDb {
       },
       first: async <T>() => {
         const r = rows.get(String(args[0]));
-        return (r ? { wire_json: r.wire_json } : null) as T | null;
+        return (r !== undefined ? { [column]: r } : null) as T | null;
       },
       run: async () => {
         if (sql.startsWith("INSERT"))
-          rows.set(String(args[0]), {
-            wire_json: String(args[1]),
-            connected_at: Number(args[2]),
-          });
+          rows.set(String(args[0]), String(args[1]));
         else if (sql.startsWith("DELETE")) rows.delete(String(args[0]));
         return { success: true } as never;
       },
