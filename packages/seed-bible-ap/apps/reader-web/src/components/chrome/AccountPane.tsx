@@ -1233,6 +1233,30 @@ export function PresenceCard({ state }: { state: ReaderState }) {
             "Only people who have added you back see it, and only while this tab is open; it fades by itself.",
         })}
       </p>
+      {state.invites.findable.value !== null && (
+        <>
+          <label className="sb-small sb-check">
+            <input
+              type="checkbox"
+              checked={state.invites.findable.value}
+              onChange={(e) =>
+                void state.invites.setFindable(
+                  (e.target as HTMLInputElement).checked
+                )
+              }
+            />{" "}
+            {t("findable-by-email", {
+              defaultValue: "Let people who have my email find me",
+            })}
+          </label>
+          <p className="sb-small sb-muted">
+            {t("findable-by-email-note", {
+              defaultValue:
+                "A friend who invites your email address reaches you here. Your address is never shown to anyone.",
+            })}
+          </p>
+        </>
+      )}
     </div>
   );
 }

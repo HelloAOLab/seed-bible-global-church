@@ -10,6 +10,8 @@ import { DEFAULT_ESTATE } from "../../session";
 import { estateById } from "../../../../../estate/faithnet";
 import { parseRoute } from "../../state/reading/route";
 import { friendLink } from "../../state/social/friendship";
+import { isEmail } from "../../state/social/invites";
+import { addFriendOrInvite } from "./addFriend";
 import { TodayWelcome } from "./TodayWelcome";
 import { BookmarkGlyph } from "../records/Bookmarks";
 
@@ -502,6 +504,7 @@ export function FriendWaiting({ state }: { state: ReaderState }) {
 function AddFriend({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [who, setWho] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const s = state.session.value;
   const me = s?.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0];
@@ -521,10 +524,12 @@ function AddFriend({ state }: { state: ReaderState }) {
         className="sb-friend-add"
         onSubmit={(e) => {
           e.preventDefault();
-          const name = who.trim();
-          if (!name) return;
-          state.friendship.add(name);
-          setWho("");
+          const typed = who;
+          setAnswer(null);
+          void addFriendOrInvite(state, typed, t).then((said) => {
+            setAnswer(said);
+            if (said === null || isEmail(typed)) setWho("");
+          });
         }}
       >
         <label className="sb-friend-subtitle" htmlFor="sb-friend-add-input">
@@ -534,8 +539,8 @@ function AddFriend({ state }: { state: ReaderState }) {
           <input
             id="sb-friend-add-input"
             className="sb-note-editor"
-            placeholder={t("friend-add-placeholder", {
-              defaultValue: "Their name at a Home, like ruth.me",
+            placeholder={t("friend-add-placeholder-email", {
+              defaultValue: "A name like ruth.me, or an email address",
             })}
             value={who}
             onInput={(e) => setWho((e.target as HTMLInputElement).value)}
@@ -549,6 +554,11 @@ function AddFriend({ state }: { state: ReaderState }) {
           </button>
         </div>
       </form>
+      {answer && (
+        <p className="sb-small sb-friends-answer" role="status">
+          {answer}
+        </p>
+      )}
       {link && (
         <div className="sb-friend-link">
           <span className="sb-friend-subtitle">

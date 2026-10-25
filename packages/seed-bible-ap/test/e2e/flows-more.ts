@@ -7297,4 +7297,200 @@ export const MORE_FLOWS: Flow[] = [
       return `'${them}' joined and shows '${said}' in the host's list; the host's own row shows none (code ${code})`;
     },
   },
+  {
+    id: "IN1",
+    section: "8. Today, Discover and publishing",
+    title: "Invite a friend by email",
+    rows: ["Invite a friend by email"],
+    checks:
+      "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+    run: async (c) => {
+      const email = `flow-${stamp()}@example.org`;
+      const sent: Array<{
+        token: string;
+        email: string;
+        createdAt: number;
+        expiresAt: number;
+      }> = [];
+      const bearers = new Set<string>();
+      await c.page.route("**/api/friends/invites", async (route) => {
+        const req = route.request();
+        if (req.method() === "OPTIONS")
+          return route.fulfill({
+            status: 204,
+            headers: {
+              "access-control-allow-origin": "*",
+              "access-control-allow-headers": "authorization, content-type",
+            },
+          });
+        bearers.add(req.headers()["authorization"] ?? "");
+        const body = req.postDataJSON() as {
+          email?: string;
+          token?: string;
+          cancel?: boolean;
+          resend?: boolean;
+        } | null;
+        const reply = (b: unknown) =>
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            headers: { "access-control-allow-origin": "*" },
+            body: JSON.stringify(b),
+          });
+        if (req.method() === "GET") return reply({ ok: true, sent });
+        if (body?.cancel) {
+          sent.splice(
+            sent.findIndex((x) => x.token === body.token),
+            1
+          );
+          return reply({ ok: true, cancelled: true });
+        }
+        if (body?.resend) return reply({ ok: true, resent: true });
+        const token = "f".repeat(40);
+        sent.push({
+          token,
+          email: body!.email!.toLowerCase(),
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 864e5,
+        });
+        return reply({ ok: true, token });
+      });
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
+      const pane = c.page.locator(".sb-friends-pane");
+      await pane.waitFor({ timeout: 5000 });
+      let popups = 0;
+      c.context.on("page", () => popups++);
+      await pane.getByLabel("Add a friend").fill(email);
+      await pane.getByRole("button", { name: "Send invitation" }).click();
+      await c.waitText(
+        pane.locator(".sb-friends-answer"),
+        /Invitation sent to/,
+        8000
+      );
+      const row = pane.locator(".sb-friends-row", { hasText: email });
+      await c.waitText(row, /Invited by email/, 8000);
+      await row
+        .getByRole("button", { name: /send the invitation .* again/i })
+        .click();
+      await c.waitText(pane.locator(".sb-friends-answer"), /again/, 5000);
+      await row
+        .getByRole("button", { name: /cancel your invitation/i })
+        .click();
+      await row.waitFor({ state: "detached", timeout: 5000 });
+      if (popups) throw new Error("a Home window opened");
+      if ([...bearers].some((b) => !/^Bearer \S+/.test(b)))
+        throw new Error("a call went without the reader's sign-in");
+      return `'${email}': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window`;
+    },
+  },
+  {
+    id: "IN2",
+    section: "8. Today, Discover and publishing",
+    title: "An emailed invitation opens in the reader",
+    rows: ["An emailed invitation"],
+    checks:
+      "The link /invite/<token> opens the reader with 'Ruth wants to be friends' and Ruth's note, and, signed out, Sign in to accept; a dead link says 'This invitation can't be opened'; signed in, Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for the signature. (The invitation calls are answered by the test)",
+    run: async (c) => {
+      const good = "c".repeat(40);
+      const RUTH = "0x" + "12".repeat(20);
+      let claimed = false;
+      await c.context.route("**/api/friends/invites**", async (route) => {
+        const req = route.request();
+        const cors = {
+          "access-control-allow-origin": "*",
+          "access-control-allow-headers": "authorization, content-type",
+        };
+        if (req.method() === "OPTIONS")
+          return route.fulfill({ status: 204, headers: cors });
+        const u = new URL(req.url());
+        if (u.pathname.endsWith("/lookup"))
+          return u.searchParams.get("token") === good
+            ? route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                headers: cors,
+                body: JSON.stringify({
+                  ok: true,
+                  from: RUTH,
+                  fromName: "Ruth",
+                  note: "Come read John with me",
+                  accepted: false,
+                }),
+              })
+            : route.fulfill({
+                status: 404,
+                contentType: "application/json",
+                headers: cors,
+                body: JSON.stringify({
+                  error: "this invitation has expired or was cancelled",
+                }),
+              });
+        if (req.postDataJSON()?.claim) claimed = true;
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: cors,
+          body: JSON.stringify({ ok: true, claimed: true, sent: [] }),
+        });
+      });
+      await c.open(`/invite/${"d".repeat(40)}`);
+      const dialog = c.page.locator(".sb-friend-invite-dialog");
+      await c.waitText(dialog, /can't be opened/i, 15000);
+      await dialog.getByRole("button", { name: "Close" }).click();
+
+      await c.open(`/invite/${good}`);
+      await c.waitText(dialog, /Ruth wants to be friends/, 15000);
+      await c.waitText(dialog, /Come read John with me/, 3000);
+      await dialog.getByRole("button", { name: /sign in to accept/i }).click();
+      await c.signInAsSample(undefined, c.page, { paneOpen: true });
+      // Signed in, Account steps aside and the invitation is back.
+      await c.waitText(dialog, /Ruth wants to be friends/, 15000);
+      const popup = c.context.waitForEvent("page", { timeout: 10000 });
+      await dialog
+        .getByRole("button", { name: /add ruth as a friend/i })
+        .click();
+      const home = await popup;
+      const homeUrl = home.url();
+      await home.close();
+      await c.page.waitForTimeout(500);
+      if (!claimed) throw new Error("the invitation was not taken");
+      if (!homeUrl.includes(`add=${RUTH}`))
+        throw new Error(`the Home opened at ${homeUrl}`);
+      return "a dead link: can't be opened; Ruth's invitation with her note and Sign in to accept; signed in, Add took it and opened the Home to add Ruth";
+    },
+  },
+  {
+    id: "FE1",
+    section: "8. Today, Discover and publishing",
+    title: "Be found by email (switch)",
+    rows: ["Be found by email"],
+    checks:
+      "Signed in: Account → 'Let people who have my email find me' is on by default; turning it off is kept at the Home (still off after a reload); turned back on",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      let pane = await c.openAccount();
+      const box = () => c.check(pane, /let people who have my email find me/i);
+      await box().waitFor({ timeout: 10000 });
+      if (!(await box().isChecked())) throw new Error("off by default");
+      await box().uncheck();
+      await c.page.waitForTimeout(1500);
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      pane = await c.openAccount();
+      await box().waitFor({ timeout: 10000 });
+      if (await box().isChecked()) throw new Error("not kept at the Home");
+      await box().check();
+      await c.page.waitForTimeout(1500);
+      return "on by default; off was still off after a reload; turned back on";
+    },
+  },
 ];

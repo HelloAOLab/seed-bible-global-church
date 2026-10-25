@@ -1,15 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:37 UTC",
+  "when": "2026-10-25 15:09 UTC",
   "results": [
     {
-      "id": "SF1",
+      "id": "FA1",
       "section": "8. Today, Discover and publishing",
-      "title": "Add a friend from a session's roster",
-      "checks": "Seed Reader hosts a session and another sample person joins signed in: in the host's Here list that person carries where they stand — Friends, Requested, Accept or Add friend — and the host's own row carries none",
+      "title": "Add a friend answers at once",
+      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
       "mark": "✅",
-      "note": "'Alice Okoro' joined and shows 'Add friend' in the host's list; the host's own row shows none (code H8U8JG)",
-      "ms": 80298
+      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
+      "ms": 36818
+    },
+    {
+      "id": "PC1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Tap a friend: their profile",
+      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
+      "mark": "✅",
+      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
+      "ms": 35473
+    },
+    {
+      "id": "IN1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Invite a friend by email",
+      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+      "mark": "✅",
+      "note": "'flow-150611@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
+      "ms": 35834
+    },
+    {
+      "id": "IN2",
+      "section": "8. Today, Discover and publishing",
+      "title": "An emailed invitation opens in the reader",
+      "checks": "The link /invite/<token> opens the reader with 'Ruth wants to be friends' and Ruth's note, and, signed out, Sign in to accept; a dead link says 'This invitation can't be opened'; signed in, Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for the signature. (The invitation calls are answered by the test)",
+      "mark": "✅",
+      "note": "a dead link: can't be opened; Ruth's invitation with her note and Sign in to accept; signed in, Add took it and opened the Home to add Ruth",
+      "ms": 102028
+    },
+    {
+      "id": "FE1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Be found by email (switch)",
+      "checks": "Signed in: Account → 'Let people who have my email find me' is on by default; turning it off is kept at the Home (still off after a reload); turned back on",
+      "mark": "✅",
+      "note": "on by default; off was still off after a reload; turned back on",
+      "ms": 39387
     }
   ]
 }

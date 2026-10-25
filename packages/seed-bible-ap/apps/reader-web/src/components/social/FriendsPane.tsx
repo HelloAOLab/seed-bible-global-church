@@ -8,6 +8,8 @@ import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { friendLink, standingOf } from "../../state/social/friendship";
+import { isEmail } from "../../state/social/invites";
+import { addFriendOrInvite } from "./addFriend";
 import {
   DEFAULT_ESTATE,
   HOME_SIGNIN_AVAILABLE,
@@ -201,7 +203,9 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     name: string;
   } | null>(null);
   useEffect(() => {
-    if (s) void today.refresh();
+    if (!s) return;
+    void today.refresh();
+    void state.invites.refresh();
   }, [!!s]);
 
   if (!s)
@@ -239,6 +243,18 @@ export function FriendsPane({ state }: { state: ReaderState }) {
   const incoming = friendship.requests.value;
   const friends = today.friends.value;
   const sent = today.requested.value;
+  const invitations = state.invites.sent.value;
+  const invited = invitations.filter((i) => !i.acceptedBy);
+  /** Who took one of your invitations — the email they were invited at, by their agent. */
+  const joinedFrom = new Map(
+    invitations
+      .filter((i) => i.acceptedBy)
+      .map((i) => [i.acceptedBy!.toLowerCase(), i.email])
+  );
+  // They joined but haven't added you yet: your Add is the whole friendship's first half.
+  const joined = [...joinedFrom].filter(
+    ([agent]) => standingOf(today.friendsView.value, agent) === "none"
+  );
   const nameOf = (agent: string, name?: string | null) =>
     today.profiles.value[agent.toLowerCase()]?.displayName ?? name ?? agent;
   const here = (agent: string) =>
@@ -253,6 +269,46 @@ export function FriendsPane({ state }: { state: ReaderState }) {
         <div className="sb-friends-inner">
           <FriendWaiting state={state} />
           <Removing state={state} />
+
+          {joined.length > 0 && (
+            <section className="sb-friends-section">
+              <Heading icon="waving_hand">
+                {t("friend-joined-heading", {
+                  defaultValue: "Joined from your invitation",
+                })}
+              </Heading>
+              <ul className="sb-friends-list">
+                {joined.map(([agent, email]) => {
+                  const name = nameOf(agent, email);
+                  return (
+                    <li key={agent} className="sb-friends-row">
+                      <Person
+                        name={name}
+                        onOpen={() => setViewing({ agent, name })}
+                        picture={today.profiles.value[agent]?.picture}
+                        subtitle={email}
+                      />
+                      <span className="sb-friends-row-actions">
+                        <button
+                          type="button"
+                          className="sb-friends-button sb-friends-button--primary"
+                          aria-label={t("add-friend-user", {
+                            name,
+                            defaultValue: "Add {{name}} as a friend",
+                          })}
+                          onClick={() => friendship.add(agent, name)}
+                        >
+                          {t("add-friend-button", {
+                            defaultValue: "Add friend",
+                          })}
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           {incoming.length > 0 && (
             <section className="sb-friends-section">
@@ -270,9 +326,17 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                         picture={
                           today.profiles.value[r.agent.toLowerCase()]?.picture
                         }
-                        subtitle={t("friend-request-line", {
-                          defaultValue: "wants to be friends",
-                        })}
+                        subtitle={
+                          joinedFrom.has(r.agent.toLowerCase())
+                            ? t("friend-request-from-invite", {
+                                email: joinedFrom.get(r.agent.toLowerCase()),
+                                defaultValue:
+                                  "accepted your invitation to {{email}}",
+                              })
+                            : t("friend-request-line", {
+                                defaultValue: "wants to be friends",
+                              })
+                        }
                       />
                       <span className="sb-friends-row-actions">
                         <button
@@ -369,46 +433,12 @@ export function FriendsPane({ state }: { state: ReaderState }) {
               className="sb-friends-add-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                const name = who.trim();
-                if (!name) return;
-                // The old reader's instant answers, before any Home window opens.
-                const me = state.session.value;
-                const own =
-                  !!me &&
-                  [me.sub.replace(/^eip155:\d+:/, ""), me.name ?? ""]
-                    .filter(Boolean)
-                    .map((x) => x.toLowerCase().replace(/\s+/g, ""))
-                    .some((x) => {
-                      const n = name.toLowerCase().replace(/\s+/g, "");
-                      return x === n || x.split(".")[0] === n.split(".")[0];
-                    });
-                const standing = standingOf(today.friendsView.value, name);
-                if (own || standing === "friend" || standing === "you-asked") {
-                  setAnswer(
-                    own
-                      ? t("friend-request-self", {
-                          defaultValue: "That's your own account.",
-                        })
-                      : standing === "friend"
-                        ? t("friend-already-friends", {
-                            defaultValue: "You're already friends.",
-                          })
-                        : t("friend-request-already-sent", {
-                            defaultValue: "You've already sent them a request.",
-                          })
-                  );
-                  return;
-                }
-                setAnswer(
-                  standing === "asked-you"
-                    ? t("friend-request-accepted-theirs", {
-                        defaultValue:
-                          "They'd already asked you, so you're now friends.",
-                      })
-                    : null
-                );
-                friendship.add(name);
-                setWho("");
+                const typed = who;
+                setAnswer(null);
+                void addFriendOrInvite(state, typed, t).then((said) => {
+                  setAnswer(said);
+                  if (said === null || isEmail(typed)) setWho("");
+                });
               }}
             >
               <input
@@ -416,8 +446,8 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 className="sb-friends-add-input"
                 value={who}
                 onInput={(e) => setWho((e.target as HTMLInputElement).value)}
-                placeholder={t("friend-add-placeholder", {
-                  defaultValue: "Their name at a Home, like ruth.me",
+                placeholder={t("friend-add-placeholder-email", {
+                  defaultValue: "A name like ruth.me, or an email address",
                 })}
                 aria-label={t("add-friend", { defaultValue: "Add a friend" })}
                 autoComplete="off"
@@ -428,7 +458,11 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 className="sb-friends-button sb-friends-button--primary"
                 disabled={!who.trim()}
               >
-                {t("send-friend-request", { defaultValue: "Send request" })}
+                {isEmail(who)
+                  ? t("send-friend-invitation", {
+                      defaultValue: "Send invitation",
+                    })
+                  : t("send-friend-request", { defaultValue: "Send request" })}
               </button>
             </form>
             {answer && (
@@ -491,7 +525,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
             )}
           </section>
 
-          {sent.length > 0 && (
+          {(sent.length > 0 || invited.length > 0) && (
             <section className="sb-friends-section">
               <Heading icon="schedule_send">
                 {t("sent-friend-requests", { defaultValue: "Sent requests" })}
@@ -525,6 +559,57 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                     </li>
                   );
                 })}
+                {invited.map((i) => (
+                  <li key={i.token} className="sb-friends-row">
+                    <Person
+                      name={i.email}
+                      subtitle={t("friend-invite-pending", {
+                        defaultValue:
+                          "Invited by email · waiting for them to join",
+                      })}
+                    />
+                    <span className="sb-friends-row-actions">
+                      <button
+                        type="button"
+                        className="sb-friends-button"
+                        aria-label={t("resend-invitation-to", {
+                          email: i.email,
+                          defaultValue:
+                            "Send the invitation to {{email}} again",
+                        })}
+                        onClick={() =>
+                          void state.invites.resend(i.token).then((ok) =>
+                            setAnswer(
+                              ok
+                                ? t("friend-invite-sent-again", {
+                                    email: i.email,
+                                    defaultValue:
+                                      "Sent your invitation to {{email}} again.",
+                                  })
+                                : t("friend-invite-resend-failed", {
+                                    defaultValue:
+                                      "Couldn't send it again. Try in a moment.",
+                                  })
+                            )
+                          )
+                        }
+                      >
+                        {t("resend", { defaultValue: "Resend" })}
+                      </button>
+                      <button
+                        type="button"
+                        className="sb-friends-button"
+                        aria-label={t("cancel-invitation-to", {
+                          email: i.email,
+                          defaultValue: "Cancel your invitation to {{email}}",
+                        })}
+                        onClick={() => void state.invites.cancel(i.token)}
+                      >
+                        {t("cancel", { defaultValue: "Cancel" })}
+                      </button>
+                    </span>
+                  </li>
+                ))}
               </ul>
             </section>
           )}

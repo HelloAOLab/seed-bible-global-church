@@ -15,6 +15,11 @@ export const WATCH_EVERY_MS = 4_000;
 export interface FriendInvite {
   agent: string;
   name: string | null;
+  /** An emailed invitation's token: accepting takes it, so the inviter sees who joined. */
+  token?: string;
+  note?: string | null;
+  /** Why an emailed invitation could not be opened (expired, cancelled). */
+  error?: string;
 }
 
 /** `/friend/<address>?name=<name>` — a friend link; null for any other path. */

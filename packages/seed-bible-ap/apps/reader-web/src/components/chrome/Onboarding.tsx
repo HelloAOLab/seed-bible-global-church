@@ -41,7 +41,8 @@ export function Onboarding({ state }: { state: ReaderState }) {
     setStage("install");
   };
 
-  if (stage === "tour")
+  // Someone arriving from an invitation answers that first; the offer waits until it's closed.
+  if (stage === "tour" && !state.friendship.invite.value)
     return (
       <div
         className="sb-tutorial-prompt"

@@ -24,6 +24,8 @@ import { createPresence } from "./social/presence";
 import { createProfile } from "./social/profile";
 import { claimDevice, forgetPerson } from "./records/deviceOwner";
 import { createFriendship, parseFriendLink } from "./social/friendship";
+import { A2A_BASE } from "../api";
+import { createInvites, parseInviteLink } from "./social/invites";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
 import { browserPeerFactory, createVoice } from "./sessions/voice";
@@ -156,6 +158,18 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     friendsView: () => today.friendsView.value,
     refresh: () => today.refreshContacts(),
     homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
+  });
+  const invites = createInvites({
+    base: A2A_BASE,
+    bearer: () => {
+      const s = session.value;
+      return s && s.via !== "dev-stub" ? s.token : null;
+    },
+  });
+  effect(() => {
+    if (!session.value) return;
+    void invites.refresh();
+    void invites.loadFindable();
   });
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
@@ -753,6 +767,15 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
             location.pathname
           )
         : null;
+    // A friend link (`/friend/<address>?name=…`) or an emailed invitation (`/invite/<token>`), likewise.
+    const friendInvite =
+      typeof location !== "undefined"
+        ? parseFriendLink(location.pathname, location.search)
+        : null;
+    const inviteToken =
+      typeof location !== "undefined"
+        ? parseInviteLink(location.pathname)
+        : null;
     // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
     if (typeof location !== "undefined") {
       const legacy = legacyTarget(location.pathname, location.search);
@@ -865,6 +888,15 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         document.removeEventListener("visibilitychange", onBack),
       // Leaving writes the last tab change at once rather than losing it to the debounce.
       saveTabsNow,
+      // Signing in to accept an invitation goes straight back to it: Account closes once you're signed in.
+      effect(() => {
+        if (
+          session.value &&
+          friendship.invite.peek() &&
+          ui.pane.peek() === "account"
+        )
+          ui.pane.value = "none";
+      }),
     ];
     void customizations.refresh();
     void offline.load();
@@ -914,12 +946,20 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.
       const tour = parseTutorialLink(q);
       if (tour) setTimeout(() => tours.start(tour.id, tour.step), 800);
-      // A friend link (`/friend/<address>?name=…`): who invited you, offered once the page is up.
-      const invite = parseFriendLink(location.pathname, location.search);
-      if (invite) {
-        friendship.invite.value = invite;
-        history.replaceState(null, "", "/");
-      }
+      // Who invited you, offered once the page is up.
+      if (friendInvite) friendship.invite.value = friendInvite;
+      if (inviteToken)
+        void invites.lookup(inviteToken).then((r) => {
+          friendship.invite.value =
+            "error" in r
+              ? { agent: "", name: null, token: inviteToken, error: r.error }
+              : {
+                  agent: r.from.toLowerCase(),
+                  name: r.fromName,
+                  token: inviteToken,
+                  note: r.note,
+                };
+        });
       const sid = q.get("session");
       if (sid) {
         const code = q.get("code") ?? undefined;
@@ -962,6 +1002,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     today,
     profile,
     friendship,
+    invites,
     presence,
     live,
     /** The tab the live session lives in (its Shared tab); null when not in one. */

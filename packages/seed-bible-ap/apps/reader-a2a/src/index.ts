@@ -1,3 +1,4 @@
+import { decodeJwt } from "jose";
 import { WireRefusal } from "./wires";
 import { joinSessionAsGuest } from "./skills/session";
 // reader-a2a — the Seed Bible reader workspace agent (hello world). Browser → A2A → MCP, the same triad shape as
@@ -14,7 +15,7 @@ import {
   readerFromToken,
   type SessionEnv,
 } from "./session";
-import { servedEstates, TOWN } from "../../../estate/faithnet";
+import { estateById, servedEstates, TOWN } from "../../../estate/faithnet";
 import { askScripture, bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
@@ -241,6 +242,78 @@ app.post("/api/presence/beat", async (c) =>
 );
 app.get("/api/presence/friends", async (c) =>
   presenceForward(c, "/presence/friends", { method: "GET" })
+);
+
+/**
+ * FRIEND INVITATIONS BY EMAIL and being found by email — the Home's (`/connect/friend-invite/*`, `/connect/findable`),
+ * asked under the reader's own token, forwarded: the browser talks to this origin only. The Home is the one that
+ * signed the reader in (the token's issuer, already checked); an invitation opened signed out asks the estate's
+ * Home. The reader's origin goes along so the Home's email links land back in the reader.
+ */
+async function homeForward(
+  c: { req: { raw: Request }; env: Env },
+  path: string,
+  init: RequestInit,
+  opts: { signedOut?: boolean } = {}
+): Promise<Response> {
+  const bearer = bearerOf(c.req.raw);
+  const reader = await readerFromToken(c.env, bearer);
+  const signedIn = !!reader && !!bearer && !bearer.startsWith("dev:");
+  if (!signedIn && !opts.signedOut)
+    return Response.json(
+      { ok: false, error: "sign in to invite a friend" },
+      { status: 401 }
+    );
+  const home = signedIn
+    ? String(decodeJwt(bearer!).iss ?? "")
+    : (estateById("faithnet")?.home ?? "");
+  if (!home)
+    return Response.json(
+      { ok: false, error: "no Home to ask" },
+      { status: 503 }
+    );
+  const origin = c.req.raw.headers.get("origin");
+  const res = await fetch(`${home.replace(/\/+$/, "")}${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+      ...(origin ? { origin } : {}),
+      ...(signedIn ? { authorization: `Bearer ${bearer}` } : {}),
+    },
+  });
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: { "content-type": "application/json" },
+  });
+}
+app.get("/api/friends/invites", async (c) =>
+  homeForward(c, "/connect/friend-invite/email", { method: "GET" })
+);
+app.post("/api/friends/invites", async (c) =>
+  homeForward(c, "/connect/friend-invite/email", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: await c.req.text(),
+  })
+);
+app.get("/api/friends/invites/lookup", async (c) =>
+  homeForward(
+    c,
+    `/connect/friend-invite/lookup?token=${encodeURIComponent(c.req.query("token") ?? "")}`,
+    { method: "GET" },
+    { signedOut: true }
+  )
+);
+app.get("/api/findable", async (c) =>
+  homeForward(c, "/connect/findable", { method: "GET" })
+);
+app.post("/api/findable", async (c) =>
+  homeForward(c, "/connect/findable", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: await c.req.text(),
+  })
 );
 
 /**

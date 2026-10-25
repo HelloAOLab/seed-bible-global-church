@@ -412,9 +412,9 @@ export class FlowContext {
   async signInAsSample(
     preferred = /seed ?reader/i,
     page: Page = this.page,
-    opts: { adopt?: "add" | "discard" | "none" } = {}
+    opts: { adopt?: "add" | "discard" | "none"; paneOpen?: boolean } = {}
   ): Promise<string> {
-    await this.pressToolbar("Sign in", page);
+    if (!opts.paneOpen) await this.pressToolbar("Sign in", page);
     await this.pane(page).waitFor({ timeout: 5000 });
     // Sign-in asks for the terms first, as the old reader's did.
     const terms = page.locator("#sb-login-terms");

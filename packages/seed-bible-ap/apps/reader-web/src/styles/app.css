@@ -2242,3 +2242,16 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 .sb-app-embed .sb-bible-reader-content {
   padding-bottom: 4.5rem;
 }
+/* The note an emailed invitation carried, in the inviter's words. */
+.sb-friend-invite-note {
+  margin: 0.5rem 0;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 3px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  opacity: 0.85;
+}
+.sb-friend-invite-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
