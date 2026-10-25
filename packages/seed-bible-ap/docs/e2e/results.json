@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:10 UTC",
+  "when": "2026-10-25 09:15 UTC",
   "results": [
     {
-      "id": "EX1",
-      "section": "12. Extensions",
-      "title": "The Extensions page",
-      "checks": "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
+      "id": "A2",
+      "section": "2. Getting in",
+      "title": "Sign in with your Home; sign out",
+      "checks": "Account → Sign in with faithnet opens the Home; a demo person approves the reader — the Account pane closes, \"Signed in as …\" shows and the reader is signed in with no refresh; Sign out signs out of the Home too and returns to the start page — signing in again, the Home asks who you are. Then the same with popups blocked (the page goes to the Home and back)",
       "mark": "✅",
-      "note": "tabs with counts; 40 → 36 cross-references at 1 per verse, reset; companion off and on; the set downloaded",
-      "ms": 2473
+      "note": "popup: \"Signed in as seedreader.me\", landed in the reader, signed out to the start page; popups blocked: \"Signed in as seedreader.me\", the same",
+      "ms": 23998
     }
   ]
 }

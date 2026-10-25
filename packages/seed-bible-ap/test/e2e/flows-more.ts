@@ -758,6 +758,61 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "SI1",
+    section: "2. Getting in",
+    title: "Sign-in asks for the terms",
+    rows: ["Sign in with your Home"],
+    checks:
+      "Today says why to sign in with a Log in button, which opens sign-in; there, signing in without ticking 'I agree to the Terms of service' says 'Please agree to the terms of service to continue.'; under it Privacy policy, Code of conduct and Terms of service open those pages; the old ?privacy=open link opens the privacy policy",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "Today's Log in";
+        await c.open(CH);
+        await c.pressToolbar("Today");
+        await c
+          .pane()
+          .getByRole("button", { name: /^log in$/i })
+          .click();
+        const pane = c.pane();
+        await pane.locator("#sb-login-terms").waitFor({ timeout: 5000 });
+        step = "the terms";
+        const details = pane.locator("details").first();
+        await details.waitFor({ timeout: 15000 });
+        if (!(await details.getAttribute("open")))
+          await details.locator("summary").click();
+        await details.locator("button").first().click();
+        await c.waitText(
+          pane,
+          /agree to the terms of service to continue/i,
+          5000
+        );
+        if (await c.page.locator(".sb-sidebar-profile-button-in").count())
+          throw new Error("signed in without agreeing");
+        step = "the links";
+        await pane
+          .locator(".sb-login-legal")
+          .getByText("Code of conduct")
+          .click();
+        await c.waitText(
+          c.pane().locator(".sb-pane-header"),
+          /code of conduct/i,
+          5000
+        );
+        step = "?privacy=open";
+        await c.open(`${CH}?privacy=open`);
+        await c.waitText(
+          c.pane().locator(".sb-pane-header"),
+          /privacy policy/i,
+          10000
+        );
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "Today's Log in opened sign-in; it refused without the terms; Code of conduct and ?privacy=open opened those pages";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",
@@ -5171,6 +5226,17 @@ export const MORE_FLOWS: Flow[] = [
       ) => {
         await c.open(CH, page);
         await c.pressToolbar("Sign in", page);
+        // Without the terms ticked it says so and goes nowhere (the old reader's).
+        await page
+          .locator(".sb-app-pane")
+          .getByRole("button", { name: /sign in with faithnet/i })
+          .click();
+        await c.waitText(
+          page.locator(".sb-app-pane"),
+          /agree to the terms of service to continue/i,
+          5000
+        );
+        await page.locator("#sb-login-terms").check();
         const opened = popup
           ? page.context().waitForEvent("page", { timeout: 15000 })
           : null;
@@ -5210,6 +5276,7 @@ export const MORE_FLOWS: Flow[] = [
           .waitFor({ timeout: 20000 });
         // Signed out of the Home too: signing in again asks who you are instead of reusing the last person.
         await c.pressToolbar("Sign in", page);
+        await page.locator("#sb-login-terms").check();
         const reopened = popup
           ? page.context().waitForEvent("page", { timeout: 15000 })
           : null;

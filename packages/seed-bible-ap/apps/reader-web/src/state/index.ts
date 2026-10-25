@@ -484,6 +484,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       sessionId: string;
       label: string;
     } | null>(null),
+    /** A policy to open in About (terms, privacy, code of conduct): sign-in's links and `?terms=open`. */
+    policy: signal<
+      "terms-of-service" | "privacy-policy" | "code-of-conduct" | null
+    >(null),
     /** The playlist open in the Library: the verse toolbar's Add to Playlist adds to it (the old reader's). */
     editingPlaylist: signal<string | null>(null),
     /** The old reader's floating chat panel, above the reader bar. */
@@ -550,6 +554,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     )
       return "wire";
     return null;
+  });
+  // A lapsed sign-in is said where the reader is, not only in the account pane (the old reader's toast).
+  let troubleSaid = false;
+  effect(() => {
+    const trouble = sessionTrouble.value === "expired";
+    if (trouble && !troubleSaid) ui.toast.value = { key: "signed-out-message" };
+    troubleSaid = trouble;
   });
   // The right-click menu closes with the selection.
   effect(() => {
@@ -822,6 +833,19 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
           const entry = customizations.findByRef(cust);
           if (entry) void customizations.select(entry);
         });
+      // `?terms=open`, `?privacy=open`, `?conduct=open` (the old reader's links to its policies) open them in About.
+      const policy =
+        q.get("terms") === "open"
+          ? "terms-of-service"
+          : q.get("privacy") === "open"
+            ? "privacy-policy"
+            : q.get("conduct") === "open"
+              ? "code-of-conduct"
+              : null;
+      if (policy) {
+        ui.policy.value = policy;
+        ui.pane.value = "about";
+      }
       // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.
       const tour = parseTutorialLink(q);
       if (tour) setTimeout(() => tours.start(tour.id, tour.step), 800);

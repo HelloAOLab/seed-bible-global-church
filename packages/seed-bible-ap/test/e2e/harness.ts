@@ -415,6 +415,9 @@ export class FlowContext {
   ): Promise<string> {
     await this.pressToolbar("Sign in", page);
     await this.pane(page).waitFor({ timeout: 5000 });
+    // Sign-in asks for the terms first, as the old reader's did.
+    const terms = page.locator("#sb-login-terms");
+    if (await terms.count()) await terms.check();
     const details = page.locator(".sb-app-pane details").first();
     await details.waitFor({ timeout: 15000 });
     if (!(await details.getAttribute("open")))

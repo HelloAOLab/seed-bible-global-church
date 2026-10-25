@@ -552,7 +552,23 @@ export function AccountCard({ state }: { state: ReaderState }) {
       listDevReaders().then((r) => (devReaders.value = r));
   }, [s]);
 
+  // The old reader's sign-in asks for the terms first; a lapsed sign-in being renewed already agreed.
+  const [agreed, setAgreed] = useState(false);
+  const needAgreement = () => {
+    if (s || agreed) return false;
+    error.value = t("login-error-terms-required", {
+      defaultValue: "Please agree to the terms of service to continue.",
+    });
+    return true;
+  };
+  const openPolicy = (
+    p: "terms-of-service" | "privacy-policy" | "code-of-conduct"
+  ) => {
+    state.ui.policy.value = p;
+    state.ui.pane.value = "about";
+  };
   const onHome = async () => {
+    if (needAgreement()) return;
     error.value = "";
     try {
       const out = await connectViaHome(
@@ -662,6 +678,32 @@ export function AccountCard({ state }: { state: ReaderState }) {
                 "Sign in with your Home. This page holds no key; your Home does the ceremony.",
             })}
           </p>
+          <label className="sb-login-terms" htmlFor="sb-login-terms">
+            <input
+              id="sb-login-terms"
+              className="sb-login-terms-checkbox"
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => {
+                setAgreed((e.currentTarget as HTMLInputElement).checked);
+                error.value = "";
+              }}
+            />
+            <span className="sb-login-terms-text">
+              {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
+              <a
+                className="sb-login-link"
+                href="?terms=open"
+                onClick={(e: MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openPolicy("terms-of-service");
+                }}
+              >
+                {t("terms-of-service", { defaultValue: "Terms of service" })}
+              </a>
+            </span>
+          </label>
           <button
             className="sb-note-button sb-note-button-primary sb-signin-button"
             onClick={() => void onHome()}
@@ -676,6 +718,38 @@ export function AccountCard({ state }: { state: ReaderState }) {
             {TOWN.label} · {estate.label} ·{" "}
             <a href={estate.home}>{estate.homeHost}</a>
           </p>
+          <div className="sb-login-legal">
+            <a
+              className="sb-login-link"
+              href="?privacy=open"
+              onClick={(e: MouseEvent) => {
+                e.preventDefault();
+                openPolicy("privacy-policy");
+              }}
+            >
+              {t("privacy-policy", { defaultValue: "Privacy policy" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href="?conduct=open"
+              onClick={(e: MouseEvent) => {
+                e.preventDefault();
+                openPolicy("code-of-conduct");
+              }}
+            >
+              {t("code-of-conduct", { defaultValue: "Code of conduct" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href="?terms=open"
+              onClick={(e: MouseEvent) => {
+                e.preventDefault();
+                openPolicy("terms-of-service");
+              }}
+            >
+              {t("terms-of-service", { defaultValue: "Terms of service" })}
+            </a>
+          </div>
           {!HOME_SIGNIN_AVAILABLE && (
             <p className="sb-small sb-muted">
               Not registered yet: the Home needs the client{" "}
@@ -699,6 +773,7 @@ export function AccountCard({ state }: { state: ReaderState }) {
                     <button
                       className="sb-note-button"
                       onClick={() => {
+                        if (needAgreement()) return;
                         error.value = "";
                         connectAsSamplePerson(DEFAULT_ESTATE, p.handle).then(
                           (out) => state.signIn(out, { announce: true }),

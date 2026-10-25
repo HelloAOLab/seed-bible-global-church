@@ -116,11 +116,7 @@ export function ProfilePane({ state }: { state: ReaderState }) {
               type="button"
               className="sb-profile-signin"
               disabled={!HOME_SIGNIN_AVAILABLE}
-              onClick={() =>
-                void connectViaHome(DEFAULT_ESTATE)
-                  .then((out) => out && state.signIn(out, { announce: true }))
-                  .catch(() => go("account"))
-              }
+              onClick={() => go("account")}
             >
               {t("log-in", { defaultValue: "Log in" })}
             </button>

@@ -39,7 +39,14 @@ export function AboutPane({ state }: { state: ReaderState }) {
       : p === "privacy-policy"
         ? t("privacy-policy", { defaultValue: "Privacy policy" })
         : t("code-of-conduct", { defaultValue: "Code of conduct" });
-  const [policy, setPolicy] = useState<Policy | null>(null);
+  const [policy, setPolicy] = useState<Policy | null>(state.ui.policy.peek());
+  // A policy asked for from outside (sign-in's links, `?terms=open`) opens here.
+  useEffect(() => {
+    const asked = state.ui.policy.value;
+    if (!asked) return;
+    setPolicy(asked);
+    state.ui.policy.value = null;
+  }, [state.ui.policy.value]);
   const [html, setHtml] = useState<string | null>(null);
   useEffect(() => {
     if (!policy) return;

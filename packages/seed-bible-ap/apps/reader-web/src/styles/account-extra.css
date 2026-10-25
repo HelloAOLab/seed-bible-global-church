@@ -1,0 +1,51 @@
+/* The old reader's sign-in terms and legal links (components/LoginModal/LoginModal.css), ported by copy. */
+
+.sb-login-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  cursor: pointer;
+}
+
+.sb-login-terms-checkbox {
+  margin: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  accent-color: var(--sb-primary-color);
+  cursor: pointer;
+}
+
+.sb-login-terms-text {
+  flex: 1;
+}
+
+.sb-login-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-login-link:hover {
+  filter: brightness(1.1);
+}
+
+.sb-login-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.8125rem;
+}
+
+.sb-login-legal .sb-login-link {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  text-decoration: none;
+}
+
+.sb-login-legal .sb-login-link:hover {
+  text-decoration: underline;
+}

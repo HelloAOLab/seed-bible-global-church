@@ -41,6 +41,7 @@ import "./styles/playlists.css";
 import "./styles/plans.css";
 import "./styles/onboarding.css";
 import "./styles/settings.css";
+import "./styles/account-extra.css";
 import "./styles/context-menu.css";
 import "./styles/bookmarks.css";
 import "./styles/profile.css";

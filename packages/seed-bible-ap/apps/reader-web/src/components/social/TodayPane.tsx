@@ -251,7 +251,14 @@ export function FriendsSection({ state }: { state: ReaderState }) {
         <p className="sb-content-empty">
           {t("today-signed-out", {
             defaultValue: "Sign in to see your friends and what they released.",
-          })}
+          })}{" "}
+          <button
+            type="button"
+            className="sb-discover-empty-action"
+            onClick={() => (state.ui.pane.value = "account")}
+          >
+            {t("log-in", { defaultValue: "Log in" })}
+          </button>
         </p>
       )}
       {signedIn &&

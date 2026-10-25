@@ -167,11 +167,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
               type="button"
               className="sb-friends-button sb-friends-button--primary"
               disabled={!HOME_SIGNIN_AVAILABLE}
-              onClick={() =>
-                void connectViaHome(DEFAULT_ESTATE)
-                  .then((out) => out && state.signIn(out, { announce: true }))
-                  .catch(() => (state.ui.pane.value = "account"))
-              }
+              onClick={() => (state.ui.pane.value = "account")}
             >
               {t("log-in", { defaultValue: "Log in" })}
             </button>

@@ -37,6 +37,10 @@ function line(
       return t("session-host-reconnected", {
         defaultValue: "The host reconnected",
       });
+    case "signed-out-message":
+      return t("signed-out-message", {
+        defaultValue: "You've been signed out. Please sign in again.",
+      });
     case "annotation-saved":
       return t("annotation-saved", { defaultValue: "Annotation saved" });
     case "annotation-save-failed":

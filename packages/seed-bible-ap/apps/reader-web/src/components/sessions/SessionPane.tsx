@@ -55,7 +55,14 @@ export function SessionPane({ state }: { state: ReaderState }) {
             <p className="sb-small">
               {t("session-sign-in", {
                 defaultValue: "Sign in to read together.",
-              })}
+              })}{" "}
+              <button
+                type="button"
+                className="sb-discover-empty-action"
+                onClick={() => (state.ui.pane.value = "account")}
+              >
+                {t("log-in", { defaultValue: "Log in" })}
+              </button>
             </p>
           )}
           <p className="sb-small sb-muted">
