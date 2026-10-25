@@ -7,7 +7,7 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { Avatar } from "../chrome/ConnectedChip";
 import { SeedBibleIcon } from "../chrome/icons";
-import { AudioScrubber } from "./AudioScrubber";
+import { AudioProgressRing, AudioScrubber } from "./AudioScrubber";
 import { TasksIcon } from "./SidebarPanels";
 import { toolbarActions } from "./ReaderToolbar";
 import type { ComponentChildren } from "preact";
@@ -80,16 +80,16 @@ function PlayGlyph({ playing }: { playing: boolean }) {
 export function ChapterNav({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { reading, ui, audio, tts } = state;
-  const audioPlaying = audio.controller.isPlaying.value;
-  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
-  const speaking = tts.isSpeaking.value;
+  const pb = state.playback.value;
+  const playing = pb.isPlaying.value;
+  const audioActive = state.listeningActive.value;
   const canListen =
     !audio.available.value && tts.canSpeakLanguage(state.speechLang());
   const canPlay = audio.available.value || canListen;
-  const playing = audioPlaying || speaking;
+
   return (
     <div
-      className={`sb-reader-floating-nav${audioPlaying ? " sb-reader-floating-nav-scrubbing" : ""}`}
+      className={`sb-reader-floating-nav${playing ? " sb-reader-floating-nav-scrubbing" : ""}`}
       role="group"
       aria-label={t("chapter-navigation", {
         defaultValue: "Chapter navigation",
@@ -105,21 +105,19 @@ export function ChapterNav({ state }: { state: ReaderState }) {
                 ? t("pause", { defaultValue: "Pause" })
                 : t("play", { defaultValue: "Play" })
             }
-            onClick={() => {
-              if (speaking) tts.stop();
-              else if (audioPlaying) audio.pause();
-              else if (audio.available.value) audio.play();
-              else state.listen();
-            }}
+            onClick={() => state.togglePlay()}
           >
             <PlayGlyph playing={playing} />
           </button>
+          {/* Paused part-way: a ring round the button shows how far it got (the old reader's); playing, the
+              scrubber above the pill does. */}
+          {audioActive && !playing && <AudioProgressRing playback={pb} />}
         </div>
       )}
       <div className="sb-reader-floating-nav-group-wrap">
-        {audioActive && (
+        {playing && (
           <AudioScrubber
-            playback={audio.controller}
+            playback={pb}
             showTimeRemaining
             className="sb-reader-floating-nav-scrubber"
           />

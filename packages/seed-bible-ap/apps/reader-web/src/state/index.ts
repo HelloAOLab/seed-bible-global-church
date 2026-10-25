@@ -49,6 +49,7 @@ import { legacyTarget } from "./reading/legacyRoute";
 import { createTabs, slotCountOf, type LayoutId } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
 import { createChapterAudio } from "./media/audio";
+import { createSpeechPlayback } from "./media/speechPlayback";
 import { createTextToSpeechManager } from "./media/textToSpeech";
 import { bibleLanguageToBcp47 } from "./media/languages";
 import { getVersePlainText } from "../components/reader/chapterContent";
@@ -217,6 +218,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     });
   });
   const tts = createTextToSpeechManager();
+  const speech = createSpeechPlayback(tts);
 
   // Every tab has its own reading state; the device position and the URL follow the selected tab only.
   const tabs = createTabs({
@@ -253,7 +255,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   effect(() => {
     const chapter = readingOf().chapterData.value;
     void audio.load(chapter);
-    tts.stop();
+    speech.controller.stop();
   });
   const speechLang = () =>
     bibleLanguageToBcp47(readingOf().translation.value?.language);
@@ -267,7 +269,26 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
           !!e && typeof e === "object" && e.type === "verse"
       )
       .map((e) => ({ number: e.number, text: getVersePlainText(e.content) }));
-    tts.speak(verses, { lang: speechLang() });
+    speech.start(verses, { lang: speechLang() });
+  }
+  /** What the bars' play, pause and scrubber drive: the device voice while it has a chapter, else the recording. */
+  const playback = computed(() =>
+    speech.loaded.value ? speech.controller : audio.controller
+  );
+  /** Whether there is listening under way (playing, or paused part-way) — the bars then show the scrubber. */
+  const listeningActive = computed(
+    () =>
+      speech.loaded.value ||
+      audio.controller.isPlaying.value ||
+      audio.controller.currentTime.value > 0
+  );
+  /** Play or Pause: carry on where it was, else the recording, else the device voice from the top. */
+  function togglePlay() {
+    const pb = playback.value;
+    if (pb.isPlaying.value) return pb.pause();
+    if (speech.loaded.value) return speech.controller.play();
+    if (audio.available.value) return audio.play();
+    listen();
   }
 
   // A kept translation with a newer file in the list is fetched again as it is read (the old reader's update).
@@ -934,6 +955,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     audio,
     listening,
     tts,
+    speech,
+    playback,
+    listeningActive,
+    togglePlay,
     speechLang,
     listen,
     tabs,

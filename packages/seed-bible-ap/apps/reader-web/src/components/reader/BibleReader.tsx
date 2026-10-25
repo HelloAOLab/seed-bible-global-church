@@ -105,8 +105,23 @@ export function BibleReader({
   );
   // Listen: the chapter's recording where it has one, else the device's voice where it speaks the language.
   const audio = state.audio;
-  const playing =
-    audio.controller.isPlaying.value || state.tts.isSpeaking.value;
+  const playing = state.playback.value.isPlaying.value;
+  // The page follows the verse being read aloud, as the old reader's does: when it moves off screen it is brought
+  // back to the middle.
+  const heard = active
+    ? (state.audio.currentVerse.value ?? state.tts.currentVerse.value)
+    : null;
+  useEffect(() => {
+    if (!playing || heard === null || !root.current) return;
+    const el = root.current.querySelector<HTMLElement>(
+      `.sb-chapter-content [data-verse-number="${heard}"]`
+    );
+    const r = el?.getBoundingClientRect();
+    if (!el || !r) return;
+    const bottom = window.innerHeight - 120;
+    if (r.top < 80 || r.bottom > bottom)
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [heard, playing]);
   const canPlay =
     audio.available.value || state.tts.canSpeakLanguage(state.speechLang());
   const chapterLabel = `${reading.bookName.value} ${reading.chapterNumber.value}`;
@@ -792,10 +807,7 @@ export function BibleReader({
                 }
                 onClick={(e: MouseEvent) => {
                   e.stopPropagation();
-                  if (state.tts.isSpeaking.value) state.tts.stop();
-                  else if (audio.controller.isPlaying.value) audio.pause();
-                  else if (audio.available.value) audio.play();
-                  else state.listen();
+                  state.togglePlay();
                 }}
               >
                 <span className="material-symbols-outlined sb-icon-filled">

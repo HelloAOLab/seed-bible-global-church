@@ -6517,4 +6517,73 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "AU1",
+    section: "7. Listening",
+    title: "Listening follows the verse; the ring when paused",
+    rows: ["Chapter actions in the header"],
+    checks:
+      "Listening to John 3, a jump near the end of the bar brings the verse being read into view on its own; on an iPhone 13, pausing part-way puts a progress ring round the play button, and the scrubber shows again on Play",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(CH);
+      const head = page.locator(
+        ".sb-bible-reader-active .sb-bible-reader-actions"
+      );
+      await head.getByRole("button", { name: "Listen" }).click();
+      const scrub = page.locator(
+        ".sb-reader-toolbar-audio .sb-audio-scrubber-hit-area"
+      );
+      await scrub.waitFor({ timeout: 15000 });
+      const box = (await scrub.boundingBox())!;
+      await page.mouse.click(box.x + box.width * 0.85, box.y + box.height / 2);
+      const heard = page
+        .locator(".sb-bible-reader-active .sb-verse-playing")
+        .first();
+      await heard.waitFor({ timeout: 10000 });
+      let inView = false;
+      for (let i = 0; i < 30 && !inView; i++) {
+        inView = await heard.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top >= 0 && r.bottom <= window.innerHeight;
+        });
+        if (!inView) await page.waitForTimeout(200);
+      }
+      const n = await heard.getAttribute("data-verse-number");
+      await head.getByRole("button", { name: "Pause" }).click();
+      if (!inView) throw new Error(`verse ${n} being read stayed off screen`);
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      c.watch(phone);
+      try {
+        await c.open(CH, phone);
+        await c.settleTours(phone);
+        const play = phone.locator(".sb-reader-floating-nav-play");
+        await play.click();
+        await phone
+          .locator(".sb-reader-floating-nav-scrubber")
+          .waitFor({ timeout: 15000 });
+        await phone.waitForTimeout(1500);
+        await play.click();
+        await phone
+          .locator(".sb-reader-floating-nav-play-wrap .sb-audio-progress-ring")
+          .waitFor({ timeout: 5000 })
+          .catch(() => {
+            throw new Error("no ring round the play button when paused");
+          });
+        await play.click();
+        await phone
+          .locator(".sb-reader-floating-nav-scrubber")
+          .waitFor({ timeout: 5000 });
+        await play.click();
+      } finally {
+        await ctx.close();
+      }
+      return `a jump to 85% brought verse ${n} into view; on a phone the ring showed when paused and the scrubber on Play`;
+    },
+  },
 ];

@@ -208,8 +208,9 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       | "session"
       | "library"
   ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
-  const audioPlaying = audio.controller.isPlaying.value;
-  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
+  const pb = state.playback.value;
+  const audioPlaying = pb.isPlaying.value;
+  const audioActive = state.listeningActive.value;
   const speaking = tts.isSpeaking.value;
   const canListen =
     !audio.available.value && tts.canSpeakLanguage(state.speechLang());
@@ -310,8 +311,8 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       {audioActive && (
         <>
           <div className="sb-reader-toolbar-audio">
-            <AudioScrubber playback={audio.controller} showTimeRemaining />
-            {audio.readers.value.length > 1 && (
+            <AudioScrubber playback={pb} showTimeRemaining />
+            {pb === audio.controller && audio.readers.value.length > 1 && (
               <select
                 className="sb-reader-toolbar-reader"
                 aria-label={t("audio-reader", { defaultValue: "Reader" })}
@@ -338,14 +339,14 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
                 ? t("pause", { defaultValue: "Pause" })
                 : t("play", { defaultValue: "Play" })
             }
-            onClick={() => (audioPlaying ? audio.pause() : audio.play())}
+            onClick={() => state.togglePlay()}
           />
           {!audioPlaying && (
             <Item
               icon="stop"
               className="sb-reader-toolbar-item-arrow"
               label={t("stop", { defaultValue: "Stop" })}
-              onClick={() => audio.stop()}
+              onClick={() => pb.stop()}
             />
           )}
           <span className="sb-reader-toolbar-divider" aria-hidden="true" />
