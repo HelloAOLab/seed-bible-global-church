@@ -1,25 +1,7 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:13 UTC",
+  "when": "2026-10-25 14:14 UTC",
   "results": [
-    {
-      "id": "P2",
-      "section": "10. Playlists and reading plans",
-      "title": "Make a reading plan, start it, tick a reading",
-      "checks": "Library → Reading plans → up to chapter 5 → Create plan; open it → Start; tick the first reading; the progress label moves; delete the plan",
-      "mark": "✅",
-      "note": "plan of 5 chapters; progress \"0/5\" → \"1/5\"",
-      "ms": 1610
-    },
-    {
-      "id": "RP1",
-      "section": "10. Playlists and reading plans",
-      "title": "A reading plan as the old reader shows it",
-      "checks": "A plan of John 1–3 started Daily shows '3 days · started …', 'Next: Day 1 · John 1', and open, 'ends …', '~N min/day' and Day 1–3 tabs; Read plays Day 1 in the reader and at its end asks 'Nice reading! Mark Day 1 complete?' → Mark as complete ticks Day 1; Day 2's Mark complete waits for its reading, then says 'Day 2 complete!'; Delete asks 'Delete reading plan?'",
-      "mark": "✅",
-      "note": "summary, Read with the Nice reading prompt, Day 2 complete!, deleted after the check",
-      "ms": 7627
-    },
     {
       "id": "G13",
       "section": "10. Playlists and reading plans",
@@ -27,16 +9,25 @@
       "checks": "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
       "mark": "✅",
       "note": "DAY 1 DAY 2 Comfort radio_button_unchecked menu_book Psalms 23 · BSB ~2 min radio_button_unchecked menu_book J; kept after a reload, Start · Weekly offered",
-      "ms": 4259
+      "ms": 4197
     },
     {
-      "id": "PB1",
+      "id": "AP1",
       "section": "10. Playlists and reading plans",
-      "title": "A chapter's plans at its end; Nice reading!",
-      "checks": "With a started plan of John 1–5, John 3 ends with a 'Reading Plans' card naming the plan and 'Mark John 3 as read'; reading on to the card (twelve seconds on the chapter) raises 'Nice reading! Mark John 3 complete?' — Mark as complete ticks the plan there",
+      "title": "Add to plan from the verse toolbar",
+      "checks": "While a reading plan is being edited, choosing John 3:16–17 offers Add to plan in the verse toolbar; with Day 2 being worked on it says 'Added to session 2' and Day 2 lists John 3:16–17",
       "mark": "✅",
-      "note": "John 3 ended with the plan's card; after the read the nudge's Mark as complete ticked it",
-      "ms": 15914
+      "note": "Add to plan appeared while editing; 'Added to session 2'; Day 2 listed John 3:16–17",
+      "ms": 1474
+    },
+    {
+      "id": "PE1",
+      "section": "10. Playlists and reading plans",
+      "title": "A plan's day: text, a link and Reflect",
+      "checks": "In a blank plan, Day 1 takes John 3, a few words ('Be still and know'), a link (a bad one says 'Enter a valid URL') and a Reflect note; saved, the plan's Day 1 shows the passage, the words, the link and Reflect with the note",
+      "mark": "✅",
+      "note": "Day 1 held John 3, the words, the link and its Reflect note",
+      "ms": 1381
     }
   ]
 }

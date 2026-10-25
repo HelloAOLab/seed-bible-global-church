@@ -15,6 +15,7 @@ import {
   removeReading,
   removeSession,
   renameSession,
+  setSessionNote,
   setDetails,
   toggleCadence,
   updateReading,
@@ -49,6 +50,9 @@ export function PlanEditor({
   const [name, setName] = useState(plan.label);
   const [description, setDescription] = useState(plan.description ?? "");
   const [refs, setRefs] = useState<Record<number, string>>({});
+  const [texts, setTexts] = useState<Record<number, string>>({});
+  const [links, setLinks] = useState<Record<number, string>>({});
+  const [badLink, setBadLink] = useState<number | null>(null);
   const [bad, setBad] = useState<number | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -296,6 +300,117 @@ export function PlanEditor({
                 })}
               </p>
             )}
+            {/* A day can also hold a few words to read and a link, and a Reflect note (the old reader's day types). */}
+            <form
+              className="sb-plan-edit-row"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const text = (texts[si] ?? "").trim();
+                if (!text) return;
+                const html = text
+                  .split(/\n{2,}/)
+                  .map(
+                    (p) =>
+                      `<p>${p.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>")}</p>`
+                  )
+                  .join("");
+                setDraft(
+                  addReading(draft, si, {
+                    "@type": "seed:HtmlItem",
+                    html,
+                    label: text.split("\n")[0]!.slice(0, 80),
+                  })
+                );
+                setTexts({ ...texts, [si]: "" });
+              }}
+            >
+              <input
+                className="sb-note-editor"
+                aria-label={t("plan-add-text-to", {
+                  defaultValue: "Add some text to {{day}}",
+                  day,
+                })}
+                placeholder={t("plan-text-placeholder", {
+                  defaultValue: "A few words to read",
+                })}
+                value={texts[si] ?? ""}
+                onInput={(e) =>
+                  setTexts({
+                    ...texts,
+                    [si]: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+              <button type="submit" className="sb-note-button">
+                {t("add", { defaultValue: "Add" })}
+              </button>
+            </form>
+            <form
+              className="sb-plan-edit-row"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const url = (links[si] ?? "").trim();
+                if (!/^https?:\/\/\S+\.\S+/.test(url)) {
+                  setBadLink(si);
+                  return;
+                }
+                setBadLink(null);
+                setDraft(
+                  addReading(draft, si, { "@type": "seed:LinkItem", url })
+                );
+                setLinks({ ...links, [si]: "" });
+              }}
+            >
+              <input
+                className="sb-note-editor"
+                aria-label={t("plan-add-link-to", {
+                  defaultValue: "Add a link to {{day}}",
+                  day,
+                })}
+                placeholder={t("add-link-url", {
+                  defaultValue: "Add a link (https://…)",
+                })}
+                value={links[si] ?? ""}
+                onInput={(e) =>
+                  setLinks({
+                    ...links,
+                    [si]: (e.target as HTMLInputElement).value,
+                  })
+                }
+              />
+              <button type="submit" className="sb-note-button">
+                {t("add", { defaultValue: "Add" })}
+              </button>
+            </form>
+            {badLink === si && (
+              <p className="sb-error sb-small">
+                {t("playlist-invalid-url", {
+                  defaultValue: "Enter a valid URL",
+                })}
+              </p>
+            )}
+            <textarea
+              className="sb-note-editor sb-plan-edit-reflect"
+              rows={2}
+              aria-label={t("plan-reflect-for", {
+                defaultValue: "Reflect for {{day}}",
+                day,
+              })}
+              placeholder={t("plan-reflect-placeholder", {
+                defaultValue:
+                  "Reflect (optional): a question or thought for the day",
+              })}
+              value={s.note ?? ""}
+              onInput={(e) =>
+                setDraft(
+                  setSessionNote(
+                    draft,
+                    si,
+                    (e.target as HTMLTextAreaElement).value
+                  )
+                )
+              }
+            />
           </div>
         );
       })}

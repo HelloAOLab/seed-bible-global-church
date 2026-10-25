@@ -99,6 +99,15 @@ export const renameSession = (plan: ReadingPlan, si: number, label: string) =>
     return next;
   });
 
+/** A day's Reflect note (the old reader's), shown under its readings; empty takes it away. */
+export const setSessionNote = (plan: ReadingPlan, si: number, note: string) =>
+  editSession(plan, si, (s) => {
+    const next = { ...s };
+    if (note.trim()) next.note = note;
+    else delete next.note;
+    return next;
+  });
+
 export const addReading = (plan: ReadingPlan, si: number, item: PlaylistItem) =>
   editSession(plan, si, (s) => ({
     ...s,

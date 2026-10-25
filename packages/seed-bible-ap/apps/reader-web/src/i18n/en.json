@@ -981,5 +981,10 @@
   "playlist-reference-not-found": "Couldn't find that reference",
   "continue-playlist": "Continue {{title}}",
   "playlist-history-remove": "Remove from history",
-  "reading-plan-mark-passage-complete": "Mark {{passage}} as read"
+  "reading-plan-mark-passage-complete": "Mark {{passage}} as read",
+  "plan-add-link-to": "Add a link to {{day}}",
+  "plan-add-text-to": "Add some text to {{day}}",
+  "plan-reflect-for": "Reflect for {{day}}",
+  "plan-reflect-placeholder": "Reflect (optional): a question or thought for the day",
+  "plan-text-placeholder": "A few words to read"
 }

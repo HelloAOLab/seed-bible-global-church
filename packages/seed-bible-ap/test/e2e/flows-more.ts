@@ -7090,4 +7090,59 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "PE1",
+    section: "10. Playlists and reading plans",
+    title: "A plan's day: text, a link and Reflect",
+    rows: ["Edit a reading plan"],
+    checks:
+      "In a blank plan, Day 1 takes John 3, a few words ('Be still and know'), a link (a bad one says 'Enter a valid URL') and a Reflect note; saved, the plan's Day 1 shows the passage, the words, the link and Reflect with the note",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openLibrary("Reading plans");
+      const title = `Flow day ${stamp()}`;
+      await pane.locator('input[placeholder^="Plan title"]').fill(title);
+      await pane.locator(".sb-plan-blank").click();
+      const editor = pane.locator(".sb-plan-editor");
+      await editor.waitFor({ timeout: 10000 });
+      try {
+        const day = editor.locator(".sb-plan-edit-day").first();
+        await editor.getByLabel("Add a reading to Day 1").fill("John 3");
+        await day.getByRole("button", { name: /^add$/i }).first().click();
+        await editor
+          .getByLabel("Add some text to Day 1")
+          .fill("Be still and know");
+        await editor.getByLabel("Add some text to Day 1").press("Enter");
+        const link = editor.getByLabel("Add a link to Day 1");
+        await link.fill("notaurl");
+        await link.press("Enter");
+        await c.waitText(editor, /Enter a valid URL/, 3000);
+        await link.fill("https://example.com/psalm-46");
+        await link.press("Enter");
+        await editor
+          .getByLabel("Reflect for Day 1")
+          .fill("What stood out to you?");
+        await editor.getByRole("button", { name: /save changes/i }).click();
+        await editor.waitFor({ state: "detached", timeout: 10000 });
+        const card = pane.locator(".sb-rp-card", { hasText: title }).first();
+        await ensureOpen(card);
+        await c.waitText(
+          card.locator(".sb-rpd-body"),
+          /John 3[\s\S]*Be still and know[\s\S]*example\.com[\s\S]*Reflect[\s\S]*What stood out to you\?/i,
+          8000
+        );
+        return "Day 1 held John 3, the words, the link and its Reflect note";
+      } finally {
+        const p = pane.locator(".sb-rp-card", { hasText: title }).first();
+        if (await p.count()) {
+          await ensureOpen(p).catch(() => undefined);
+          await p
+            .getByRole("button", { name: /^delete$/i })
+            .click()
+            .catch(() => undefined);
+          await c.confirmDelete().catch(() => undefined);
+        }
+      }
+    },
+  },
 ];
