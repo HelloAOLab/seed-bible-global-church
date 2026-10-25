@@ -205,6 +205,32 @@ export class FlowContext {
     await box.waitFor({ state: "detached", timeout: 5000 });
   }
 
+  /** The bookmark window: place a new bookmark here (the offered one, or + New bookmark), or remove them all. */
+  async bookmarkPicker(
+    opts: { remove?: boolean } = {},
+    page: Page = this.page
+  ): Promise<void> {
+    const box = page.locator(".sb-bookmark-picker");
+    await box.waitFor({ timeout: 5000 });
+    if (opts.remove) {
+      const bins = box.locator(
+        ".sb-bookmark-picker-row .sb-bookmark-picker-remove"
+      );
+      while (await bins.count()) {
+        const n = await bins.count();
+        await bins.first().click();
+        for (let i = 0; i < 20 && (await bins.count()) === n; i++)
+          await page.waitForTimeout(100);
+      }
+      await page.locator(".sb-footnote-modal-close").first().click();
+    } else {
+      if (!(await box.locator(".sb-bookmark-picker-save").count()))
+        await box.locator(".sb-bookmark-add-new").click();
+      await box.locator(".sb-bookmark-picker-save").click();
+    }
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
   /** Wait until an element stops moving (the verse toolbar slides into place after it appears). */
   async settled(locator: Locator, timeout = 3000): Promise<void> {
     const t0 = Date.now();

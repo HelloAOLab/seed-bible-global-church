@@ -459,6 +459,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     savesPanel: signal(false),
     /** The old reader's floating search above the toolbar. */
     searchOpen: signal(false),
+    /** The bookmark window for a chapter (move one of your bookmarks here, or make one); null when closed. */
+    bookmarkPicker: signal<{ chapterRef: string; edition?: string } | null>(
+      null
+    ),
     /** The save window (the old SaveCategoryPicker): the passage to file, and the save when it is already saved. */
     savePicker: signal<{
       chapterRef: string;

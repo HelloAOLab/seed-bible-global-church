@@ -1246,6 +1246,7 @@ export const MORE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
         )
         .click();
+      await c.bookmarkPicker();
       await c.page
         .locator(
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"
@@ -1266,7 +1267,7 @@ export const MORE_FLOWS: Flow[] = [
       await pane
         .locator('input[placeholder="Bookmark name"]')
         .fill("Nicodemus");
-      await pane.locator('button[aria-label="green"]').first().click();
+      await pane.locator('button[aria-label="Green"]').first().click();
       await pane
         .getByRole("button", { name: /^save$/i })
         .first()
@@ -1436,6 +1437,111 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(`step ${step}: ${(e as Error).message.split("\n")[0]}`);
       }
       return "saved to My Saves and a new folder; renamed, moved, deleted and removed";
+    },
+  },
+  {
+    id: "BM1",
+    section: "4. Marking the text",
+    title: "The movable bookmark",
+    rows: ["Bookmark a chapter"],
+    checks:
+      "John 3's bookmark button opens the bookmark window with 'My bookmark' in orange ready → Save: the button shows the ribbon and names it; on Romans 8 the window says to tap a bookmark to move it → tap: it leaves John 3 for Romans 8; + New bookmark offers 'My bookmark 2' in red → Save: two ribbons; the sidebar's bookmarks list both as 'Romans 8 • BSB'; at five, + New bookmark is off and says why",
+    run: async (c) => {
+      let step = "";
+      try {
+        const button = () =>
+          c.page.locator(
+            ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+          );
+        const box = c.page.locator(".sb-bookmark-picker");
+        step = "open John 3";
+        await c.open("/read/BSB/JHN/3");
+        await button().click();
+        await box.waitFor({ timeout: 5000 });
+        step = "the offered first bookmark";
+        const name = await box.locator(".sb-bookmark-form-name").inputValue();
+        const orange = await box
+          .locator('.sb-bookmark-form-color[aria-checked="true"]')
+          .getAttribute("aria-label");
+        if (name !== "My bookmark" || orange !== "Orange")
+          throw new Error(`offered ${name} in ${orange}`);
+        await c.bookmarkPicker();
+        step = "the button names it";
+        await c.page
+          .locator(
+            '.sb-bible-reader-header [aria-label="Bookmark on this chapter: My bookmark"]'
+          )
+          .waitFor({ timeout: 5000 });
+
+        step = "move it to Romans 8";
+        await c.open("/read/BSB/ROM/8");
+        await button().click();
+        await c.waitText(box, /tap a bookmark to move it/i, 5000);
+        await box
+          .locator(".sb-bookmark-picker-choice", { hasText: "My bookmark" })
+          .click();
+        await box.waitFor({ state: "detached", timeout: 5000 });
+        await c.page
+          .locator(
+            '.sb-bible-reader-header [aria-label="Bookmark on this chapter: My bookmark"]'
+          )
+          .waitFor({ timeout: 5000 });
+
+        step = "a second bookmark";
+        await button().click();
+        await box.locator(".sb-bookmark-add-new").click();
+        const second = await box.locator(".sb-bookmark-form-name").inputValue();
+        const red = await box
+          .locator('.sb-bookmark-form-color[aria-checked="true"]')
+          .getAttribute("aria-label");
+        if (second !== "My bookmark 2" || red !== "Red")
+          throw new Error(`second offered ${second} in ${red}`);
+        await box.locator(".sb-bookmark-picker-save").click();
+        await box.waitFor({ state: "detached", timeout: 5000 });
+        await c.page
+          .locator(".sb-bible-reader-header .sb-bookmark-stack-icon")
+          .waitFor({ timeout: 5000 });
+
+        step = "the sidebar's bookmarks";
+        const side = c.page.locator(".sb-tabs-sidebar");
+        await side.getByRole("button", { name: "Bookmarks" }).click();
+        const panel = side.locator(".sb-bookmarks-panel");
+        await c.waitText(panel, /my bookmark 2[\s\S]*romans 8/i, 5000);
+        const rows = await panel
+          .locator(".sb-bookmarks-panel-row")
+          .allInnerTexts();
+        if (
+          rows.length !== 2 ||
+          !rows.every((r) => /romans 8\s*•\s*BSB/i.test(r))
+        )
+          throw new Error(`panel: ${rows.join(" | ")}`);
+
+        step = "John 3 has none now";
+        await c.open("/read/BSB/JHN/3");
+        await button().waitFor({ timeout: 10000 });
+        if (
+          (await button().getAttribute("aria-label")) !==
+          "Bookmark this chapter"
+        )
+          throw new Error(
+            `John 3: ${await button().getAttribute("aria-label")}`
+          );
+
+        step = "the cap of five";
+        for (let n = 0; n < 3; n++) {
+          await button().click();
+          await c.bookmarkPicker();
+        }
+        await button().click();
+        const add = box.locator(".sb-bookmark-add-new");
+        if (!(await add.isDisabled()))
+          throw new Error("+ New bookmark is still on at five");
+        await c.waitText(box, /up to 5 bookmarks/i, 3000);
+        await c.page.locator(".sb-footnote-modal-close").first().click();
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "placed on John 3, moved to Romans 8, a second in red, both in the sidebar; five is the most";
     },
   },
   // ── 8. Today, Discover and publishing ──────────────────────────────────────────────────────────────────────
@@ -3512,6 +3618,7 @@ export const MORE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
         )
         .click();
+      await c.bookmarkPicker();
       await side.getByRole("button", { name: "Bookmarks" }).click();
       await c.waitText(side.locator(".sb-bookmarks-panel"), /john 3/i, 5000);
       // A bookmark opens in the translation on screen, so it goes before the saves are tried from WEB.
@@ -3520,6 +3627,7 @@ export const MORE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
         )
         .click();
+      await c.bookmarkPicker({ remove: true });
       await side.getByRole("button", { name: "Saves" }).click();
       const saves = side.locator(".sb-saves-section");
       await c.waitText(saves, /my saves[\s\S]*john 3/i, 5000);

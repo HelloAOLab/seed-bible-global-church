@@ -11,6 +11,7 @@ import { estateById } from "../../../../../estate/faithnet";
 import { parseRoute } from "../../state/reading/route";
 import { friendLink } from "../../state/social/friendship";
 import { TodayWelcome } from "./TodayWelcome";
+import { BookmarkGlyph } from "../records/Bookmarks";
 
 function label(state: ReaderState, chapter: string) {
   const [book, ch] = chapter.split(".");
@@ -139,15 +140,8 @@ export function TodayPane({ state }: { state: ReaderState }) {
             className="sb-content-save"
             onClick={() => open(b.chapter)}
           >
-            <span
-              className="sb-content-save-kind"
-              style={
-                b.colorId
-                  ? { color: `var(--sb-highlight-${b.colorId}-color)` }
-                  : undefined
-              }
-            >
-              <span className="material-symbols-outlined">bookmark</span>
+            <span className="sb-content-save-kind">
+              <BookmarkGlyph colorId={b.colorId} size={18} />
             </span>
             <span className="sb-content-save-name">{b.name}</span>
             <span className="sb-content-save-date">

@@ -369,6 +369,7 @@ const BASE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
         )
         .click();
+      await c.bookmarkPicker();
       await c.page
         .locator(
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"

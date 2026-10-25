@@ -17,6 +17,7 @@ import { attachReaderViewport } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
 import { openSavePicker } from "../records/SavePicker";
+import { BookmarkStackIcon, bookmarkButtonLabel } from "../records/Bookmarks";
 
 interface SelectedFootnote {
   noteId: number;
@@ -53,7 +54,10 @@ export function BibleReader({
   const check = state.scriptureCheck.of(chapter as never);
   const verseChecks = check && "verses" in check ? check.verses : undefined;
   const saved = state.saves.forPassage(chapterRef).length > 0;
-  const bookmarked = state.bookmarks.onChapter(chapterRef).length > 0;
+  const bookmarksHere = state.bookmarks.onChapter(
+    chapterRef,
+    reading.translationId.value
+  );
   // Listen: the chapter's recording where it has one, else the device's voice where it speaks the language.
   const audio = state.audio;
   const playing =
@@ -250,24 +254,18 @@ export function BibleReader({
       </button>
       <button
         type="button"
-        className={`sb-bible-reader-bookmark-button${bookmarked ? " sb-bible-reader-save-button-saved" : ""}`}
-        aria-label={t("bookmark-this-chapter", {
-          defaultValue: "Bookmark this chapter",
-        })}
-        title={t("bookmark-this-chapter", {
-          defaultValue: "Bookmark this chapter",
-        })}
+        className={`sb-bible-reader-bookmark-button${bookmarksHere.length ? " sb-bible-reader-save-button-saved" : ""}`}
+        aria-label={bookmarkButtonLabel(t, bookmarksHere)}
+        title={bookmarkButtonLabel(t, bookmarksHere)}
         onClick={(e: MouseEvent) => {
           e.stopPropagation();
-          void state.bookmarks.toggle(
+          ui.bookmarkPicker.value = {
             chapterRef,
-            `${reading.bookName.value} ${reading.chapterNumber.value}`
-          );
+            edition: reading.translationId.value,
+          };
         }}
       >
-        <span className="material-symbols-outlined">
-          {bookmarked ? "bookmark" : "bookmark_border"}
-        </span>
+        <BookmarkStackIcon bookmarks={bookmarksHere} />
       </button>
     </>
   );

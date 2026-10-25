@@ -8,6 +8,13 @@ import { useEffect, useState } from "preact/hooks";
 import { signal } from "@preact/signals";
 import { MY_SAVES } from "../../state/records/saves";
 import { openSavePicker } from "../records/SavePicker";
+import {
+  BookmarkForm,
+  BookmarkGlyph,
+  BookmarkLabel,
+  type BookmarkDetails,
+} from "../records/Bookmarks";
+import { DEFAULT_BOOKMARK_COLOR_ID } from "../../state/records/bookmarks";
 
 /** The old reader's Tasks glyph: a page with a tick. */
 export function TasksIcon() {
@@ -49,7 +56,10 @@ export function TasksIcon() {
 const bookNames = signal<Record<string, Record<string, string>>>({});
 const asked = new Set<string>();
 
-function useBookNames(state: ReaderState, translationIds: readonly string[]) {
+export function useBookNames(
+  state: ReaderState,
+  translationIds: readonly string[]
+) {
   const key = [...new Set(translationIds)].sort().join();
   useEffect(() => {
     for (const id of new Set(translationIds)) {
@@ -68,7 +78,7 @@ function useBookNames(state: ReaderState, translationIds: readonly string[]) {
   }, [key]);
 }
 
-function chapterName(
+export function chapterName(
   state: ReaderState,
   chapter: string,
   translationId?: string
@@ -81,7 +91,7 @@ function chapterName(
   return `${name} ${ch}`;
 }
 
-function openAt(
+export function openAt(
   state: ReaderState,
   chapter: string,
   translationId?: string,
@@ -101,8 +111,20 @@ function openAt(
 export function BookmarksPanel({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const all = state.bookmarks.all.value;
-  const here = state.reading.translationId.value;
-  useBookNames(state, [here]);
+  useBookNames(
+    state,
+    all.map((b) => b.edition ?? "")
+  );
+  const [editing, setEditing] = useState<string | null>(null);
+  const [value, setValue] = useState<BookmarkDetails>({
+    name: "",
+    colorId: DEFAULT_BOOKMARK_COLOR_ID,
+  });
+  const submit = () => {
+    if (!editing || !value.name.trim()) return;
+    void state.bookmarks.update(editing, value);
+    setEditing(null);
+  };
   return (
     <div className="sb-bookmarks-panel">
       {!all.length && (
@@ -113,55 +135,80 @@ export function BookmarksPanel({ state }: { state: ReaderState }) {
           })}
         </p>
       )}
-      {all.map((b) => (
-        <div key={b.id} className="sb-bookmarks-panel-row">
-          <button
-            type="button"
-            className="sb-bookmarks-panel-open"
-            onClick={() => openAt(state, b.chapter)}
-          >
-            <span
-              className="material-symbols-outlined sb-icon-filled"
-              aria-hidden="true"
-              style={
-                b.colorId
-                  ? { color: `var(--sb-highlight-${b.colorId}-color)` }
-                  : undefined
-              }
+      {all.map((b) =>
+        editing === b.id ? (
+          <div key={b.id} className="sb-bookmarks-panel-editor">
+            <BookmarkForm
+              value={value}
+              autoFocus
+              onChange={setValue}
+              onSubmit={submit}
+            />
+            <div className="sb-bookmarks-panel-edit-actions">
+              <button
+                type="button"
+                className="sb-bookmarks-panel-cancel"
+                onClick={() => setEditing(null)}
+              >
+                {t("cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="sb-bookmark-picker-save"
+                disabled={!value.name.trim()}
+                onClick={submit}
+              >
+                {t("save", { defaultValue: "Save" })}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div key={b.id} className="sb-bookmarks-panel-row">
+            <button
+              type="button"
+              className="sb-bookmarks-panel-open"
+              onClick={() => openAt(state, b.chapter, b.edition)}
             >
-              bookmark
-            </span>
-            <span className="sb-tab-main-title">{b.name}</span>
-            {b.name !== chapterName(state, b.chapter, here) && (
-              <span className="sb-tab-main-translation">
-                {chapterName(state, b.chapter, here)}
-              </span>
-            )}
-          </button>
-          <MenuButton
-            label={t("bookmark-options", { defaultValue: "Bookmark options" })}
-            anchorClassName="sb-tab-menu-anchor"
-            buttonClassName="sb-tab-menu-button"
-            menuClassName="sb-tab-menu"
-            iconClassName="sb-tab-more-icon"
-          >
-            <MenuItem
-              icon="edit"
-              className="sb-tab-menu-item"
-              onSelect={() => (state.ui.pane.value = "content")}
+              <BookmarkGlyph colorId={b.colorId} size={16} />
+              <BookmarkLabel
+                name={b.name}
+                chapterText={chapterName(state, b.chapter, b.edition)}
+                translationId={b.edition}
+              />
+            </button>
+            <MenuButton
+              label={t("bookmark-options", {
+                defaultValue: "Bookmark options",
+              })}
+              anchorClassName="sb-tab-menu-anchor"
+              buttonClassName="sb-tab-menu-button"
+              menuClassName="sb-tab-menu"
+              iconClassName="sb-tab-more-icon"
             >
-              {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
-            </MenuItem>
-            <MenuItem
-              icon="delete"
-              className="sb-tab-menu-item"
-              onSelect={() => void state.bookmarks.remove(b.id)}
-            >
-              {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
-            </MenuItem>
-          </MenuButton>
-        </div>
-      ))}
+              <MenuItem
+                icon="edit"
+                className="sb-tab-menu-item"
+                onSelect={() => {
+                  setEditing(b.id);
+                  setValue({
+                    name: b.name,
+                    colorId: b.colorId ?? DEFAULT_BOOKMARK_COLOR_ID,
+                  });
+                }}
+              >
+                {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+              </MenuItem>
+              <MenuItem
+                icon="delete"
+                className="sb-tab-menu-item"
+                onSelect={() => void state.bookmarks.remove(b.id)}
+              >
+                {t("delete-bookmark", { defaultValue: "Delete bookmark" })}
+              </MenuItem>
+            </MenuButton>
+          </div>
+        )
+      )}
     </div>
   );
 }

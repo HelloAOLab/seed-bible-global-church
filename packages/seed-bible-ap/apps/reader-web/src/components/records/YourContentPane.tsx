@@ -23,6 +23,8 @@ import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import type { PlanView } from "../../state/library/plans";
 import { sharedPathOf, sharedRefOf } from "../../state/social/sharedPage";
 import { openSavePicker } from "./SavePicker";
+import { BookmarkForm, BookmarkGlyph } from "./Bookmarks";
+import { DEFAULT_BOOKMARK_COLOR_ID } from "../../state/records/bookmarks";
 
 /** How many of each section "All" shows before See all. */
 const PREVIEW_LIMIT = 3;
@@ -319,6 +321,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   const [words, setWords] = useState<Map<string, string>>(new Map());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
+  const [draftColor, setDraftColor] = useState("");
   const [viewing, setViewing] = useState<GalleryImage | null>(null);
   const [deleting, setDeleting] = useState<GalleryImage | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -557,8 +560,6 @@ export function YourContentPane({ state }: { state: ReaderState }) {
       .filter((w) => w.heroImage === url)
       .map((w) => w.label);
 
-  const COLORS = ["yellow", "green", "blue", "pink", "orange", "purple"];
-
   return (
     <section
       className="sb-pane sb-content-screen"
@@ -793,43 +794,21 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                     className="sb-item-editor"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      void bookmarks.update(b.id, { name: draftName });
+                      void bookmarks.update(b.id, {
+                        name: draftName,
+                        colorId: draftColor,
+                      });
                       setEditingId(null);
                     }}
                   >
-                    <input
-                      className="sb-note-editor"
-                      value={draftName}
-                      onInput={(e) =>
-                        setDraftName((e.target as HTMLInputElement).value)
-                      }
-                      placeholder={t("bookmark-name", {
-                        defaultValue: "Bookmark name",
-                      })}
+                    <BookmarkForm
+                      value={{ name: draftName, colorId: draftColor }}
+                      autoFocus
+                      onChange={(v) => {
+                        setDraftName(v.name);
+                        setDraftColor(v.colorId);
+                      }}
                     />
-                    <div className="sb-verse-toolbar-swatches sb-bookmark-swatches">
-                      {COLORS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          className="sb-verse-toolbar-color-button"
-                          aria-label={c}
-                          aria-pressed={b.colorId === c}
-                          onClick={() =>
-                            void bookmarks.update(b.id, {
-                              colorId: b.colorId === c ? null : c,
-                            })
-                          }
-                        >
-                          <span
-                            className={`sb-verse-toolbar-color${b.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
-                            style={{
-                              background: `var(--sb-highlight-${c}-color)`,
-                            }}
-                          />
-                        </button>
-                      ))}
-                    </div>
                     <div className="sb-note-card-actions">
                       <button
                         type="submit"
@@ -853,19 +832,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                       className="sb-content-save"
                       onClick={() => open(b.chapter)}
                     >
-                      <span
-                        className="material-symbols-outlined sb-icon-filled"
-                        aria-hidden="true"
-                        style={
-                          b.colorId
-                            ? {
-                                color: `var(--sb-highlight-${b.colorId}-color)`,
-                              }
-                            : undefined
-                        }
-                      >
-                        bookmark
-                      </span>
+                      <BookmarkGlyph colorId={b.colorId} size={18} />
                       <span className="sb-content-save-name">{b.name}</span>
                       <span className="sb-content-save-date">
                         {dateOf(b.updatedAt, language, true)}
@@ -883,6 +850,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
                         onSelect={() => {
                           setEditingId(b.id);
                           setDraftName(b.name);
+                          setDraftColor(b.colorId ?? DEFAULT_BOOKMARK_COLOR_ID);
                         }}
                       >
                         {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
