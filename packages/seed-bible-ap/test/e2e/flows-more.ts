@@ -6312,4 +6312,62 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "AP1",
+    section: "10. Playlists and reading plans",
+    title: "Add to plan from the verse toolbar",
+    rows: ["Edit a reading plan"],
+    checks:
+      "While a reading plan is being edited, choosing John 3:16–17 offers Add to plan in the verse toolbar; with Day 2 being worked on it says 'Added to session 2' and Day 2 lists John 3:16–17",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openLibrary("Reading plans");
+      const title = `Flow add ${stamp()}`;
+      await pane.locator('input[placeholder^="Plan title"]').fill(title);
+      await pane.locator(".sb-plan-blank").click();
+      const editor = pane.locator(".sb-plan-editor");
+      await editor.waitFor({ timeout: 10000 });
+      try {
+        await editor
+          .locator(".sb-plan-edit-day")
+          .first()
+          .getByRole("button", { name: /add what is on screen/i })
+          .click();
+        await editor.getByRole("button", { name: /add session/i }).click();
+        await editor.getByLabel("Name of Day 2").click();
+        await c.selectVerse(16);
+        await c.tapVerse(17);
+        const add = c.page
+          .locator(".sb-verse-toolbar")
+          .getByRole("button", { name: "Add to plan" });
+        await add.waitFor({ timeout: 5000 }).catch(() => {
+          throw new Error("no Add to plan in the verse toolbar");
+        });
+        await add.click();
+        await c.waitText(
+          c.page.locator(".sb-toast"),
+          /added to session 2/i,
+          5000
+        );
+        await c.waitText(
+          editor.locator(".sb-plan-edit-day").nth(1),
+          /John 3:16[–-]17/,
+          5000
+        );
+        await editor.getByRole("button", { name: /save changes/i }).click();
+        await editor.waitFor({ state: "detached", timeout: 10000 });
+        return "Add to plan appeared while editing; 'Added to session 2'; Day 2 listed John 3:16–17";
+      } finally {
+        const card = pane.locator(".sb-rp-card", { hasText: title }).first();
+        if (await card.count()) {
+          await ensureOpen(card).catch(() => undefined);
+          await card
+            .getByRole("button", { name: /^delete$/i })
+            .click()
+            .catch(() => undefined);
+          await c.confirmDelete().catch(() => undefined);
+        }
+      }
+    },
+  },
 ];

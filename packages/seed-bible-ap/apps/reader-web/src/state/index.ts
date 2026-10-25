@@ -1,6 +1,7 @@
 // THE WIRING — what SeedBibleStateManager + init.tsx did: one place that builds the backend, the device stores,
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
+import type { PlaylistItem } from "@seed/seed-schema";
 import { parseSharedPath, type SharedRef } from "./social/sharedPage";
 import { createTours, parseTutorialLink } from "./chrome/tours";
 import { createToolbarLayout } from "./chrome/toolbarLayout";
@@ -489,6 +490,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     editingPlaylist: signal<string | null>(null),
     /** The old reader's floating chat panel, above the reader bar. */
     chatOpen: signal(false),
+    /** A reading plan being edited and the day being worked on: the verse toolbar's Add to plan puts the chosen
+     *  verses there (through `planAdd`, which the editor takes and clears). */
+    planEditing: signal<{ planId: string; day: number } | null>(null),
+    planAdd: signal<PlaylistItem | null>(null),
     /** `?chatFirst=true`: Chat stays on the bar outside a live session, first after the chapter controls. */
     chatFirst: signal(false),
     /** What the chat panel shows: the list of chats, or the session's chat. */

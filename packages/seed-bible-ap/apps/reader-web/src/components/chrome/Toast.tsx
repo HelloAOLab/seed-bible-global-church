@@ -17,6 +17,11 @@ function line(
         defaultValue: "Signed in as {{name}}",
         name: values["name"] ?? "",
       });
+    case "added-to-reading-plan-session":
+      return t("added-to-reading-plan-session", {
+        defaultValue: "Added to session {{session}}",
+        session: values["session"] ?? "",
+      });
     case "playlist-url-copied":
       return t("playlist-url-copied", { defaultValue: "Playlist URL copied" });
     case "plan-url-copied":

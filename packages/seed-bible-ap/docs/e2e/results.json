@@ -1,51 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:12 UTC",
+  "when": "2026-10-25 10:15 UTC",
   "results": [
     {
-      "id": "M2",
-      "section": "4. Marking the text",
-      "title": "Write, edit and delete a note",
-      "checks": "Select 3:16 → Note → type → Save → it is listed under John 3:16; its ⋮ → Edit changes it; ⋮ → Delete asks 'Delete annotation?' and removes it",
+      "id": "G13",
+      "section": "10. Playlists and reading plans",
+      "title": "Edit a reading plan",
+      "checks": "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
       "mark": "✅",
-      "note": "created, edited, deleted; the pane counts 0 notes",
-      "ms": 1218
-    },
-    {
-      "id": "VS1",
-      "section": "4. Marking the text",
-      "title": "The phone's verse sheet",
-      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
-      "mark": "✅",
-      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
-      "ms": 2896
-    },
-    {
-      "id": "NO1",
-      "section": "4. Marking the text",
-      "title": "Notes as the old reader shows them",
-      "checks": "With no notes, the Notes pane says 'You don't have any notes for this chapter.' with Create a note; with nothing chosen it writes a note on the whole chapter (grouped as John 3, 'Annotation saved'); a note on 3:16 groups under John 3:16 with 'You' and when; a group folds; while a draft is open, choosing 3:17–18 moves it there",
-      "mark": "✅",
-      "note": "empty state, a whole-chapter note, a grouped verse note with You and when, folding, and the draft following 3:17–18",
-      "ms": 4117
-    },
-    {
-      "id": "NO2",
-      "section": "4. Marking the text",
-      "title": "A note when the editor cannot load",
-      "checks": "With the rich editor's file blocked, Note opens a plain text box that says so; the note saved from it is listed",
-      "mark": "✅",
-      "note": "the plain box took the note and it was listed",
-      "ms": 844
-    },
-    {
-      "id": "SN1",
-      "section": "4. Marking the text",
-      "title": "The verse sheet shows the chosen verses' notes",
-      "checks": "With a note on John 3:16, a phone's verse sheet for 3:16, pulled up, shows the note under 'John 3:16' with ⋮ Edit and Delete; Delete asks 'Delete annotation?' and the note goes",
-      "mark": "✅",
-      "note": "the sheet showed the note under John 3:16 with Edit and Delete; Delete asked and removed it",
-      "ms": 16486
+      "note": "DAY 1 DAY 2 Comfort radio_button_unchecked menu_book Psalms 23 · BSB ~2 min radio_button_unchecked menu_book J; kept after a reload, Start · Weekly offered",
+      "ms": 4131
     }
   ]
 }

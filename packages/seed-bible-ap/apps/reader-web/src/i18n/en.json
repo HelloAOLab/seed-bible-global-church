@@ -943,5 +943,7 @@
   "chapter-unavailable-offline-switch_one": "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
   "chapter-unavailable-offline-switch_other": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
   "chapter-unavailable-offline-switch": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
-  "notes-for-verse": "Notes for verse {{verse}}"
+  "notes-for-verse": "Notes for verse {{verse}}",
+  "add-to-reading-plan": "Add to plan",
+  "added-to-reading-plan-session": "Added to session {{session}}"
 }

@@ -244,6 +244,29 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       }}
     />
   ) : null;
+  const planEditing = state.ui.planEditing.value;
+  const addToPlanA = planEditing ? (
+    <Action
+      key="add-to-plan"
+      icon="library_add"
+      label={t("add-to-reading-plan", { defaultValue: "Add to plan" })}
+      onClick={() => {
+        state.ui.planAdd.value = {
+          "@type": "seed:ScriptureItem",
+          aboutPassage:
+            start === end
+              ? `${chapterRef}.${start}`
+              : `${chapterRef}.${start}-${chapterRef}.${end}`,
+          ofEdition: reading.translationId.value,
+        };
+        state.ui.toast.value = {
+          key: "added-to-reading-plan-session",
+          values: { session: String(planEditing.day + 1) },
+        };
+        state.selection.clear();
+      }}
+    />
+  ) : null;
   const toolsA = tools.map((tool) => (
     <Action
       key={tool.id}
@@ -430,6 +453,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   if (phone && !menuAt) {
     const more = [
       marking && addToPlaylistA,
+      marking && addToPlanA,
       shareA,
       ...toolsA,
       marking && everyoneA,
@@ -620,6 +644,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           {marking && noteA}
           {copyA}
           {marking && addToPlaylistA}
+          {marking && addToPlanA}
           {toolsA}
           {shareA}
           {marking && everyoneA}

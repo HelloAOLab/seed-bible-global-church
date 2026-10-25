@@ -1,7 +1,7 @@
 // THE PLAN EDITOR — the old ReadingPlanEditor on a plan card: name and description, days (sessions) added,
 // renamed, reordered and removed, readings typed in ("Romans 8:28-39") or taken from the screen, edited, reordered
 // and removed within a day, and the paces the plan offers. Edits stay a draft until Save (state/library/planEdits.ts).
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { PlaylistItem, ReadingPlan } from "@seed/seed-schema";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -52,6 +52,26 @@ export function PlanEditor({
   const [bad, setBad] = useState<number | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // The day being worked on: the verse toolbar's Add to plan (the old reader's) puts the chosen verses there.
+  const [day, setDay] = useState(Math.max(0, plan.hasSession.length - 1));
+  const today = Math.min(day, draft.hasSession.length - 1);
+  useEffect(() => {
+    state.ui.planEditing.value = { planId: plan["@id"], day: today };
+  }, [today]);
+  useEffect(
+    () => () => {
+      state.ui.planEditing.value = null;
+    },
+    []
+  );
+  const incoming = state.ui.planAdd.value;
+  useEffect(() => {
+    if (!incoming) return;
+    state.ui.planAdd.value = null;
+    setDraft((d) =>
+      addReading(d, Math.min(day, d.hasSession.length - 1), incoming)
+    );
+  }, [incoming]);
   const withDetails = setDetails(draft, name, description);
   const problem = name.trim() ? planProblem(withDetails) : "name";
 
@@ -123,7 +143,12 @@ export function PlanEditor({
       {draft.hasSession.map((s, si) => {
         const day = t("plan-day-n", { defaultValue: "Day {{n}}", n: si + 1 });
         return (
-          <div key={s["@id"]} className="sb-rpd-reading-card sb-plan-edit-day">
+          <div
+            key={s["@id"]}
+            className={`sb-rpd-reading-card sb-plan-edit-day${si === today ? " sb-plan-edit-day-current" : ""}`}
+            onClickCapture={() => setDay(si)}
+            onFocusCapture={() => setDay(si)}
+          >
             <div className="sb-plan-edit-row">
               <input
                 className="sb-note-editor sb-plan-edit-day-name"

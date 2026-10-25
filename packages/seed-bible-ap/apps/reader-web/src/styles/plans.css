@@ -1196,3 +1196,10 @@
   justify-content: center;
   gap: 0.25rem;
 }
+
+/* The day the verse toolbar's Add to plan puts readings into. */
+.sb-plan-edit-day-current {
+  outline: 2px solid
+    color-mix(in srgb, var(--sb-primary-color), transparent 55%);
+  outline-offset: 1px;
+}
