@@ -18,6 +18,7 @@ import "./styles/selector-inline.css";
 import "./styles/selector.css";
 import "./styles/translation-list.css";
 import "./styles/offline-recovery.css";
+import "./styles/offscreen-cues.css";
 import "./styles/toolbar.css";
 import "./styles/your-content.css";
 import "./styles/tiptap.css";

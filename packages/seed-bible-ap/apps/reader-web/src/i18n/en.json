@@ -952,5 +952,11 @@
   "offlineRecovery.title": "Save {{abbreviation}} for offline reading?",
   "offlineRecovery.body": "That chapter didn't load the first time. With a download, you can keep reading even when your connection drops.",
   "offlineRecovery.download": "Download",
-  "offlineRecovery.notNow": "Not now"
+  "offlineRecovery.notNow": "Not now",
+  "highlighted-verse": "Highlighted verse {{verse}}",
+  "highlighted-verses": "Highlighted verses {{verses}}",
+  "offscreen-highlight-above": "Highlight above, verse {{verses}}. Show it",
+  "offscreen-highlight-below": "Highlight below, verse {{verses}}. Show it",
+  "offscreen-highlight-scroll-left": "More highlights to the left",
+  "offscreen-highlight-scroll-right": "More highlights to the right"
 }

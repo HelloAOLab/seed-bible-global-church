@@ -18,6 +18,7 @@ import {
 import { forwardRef } from "preact/compat";
 import { ChapterColumn } from "./ChapterColumn";
 import { ReferenceText } from "./ReferenceText";
+import { cueStyle, type CueMark } from "../../state/reading/offscreenCues";
 import { attachReaderViewport, pageScrolls } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
@@ -106,8 +107,8 @@ export function BibleReader({
   // Listen: the chapter's recording where it has one, else the device's voice where it speaks the language.
   const audio = state.audio;
   const playing = state.playback.value.isPlaying.value;
-  // The page follows the verse being read aloud, as the old reader's does: when it moves off screen it is brought
-  // back to the middle.
+  // The page follows the verse being read aloud, as the old reader's does: when it is not wholly on screen it glides
+  // to the top, with a heading just above it.
   const heard = active
     ? (state.audio.currentVerse.value ?? state.tts.currentVerse.value)
     : null;
@@ -119,8 +120,20 @@ export function BibleReader({
     const r = el?.getBoundingClientRect();
     if (!el || !r) return;
     const bottom = window.innerHeight - 120;
-    if (r.top < 80 || r.bottom > bottom)
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (r.top >= 80 && r.bottom <= bottom) return;
+    const prev = el.previousElementSibling as HTMLElement | null;
+    const target = prev?.matches(
+      "h1, h2, h3, h4, .sb-heading, [class*='heading']"
+    )
+      ? prev
+      : el;
+    target.style.scrollMarginTop = "16px";
+    target.scrollIntoView({
+      block: "start",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   }, [heard, playing]);
   const canPlay =
     audio.available.value || state.tts.canSpeakLanguage(state.speechLang());
@@ -197,6 +210,23 @@ export function BibleReader({
     selection.toggle(verseNumber, event.shiftKey);
   };
 
+  /** Others' marks in the live session, verse by verse, for the off-screen cues. */
+  const sessionCues = (): CueMark[] => {
+    const me = state.live.me.value;
+    const people = state.live.state.value?.participants ?? [];
+    const out: CueMark[] = [];
+    for (const d of state.live.decorations.value) {
+      if (d.by === me) continue;
+      const name = people.find((p) => p.agent === d.by)?.name ?? "";
+      for (let v = d.start; v <= d.end; v++)
+        out.push({
+          verse: v,
+          ...cueStyle(d.colorId),
+          author: { key: d.by, name, color: colorOf(d.by) },
+        });
+    }
+    return out;
+  };
   const body = () => {
     // A book this translation does not have (a link from another Bible): the old reader's "Book not found".
     const books = reading.books.value;
@@ -408,6 +438,7 @@ export function BibleReader({
         chapterId={`${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`}
         stale={reading.loading.value}
         gutter={inSession ? <PresenceGutter state={state} /> : undefined}
+        {...(inSession ? { cues: sessionCues() } : {})}
         {...(phone
           ? {
               notes: {

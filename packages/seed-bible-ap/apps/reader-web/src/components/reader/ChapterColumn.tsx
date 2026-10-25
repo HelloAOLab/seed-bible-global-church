@@ -13,6 +13,8 @@ import {
   collectLineRects,
   type RibbonRect,
 } from "./highlightRibbon";
+import { OffscreenCues } from "./OffscreenCues";
+import type { CueMark } from "../../state/reading/offscreenCues";
 
 interface Ribbon {
   key: string;
@@ -51,6 +53,8 @@ export function ChapterColumn(props: {
     label: (verse: number) => string;
     open: (verse: number) => void;
   };
+  /** Someone else's highlights (a live session's): when one lands off screen, a cue points to it. */
+  cues?: readonly CueMark[];
   children: ComponentChildren;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -268,6 +272,9 @@ export function ChapterColumn(props: {
             </button>
           ))}
         </div>
+      )}
+      {props.cues && props.cues.length > 0 && (
+        <OffscreenCues contentRef={contentRef} marks={props.cues} />
       )}
       {props.children}
     </div>

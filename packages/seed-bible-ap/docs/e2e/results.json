@@ -1,42 +1,24 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:36 UTC",
+  "when": "2026-10-25 10:43 UTC",
   "results": [
     {
-      "id": "H1",
-      "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "id": "PS1",
+      "section": "9. Reading together",
+      "title": "Where everyone is in the text; connection notices",
+      "checks": "Signed in, the host starts a session and a guest joins. The guest reads further down John 3: on the host's screen a bar in the guest's colour runs beside the verses on the guest's screen, with the guest's initials at its top. When the host leaves the page, the guest is told 'The host disconnected'",
       "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 1397
+      "note": "the guest's bar ran beside John 3:16 with \"FG\" at its top; the guest was told the host disconnected",
+      "ms": 41482
     },
     {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
+      "id": "L2",
+      "section": "9. Reading together",
+      "title": "Show everyone, the roster, chat, the record",
+      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
       "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1404
-    },
-    {
-      "id": "TB2",
-      "section": "2. Tabs and panes",
-      "title": "Tab marks and the collapsed rail",
-      "checks": "A bookmark on John 3 puts its ribbon on the tab's row, and Listen puts a speaker there while it plays. With the sidebar closed to its rail, the tab is the old reader's tile: 'JHN 3', the speaker, and a label that says it is playing audio",
-      "mark": "✅",
-      "note": "row: ribbon and speaker; rail tile 'JHN 3', 'JHN 3 — playing audio'; the speaker went with Pause",
-      "ms": 1055
-    },
-    {
-      "id": "EM1",
-      "section": "13. Links and embedding",
-      "title": "The embed's own controls",
-      "checks": "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
-      "mark": "✅",
-      "note": "header: Open in New Tab · Text settings; the bar went to John 4; Open in New Tab opened /read/BSB/JHN/4; verse: Copy · Compare · Share · Cancel; the sheet without Go to all settings",
-      "ms": 4825
+      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code S4DDPK)",
+      "ms": 41057
     },
     {
       "id": "AU1",
@@ -45,7 +27,16 @@
       "checks": "Listening to John 3, a jump near the end of the bar brings the verse being read into view on its own; on an iPhone 13, pausing part-way puts a progress ring round the play button, and the scrubber shows again on Play",
       "mark": "✅",
       "note": "a jump to 85% brought verse 31 into view; on a phone the ring showed when paused and the scrubber on Play",
-      "ms": 7533
+      "ms": 4106
+    },
+    {
+      "id": "OC1",
+      "section": "9. Reading together",
+      "title": "Someone's highlight off screen",
+      "checks": "In a live session, with a guest at the top of John 3, the host shows everyone verse 30: the guest sees a pill 'Highlighted verse 30' at the bottom edge with the host's face, which folds after a few seconds into a corner indicator ('Highlight below, verse 30. Show it'); clicking it brings verse 30 into view and the cue goes",
+      "mark": "✅",
+      "note": "the guest saw 'Highlighted verse 30' with the host's face, then 'Highlight below, verse 30. Show it', which brought verse 30 into view",
+      "ms": 43729
     }
   ]
 }

@@ -6540,7 +6540,14 @@ export const MORE_FLOWS: Flow[] = [
       const heard = page
         .locator(".sb-bible-reader-active .sb-verse-playing")
         .first();
-      await heard.waitFor({ timeout: 10000 });
+      // The jump lands: the verse being read is well past 20.
+      for (let i = 0; i < 50; i++) {
+        const v = Number(
+          (await heard.getAttribute("data-verse-number").catch(() => null)) ?? 0
+        );
+        if (v > 20) break;
+        await page.waitForTimeout(200);
+      }
       let inView = false;
       for (let i = 0; i < 30 && !inView; i++) {
         inView = await heard.evaluate((el) => {
@@ -6584,6 +6591,60 @@ export const MORE_FLOWS: Flow[] = [
         await ctx.close();
       }
       return `a jump to 85% brought verse ${n} into view; on a phone the ring showed when paused and the scrubber on Play`;
+    },
+  },
+  {
+    id: "OC1",
+    section: "9. Reading together",
+    title: "Someone's highlight off screen",
+    rows: ["Show everyone a verse"],
+    checks:
+      "In a live session, with a guest at the top of John 3, the host shows everyone verse 30: the guest sees a pill 'Highlighted verse 30' at the bottom edge with the host's face, which folds after a few seconds into a corner indicator ('Highlight below, verse 30. Show it'); clicking it brings verse 30 into view and the cue goes",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const { sid, code } = await startSession(c);
+      const guest = await joinAsGuest(c, sid, code);
+      await c.waitText(c.pane(), /Flow guest/, 20000);
+      await guest.evaluate(() => window.scrollTo(0, 0));
+      await guest.locator(".sb-bible-reader-active").evaluate((el) => {
+        let n: HTMLElement | null = el as HTMLElement;
+        while (n) {
+          n.scrollTop = 0;
+          n = n.parentElement;
+        }
+      });
+      await c.selectVerse(30);
+      await c.page
+        .locator(".sb-verse-toolbar-action", { hasText: /show everyone/i })
+        .click();
+      const pill = guest
+        .locator(".sb-offscreen-cues-down .sb-offscreen-cue")
+        .first();
+      await c.waitText(pill, /Highlighted verse 30/, 20000);
+      if (!(await pill.locator(".sb-offscreen-cue-avatar").count()))
+        throw new Error("the pill does not show who highlighted");
+      const indicator = guest.locator(".sb-offscreen-cue-indicator-down");
+      await indicator.waitFor({ timeout: 8000 });
+      const label = (await indicator.getAttribute("aria-label")) ?? "";
+      if (!/Highlight below, verse 30/.test(label))
+        throw new Error(`indicator: ${label}`);
+      await indicator.click();
+      await guest
+        .locator(".sb-offscreen-cue-indicator-down")
+        .waitFor({ state: "detached", timeout: 8000 })
+        .catch(() => {
+          throw new Error("the cue stayed after going to the verse");
+        });
+      const inView = await guest
+        .locator('.sb-bible-reader-active [data-verse-number="30"]')
+        .first()
+        .evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return r.top >= 0 && r.bottom <= window.innerHeight;
+        });
+      if (!inView) throw new Error("verse 30 is not on screen after the click");
+      return `the guest saw 'Highlighted verse 30' with the host's face, then '${label}', which brought verse 30 into view`;
     },
   },
 ];
