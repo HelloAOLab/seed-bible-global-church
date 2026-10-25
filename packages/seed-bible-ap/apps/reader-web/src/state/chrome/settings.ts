@@ -48,6 +48,7 @@ export function allowedFontStylesheet(url: string | undefined): string | null {
 }
 
 const KEY = "sbr.settings";
+export const MAX_CUSTOM_COLORS = 3;
 
 interface Persisted {
   theme?: ThemeChoice;
@@ -58,6 +59,7 @@ interface Persisted {
   scripture?: Partial<ScriptureElementsBehavior>;
   keepScreenAwake?: boolean;
   textStyle?: TextStyle;
+  customColors?: string[];
 }
 
 function read(): Persisted {
@@ -84,6 +86,12 @@ export function createSettings(deps: SettingsDeps = {}) {
   const keepScreenAwake = signal(saved.keepScreenAwake === true);
   /** Font, weight and italics for the book title, headings and verses (state/chrome/textStyle.ts). */
   const textStyle = signal<TextStyle>(cleanTextStyle(saved.textStyle));
+  /** Up to three highlight colours of the reader's own (#rrggbb), after the twelve in the verse toolbar. */
+  const customColors = signal<string[]>(
+    (saved.customColors ?? [])
+      .filter((c) => /^#[0-9a-f]{6}$/i.test(c))
+      .slice(0, MAX_CUSTOM_COLORS)
+  );
   const scripture = signal<ScriptureElementsBehavior>({
     showVerseNumbers: true,
     showHeadings: true,
@@ -171,6 +179,7 @@ export function createSettings(deps: SettingsDeps = {}) {
         scripture: scripture.value,
         keepScreenAwake: keepScreenAwake.value,
         textStyle: textStyle.value,
+        customColors: customColors.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
     } catch {
@@ -191,6 +200,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     scripture,
     keepScreenAwake,
     textStyle,
+    customColors,
     resolvedTheme,
     toggleTheme,
     dispose,

@@ -134,7 +134,18 @@ export class FlowContext {
   ): Promise<void> {
     const num = this.verse(n, page).locator(".sb-verse-number").first();
     const mods = opts.shift ? { modifiers: ["Shift" as const] } : {};
-    if (await num.isVisible().catch(() => false)) await num.click(mods);
+    // A noted verse's number opens its note; its words start just after it.
+    const noted = await num
+      .evaluate((n) => n.classList.contains("sb-verse-number-annotated"))
+      .catch(() => false);
+    if (noted) {
+      await num.evaluate((n) => n.scrollIntoView({ block: "center" }));
+      await page.waitForTimeout(200);
+      const box = (await num.boundingBox())!;
+      if (opts.shift) await page.keyboard.down("Shift");
+      await page.mouse.click(box.x + box.width + 10, box.y + box.height / 2);
+      if (opts.shift) await page.keyboard.up("Shift");
+    } else if (await num.isVisible().catch(() => false)) await num.click(mods);
     else
       await this.verse(n, page).click({ position: { x: 40, y: 8 }, ...mods });
   }

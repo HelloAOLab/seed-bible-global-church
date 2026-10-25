@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 03:45 UTC",
+  "when": "2026-10-25 04:11 UTC",
   "results": [
     {
-      "id": "PS1",
-      "section": "9. Reading together",
-      "title": "Where everyone is in the text; connection notices",
-      "checks": "Signed in, the host starts a session and a guest joins. The guest reads further down John 3: on the host's screen a bar in the guest's colour runs beside the verses on the guest's screen, with the guest's initials at its top. When the host leaves the page, the guest is told 'The host disconnected'",
+      "id": "A1",
+      "section": "2. Getting in",
+      "title": "Sign in as a sample person, mark, sync, sign out",
+      "checks": "Account pane → a sample person → the chip shows their name; a highlight reaches the Library ('Everything is in your Library'); Sign out clears the chip",
       "mark": "✅",
-      "note": "the guest's bar ran beside John 3:16 with \"FG\" at its top; the guest was told the host disconnected",
-      "ms": 39524
+      "note": "signed in as Seed Reader; the highlight reached the Library; signed out",
+      "ms": 41398
     }
   ]
 }

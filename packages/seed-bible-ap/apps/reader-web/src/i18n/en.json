@@ -715,5 +715,9 @@
   "session-connection-lost": "You lost connection to the session. Reconnecting…",
   "session-host-disconnected": "The host disconnected",
   "session-host-reconnected": "The host reconnected",
-  "session-rejoined": "You rejoined the session"
+  "session-rejoined": "You rejoined the session",
+  "add-color": "Add color",
+  "add-custom-color": "Add custom color",
+  "custom-color-remove-hint": "{{color}} — right-click to remove",
+  "highlight-custom": "Highlight {{color}}"
 }

@@ -72,3 +72,33 @@ describe("highlights", () => {
     expect(shown(h)).toEqual(["blue:10-12", "yellow:1-9"]);
   });
 });
+
+describe("a colour of your own", () => {
+  const withCustom = (h: ReturnType<typeof device>) =>
+    h
+      .forChapter("JHN.3")
+      .value.map(
+        (x) =>
+          `${x.customColor ?? x.colorId}~${x.colorId}:${Array.isArray(x.verse) ? x.verse.join("-") : x.verse}`
+      )
+      .sort();
+
+  it("is kept with the nearest of the twelve, so a reader that cannot draw it still shows something close", async () => {
+    const h = device();
+    await h.set("JHN.3", 16, 16, "#2a6fdb");
+    expect(withCustom(h)).toEqual(["#2a6fdb~blue:16"]);
+  });
+
+  it("survives clearing a verse inside it, and joins only the same colour", async () => {
+    const h = device();
+    await h.set("JHN.3", 1, 6, "#2a6fdb");
+    await h.clear("JHN.3", 3);
+    await h.set("JHN.3", 7, 8, "#2a6fdb");
+    await h.set("JHN.3", 9, 9, "blue");
+    expect(withCustom(h)).toEqual([
+      "#2a6fdb~blue:1-2",
+      "#2a6fdb~blue:4-8",
+      "blue~blue:9",
+    ]);
+  });
+});

@@ -64,6 +64,16 @@ function reorderFootnoteBeforeLineBreak(
   return reordered ?? content;
 }
 
+/** Text that reads on a reader's own highlight colour: dark on a light colour, white on a dark one. */
+export function contrastText(hex: string): string {
+  const [r, g, b] = [1, 3, 5].map(
+    (k) => parseInt(hex.slice(k, k + 2), 16) / 255
+  );
+  const lin = (c: number) =>
+    c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const l = 0.2126 * lin(r!) + 0.7152 * lin(g!) + 0.0722 * lin(b!);
+  return l > 0.4 ? "#1f1f1f" : "#ffffff";
+}
 export function getInlineText(part: Part): string {
   if (typeof part === "string") return part;
   if (part && typeof part === "object" && "text" in part)
@@ -496,6 +506,7 @@ export function renderChapterContent(
           if (
             !nextHighlight ||
             nextHighlight.colorId !== highlight.colorId ||
+            nextHighlight.customColor !== highlight.customColor ||
             nextIsPoetry
           )
             break;
@@ -514,7 +525,16 @@ export function renderChapterContent(
           data-highlight-broadcast={
             highlight.id.startsWith("session:") ? "true" : undefined
           }
-          data-highlight-fill={`var(--sb-highlight-${highlight.colorId}-color, transparent)`}
+          data-highlight-fill={
+            highlight.customColor ??
+            `var(--sb-highlight-${highlight.colorId}-color, transparent)`
+          }
+          data-highlight-custom={highlight.customColor}
+          style={
+            highlight.customColor
+              ? { color: contrastText(highlight.customColor) }
+              : undefined
+          }
           data-highlight-key={`${firstVerse}-${lastVerse}`}
         >
           {runIndices.flatMap((idx, runIndex) => {

@@ -2349,3 +2349,16 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   flex-direction: column;
   min-width: 0;
 }
+
+/* The empty slot for a colour of your own: the dashed circle with a + (its colour chooser is the hidden input). */
+.sb-verse-toolbar-add-color {
+  cursor: pointer;
+}
+.sb-verse-toolbar-add-color .sb-verse-toolbar-color-slot {
+  display: inline-grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+.sb-verse-toolbar-add-color .material-symbols-outlined {
+  font-size: 0.875rem;
+}

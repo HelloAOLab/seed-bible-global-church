@@ -178,6 +178,50 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "HC1",
+    section: "4. Marking the text",
+    title: "Twelve highlight colours and colours of your own",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "Highlight shows the old reader's twelve colours and a + for a colour of your own. Cyan highlights John 3:16; a colour chosen with + highlights 3:14 in exactly that colour and joins the picker after the twelve; right-click takes it away again; both highlights clear",
+    run: async (c) => {
+      await c.open(CH);
+      await c.selectVerse(16);
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
+      const swatches = c.page.locator(
+        ".sb-verse-toolbar-swatches > button.sb-verse-toolbar-color-button"
+      );
+      const n = await swatches.count();
+      if (n !== 12) throw new Error(`${n} colours in the picker`);
+      await c.page.getByRole("button", { name: "Highlight cyan" }).click();
+      const cyan = c.page.locator(".sb-bible-reader-active .sb-highlight-cyan");
+      await cyan.first().waitFor({ timeout: 5000 });
+      await c.selectVerse(14);
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
+      await c.page
+        .locator('.sb-verse-toolbar input[type="color"]')
+        .fill("#2a6fdb");
+      const mine = c.page.locator(
+        '.sb-bible-reader-active [data-highlight-custom="#2a6fdb"]'
+      );
+      await mine.first().waitFor({ timeout: 5000 });
+      await c.selectVerse(14);
+      await c.page.locator(".sb-verse-toolbar-highlight-trigger").click();
+      const own = c.page.getByRole("button", { name: "Highlight #2a6fdb" });
+      await own.waitFor({ timeout: 3000 });
+      if ((await own.getAttribute("aria-pressed")) !== "true")
+        throw new Error("the picker does not show 3:14's own colour as chosen");
+      await own.click({ button: "right" });
+      await own.waitFor({ state: "detached", timeout: 3000 });
+      await c.page.locator(".sb-verse-toolbar-clear").click();
+      await mine.first().waitFor({ state: "detached", timeout: 5000 });
+      await c.selectVerse(16);
+      await c.clearHighlight();
+      await cyan.first().waitFor({ state: "detached", timeout: 5000 });
+      return "twelve colours and a +; cyan on 3:16; #2a6fdb on 3:14 and in the picker; right-click removed it; both cleared";
+    },
+  },
+  {
     id: "PS1",
     section: "9. Reading together",
     title: "Where everyone is in the text; connection notices",

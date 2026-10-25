@@ -203,7 +203,9 @@ function HighlightRow(props: {
         type="button"
         className="sb-content-highlight"
         style={{
-          borderInlineStartColor: `var(--sb-highlight-${colorIdOf(highlight.highlightColor)}-color, var(--sb-primary-color))`,
+          borderInlineStartColor:
+            highlight.customColor ??
+            `var(--sb-highlight-${colorIdOf(highlight.highlightColor)}-color, var(--sb-primary-color))`,
         }}
         onClick={props.onOpen}
       >

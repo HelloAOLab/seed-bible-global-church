@@ -60,13 +60,20 @@ export const NON_SEED_KEYS: Readonly<Record<string, string>> = {
   wasAssociatedWith: "prov:wasAssociatedWith",
 };
 
+/** The old reader's twelve, in its order (seed.data.ttl seed:highlightcolor-*). */
 export const HIGHLIGHT_COLORS = [
   "yellow",
   "green",
+  "cyan",
   "blue",
+  "red",
+  "magenta",
   "pink",
-  "orange",
   "purple",
+  "orange",
+  "cream",
+  "gray",
+  "tan",
 ] as const;
 export const OFFERING_KINDS = [
   "video",
@@ -119,6 +126,11 @@ export const Highlight = z.object({
       ...string[],
     ]
   ),
+  /** A colour of the reader's own (#rrggbb), drawn in place of highlightColor, which stays the nearest listed one. */
+  customColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
 });
 export type Highlight = z.infer<typeof Highlight>;
 

@@ -11,6 +11,7 @@ import { useI18n } from "../../i18n";
 import { passageOf } from "../../state/records/marks";
 import { shareUrl } from "../../state/reading/route";
 import { getVersePlainText } from "./chapterContent";
+import { MAX_CUSTOM_COLORS } from "../../state/chrome/settings";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -291,18 +292,89 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             className="sb-verse-toolbar-color-button"
             aria-label={t("highlight", { defaultValue: "Highlight" }) + ` ${c}`}
             title={c}
-            aria-pressed={current?.colorId === c}
+            aria-pressed={!current?.customColor && current?.colorId === c}
             onClick={() => {
               void state.highlights.set(chapterRef, start, end, c);
               state.selection.clear();
             }}
           >
             <span
-              className={`sb-verse-toolbar-color${current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
+              className={`sb-verse-toolbar-color${!current?.customColor && current?.colorId === c ? " sb-verse-toolbar-color-active" : ""}`}
               style={{ background: `var(--sb-highlight-${c}-color)` }}
             />
           </button>
         ))}
+        {/* The reader's own colours, after the twelve; right-click (a long press) takes one away. */}
+        {state.settings.customColors.value.map((hex) => (
+          <button
+            key={hex}
+            type="button"
+            className="sb-verse-toolbar-color-button sb-verse-toolbar-custom-color"
+            aria-label={t("highlight-custom", {
+              color: hex,
+              defaultValue: "Highlight {{color}}",
+            })}
+            title={t("custom-color-remove-hint", {
+              color: hex,
+              defaultValue: "{{color}} — right-click to remove",
+            })}
+            aria-pressed={current?.customColor === hex}
+            onClick={() => {
+              void state.highlights.set(
+                chapterRef,
+                start,
+                end,
+                hex as `#${string}`
+              );
+              state.selection.clear();
+            }}
+            onContextMenu={(e: MouseEvent) => {
+              e.preventDefault();
+              state.settings.customColors.value =
+                state.settings.customColors.value.filter((c) => c !== hex);
+            }}
+          >
+            <span
+              className={`sb-verse-toolbar-color${current?.customColor === hex ? " sb-verse-toolbar-color-active" : ""}`}
+              style={{ background: hex }}
+            />
+          </button>
+        ))}
+        {state.settings.customColors.value.length < MAX_CUSTOM_COLORS && (
+          <label
+            className="sb-verse-toolbar-color-button sb-verse-toolbar-add-color"
+            title={t("add-color", { defaultValue: "Add color" })}
+          >
+            <span
+              className="sb-verse-toolbar-color sb-verse-toolbar-color-slot"
+              aria-hidden="true"
+            >
+              <span className="material-symbols-outlined">add</span>
+            </span>
+            <input
+              type="color"
+              className="sr-only"
+              aria-label={t("add-custom-color", {
+                defaultValue: "Add custom color",
+              })}
+              onChange={(e) => {
+                const hex = (e.target as HTMLInputElement).value.toLowerCase();
+                if (!/^#[0-9a-f]{6}$/.test(hex)) return;
+                state.settings.customColors.value = [
+                  ...state.settings.customColors.value.filter((c) => c !== hex),
+                  hex,
+                ].slice(-MAX_CUSTOM_COLORS);
+                void state.highlights.set(
+                  chapterRef,
+                  start,
+                  end,
+                  hex as `#${string}`
+                );
+                state.selection.clear();
+              }}
+            />
+          </label>
+        )}
       </div>
       <div className="sb-verse-toolbar-picker-actions">
         <button
