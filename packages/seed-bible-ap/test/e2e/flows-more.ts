@@ -1716,7 +1716,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "A note edited on two devices",
     rows: ["A note edited on two devices"],
     checks:
-      "Signed in on two browsers as Seed Reader: one note, edited differently on each while offline, comes back twice with Keep this version; keeping one leaves one",
+      "Signed in on two browsers as Seed Reader: one note, edited differently on each while offline, comes back twice; the old reader's window 'This note changed in two places' shows Your version and The other version, and keeping Your version leaves that one note",
     run: async (c) => {
       // A chapter of its own each run: the sample person's Library keeps whatever an earlier run left.
       const ch = `/read/BSB/PSA/${10 + Math.floor(Math.random() * 130)}`;
@@ -1760,21 +1760,31 @@ export const MORE_FLOWS: Flow[] = [
       await b.context().setOffline(false);
       const pb = await c.openAccount(b);
       await c.waitText(pb, /everything is in your library/i, 120000);
+      // The old reader's window, over whatever is open: both versions, tick one, Confirm.
+      const win = b.getByRole("dialog", {
+        name: "This note changed in two places",
+      });
+      await c.waitText(
+        win,
+        /changed this note on this device[\s\S]*Your version[\s\S]*The other version/i,
+        60000
+      );
+      const yours = win.locator(".sb-annotation-conflict-version").first();
+      const kept = (
+        await yours.locator(".sb-annotation-conflict-body").innerText()
+      ).trim();
+      await yours.click();
+      await win.getByRole("button", { name: "Confirm" }).click();
+      await win.waitFor({ state: "detached", timeout: 15000 });
       await b.locator(".sb-pane-close").first().click();
       await c.pressToolbar("Notes", b);
-      await c.waitText(b.locator(".sb-app-pane"), /keep this version/i, 30000);
-      await b
-        .locator(".sb-app-pane")
-        .getByRole("button", { name: /keep this version/i })
-        .first()
-        .click();
       await b.waitForTimeout(1500);
-      const cards = await b
-        .locator(".sb-note-card:not(.sb-note-card-draft)")
-        .count();
-      if (cards !== 1) throw new Error(`${cards} cards after keeping one`);
+      const cards = b.locator(".sb-note-card:not(.sb-note-card-draft)");
+      if ((await cards.count()) !== 1)
+        throw new Error(`${await cards.count()} cards after keeping one`);
+      await c.waitText(cards.first(), new RegExp(kept), 5000);
       await deleteAllNotes(c);
-      return "both edits kept with Keep this version; keeping one left one note";
+      return `both edits came back; the window kept "${kept}" and left one note`;
     },
   },
   {

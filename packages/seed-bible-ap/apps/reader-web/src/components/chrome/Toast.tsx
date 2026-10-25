@@ -17,6 +17,10 @@ function line(
         defaultValue: "Signed in as {{name}}",
         name: values["name"] ?? "",
       });
+    case "annotation-conflict-resolve-failed":
+      return t("annotation-conflict-resolve-failed", {
+        defaultValue: "Couldn't apply that choice. It'll be tried again.",
+      });
     case "translation-downloaded":
       return t("translation-downloaded", {
         defaultValue: "{{name}} is now available offline",

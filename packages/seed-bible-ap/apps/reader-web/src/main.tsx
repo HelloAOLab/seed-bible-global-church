@@ -20,6 +20,7 @@ import "./styles/translation-list.css";
 import "./styles/offline-recovery.css";
 import "./styles/offscreen-cues.css";
 import "./styles/adopt-device.css";
+import "./styles/note-conflict.css";
 import "./styles/toolbar.css";
 import "./styles/your-content.css";
 import "./styles/tiptap.css";

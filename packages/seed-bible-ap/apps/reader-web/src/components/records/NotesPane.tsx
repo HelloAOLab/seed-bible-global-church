@@ -25,7 +25,7 @@ const TipTapEditor = lazy(() =>
 const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 /** A note's body as safe HTML: TipTap output sanitized, plain text of the first cut paragraphed. */
-const bodyHtml = (note: string) =>
+export const bodyHtml = (note: string) =>
   isHtmlNote(note)
     ? sanitizeNoteHtml(note)
     : `<p>${escapeHtml(note).replace(/\n/g, "<br>")}</p>`;

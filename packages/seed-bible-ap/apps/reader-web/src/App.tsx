@@ -45,6 +45,7 @@ import { AboutPane } from "./components/chrome/AboutPane";
 import { LanguageSwitchPrompt } from "./components/chrome/LanguageSwitchPrompt";
 import { OfflineRecovery } from "./components/reader/OfflineRecovery";
 import { AdoptPrompt } from "./components/chrome/AdoptPrompt";
+import { NoteConflict } from "./components/records/NoteConflict";
 import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
 import { completeRedirectIfReturning } from "./session";
 
@@ -231,6 +232,7 @@ export function App({ state }: { state: ReaderState }) {
       <LanguageSwitchPrompt />
       <OfflineRecovery state={state} />
       <AdoptPrompt state={state} />
+      <NoteConflict state={state} />
       <PlanNudge state={state} />
       <SessionSettingsWindow state={state} />
       <SessionCloseConfirm state={state} />

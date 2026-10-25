@@ -969,5 +969,12 @@
   "adopt-device-content-kind-notes": "notes",
   "adopt-device-content-message": "This device is storing {{content}} that are not associated with any account. Do you want to add them to your account?",
   "adopt-device-content-skip": "Don't add",
-  "adopt-device-content-title": "Sync device content?"
+  "adopt-device-content-title": "Sync device content?",
+  "annotation-conflict-confirm": "Confirm",
+  "annotation-conflict-message": "You changed this note on this device, and it also changed somewhere else. Which do you want to keep?",
+  "annotation-conflict-progress": "1 of {{total}} notes to review",
+  "annotation-conflict-resolve-failed": "Couldn't apply that choice. It'll be tried again.",
+  "annotation-conflict-theirs": "The other version",
+  "annotation-conflict-title": "This note changed in two places",
+  "annotation-conflict-yours": "Your version"
 }
