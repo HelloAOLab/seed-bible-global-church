@@ -10,8 +10,11 @@ import { newOpId, nowIso, passageOf, spanOf } from "./marks";
 
 export interface Note {
   id: string;
+  /** The verses it is on; 0 and 0 for a note on the whole chapter (`whole`). */
   start: number;
   end: number;
+  /** A note on the whole chapter, not on verses (the old reader's note with no verse). */
+  whole?: boolean;
   note: string;
   updatedAt: string;
   /** Set on the copy a merge kept beside the one it collided with. */
@@ -22,11 +25,15 @@ export function toNotes(items: readonly unknown[]): Note[] {
   const out: Note[] = [];
   for (const it of items as Annotation[]) {
     if (it["@type"] !== "seed:Annotation" || it.deleted) continue;
-    const { start, end } = spanOf(it.aboutPassage);
+    const whole = it.aboutPassage === chapterOf(it.aboutPassage);
+    const { start, end } = whole
+      ? { start: 0, end: 0 }
+      : spanOf(it.aboutPassage);
     out.push({
       id: it["@id"],
       start,
       end,
+      ...(whole ? { whole: true } : {}),
       note: it.note,
       updatedAt: it.updatedAt ?? it.createdAt ?? "",
       ...(it.conflictOf ? { conflictOf: it.conflictOf } : {}),
@@ -59,6 +66,7 @@ export function createAnnotations(
       buckets.get("annotations", chapter).bucket.value["@graph"] as Annotation[]
     ).find((it) => it["@id"] === id && it["@type"] === "seed:Annotation");
 
+  /** A note on verses, or on the whole chapter when `start` is 0. */
   async function add(
     chapterRef: string,
     start: number,
@@ -71,7 +79,7 @@ export function createAnnotations(
       "@id": id,
       "@type": "seed:Annotation",
       heldBy: identity()?.agent ?? LOCAL_AGENT,
-      aboutPassage: passageOf(chapter, start, end),
+      aboutPassage: start > 0 ? passageOf(chapter, start, end) : chapter,
       note,
       opId: newOpId(),
       createdAt: nowIso(),

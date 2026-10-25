@@ -179,6 +179,22 @@ export class FlowContext {
     await page.locator(".sb-verse-toolbar-clear").click();
   }
 
+  /** A note's ⋮ → an item (Delete answers its confirmation too). */
+  async noteAction(
+    card: Locator,
+    item: RegExp,
+    page: Page = this.page
+  ): Promise<void> {
+    await card.locator(".sb-annotation-item-menu").first().click();
+    await page.getByRole("menuitem", { name: item }).first().click();
+    if (item.test("Delete")) {
+      const confirm = page.getByRole("dialog", { name: "Delete annotation?" });
+      await confirm.waitFor({ timeout: 5000 });
+      await confirm.getByRole("button", { name: /^delete$/i }).click();
+      await confirm.waitFor({ state: "detached", timeout: 5000 });
+    }
+  }
+
   /** The save window: tick the named folders (making any that are new), then Save — or Remove from all folders. */
   async savePicker(
     opts: { folders?: string[]; remove?: boolean } = {},

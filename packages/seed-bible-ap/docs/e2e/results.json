@@ -1,33 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 05:50 UTC",
+  "when": "2026-10-25 06:05 UTC",
   "results": [
     {
-      "id": "SH1",
-      "section": "9. Reading together",
-      "title": "The session's Shared tab",
-      "checks": "The host starts a session in John 3 and a guest joins: that tab is marked Shared with the people on it (Host first); its ⋮ has Session settings, Share session and Open chat instead of Save. A new tab moved to Romans 8 does not move the session (the guest stays in John 3). Closing the Shared tab from its ⋮ ends the session for the guest",
+      "id": "M6",
+      "section": "4. Marking the text",
+      "title": "Verse references in notes become links",
+      "checks": "A note saying 'see Romans 8:28' shows a link; tapping it opens Romans 8 with verse 28 selected",
       "mark": "✅",
-      "note": "the session's tab showed Shared with its people and the session menu; another tab left the guest in John 3; closing the tab ended it",
-      "ms": 44141
-    },
-    {
-      "id": "PP1",
-      "section": "9. Reading together",
-      "title": "Who is here, on a phone",
-      "checks": "The host starts a session on a computer; a guest joins on a phone: the chapter's top bar shows a stack of faces (2 people); a tap opens the Participants sheet with the host marked Host and the guest marked (you), and its Session settings opens the settings window",
-      "mark": "✅",
-      "note": "the phone's top bar showed 2 faces; the sheet named the Host and the guest (you); Session settings opened",
-      "ms": 39905
-    },
-    {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
-      "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1418
+      "note": "link → /read/BSB/JHN/3, verse 28 selected",
+      "ms": 7286
     }
   ]
 }

@@ -37,6 +37,16 @@ function line(
       return t("session-host-reconnected", {
         defaultValue: "The host reconnected",
       });
+    case "annotation-saved":
+      return t("annotation-saved", { defaultValue: "Annotation saved" });
+    case "annotation-save-failed":
+      return t("annotation-save-failed", {
+        defaultValue: "Couldn't save the annotation.",
+      });
+    case "annotation-delete-failed":
+      return t("delete-annotation-failed", {
+        defaultValue: "Couldn't delete the annotation.",
+      });
     case "link-copied":
       return t("link-copied", { defaultValue: "Link copied" });
     case "copied":

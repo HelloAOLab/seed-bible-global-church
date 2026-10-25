@@ -310,7 +310,7 @@ const BASE_FLOWS: Flow[] = [
     section: "4. Marking the text",
     title: "Write, edit and delete a note",
     checks:
-      "Select 3:16 → Note → type → Save → the card lists it; Edit changes it; Delete removes it",
+      "Select 3:16 → Note → type → Save → it is listed under John 3:16; its ⋮ → Edit changes it; ⋮ → Delete asks 'Delete annotation?' and removes it",
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
@@ -331,7 +331,7 @@ const BASE_FLOWS: Flow[] = [
         .locator(".sb-note-card:not(.sb-note-card-draft)")
         .first();
       await c.waitText(card, /a note from the flow/);
-      await card.getByRole("button", { name: /^edit$/i }).click();
+      await c.noteAction(card, /^edit$/i);
       await c.page
         .locator(".sb-note-card [contenteditable]")
         .first()
@@ -345,12 +345,7 @@ const BASE_FLOWS: Flow[] = [
         c.page.locator(".sb-note-card").first(),
         /an edited note/
       );
-      c.page.once("dialog", (d) => void d.accept());
-      await c.page
-        .locator(".sb-note-card")
-        .first()
-        .getByRole("button", { name: /^delete$/i })
-        .click();
+      await c.noteAction(c.page.locator(".sb-note-card").first(), /^delete$/i);
       await c.waitText(c.pane(), /0 notes/);
       return "created, edited, deleted; the pane counts 0 notes";
     },

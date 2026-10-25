@@ -11,6 +11,7 @@ import { noteText } from "./noteHtml";
 import { getVersePlainText } from "../reader/chapterContent";
 import { listStored, type StoredChapter } from "../../state/records/all";
 import { spanOf } from "../../state/records/marks";
+import { chapterOf } from "@seed/seed-protocol";
 import type {
   Annotation,
   GalleryImage,
@@ -89,6 +90,16 @@ function useVerseText(
   return text;
 }
 
+/** A note's verses; none (null) for a note on the whole chapter. */
+function noteSpan(passage: string): {
+  start: number | null;
+  end: number | null;
+} {
+  return passage === chapterOf(passage)
+    ? { start: null, end: null }
+    : spanOf(passage);
+}
+
 function refLabel(
   state: ReaderState,
   chapter: string,
@@ -155,8 +166,8 @@ function AnnotationCard(props: {
 }) {
   const { state, chapter, note } = props;
   const { t, language } = useI18n();
-  const s = spanOf(note.aboutPassage);
-  const text = useVerseText(state, props.translationId, chapter, s.start);
+  const s = noteSpan(note.aboutPassage);
+  const text = useVerseText(state, props.translationId, chapter, s.start ?? 0);
   return (
     <div className="sb-content-annotation">
       <div className="sb-content-annotation-head">
@@ -391,7 +402,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   const notes = allNotes
     .flatMap((c) => c.items.map((n) => ({ chapter: c.chapterRef, n })))
     .filter(({ chapter, n }) => {
-      const s = spanOf(n.aboutPassage);
+      const s = noteSpan(n.aboutPassage);
       return matches(noteText(n.note), ...refFields(chapter, s.start, s.end));
     })
     .sort((a, b) =>
@@ -516,7 +527,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
       });
   };
   const openNote = (chapter: string, n: Annotation) => {
-    const s = spanOf(n.aboutPassage);
+    const s = noteSpan(n.aboutPassage);
     open(chapter, null, null, n.ofEdition);
     ui.pane.value = "notes";
     ui.focusNoteVerse.value = s.start;

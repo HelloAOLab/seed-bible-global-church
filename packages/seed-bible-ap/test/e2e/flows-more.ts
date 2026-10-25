@@ -67,10 +67,12 @@ async function writeNote(c: FlowContext, verse: number, text: string) {
     .locator(".sb-note-card-draft")
     .getByRole("button", { name: /^save$/i })
     .click();
-  await c.waitText(
-    c.page.locator(".sb-note-card:not(.sb-note-card-draft)").first(),
-    new RegExp(text.slice(0, 20))
-  );
+  await c.page
+    .locator(".sb-note-card:not(.sb-note-card-draft)", {
+      hasText: text.slice(0, 20),
+    })
+    .first()
+    .waitFor({ timeout: 15000 });
 }
 
 /** Delete every note on the chapter — the Notes pane is opened for it, so one a failed run left behind goes too. */
@@ -82,14 +84,17 @@ async function deleteAllNotes(c: FlowContext) {
     await c.page.waitForTimeout(1500);
   }
   for (let i = 0; i < 10; i++) {
-    const del = c.page
-      .locator(".sb-note-card")
-      .getByRole("button", { name: /^delete$/i })
-      .first();
-    if (!(await del.count())) return;
-    await del.click();
+    const card = c.page.locator(".sb-notes-pane .sb-annotation-item").first();
+    if (!(await card.count())) return;
+    await c.noteAction(card, /^delete$/i);
     await c.page.waitForTimeout(400);
   }
+}
+
+/** Back to a chapter and delete its notes (a flow that left it). */
+async function deleteAllNotesOn(c: FlowContext, path: string) {
+  await c.open(path);
+  await deleteAllNotes(c);
 }
 
 /** Wait for the account pane's sync line to say the Library holds everything. */
@@ -1530,11 +1535,16 @@ export const MORE_FLOWS: Flow[] = [
         timeout: 15000,
       });
       await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 15000 });
-      const ref = await c.page
-        .locator(".sb-verse-toolbar-ref-text")
-        .innerText();
-      if (!/Romans 8:28/.test(ref)) throw new Error(`toolbar reads "${ref}"`);
-      return `link → ${c.page.url().replace(BASE, "")}, "${ref}" selected`;
+      const chosen = await c.page
+        .locator(".sb-bible-reader-active .sb-verse-selected")
+        .evaluateAll((els) =>
+          els.map((e) => e.getAttribute("data-verse-number"))
+        );
+      if (chosen.join() !== "28")
+        throw new Error(`verses chosen: ${chosen.join(", ")}`);
+      const opened = c.page.url().replace(BASE, "");
+      await deleteAllNotesOn(c, CH);
+      return `link → ${opened}, verse 28 selected`;
     },
   },
   {
@@ -1585,11 +1595,11 @@ export const MORE_FLOWS: Flow[] = [
       await c.context.setOffline(true);
       await b.context().setOffline(true);
       const edit = async (page: typeof b, text: string) => {
-        await page
-          .locator(".sb-note-card")
-          .first()
-          .getByRole("button", { name: /^edit$/i })
-          .click();
+        await c.noteAction(
+          page.locator(".sb-note-card").first(),
+          /^edit$/i,
+          page
+        );
         await page
           .locator(".sb-note-card [contenteditable]")
           .first()
@@ -1623,6 +1633,82 @@ export const MORE_FLOWS: Flow[] = [
       if (cards !== 1) throw new Error(`${cards} cards after keeping one`);
       await deleteAllNotes(c);
       return "both edits kept with Keep this version; keeping one left one note";
+    },
+  },
+  {
+    id: "NO1",
+    section: "4. Marking the text",
+    title: "Notes as the old reader shows them",
+    rows: ["Write a note"],
+    checks:
+      "With no notes, the Notes pane says 'You don't have any notes for this chapter.' with Create a note; with nothing chosen it writes a note on the whole chapter (grouped as John 3, 'Annotation saved'); a note on 3:16 groups under John 3:16 with 'You' and when; a group folds; while a draft is open, choosing 3:17–18 moves it there",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "empty";
+        await c.open(CH);
+        await deleteAllNotes(c);
+        if (!(await c.pane().isVisible())) await c.pressToolbar("Notes");
+        await c.waitText(
+          c.pane(),
+          /you don't have any notes for this chapter/i,
+          10000
+        );
+        step = "a note on the whole chapter";
+        await c
+          .pane()
+          .getByRole("button", { name: /create a note/i })
+          .click();
+        const draft = c.page.locator(".sb-note-card-draft");
+        await c.waitText(draft.locator(".sb-note-card-ref"), /^John 3$/, 5000);
+        const ed = draft.locator("[contenteditable]").first();
+        await ed.waitFor({ timeout: 20000 });
+        await ed.fill("about the whole chapter");
+        await draft.getByRole("button", { name: /^save$/i }).click();
+        await c.waitText(
+          c.page.locator(".sb-toast"),
+          /annotation saved/i,
+          5000
+        );
+        const groups = c.pane().locator(".sb-annotation-group");
+        await c.waitText(
+          groups.first(),
+          /^John 3[\s\S]*about the whole chapter/,
+          10000
+        );
+        step = "a note on 3:16, with author and time";
+        await writeNote(c, 16, "on verse sixteen");
+        const g16 = groups.filter({ hasText: /John 3:16/ }).first();
+        await c.waitText(g16, /on verse sixteen[\s\S]*You[\s\S]*\|/, 10000);
+        step = "a group folds";
+        await g16.locator(".sb-annotation-group-header").click();
+        await g16
+          .locator(".sb-annotation-item")
+          .waitFor({ state: "detached", timeout: 3000 });
+        await g16.locator(".sb-annotation-group-header").click();
+        step = "the draft follows the selection";
+        await c.selectVerse(17);
+        await c
+          .pane()
+          .getByRole("button", { name: /write a note on/i })
+          .click();
+        await c.waitText(
+          draft.locator(".sb-note-card-ref"),
+          /John 3:17$/,
+          5000
+        );
+        await c.tapVerse(18);
+        await c.waitText(
+          draft.locator(".sb-note-card-ref"),
+          /John 3:17.18/,
+          5000
+        );
+        await draft.getByRole("button", { name: /^cancel$/i }).click();
+        await deleteAllNotes(c);
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "empty state, a whole-chapter note, a grouped verse note with You and when, folding, and the draft following 3:17–18";
     },
   },
   {
@@ -2185,7 +2271,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Publish a note",
     rows: ["Publish a note"],
     checks:
-      "Signed in: a note on John 7:37 → Publish → Published; Copy link gives a link naming the offering; Published again withdraws it",
+      "Signed in: a note on John 7:37 → its ⋮ → Publish to your public shelf → marked Published; ⋮ → Copy link gives a link naming the offering; ⋮ → Make private again withdraws it",
     run: async (c) => {
       await c.open("/read/BSB/JHN/7");
       await c.signInAsSample();
@@ -2196,20 +2282,18 @@ export const MORE_FLOWS: Flow[] = [
       const card = c.page
         .locator(".sb-note-card:not(.sb-note-card-draft)")
         .first();
-      await card.locator("button", { hasText: /(^|\s)Publish\s*$/ }).click();
-      await card
-        .locator("button", { hasText: /(^|\s)Published\s*$/ })
-        .waitFor({ timeout: 120000 });
-      await card.getByRole("button", { name: /copy link/i }).click();
+      await c.noteAction(card, /publish to your public shelf/i);
+      await card.locator(".sb-note-published-tag").waitFor({ timeout: 120000 });
+      await c.noteAction(card, /copy link/i);
       await c.page.waitForTimeout(300);
       const link = await c.page
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
       if (!/offering=/.test(link)) throw new Error(`link "${link}"`);
-      await card.locator("button", { hasText: /(^|\s)Published\s*$/ }).click();
+      await c.noteAction(card, /make private again/i);
       await card
-        .locator("button", { hasText: /(^|\s)Publish\s*$/ })
-        .waitFor({ timeout: 120000 });
+        .locator(".sb-note-published-tag")
+        .waitFor({ state: "detached", timeout: 120000 });
       await deleteAllNotes(c);
       return `published, link ${link.replace(BASE, "").slice(0, 70)}…, withdrawn`;
     },
