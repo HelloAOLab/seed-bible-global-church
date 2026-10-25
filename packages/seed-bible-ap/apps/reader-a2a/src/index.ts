@@ -20,6 +20,8 @@ import { askScripture, bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
 import { huddleRoutes, type HuddleEnv } from "./routes/huddle";
+import { passageRoutes } from "./routes/passage";
+import { agentFor, readBucket } from "./skills/vault";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
 // the Worker runtime has, and this app is also imported by the in-process smoke (scripts/smoke.ts). The room class
 // itself is exported from worker.ts, the deploy entry.
@@ -57,6 +59,24 @@ app.route("/", connectRoutes);
 app.route("/", bibleRoutes);
 app.route("/", publicRoutes);
 app.route("/", huddleRoutes);
+// The passage's own marks come from the signed-in reader's agent (their Library), never from the registry.
+app.route(
+  "/",
+  passageRoutes<Env>(async (c) => {
+    const reader = await readerFromToken(c.env, bearerOf(c.req.raw));
+    if (!reader) return null;
+    return async (chapterRef) => {
+      const agent = await agentFor(c.env, reader.agent.toLowerCase());
+      const [h, a] = await Promise.all([
+        readBucket(agent, "highlights", chapterRef),
+        readBucket(agent, "annotations", chapterRef),
+      ]);
+      return [...h.bucket["@graph"], ...a.bucket["@graph"]] as Array<
+        Record<string, unknown>
+      >;
+    };
+  })
+);
 // The rooms: people's devices join a session on this origin (realtime-collaboration.md rule 2).
 app.all("/agents/*", async (c) => {
   const { routeAgentRequest } = await import("agents");

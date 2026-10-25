@@ -7996,7 +7996,7 @@ export const MORE_FLOWS: Flow[] = [
       }
       await ask.waitFor({ timeout: 45000 });
       await shot(home, "question");
-      const question = (await ask.innerText()).split("\n")[0];
+      const question = (await ask.innerText()).split("\n")[0] ?? "";
       if (!/Alice/i.test(question))
         throw new Error(`the window asked: ${question}`);
       await ask.getByRole("button", { name: /yes, add them/i }).click();
