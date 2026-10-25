@@ -1,15 +1,24 @@
 {
-  "base": "http://localhost:5207",
-  "when": "2026-10-25 09:52 UTC",
+  "base": "https://seed-reader.faithnet.io",
+  "when": "2026-10-25 09:59 UTC",
   "results": [
     {
-      "id": "ER1",
+      "id": "MS1",
       "section": "3. Reading",
-      "title": "When a chapter can't be shown",
-      "checks": "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it. /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+      "title": "The phone's Theme & text sheet",
+      "checks": "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
       "mark": "✅",
-      "note": "Chapter unavailable with Reload and Choose a translation, Reload brought John 4; Tobit: Book not found, Go to Genesis 1 went there",
-      "ms": 5595
+      "note": "text m → l → m; spacing normal → relaxed and back; UI size L then M; keep awake toggled; Go to all settings opened Settings",
+      "ms": 2038
+    },
+    {
+      "id": "RD2",
+      "section": "3. Reading",
+      "title": "Footnote links, an embed's marks, the phone's note count",
+      "checks": "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone shows a note marker in the margin level with verse 16 and the note count in its header; each opens the note",
+      "mark": "✅",
+      "note": "John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone's margin marker and header ('1 note for this chapter') each opened it",
+      "ms": 28337
     }
   ]
 }

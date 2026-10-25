@@ -25,6 +25,13 @@ export function ChapterColumn(props: {
   stale?: boolean;
   /** The session's presence gutter, drawn inside the column (which then keeps room for it). */
   gutter?: ComponentChildren;
+  /** A phone's note markers down the end edge (the old reader's note gutter): the verses with notes, and what a
+   *  marker opens. Given at all (even empty), the gutter is kept open so the text keeps one width. */
+  notes?: {
+    verses: number[];
+    label: (verse: number) => string;
+    open: (verse: number) => void;
+  };
   children: ComponentChildren;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -96,10 +103,41 @@ export function ChapterColumn(props: {
     setRibbons(next);
   };
 
+  // Each marker sits against the first line box of its verse (the line with the verse number), however it wraps.
+  const [markers, setMarkers] = useState<
+    { verse: number; top: number; height: number }[]
+  >([]);
+  const markerSignatureRef = useRef("");
+  const measureMarkers = () => {
+    const content = contentRef.current;
+    if (!content) return;
+    const next: { verse: number; top: number; height: number }[] = [];
+    if (props.notes) {
+      const box = content.getBoundingClientRect();
+      for (const verse of props.notes.verses) {
+        const el = content.querySelector<HTMLElement>(
+          `[data-verse-number="${verse}"]`
+        );
+        const line = el && collectLineRects(el, box.left, box.top)[0];
+        if (line)
+          next.push({ verse, top: line.top, height: line.bottom - line.top });
+      }
+    }
+    const signature = next
+      .map((m) => `${m.verse}:${Math.round(m.top)}:${Math.round(m.height)}`)
+      .join("|");
+    if (signature === markerSignatureRef.current) return;
+    markerSignatureRef.current = signature;
+    setMarkers(next);
+  };
+
   const remeasureRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
-    remeasureRef.current = measureRibbons;
-    measureRibbons();
+    remeasureRef.current = () => {
+      measureRibbons();
+      measureMarkers();
+    };
+    remeasureRef.current();
   });
   useLayoutEffect(() => {
     const content = contentRef.current;
@@ -115,7 +153,7 @@ export function ChapterColumn(props: {
   return (
     <div
       ref={contentRef}
-      className={`sb-chapter-content${props.stale ? " sb-chapter-content-stale" : ""}${props.gutter ? " sb-chapter-content-presence" : ""}`}
+      className={`sb-chapter-content${props.stale ? " sb-chapter-content-stale" : ""}${props.gutter ? " sb-chapter-content-presence" : ""}${props.notes ? " sb-chapter-content-note-gutter" : ""}`}
     >
       {props.gutter}
       <svg className="sb-highlight-layer" aria-hidden="true">
@@ -131,6 +169,25 @@ export function ChapterColumn(props: {
           />
         ))}
       </svg>
+      {props.notes && (
+        <div className="sb-note-gutter" aria-hidden={markers.length === 0}>
+          {markers.map((m) => (
+            <button
+              key={m.verse}
+              type="button"
+              className="sb-note-gutter-marker"
+              style={{ top: `${m.top}px`, height: `${m.height}px` }}
+              aria-label={props.notes!.label(m.verse)}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                props.notes!.open(m.verse);
+              }}
+            >
+              <span className="material-symbols-outlined">sticky_note_2</span>
+            </button>
+          ))}
+        </div>
+      )}
       {props.children}
     </div>
   );

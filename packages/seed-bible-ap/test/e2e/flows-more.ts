@@ -5905,7 +5905,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Footnote links, an embed's marks, the phone's note count",
     rows: ["Headings, poetry, red letters, footnotes"],
     checks:
-      "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone's header shows the note count, and it opens the note",
+      "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone shows a note marker in the margin level with verse 16 and the note count in its header; each opens the note",
     run: async (c) => {
       const page = c.page;
       let step = "";
@@ -5940,6 +5940,7 @@ export const MORE_FLOWS: Flow[] = [
         if (await page.locator(fill).count())
           throw new Error("the embed draws the visitor's highlight");
         await c.open(CH);
+        await page.locator(fill).first().waitFor({ timeout: 10000 });
         await c.selectVerse(3);
         await c.clearHighlight();
         step = "the phone's note count";
@@ -5954,11 +5955,33 @@ export const MORE_FLOWS: Flow[] = [
         const label = (await count.getAttribute("aria-label")) ?? "";
         if (!/^1 note for this chapter$/i.test(label))
           throw new Error(`note count: ${label}`);
+        const marker = page.locator(
+          '.sb-bible-reader-active .sb-note-gutter-marker[aria-label="Notes for verse 16"]'
+        );
+        await marker.waitFor({ timeout: 5000 }).catch(() => {
+          throw new Error("no note marker in the margin beside 3:16");
+        });
+        const [mb, vb] = await Promise.all([
+          marker.boundingBox(),
+          c.verse(16).locator(".sb-verse-number").first().boundingBox(),
+        ]);
+        if (
+          !mb ||
+          !vb ||
+          Math.abs(mb.y + mb.height / 2 - (vb.y + vb.height / 2)) > 16
+        )
+          throw new Error(
+            "the margin marker is not level with verse 16's number"
+          );
+        await marker.click();
+        await c.waitText(c.pane(), /a note for the count/, 8000);
+        await page.keyboard.press("Escape");
         await count.click();
         await c.waitText(c.pane(), /a note for the count/, 8000);
-        return `John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone header said '${label}' and opened it`;
+        return `John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone's margin marker and header ('${label}') each opened it`;
       } catch (e) {
-        throw new Error(`${step}: ${(e as Error).message}`);
+        (e as Error).message = `${step}: ${(e as Error).message}`;
+        throw e;
       } finally {
         await page.setViewportSize({ width: 1280, height: 900 });
         await c.open(CH).catch(() => undefined);

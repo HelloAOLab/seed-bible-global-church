@@ -942,5 +942,6 @@
   "reload": "Reload",
   "chapter-unavailable-offline-switch_one": "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
   "chapter-unavailable-offline-switch_other": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
-  "chapter-unavailable-offline-switch": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}."
+  "chapter-unavailable-offline-switch": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+  "notes-for-verse": "Notes for verse {{verse}}"
 }

@@ -55,6 +55,15 @@ export function BibleReader({
     state.live.active.value && state.live.sessionReading() === reading;
   const [footnote, setFootnote] = useState<SelectedFootnote | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  // A phone-width layout (the note gutter, the swipe previews), kept up to date as the window changes.
+  const [phone, setPhone] = useState(pageScrolls);
+  useEffect(() => {
+    if (typeof matchMedia === "undefined") return;
+    const mq = matchMedia("(max-width: 720px)");
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const prevPreview = useRef<HTMLDivElement>(null);
   const nextPreview = useRef<HTMLDivElement>(null);
   // Scroll memory, the linked verse and the swipe, for this pane on this tab's reading.
@@ -378,6 +387,24 @@ export function BibleReader({
         chapterId={`${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`}
         stale={reading.loading.value}
         gutter={inSession ? <PresenceGutter state={state} /> : undefined}
+        {...(phone
+          ? {
+              notes: {
+                verses: [
+                  ...new Set(notes.filter((n) => n.start).map((n) => n.start)),
+                ],
+                label: (verse: number) =>
+                  t("notes-for-verse", {
+                    verse,
+                    defaultValue: "Notes for verse {{verse}}",
+                  }),
+                open: (verse: number) => {
+                  ui.pane.value = "notes";
+                  ui.focusNoteVerse.value = verse;
+                },
+              },
+            }
+          : {})}
       >
         {renderChapterContent(chapter, {
           selectedVerses: active ? selection.verses.value : [],
