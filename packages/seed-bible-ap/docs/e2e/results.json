@@ -1,42 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:00 UTC",
+  "when": "2026-10-25 10:02 UTC",
   "results": [
     {
-      "id": "EX1",
-      "section": "12. Extensions",
-      "title": "The Extensions page",
-      "checks": "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
+      "id": "M3",
+      "section": "4. Marking the text",
+      "title": "Bookmark and save a chapter; see them in Your Content",
+      "checks": "Header bookmark and ☆ toggle; Your Content lists John 3 under Bookmarks and Saves",
       "mark": "✅",
-      "note": "tabs with counts; 40 → 36 cross-references at 1 per verse, reset; companion off and on; the set downloaded",
-      "ms": 2197
+      "note": "John 3 listed under bookmarks and saves",
+      "ms": 1144
     },
     {
-      "id": "H1",
-      "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "id": "HC1",
+      "section": "4. Marking the text",
+      "title": "Twelve highlight colours and colours of your own",
+      "checks": "Highlight shows the old reader's twelve colours and a + for a colour of your own. Cyan highlights John 3:16; a colour chosen with + highlights 3:14 in exactly that colour and joins the picker after the twelve; right-click takes it away again; both highlights clear",
       "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 1126
+      "note": "twelve colours and a +; cyan on 3:16; #2a6fdb on 3:14 and in the picker; right-click removed it; both cleared",
+      "ms": 2123
     },
     {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
+      "id": "VS1",
+      "section": "4. Marking the text",
+      "title": "The phone's verse sheet",
+      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
       "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1346
+      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
+      "ms": 3095
     },
     {
-      "id": "EM1",
-      "section": "13. Links and embedding",
-      "title": "The embed's own controls",
-      "checks": "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+      "id": "L2",
+      "section": "9. Reading together",
+      "title": "Show everyone, the roster, chat, the record",
+      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
       "mark": "✅",
-      "note": "header: Open in New Tab · Text settings; the bar went to John 4; Open in New Tab opened /read/BSB/JHN/4; verse: Copy · Compare · Share · Cancel; the sheet without Go to all settings",
-      "ms": 4709
+      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code W2VSK7)",
+      "ms": 40613
+    },
+    {
+      "id": "HF1",
+      "section": "4. Marking the text",
+      "title": "Highlights fade in and out",
+      "checks": "Highlighting John 3:7 draws a new ribbon that fades in; clearing it fades the ribbon out (still drawn, transparent) before it goes",
+      "mark": "✅",
+      "note": "ribbons 0 → 1 (fading in) → 0 after fading out",
+      "ms": 1434
     }
   ]
 }

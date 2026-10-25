@@ -1,7 +1,8 @@
 // THE CHAPTER COLUMN with the highlight ribbon layer — ported from the `ChapterContent` component of
 // packages/seed-bible BibleReader.tsx (`measureRibbons`): every highlighted run's live text geometry is measured
 // after each render and on reflow, and drawn as one rounded SVG path BEHIND the text, so a highlight never shifts
-// a line or covers a glyph. The fade in/out bookkeeping of the original is left out of this cut.
+// a line or covers a glyph. A new highlight fades in and a removed one fades out; one that only reshaped (an edit, a
+// reflow, a neighbour merged in) snaps, as in the original.
 import { type ComponentChildren } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import {
@@ -18,7 +19,25 @@ interface Ribbon {
   d: string;
   fill: string;
   broadcast: boolean;
+  /** The verses it covers. */
+  first: number;
+  last: number;
+  /** Genuinely new: starts transparent and fades in. */
+  enter: boolean;
+  /** Removed: fading out before it goes. */
+  exiting: boolean;
 }
+
+const RIBBON_FADE_MS = 250;
+
+const versesOf = (el: HTMLElement): number[] => {
+  const inside = Array.from(
+    el.querySelectorAll<HTMLElement>("[data-verse-number]")
+  ).map((v) => Number(v.dataset["verseNumber"]));
+  if (inside.length) return inside;
+  const own = el.closest<HTMLElement>("[data-verse-number]");
+  return own ? [Number(own.dataset["verseNumber"])] : [];
+};
 
 export function ChapterColumn(props: {
   chapterId: string;
@@ -38,13 +57,32 @@ export function ChapterColumn(props: {
   const [ribbons, setRibbons] = useState<Ribbon[]>([]);
   const signatureRef = useRef("");
   const chapterIdRef = useRef("");
+  const renderedRef = useRef<Ribbon[]>([]);
+  const coverageRef = useRef<Set<number>>(new Set());
+  const exitTimers = useRef(new Map<string, number>());
+  useLayoutEffect(
+    () => () => {
+      for (const t of exitTimers.current.values()) clearTimeout(t);
+    },
+    []
+  );
+  const removeRibbon = (key: string) => {
+    exitTimers.current.delete(key);
+    renderedRef.current = renderedRef.current.filter((r) => r.key !== key);
+    setRibbons(renderedRef.current);
+  };
 
   const measureRibbons = () => {
     const content = contentRef.current;
     if (!content) return;
     if (props.chapterId !== chapterIdRef.current) {
+      // Another chapter: nothing fades across the change.
       chapterIdRef.current = props.chapterId;
       signatureRef.current = "";
+      for (const t of exitTimers.current.values()) clearTimeout(t);
+      exitTimers.current.clear();
+      renderedRef.current = [];
+      coverageRef.current = new Set();
     }
     const box = content.getBoundingClientRect();
     const style = getComputedStyle(content);
@@ -64,6 +102,7 @@ export function ChapterColumn(props: {
         fill: el.getAttribute("data-highlight-fill") ?? "",
         broadcast: el.getAttribute("data-highlight-broadcast") === "true",
         lines: collectLineRects(el, box.left, box.top),
+        verses: versesOf(el),
         leadPad: padX,
         trailPad: padX,
       }))
@@ -82,7 +121,7 @@ export function ChapterColumn(props: {
       if (after && sharesLine(after, last)) run.trailPad = 0;
     }
 
-    const next: Ribbon[] = [];
+    const next: Omit<Ribbon, "enter" | "exiting">[] = [];
     for (const run of runs) {
       const d = buildRibbonPath(run.lines, radius, padX, linePitch, {
         leadPad: run.leadPad,
@@ -95,12 +134,53 @@ export function ChapterColumn(props: {
           d,
           fill: run.fill,
           broadcast: run.broadcast,
+          first: Math.min(...run.verses),
+          last: Math.max(...run.verses),
         });
     }
     const signature = JSON.stringify(next);
     if (signature === signatureRef.current) return;
     signatureRef.current = signature;
-    setRibbons(next);
+
+    // A run fades in only when none of its verses were highlighted before, and out only when none are now.
+    const covered = new Set<number>();
+    for (const r of next)
+      for (let v = r.first; v <= r.last; v++) covered.add(v);
+    const before = coverageRef.current;
+    const liveBefore = new Set(
+      renderedRef.current.filter((r) => !r.exiting).map((r) => r.key)
+    );
+    const liveNow = new Set(next.map((r) => r.key));
+    const result: Ribbon[] = next.map((r) => {
+      const timer = exitTimers.current.get(r.key);
+      if (timer !== undefined) {
+        clearTimeout(timer);
+        exitTimers.current.delete(r.key);
+      }
+      let enter = !liveBefore.has(r.key);
+      for (let v = r.first; enter && v <= r.last; v++)
+        if (before.has(v)) enter = false;
+      return { ...r, enter, exiting: false };
+    });
+    for (const prev of renderedRef.current) {
+      if (liveNow.has(prev.key)) continue;
+      if (prev.exiting) {
+        if (exitTimers.current.has(prev.key)) result.push(prev);
+        continue;
+      }
+      let still = false;
+      for (let v = prev.first; !still && v <= prev.last; v++)
+        still = covered.has(v);
+      if (still) continue;
+      result.push({ ...prev, enter: false, exiting: true });
+      exitTimers.current.set(
+        prev.key,
+        window.setTimeout(() => removeRibbon(prev.key), RIBBON_FADE_MS + 50)
+      );
+    }
+    renderedRef.current = result;
+    coverageRef.current = covered;
+    setRibbons(result);
   };
 
   // Each marker sits against the first line box of its verse (the line with the verse number), however it wraps.
@@ -160,11 +240,12 @@ export function ChapterColumn(props: {
         {ribbons.map((ribbon) => (
           <path
             key={ribbon.key}
-            className={`sb-highlight-ribbon${ribbon.broadcast ? " sb-highlight-ribbon-broadcast" : ""}`}
+            className={`sb-highlight-ribbon${ribbon.broadcast ? " sb-highlight-ribbon-broadcast" : ""}${ribbon.enter ? " sb-highlight-ribbon-enter" : ""}`}
             d={ribbon.d}
             style={{
               fill: ribbon.fill,
               stroke: ribbon.broadcast ? ribbon.fill : undefined,
+              opacity: ribbon.exiting ? 0 : undefined,
             }}
           />
         ))}

@@ -6082,4 +6082,44 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "HF1",
+    section: "4. Marking the text",
+    title: "Highlights fade in and out",
+    rows: ["Clear a highlight"],
+    checks:
+      "Highlighting John 3:7 draws a new ribbon that fades in; clearing it fades the ribbon out (still drawn, transparent) before it goes",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(CH);
+      const ribbons = page.locator(
+        ".sb-bible-reader-active .sb-highlight-layer .sb-highlight-ribbon"
+      );
+      const before = await ribbons.count();
+      await c.selectVerse(7);
+      await c.pickColor(2);
+      await page
+        .locator(".sb-bible-reader-active .sb-highlight-ribbon-enter")
+        .first()
+        .waitFor({ state: "attached", timeout: 5000 })
+        .catch(() => {
+          throw new Error("the new ribbon did not fade in");
+        });
+      const during = await ribbons.count();
+      await c.selectVerse(7);
+      await c.clearHighlight();
+      const fading = await page
+        .locator(".sb-bible-reader-active .sb-highlight-ribbon")
+        .evaluateAll(
+          (els) =>
+            els.filter((e) => (e as SVGElement).style.opacity === "0").length
+        );
+      if (fading < 1) throw new Error("the cleared ribbon did not fade out");
+      for (let i = 0; i < 20 && (await ribbons.count()) > before; i++)
+        await page.waitForTimeout(100);
+      if ((await ribbons.count()) !== before)
+        throw new Error("the cleared ribbon stayed");
+      return `ribbons ${before} → ${during} (fading in) → ${before} after fading out`;
+    },
+  },
 ];
