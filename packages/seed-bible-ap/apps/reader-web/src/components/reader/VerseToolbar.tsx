@@ -39,10 +39,20 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   );
   const row = useRef<HTMLDivElement>(null);
   const swiped = useRef(false);
+  // A desktop toolbar can be dragged out of the way (the old reader's); a new choice puts it back beside the verses.
+  const [offset, setOffset] = useState({ dx: 0, dy: 0 });
+  const moving = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+  } | null>(null);
   useEffect(() => {
     setPicker(false);
     setReveal(0);
     setDismiss(0);
+    setOffset({ dx: 0, dy: 0 });
   }, [key]);
   useLayoutEffect(() => {
     if (row.current) setFull(row.current.scrollHeight);
@@ -125,8 +135,8 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       }
     : !phone && anchor
       ? {
-          left: `${Math.min(Math.max(anchor.x, 200), window.innerWidth - 200)}px`,
-          top: `${Math.min(Math.max(anchor.y - 12, picker ? 140 : 90), window.innerHeight - 100)}px`,
+          left: `${Math.min(Math.max(anchor.x + offset.dx, 200), window.innerWidth - 200)}px`,
+          top: `${Math.min(Math.max(anchor.y - 12 + offset.dy, picker ? 140 : 90), window.innerHeight - 100)}px`,
         }
       : undefined;
   const saved =
@@ -612,6 +622,30 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       role={menuAt ? "menu" : "toolbar"}
       style={style}
       onClick={(e: MouseEvent) => e.stopPropagation()}
+      onPointerDown={(e: PointerEvent) => {
+        if (menuAt || !anchor) return;
+        if ((e.target as HTMLElement | null)?.closest("button, input, label"))
+          return;
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+        moving.current = {
+          id: e.pointerId,
+          x: e.clientX,
+          y: e.clientY,
+          dx: offset.dx,
+          dy: offset.dy,
+        };
+        e.preventDefault();
+      }}
+      onPointerMove={(e: PointerEvent) => {
+        const m = moving.current;
+        if (!m || m.id !== e.pointerId) return;
+        setOffset({ dx: m.dx + e.clientX - m.x, dy: m.dy + e.clientY - m.y });
+      }}
+      onPointerUp={(e: PointerEvent) => {
+        if (moving.current?.id !== e.pointerId) return;
+        (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+        moving.current = null;
+      }}
     >
       {picker && (
         <div className="sb-verse-toolbar-ref sb-verse-toolbar-ref-with-back">

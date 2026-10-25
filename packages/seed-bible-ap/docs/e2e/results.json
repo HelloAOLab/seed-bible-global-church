@@ -1,15 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:15 UTC",
+  "when": "2026-10-25 10:16 UTC",
   "results": [
     {
-      "id": "G13",
-      "section": "10. Playlists and reading plans",
-      "title": "Edit a reading plan",
-      "checks": "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
+      "id": "M1",
+      "section": "4. Marking the text",
+      "title": "Highlight and clear",
+      "checks": "Select 3:16, tap a colour → a ribbon appears; select again → Clear highlight → gone",
       "mark": "✅",
-      "note": "DAY 1 DAY 2 Comfort radio_button_unchecked menu_book Psalms 23 · BSB ~2 min radio_button_unchecked menu_book J; kept after a reload, Start · Weekly offered",
-      "ms": 4131
+      "note": "ribbon drawn, then cleared",
+      "ms": 1906
+    },
+    {
+      "id": "HC1",
+      "section": "4. Marking the text",
+      "title": "Twelve highlight colours and colours of your own",
+      "checks": "Highlight shows the old reader's twelve colours and a + for a colour of your own. Cyan highlights John 3:16; a colour chosen with + highlights 3:14 in exactly that colour and joins the picker after the twelve; right-click takes it away again; both highlights clear",
+      "mark": "✅",
+      "note": "twelve colours and a +; cyan on 3:16; #2a6fdb on 3:14 and in the picker; right-click removed it; both cleared",
+      "ms": 1828
+    },
+    {
+      "id": "SV1",
+      "section": "4. Marking the text",
+      "title": "The save window: several folders, rename and delete a folder",
+      "checks": "Select 3:16 → Save opens the save window with My Saves ticked → Add to new 'Memory' → Save: the sidebar's saves list it under My Saves and Memory; Save again opens it as Edit save; Memory's ⋮ → Rename 'Verses' moves it; Edit save → untick My Saves → it is only in Verses; Verses' ⋮ → Delete puts it back in My Saves; Remove from all folders unsaves it",
+      "mark": "✅",
+      "note": "saved to My Saves and a new folder; renamed, moved, deleted and removed",
+      "ms": 2425
+    },
+    {
+      "id": "G4",
+      "section": "4. Marking the text",
+      "title": "Right-click menu on a verse, Copy",
+      "checks": "Right-click John 3:16: the verse toolbar opens at the pointer as a menu; Copy puts the verse's text and reference on the clipboard",
+      "mark": "✅",
+      "note": "For God so loved the world that He gave His one and only Son, that everyone who believes i",
+      "ms": 885
+    },
+    {
+      "id": "VD1",
+      "section": "4. Marking the text",
+      "title": "Drag the verse toolbar aside",
+      "checks": "On a desktop, the verse toolbar over John 3:3 can be dragged by its edge (not its buttons) 150px right and 60px down; choosing another verse puts it back beside that verse",
+      "mark": "✅",
+      "note": "dragged by 150, 60; a new choice brought it back beside the verses",
+      "ms": 1188
     }
   ]
 }

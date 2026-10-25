@@ -6370,4 +6370,39 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "VD1",
+    section: "4. Marking the text",
+    title: "Drag the verse toolbar aside",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "On a desktop, the verse toolbar over John 3:3 can be dragged by its edge (not its buttons) 150px right and 60px down; choosing another verse puts it back beside that verse",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(CH);
+      await c.selectVerse(3);
+      const bar = page.locator(".sb-verse-toolbar");
+      const before = (await bar.boundingBox())!;
+      await page.mouse.move(before.x + 3, before.y + before.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(before.x + 153, before.y + before.height / 2 + 60, {
+        steps: 8,
+      });
+      await page.mouse.up();
+      const after = (await bar.boundingBox())!;
+      const dx = Math.round(after.x - before.x);
+      const dy = Math.round(after.y - before.y);
+      if (Math.abs(dx - 150) > 6 || Math.abs(dy - 60) > 6)
+        throw new Error(`moved by ${dx}, ${dy}`);
+      await c.tapVerse(4);
+      await page.waitForTimeout(300);
+      const back = (await bar.boundingBox())!;
+      if (Math.abs(back.x - before.x) > 60)
+        throw new Error(
+          `after a new choice it stayed aside (${Math.round(back.x - before.x)}px)`
+        );
+      await page.keyboard.press("Escape");
+      return `dragged by ${dx}, ${dy}; a new choice brought it back beside the verses`;
+    },
+  },
 ];
