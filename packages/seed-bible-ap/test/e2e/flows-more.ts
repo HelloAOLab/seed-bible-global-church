@@ -50,7 +50,7 @@ async function ensureOpen(card: ReturnType<FlowContext["page"]["locator"]>) {
   try {
     await del.waitFor({ timeout: 2500 });
   } catch {
-    await card.locator(".sb-note-card-ref").first().click();
+    await card.locator(".sb-note-card-ref, .sb-rp-card-open").first().click();
     await del.waitFor({ timeout: 5000 });
   }
 }
@@ -2699,7 +2699,7 @@ export const MORE_FLOWS: Flow[] = [
       const progress = async () =>
         (await card.locator(".sb-rp-card-progress-label").innerText()).trim();
       const p0 = await progress();
-      await card.locator('input[type="checkbox"]').first().check();
+      await card.locator(".sb-rpd-reading-toggle").first().click();
       await c.page.waitForTimeout(500);
       const p1 = await progress();
       if (p0 === p1) throw new Error(`progress unchanged "${p0}"`);
@@ -2707,6 +2707,81 @@ export const MORE_FLOWS: Flow[] = [
       await card.getByRole("button", { name: /^delete$/i }).click();
       await c.confirmDelete();
       return `plan of 5 chapters; progress "${p0}" → "${p1}"`;
+    },
+  },
+  {
+    id: "RP1",
+    section: "10. Playlists and reading plans",
+    title: "A reading plan as the old reader shows it",
+    rows: ["Start a plan, tick readings"],
+    checks:
+      "A plan of John 1–3 started Daily shows '3 days · started …', 'Next: Day 1 · John 1', and open, 'ends …', '~N min/day' and Day 1–3 tabs; Read plays Day 1 in the reader and at its end asks 'Nice reading! Mark Day 1 complete?' → Mark as complete ticks Day 1; Day 2's Mark complete waits for its reading, then says 'Day 2 complete!'; Delete asks 'Delete reading plan?'",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "make and start";
+        await c.open("/read/BSB/JHN/1");
+        let pane = await c.openLibrary("Reading plans");
+        const title = `Flow rp ${stamp()}`;
+        await pane.locator('input[placeholder^="Plan title"]').fill(title);
+        await pane.locator('input[type="number"]').first().fill("3");
+        await pane.getByRole("button", { name: /create plan/i }).click();
+        let card = pane.locator(".sb-rp-card", { hasText: title }).first();
+        await card.waitFor({ timeout: 10000 });
+        await ensureOpen(card);
+        await card.getByRole("button", { name: /start · daily/i }).click();
+        step = "the summary";
+        await c.waitText(card, /3 days · started/, 5000);
+        await c.waitText(card, /Next: Day 1 · John 1/, 5000);
+        await c.waitText(card, /ends .*[\s\S]*~\d+ min\/day/, 5000);
+        if ((await card.locator(".sb-rpd-day-tab").count()) !== 3)
+          throw new Error("not three day tabs");
+        step = "Read the day";
+        await card
+          .getByRole("button", { name: /^play_arrow\s*read$|^read$/i })
+          .click();
+        const note = c.page.locator(".sb-playlist-note");
+        await note.waitFor({ timeout: 10000 });
+        await note.getByRole("button", { name: /finish/i }).click();
+        const nudge = c.page.locator(".sb-rpb-toast");
+        await c.waitText(
+          nudge,
+          /nice reading![\s\S]*mark day 1 complete\?/i,
+          5000
+        );
+        await nudge.getByRole("button", { name: /mark as complete/i }).click();
+        step = "Day 1 ticked";
+        pane = await c.openLibrary("Reading plans");
+        card = pane.locator(".sb-rp-card", { hasText: title }).first();
+        await ensureOpen(card);
+        await c.waitText(
+          card.locator(".sb-rp-card-progress-label"),
+          /^1\/3$/,
+          10000
+        );
+        step = "Mark Day 2 complete";
+        // The celebration has no title in it: hold the card by its plan.
+        const id = await card.getAttribute("data-plan-id");
+        card = pane.locator(`.sb-rp-card[data-plan-id="${id}"]`);
+        await card.locator(".sb-rpd-day-tab").nth(1).click();
+        const mark = card.getByRole("button", { name: /mark day 2 complete/i });
+        if (await mark.isEnabled())
+          throw new Error("Mark Day 2 complete before its reading was ticked");
+        await card.locator(".sb-rpd-reading-toggle").first().click();
+        await mark.click();
+        await c.waitText(card, /day 2 complete!/i, 5000);
+        await card.getByRole("button", { name: /back to plan/i }).click();
+        step = "delete";
+        await card.getByRole("button", { name: /^delete$/i }).click();
+        await c.page
+          .getByRole("dialog", { name: "Delete reading plan?" })
+          .waitFor({ timeout: 5000 });
+        await c.confirmDelete();
+        await card.waitFor({ state: "detached", timeout: 10000 });
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "summary, Read with the Nice reading prompt, Day 2 complete!, deleted after the check";
     },
   },
   {
@@ -2754,16 +2829,19 @@ export const MORE_FLOWS: Flow[] = [
       await save.click();
       await editor.waitFor({ state: "detached", timeout: 10000 });
       const card = pane.locator(".sb-rp-card", { hasText: title }).first();
-      const days = async () =>
-        card
-          .locator(".sb-rpd-reading-card")
-          .evaluateAll((ds) =>
-            ds.map((d) =>
-              (d as HTMLElement).innerText.replace(/\s+/g, " ").trim()
-            )
-          );
-      const shown = (await days()).join(" | ");
-      if (!/^Comfort.*Psalms? 23.*John 1.*\| Day 2.*Romans 8:28/i.test(shown))
+      await ensureOpen(card);
+      // One day at a time, as the old reader shows a plan: the day's name, then its readings.
+      const day = async (n: number) => {
+        await card
+          .locator(".sb-rpd-day-tab")
+          .nth(n - 1)
+          .click();
+        return (await card.locator(".sb-rpd-body").innerText())
+          .replace(/\s+/g, " ")
+          .trim();
+      };
+      const shown = `${await day(1)} | ${await day(2)}`;
+      if (!/Comfort.*Psalms? 23.*John 1.*\| .*Romans 8:28/i.test(shown))
         throw new Error(`days: ${shown}`);
       await c.page.reload();
       const again = await c.openLibrary("Reading plans");

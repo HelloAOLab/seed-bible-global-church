@@ -38,10 +38,14 @@ export function createPlaylists(
     .get(HISTORY_KEY)
     .then((v) => (history.value = (v as PlayHistoryEntry[] | undefined) ?? []))
     .catch(() => undefined);
+  /** A queue that is not a saved playlist (a plan's day, read straight through), and what to do at its end. */
+  const queue = signal<Playlist | null>(null);
+  let onQueueEnd: (() => void) | null = null;
   const current = computed(() => {
     const p = playing.value;
     if (!p) return null;
-    const pl = works.byId(p.playlistId);
+    const q = queue.value;
+    const pl = q && q["@id"] === p.playlistId ? q : works.byId(p.playlistId);
     const item = pl?.hasItem[p.index];
     return pl && item
       ? { playlist: pl, item, index: p.index, count: pl.hasItem.length }
@@ -157,24 +161,61 @@ export function createPlaylists(
     noteHidden.value = false;
     if (c.index + 1 < c.count) {
       playing.value = { playlistId: c.playlist["@id"], index: c.index + 1 };
-      record(c.playlist["@id"], c.index + 1);
+      if (queue.value?.["@id"] !== c.playlist["@id"])
+        record(c.playlist["@id"], c.index + 1);
+      return;
+    }
+    playing.value = null;
+    if (queue.value?.["@id"] === c.playlist["@id"]) {
+      const end = onQueueEnd;
+      queue.value = null;
+      onQueueEnd = null;
+      end?.();
       return;
     }
     record(c.playlist["@id"], c.index, { end: true });
-    playing.value = null;
     finished.value = c.playlist["@id"];
+  }
+
+  /** Read a set of items in turn as if they were a playlist (not kept, not in the history). */
+  function playItems(
+    label: string,
+    items: PlaylistItem[],
+    start = 0,
+    onEnd?: () => void
+  ) {
+    if (!items.length) return;
+    const q: Playlist = {
+      "@id": `urn:seed:queue:${newOpId()}`,
+      "@type": "seed:Playlist",
+      publishedBy: identity()?.agent ?? LOCAL_AGENT,
+      label,
+      hasItem: items,
+    };
+    queue.value = q;
+    onQueueEnd = onEnd ?? null;
+    finished.value = null;
+    noteHidden.value = false;
+    playing.value = {
+      playlistId: q["@id"],
+      index: Math.min(Math.max(start, 0), items.length - 1),
+    };
   }
   function prev() {
     const c = current.value;
     if (c && c.index > 0) {
       noteHidden.value = false;
       playing.value = { playlistId: c.playlist["@id"], index: c.index - 1 };
-      record(c.playlist["@id"], c.index - 1);
+      if (queue.value?.["@id"] !== c.playlist["@id"])
+        record(c.playlist["@id"], c.index - 1);
     }
   }
   const stop = () => {
     const p = playing.value;
-    if (p) record(p.playlistId, p.index, { end: true });
+    if (p && queue.value?.["@id"] !== p.playlistId)
+      record(p.playlistId, p.index, { end: true });
+    queue.value = null;
+    onQueueEnd = null;
     playing.value = null;
   };
   /** Forget the history on this device. */
@@ -198,6 +239,7 @@ export function createPlaylists(
     removeItem,
     moveItem,
     play,
+    playItems,
     next,
     prev,
     stop,

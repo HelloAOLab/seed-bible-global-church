@@ -1170,3 +1170,29 @@
 .sb-rpb-toast-close .material-symbols-outlined {
   font-size: 18px;
 }
+
+/* Here a plan opens inside its card in the Library (the old reader gave it a screen of its own). */
+.sb-rp-card .sb-rpd {
+  height: auto;
+  margin-inline: -14px;
+  border-top: 1px solid var(--rp-border, var(--sb-divider-color));
+}
+.sb-rp-card .sb-rpd > .sb-note-card-actions {
+  padding: 0 16px 12px;
+  flex-wrap: wrap;
+}
+.sb-rp-card .sb-rpd-hero-header {
+  padding: 12px 16px 0;
+}
+.sb-rp-card .sb-hero-thumb {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+.sb-rpd-footer-actions .sb-note-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}

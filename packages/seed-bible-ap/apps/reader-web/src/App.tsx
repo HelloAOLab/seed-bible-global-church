@@ -29,6 +29,7 @@ import { MobileSettingsSheet } from "./components/chrome/MobileSettingsSheet";
 import { SavePicker } from "./components/records/SavePicker";
 import { BookmarkPicker } from "./components/records/Bookmarks";
 import { ChatPanel } from "./components/sessions/ChatPanel";
+import { PlanNudge } from "./components/library/PlanCard";
 import {
   PlaylistFinished,
   PlaylistNote,
@@ -218,6 +219,7 @@ export function App({ state }: { state: ReaderState }) {
       <ChatPanel state={state} />
       <PlaylistNote state={state} />
       <PlaylistFinished state={state} />
+      <PlanNudge state={state} />
       <SessionSettingsWindow state={state} />
       <SessionCloseConfirm state={state} />
       <BibleSelector state={state} />

@@ -68,6 +68,14 @@ for (const flow of FLOWS) {
     });
     console.log(`✓ ${flow.id} ${flow.title} — ${note}`);
   } catch (e) {
+    if (process.env["E2E_STACK"])
+      console.log(
+        ((e as Error).stack ?? "")
+          .split("\n")
+          .filter((l) => /flows/.test(l))
+          .slice(0, 3)
+          .join("\n")
+      );
     const err = e instanceof Error ? e.message.split("\n")[0]! : String(e);
     const extra = ctx.logs.length
       ? ` [${ctx.logs.slice(0, 2).join(" | ").slice(0, 160)}]`

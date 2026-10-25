@@ -208,6 +208,39 @@ export function createPlans(
     });
   }
 
+  /** A whole session (a day) marked read: all its readings at once. */
+  async function completeSession(planId: string, sessionId: string) {
+    const progress = progressOf(planId);
+    const session = works
+      .byId(planId)
+      ?.hasSession.find((s) => s["@id"] === sessionId);
+    if (!progress || !session) return;
+    const sessions = progress.sessions.filter((s) => s.session !== sessionId);
+    sessions.push({
+      "@type": "seed:SessionProgress",
+      session: sessionId,
+      completed: session.readings.map((r) => r["@id"]),
+      completedAt: nowIso(),
+    });
+    await buckets.put("progress", undefined, {
+      ...progress,
+      sessions,
+      opId: newOpId(),
+      updatedAt: nowIso(),
+    });
+  }
+
+  async function update(
+    planId: string,
+    patch: Partial<Pick<ReadingPlan, "heroImage">>
+  ) {
+    const plan = works.byId(planId);
+    if (!plan) throw new Error("no such plan");
+    const next: ReadingPlan = { ...plan, ...patch };
+    if (!next.heroImage) delete next.heroImage;
+    await works.save(next);
+  }
+
   async function reset(planId: string) {
     const progress = progressOf(planId);
     if (progress)
@@ -228,6 +261,8 @@ export function createPlans(
     createFromChapters,
     start,
     setDone,
+    completeSession,
+    update,
     reset,
   };
 }

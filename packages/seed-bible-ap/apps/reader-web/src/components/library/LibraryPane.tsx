@@ -6,6 +6,7 @@ import { ThemeLivePreview } from "../chrome/ThemePreview";
 import { PictureField } from "./PictureField";
 import { COVER_IMAGE, LOGO } from "../../state/library/crop";
 import { PlanEditor } from "./PlanEditor";
+import { PlanCard } from "./PlanCard";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -35,7 +36,7 @@ function endChapterOf(passage: string): string | null {
   return to && b && b !== a ? b : null;
 }
 
-function itemLabel(state: ReaderState, it: PlaylistItem): string {
+export function itemLabel(state: ReaderState, it: PlaylistItem): string {
   if (it["@type"] === "seed:ScriptureItem") {
     const { chapter, start, end } = spanOf(it.aboutPassage);
     const [book, ch] = chapter.split(".");
@@ -53,7 +54,7 @@ function itemLabel(state: ReaderState, it: PlaylistItem): string {
   return it.label ?? it.url;
 }
 
-function openItem(state: ReaderState, it: PlaylistItem) {
+export function openItem(state: ReaderState, it: PlaylistItem) {
   if (it["@type"] !== "seed:ScriptureItem") return;
   const { chapter, start, end } = spanOf(it.aboutPassage);
   const [book, ch] = chapter.split(".");
@@ -430,6 +431,7 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   const [deleting, setDeleting] = useState<{
     id: string;
     label: string;
+    kind?: "plan";
   } | null>(null);
   const [title, setTitle] = useState("");
   const [planTo, setPlanTo] = useState("");
@@ -1432,148 +1434,30 @@ export function LibraryPane({ state }: { state: ReaderState }) {
           {plans.views.value.map((v) => {
             const pl = v.plan;
             const isOpen = open === pl["@id"];
-            const published = state.publishing.isPublished(pl["@id"]);
-            return (
+            return isOpen && editingPlan === pl["@id"] ? (
               <article key={pl["@id"]} className="sb-rp-card sb-note-card">
-                <header className="sb-note-card-header">
-                  <button
-                    className="sb-note-card-ref sb-rp-card-title"
-                    onClick={() => setOpen(isOpen ? null : pl["@id"])}
-                  >
-                    {pl.label}
-                  </button>
-                  <span className="sb-note-card-when sb-rp-card-progress-label">
-                    {v.done}/{v.total}
-                  </span>
-                </header>
-                <div className="sb-rp-card-progress-bar">
-                  <div
-                    className="sb-rp-card-progress-fill"
-                    style={{
-                      width: `${v.total ? (100 * v.done) / v.total : 0}%`,
-                    }}
-                  />
-                </div>
-                {isOpen && editingPlan === pl["@id"] && (
-                  <PlanEditor
-                    state={state}
-                    plan={pl}
-                    onDone={() => setEditingPlan(null)}
-                    parseReference={scriptureFromText}
-                    passageOnScreen={scriptureItem}
-                    label={(it) => itemLabel(state, it)}
-                    ItemEditor={ItemEditor}
-                  />
-                )}
-                {isOpen && editingPlan !== pl["@id"] && (
-                  <>
-                    {!v.progress && (
-                      <div className="sb-note-card-actions">
-                        {pl.cadenceOptions.map((c) => (
-                          <button
-                            key={c["@id"]}
-                            className="sb-note-button sb-note-button-primary"
-                            onClick={() =>
-                              void plans.start(pl["@id"], c["@id"])
-                            }
-                          >
-                            {t("start-plan", { defaultValue: "Start" })} ·{" "}
-                            {c.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {pl.hasSession.map((s, si) => {
-                      const sp = v.progress?.sessions.find(
-                        (x) => x.session === s["@id"]
-                      );
-                      return (
-                        <div
-                          key={s["@id"]}
-                          className={`sb-rpd-reading-card${v.todayIndex === si ? " sb-rp-today" : ""}`}
-                        >
-                          <div className="sb-rp-section-label">
-                            {s.label ??
-                              `${t("day", { defaultValue: "Day" })} ${si + 1}`}
-                            {v.todayIndex === si
-                              ? ` · ${t("today", { defaultValue: "Today" })}`
-                              : ""}
-                          </div>
-                          {s.readings.map((r) => {
-                            const done = !!sp?.completed.includes(r["@id"]);
-                            return (
-                              <div key={r["@id"]} className="sb-rpb-row">
-                                <input
-                                  type="checkbox"
-                                  className="sb-rpb-check"
-                                  checked={done}
-                                  disabled={!v.progress}
-                                  onChange={(e) =>
-                                    void plans.setDone(
-                                      pl["@id"],
-                                      s["@id"],
-                                      r["@id"],
-                                      (e.target as HTMLInputElement).checked
-                                    )
-                                  }
-                                />
-                                <button
-                                  className="sb-note-card-ref"
-                                  onClick={() => openItem(state, r.item)}
-                                >
-                                  {itemLabel(state, r.item)}
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                    <div className="sb-note-card-actions">
-                      {canPublish && (
-                        <button
-                          className={`sb-note-button${published ? " sb-note-button-published" : ""}`}
-                          disabled={state.publishing.busy.value === pl["@id"]}
-                          onClick={() =>
-                            void (
-                              published
-                                ? state.publishing.withdrawWork(
-                                    pl["@id"],
-                                    "plan"
-                                  )
-                                : state.publishing.publishWork(pl)
-                            ).catch(() => {})
-                          }
-                        >
-                          {published
-                            ? t("published", { defaultValue: "Published" })
-                            : t("publish", { defaultValue: "Publish" })}
-                        </button>
-                      )}
-                      <button
-                        className="sb-note-button sb-plan-edit-open"
-                        onClick={() => setEditingPlan(pl["@id"])}
-                      >
-                        {t("edit-plan", { defaultValue: "Edit" })}
-                      </button>
-                      {v.progress && (
-                        <button
-                          className="sb-note-button"
-                          onClick={() => void plans.reset(pl["@id"])}
-                        >
-                          {t("restart-plan", { defaultValue: "Restart" })}
-                        </button>
-                      )}
-                      <button
-                        className="sb-note-button sb-note-button-danger"
-                        onClick={() => void plans.remove(pl["@id"])}
-                      >
-                        {t("delete-reading-plan", { defaultValue: "Delete" })}
-                      </button>
-                    </div>
-                  </>
-                )}
+                <PlanEditor
+                  state={state}
+                  plan={pl}
+                  onDone={() => setEditingPlan(null)}
+                  parseReference={scriptureFromText}
+                  passageOnScreen={scriptureItem}
+                  label={(it) => itemLabel(state, it)}
+                  ItemEditor={ItemEditor}
+                />
               </article>
+            ) : (
+              <PlanCard
+                key={pl["@id"]}
+                state={state}
+                view={v}
+                open={isOpen}
+                onToggle={() => setOpen(isOpen ? null : pl["@id"])}
+                onEdit={() => setEditingPlan(pl["@id"])}
+                onDelete={() =>
+                  setDeleting({ id: pl["@id"], label: pl.label, kind: "plan" })
+                }
+              />
             );
           })}
         </>
@@ -1586,16 +1470,26 @@ export function LibraryPane({ state }: { state: ReaderState }) {
           <div
             className="sb-footnote-modal sb-content-dialog"
             role="dialog"
-            aria-label={t("delete-playlist-confirm-title", {
-              defaultValue: "Delete playlist?",
-            })}
+            aria-label={
+              deleting.kind === "plan"
+                ? t("delete-reading-plan-confirm-title", {
+                    defaultValue: "Delete reading plan?",
+                  })
+                : t("delete-playlist-confirm-title", {
+                    defaultValue: "Delete playlist?",
+                  })
+            }
             onClick={(e: MouseEvent) => e.stopPropagation()}
           >
             <div className="sb-footnote-modal-header">
               <h3 className="sb-footnote-modal-title">
-                {t("delete-playlist-confirm-title", {
-                  defaultValue: "Delete playlist?",
-                })}
+                {deleting.kind === "plan"
+                  ? t("delete-reading-plan-confirm-title", {
+                      defaultValue: "Delete reading plan?",
+                    })
+                  : t("delete-playlist-confirm-title", {
+                      defaultValue: "Delete playlist?",
+                    })}
               </h3>
             </div>
             <div className="sb-confirm-delete">
@@ -1617,10 +1511,12 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                   type="button"
                   className="sb-note-button sb-note-button-danger"
                   onClick={() => {
-                    const id = deleting.id;
+                    const d = deleting;
                     setDeleting(null);
-                    if (open === id) setOpen(null);
-                    void playlists.remove(id);
+                    if (open === d.id) setOpen(null);
+                    void (d.kind === "plan"
+                      ? plans.remove(d.id)
+                      : playlists.remove(d.id));
                   }}
                 >
                   {t("delete", { defaultValue: "Delete" })}

@@ -478,6 +478,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     bookmarkPicker: signal<{ chapterRef: string; edition?: string } | null>(
       null
     ),
+    /** After a plan's day was read through: "Nice reading! Mark Day N complete?". */
+    planNudge: signal<{
+      planId: string;
+      sessionId: string;
+      label: string;
+    } | null>(null),
     /** The playlist open in the Library: the verse toolbar's Add to Playlist adds to it (the old reader's). */
     editingPlaylist: signal<string | null>(null),
     /** The old reader's floating chat panel, above the reader bar. */
