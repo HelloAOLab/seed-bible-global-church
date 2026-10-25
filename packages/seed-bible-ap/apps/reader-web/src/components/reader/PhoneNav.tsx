@@ -75,6 +75,94 @@ function PlayGlyph({ playing }: { playing: boolean }) {
   );
 }
 
+/** The chapter bar: play on the left and the pill ‹ John 3 › (the book picker in the middle). The phone's, and an
+ *  embed's at any width — there it is the only way around the chapter, as in the old reader. */
+export function ChapterNav({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { reading, ui, audio, tts } = state;
+  const audioPlaying = audio.controller.isPlaying.value;
+  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
+  const speaking = tts.isSpeaking.value;
+  const canListen =
+    !audio.available.value && tts.canSpeakLanguage(state.speechLang());
+  const canPlay = audio.available.value || canListen;
+  const playing = audioPlaying || speaking;
+  return (
+    <div
+      className={`sb-reader-floating-nav${audioPlaying ? " sb-reader-floating-nav-scrubbing" : ""}`}
+      role="group"
+      aria-label={t("chapter-navigation", {
+        defaultValue: "Chapter navigation",
+      })}
+    >
+      {canPlay && (
+        <div className="sb-reader-floating-nav-play-wrap">
+          <button
+            type="button"
+            className="sb-reader-floating-nav-play"
+            aria-label={
+              playing
+                ? t("pause", { defaultValue: "Pause" })
+                : t("play", { defaultValue: "Play" })
+            }
+            onClick={() => {
+              if (speaking) tts.stop();
+              else if (audioPlaying) audio.pause();
+              else if (audio.available.value) audio.play();
+              else state.listen();
+            }}
+          >
+            <PlayGlyph playing={playing} />
+          </button>
+        </div>
+      )}
+      <div className="sb-reader-floating-nav-group-wrap">
+        {audioActive && (
+          <AudioScrubber
+            playback={audio.controller}
+            showTimeRemaining
+            className="sb-reader-floating-nav-scrubber"
+          />
+        )}
+        <div className="sb-reader-floating-nav-group">
+          <button
+            type="button"
+            className="sb-reader-floating-nav-arrow"
+            aria-label={t("previous-chapter", {
+              defaultValue: "Previous Chapter",
+            })}
+            disabled={!reading.hasPrev.value}
+            onClick={() => void reading.prev()}
+          >
+            <span className="material-symbols-outlined rtl-mirror">
+              chevron_left
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sb-reader-floating-nav-label"
+            onClick={() => (ui.selector.value = "books")}
+          >
+            <div>{reading.bookName.value || " "}</div>
+            <div>{reading.chapterNumber.value}</div>
+          </button>
+          <button
+            type="button"
+            className="sb-reader-floating-nav-arrow"
+            aria-label={t("next-chapter", { defaultValue: "Next Chapter" })}
+            disabled={!reading.hasNext.value}
+            onClick={() => void reading.next()}
+          >
+            <span className="material-symbols-outlined rtl-mirror">
+              chevron_right
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PhoneNav({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { reading, ui, audio, tts, settings } = state;
@@ -126,14 +214,6 @@ export function PhoneNav({ state }: { state: ReaderState }) {
           : pane === "none" && !ui.sidebarDrawer.value
             ? "bible"
             : "none";
-
-  const audioPlaying = audio.controller.isPlaying.value;
-  const audioActive = audioPlaying || audio.controller.currentTime.value > 0;
-  const speaking = tts.isSpeaking.value;
-  const canListen =
-    !audio.available.value && tts.canSpeakLanguage(state.speechLang());
-  const canPlay = audio.available.value || canListen;
-  const playing = audioPlaying || speaking;
 
   const dark = settings.resolvedTheme().id === "dark";
   const notes = state.annotations.forChapter(reading.chapterRef.value).value
@@ -193,80 +273,7 @@ export function PhoneNav({ state }: { state: ReaderState }) {
   if (state.selection.verses.value.length > 0) return null;
   return (
     <div className="sb-reader-toolbar-wrap sb-phone-nav">
-      {active === "bible" && (
-        <div
-          className={`sb-reader-floating-nav${audioPlaying ? " sb-reader-floating-nav-scrubbing" : ""}`}
-          role="group"
-          aria-label={t("chapter-navigation", {
-            defaultValue: "Chapter navigation",
-          })}
-        >
-          {canPlay && (
-            <div className="sb-reader-floating-nav-play-wrap">
-              <button
-                type="button"
-                className="sb-reader-floating-nav-play"
-                aria-label={
-                  playing
-                    ? t("pause", { defaultValue: "Pause" })
-                    : t("play", { defaultValue: "Play" })
-                }
-                onClick={() => {
-                  if (speaking) tts.stop();
-                  else if (audioPlaying) audio.pause();
-                  else if (audio.available.value) audio.play();
-                  else state.listen();
-                }}
-              >
-                <PlayGlyph playing={playing} />
-              </button>
-            </div>
-          )}
-          <div className="sb-reader-floating-nav-group-wrap">
-            {audioActive && (
-              <AudioScrubber
-                playback={audio.controller}
-                showTimeRemaining
-                className="sb-reader-floating-nav-scrubber"
-              />
-            )}
-            <div className="sb-reader-floating-nav-group">
-              <button
-                type="button"
-                className="sb-reader-floating-nav-arrow"
-                aria-label={t("previous-chapter", {
-                  defaultValue: "Previous Chapter",
-                })}
-                disabled={!reading.hasPrev.value}
-                onClick={() => void reading.prev()}
-              >
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_left
-                </span>
-              </button>
-              <button
-                type="button"
-                className="sb-reader-floating-nav-label"
-                onClick={() => (ui.selector.value = "books")}
-              >
-                <div>{reading.bookName.value || " "}</div>
-                <div>{reading.chapterNumber.value}</div>
-              </button>
-              <button
-                type="button"
-                className="sb-reader-floating-nav-arrow"
-                aria-label={t("next-chapter", { defaultValue: "Next Chapter" })}
-                disabled={!reading.hasNext.value}
-                onClick={() => void reading.next()}
-              >
-                <span className="material-symbols-outlined rtl-mirror">
-                  chevron_right
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {active === "bible" && <ChapterNav state={state} />}
       <nav className="sb-reader-toolbar sb-reader-toolbar-mobile-layout">
         <Tab
           label={t("today", { defaultValue: "Today" })}

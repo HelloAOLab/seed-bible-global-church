@@ -844,7 +844,7 @@ body {
 .sb-app-embed {
   grid-template-columns: minmax(0, 1fr);
 }
-.sb-app-embed .sb-app-main {
+.sb-app-embed .sb-bible-reader-content {
   padding: 0;
 }
 .sb-sidebar-logo-button {
@@ -2232,4 +2232,13 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 }
 .sb-verse-toolbar-add-color .material-symbols-outlined {
   font-size: 0.875rem;
+}
+
+/* An embed: the chapter bar along the bottom at any width (PhoneNav's ChapterNav), the text clear of it. */
+.sb-reader-toolbar-wrap-embed {
+  --sb-reader-floating-nav-play-background: var(--sb-primary-color);
+  --sb-reader-floating-nav-play-glyph: #fff;
+}
+.sb-app-embed .sb-bible-reader-content {
+  padding-bottom: 4.5rem;
 }

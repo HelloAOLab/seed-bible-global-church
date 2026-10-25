@@ -23,7 +23,7 @@ import { YourContentPane } from "./components/records/YourContentPane";
 import { TodayPane } from "./components/social/TodayPane";
 import { DiscoverPane } from "./components/social/DiscoverPane";
 import { SessionPane } from "./components/sessions/SessionPane";
-import { PhoneNav } from "./components/reader/PhoneNav";
+import { ChapterNav, PhoneNav } from "./components/reader/PhoneNav";
 import { FloatingSearch } from "./components/reader/FloatingSearch";
 import { MobileSettingsSheet } from "./components/chrome/MobileSettingsSheet";
 import { SavePicker } from "./components/records/SavePicker";
@@ -108,6 +108,12 @@ export function App({ state }: { state: ReaderState }) {
           <PanesLayout state={state} />
         </main>
         <VerseToolbar state={state} />
+        {state.selection.verses.value.length === 0 && (
+          <div className="sb-reader-toolbar-wrap sb-reader-toolbar-wrap-embed">
+            <ChapterNav state={state} />
+          </div>
+        )}
+        <MobileSettingsSheet state={state} />
         <BibleSelector state={state} />
       </div>
     );

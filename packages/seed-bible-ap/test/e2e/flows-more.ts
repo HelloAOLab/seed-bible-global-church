@@ -5743,4 +5743,66 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "EM1",
+    section: "13. Links and embedding",
+    title: "The embed's own controls",
+    rows: ["Embed in another site"],
+    checks:
+      "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(`${CH}?embed=minimal`);
+      const head = page.locator(
+        ".sb-bible-reader-active .sb-bible-reader-actions"
+      );
+      const actions = await head
+        .locator("button:visible")
+        .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+      if (actions.join() !== "Open in New Tab,Text settings")
+        throw new Error(`header: ${actions.join(", ")}`);
+      const bar = page.locator(".sb-reader-toolbar-wrap-embed");
+      await c.waitText(bar, /john\s*3/i, 5000);
+      await bar.getByRole("button", { name: "Next Chapter" }).click();
+      await c.waitText(bar, /john\s*4/i, 8000);
+      const [tab] = await Promise.all([
+        page.context().waitForEvent("page", { timeout: 5000 }),
+        head.getByRole("button", { name: "Open in New Tab" }).click(),
+      ]);
+      await tab.waitForLoadState("domcontentloaded");
+      const opened = tab.url();
+      await tab.close();
+      if (!/\/read\/BSB\/JHN\/4/.test(opened) || /embed/.test(opened))
+        throw new Error(`Open in New Tab opened ${opened}`);
+      await c.verse(3).locator(".sb-verse-number").first().click();
+      const tools = page.locator(".sb-verse-toolbar");
+      await tools.waitFor({ timeout: 5000 });
+      const labels = await tools
+        .locator("button:visible")
+        .evaluateAll((bs) =>
+          bs.map(
+            (b) => b.getAttribute("aria-label") ?? (b.textContent ?? "").trim()
+          )
+        );
+      const joined = labels.join(" · ");
+      if (
+        /highlight|save|note/i.test(joined) ||
+        !/copy/i.test(joined) ||
+        !/share/i.test(joined)
+      )
+        throw new Error(`verse toolbar: ${joined}`);
+      await page.keyboard.press("Escape");
+      await page
+        .locator(".sb-verse-toolbar")
+        .waitFor({ state: "detached", timeout: 3000 })
+        .catch(() => undefined);
+      await head.getByRole("button", { name: "Text settings" }).click();
+      const sheet = page.locator(".sb-mobile-settings-sheet");
+      await sheet.waitFor({ timeout: 3000 });
+      if (await sheet.getByText(/go to all settings/i).count())
+        throw new Error("the sheet offers Go to all settings in an embed");
+      await page.keyboard.press("Escape");
+      return `header: ${actions.join(" · ")}; the bar went to John 4; Open in New Tab opened ${new URL(opened).pathname}; verse: ${joined}; the sheet without Go to all settings`;
+    },
+  },
 ];

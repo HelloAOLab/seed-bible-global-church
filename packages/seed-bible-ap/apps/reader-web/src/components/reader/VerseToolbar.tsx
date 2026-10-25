@@ -154,6 +154,8 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const canShowEveryone =
     state.live.active.value && state.live.canHighlight.value;
 
+  // An embed is read on someone else's page: no marking tools there, as in the old reader's embed.
+  const marking = !state.ui.embed.value;
   const highlightA = (
     <Action
       key="highlight"
@@ -421,7 +423,12 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   );
 
   if (phone && !menuAt) {
-    const more = [addToPlaylistA, shareA, ...toolsA, everyoneA].filter(Boolean);
+    const more = [
+      marking && addToPlaylistA,
+      shareA,
+      ...toolsA,
+      marking && everyoneA,
+    ].filter(Boolean);
     const open = reveal > 0;
     const end_ = () => {
       const d = drag.current;
@@ -526,9 +533,9 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           pickerEl
         ) : (
           <div className="sb-verse-toolbar-tools sb-verse-toolbar-cards">
-            {highlightA}
-            {saveA}
-            {noteA}
+            {marking && highlightA}
+            {marking && saveA}
+            {marking && noteA}
             {copyA}
             {more.length > 0 && (
               <div
@@ -602,14 +609,14 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             )
           }
         >
-          {highlightA}
-          {saveA}
-          {noteA}
+          {marking && highlightA}
+          {marking && saveA}
+          {marking && noteA}
           {copyA}
-          {addToPlaylistA}
+          {marking && addToPlaylistA}
           {toolsA}
           {shareA}
-          {everyoneA}
+          {marking && everyoneA}
           {cancelA}
         </div>
       )}

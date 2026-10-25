@@ -176,32 +176,39 @@ export function MobileSettingsSheet({ state }: { state: ReaderState }) {
               }
             />
           </div>
-          <div className="sb-mobile-settings-sheet-divider" />
-          <button
-            type="button"
-            className="sb-mobile-settings-sheet-all-settings"
-            onClick={() => {
-              close();
-              ui.sidebarDrawer.value = true;
-              ui.settingsView.value = "main";
-            }}
-          >
-            <span
-              className="material-symbols-outlined sb-mobile-settings-icon"
-              aria-hidden="true"
-            >
-              settings
-            </span>
-            <span>
-              {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
-            </span>
-            <span
-              className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror"
-              aria-hidden="true"
-            >
-              chevron_right
-            </span>
-          </button>
+          {/* An embed has no settings beyond these (the old reader's embed sheet). */}
+          {!ui.embed.value && (
+            <>
+              <div className="sb-mobile-settings-sheet-divider" />
+              <button
+                type="button"
+                className="sb-mobile-settings-sheet-all-settings"
+                onClick={() => {
+                  close();
+                  ui.sidebarDrawer.value = true;
+                  ui.settingsView.value = "main";
+                }}
+              >
+                <span
+                  className="material-symbols-outlined sb-mobile-settings-icon"
+                  aria-hidden="true"
+                >
+                  settings
+                </span>
+                <span>
+                  {t("go-to-all-settings", {
+                    defaultValue: "Go to all settings",
+                  })}
+                </span>
+                <span
+                  className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror"
+                  aria-hidden="true"
+                >
+                  chevron_right
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>

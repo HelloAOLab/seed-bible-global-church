@@ -268,6 +268,45 @@ export function BibleReader({
     footnote &&
     chapter?.chapter.footnotes.find((f) => f.noteId === footnote.noteId);
 
+  // An embed's header, as the old reader's: the chapter opened in Seed Bible itself, and the Theme & text sheet.
+  const embed = ui.embed.value;
+  const embedActions = (
+    <>
+      <button
+        type="button"
+        className="sb-bible-reader-action-button sb-bible-reader-open-tab"
+        aria-label={t("open-in-new-tab", { defaultValue: "Open in New Tab" })}
+        title={t("open-in-new-tab", { defaultValue: "Open in New Tab" })}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          window.open(
+            `${location.origin}${routeOf({
+              translationId: reading.translationId.value,
+              bookId: reading.bookId.value,
+              chapterNumber: reading.chapterNumber.value,
+            })}`,
+            "_blank",
+            "noopener,noreferrer"
+          );
+        }}
+      >
+        <span className="material-symbols-outlined">open_in_new</span>
+      </button>
+      <button
+        type="button"
+        className="sb-bible-reader-action-button sb-bible-reader-mobile-header-settings"
+        aria-label={t("text-settings", { defaultValue: "Text settings" })}
+        title={t("text-settings", { defaultValue: "Text settings" })}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          ui.textSheet.value = true;
+        }}
+      >
+        <span className="material-symbols-outlined">tune</span>
+      </button>
+    </>
+  );
+
   // The chapter's own actions, the same on the desktop header and the phone's.
   const saveButtons = (
     <>
@@ -366,21 +405,29 @@ export function BibleReader({
             </h1>
           </div>
           <div className="sb-bible-reader-mobile-header-actions">
-            {saveButtons}
-            {shareButton}
-            {inSession && <SessionPeopleStack state={state} />}
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-settings"
-              aria-label={t("text-settings", { defaultValue: "Text settings" })}
-              title={t("text-settings", { defaultValue: "Text settings" })}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.textSheet.value = true;
-              }}
-            >
-              <span className="material-symbols-outlined">tune</span>
-            </button>
+            {embed ? (
+              embedActions
+            ) : (
+              <>
+                {saveButtons}
+                {shareButton}
+                {inSession && <SessionPeopleStack state={state} />}
+                <button
+                  type="button"
+                  className="sb-bible-reader-mobile-header-settings"
+                  aria-label={t("text-settings", {
+                    defaultValue: "Text settings",
+                  })}
+                  title={t("text-settings", { defaultValue: "Text settings" })}
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    ui.textSheet.value = true;
+                  }}
+                >
+                  <span className="material-symbols-outlined">tune</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
         <div className="sb-bible-reader-header">
@@ -425,7 +472,8 @@ export function BibleReader({
             />
           </div>
           <div className="sb-bible-reader-actions">
-            {reading.fromDevice.value && (
+            {embed ? embedActions : null}
+            {!embed && reading.fromDevice.value && (
               <span
                 className="sb-reader-from-device"
                 title={t("read-from-device", {
@@ -436,23 +484,25 @@ export function BibleReader({
               </span>
             )}
             {/* The old reader's chapter actions, in its order. */}
-            {saveButtons}
-            <button
-              type="button"
-              className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
-              aria-label={t("discover", { defaultValue: "Discover" })}
-              title={t("discover", { defaultValue: "Discover" })}
-              aria-pressed={ui.pane.value === "discover"}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.pane.value =
-                  ui.pane.value === "discover" ? "none" : "discover";
-              }}
-            >
-              <span className="material-symbols-outlined">explore</span>
-            </button>
-            {shareButton}
-            {active && canPlay && (
+            {!embed && saveButtons}
+            {!embed && (
+              <button
+                type="button"
+                className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
+                aria-label={t("discover", { defaultValue: "Discover" })}
+                title={t("discover", { defaultValue: "Discover" })}
+                aria-pressed={ui.pane.value === "discover"}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  ui.pane.value =
+                    ui.pane.value === "discover" ? "none" : "discover";
+                }}
+              >
+                <span className="material-symbols-outlined">explore</span>
+              </button>
+            )}
+            {!embed && shareButton}
+            {!embed && active && canPlay && (
               <button
                 type="button"
                 className="sb-bible-reader-play-button"
