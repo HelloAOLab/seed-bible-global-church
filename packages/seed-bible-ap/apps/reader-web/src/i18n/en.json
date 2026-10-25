@@ -1003,5 +1003,8 @@
   "friend-request-already-sent": "You've already sent them a request.",
   "friend-request-self": "That's your own account.",
   "person-profile-empty": "This person hasn't set up their profile yet.",
-  "view-profile-of": "View {{name}}'s profile"
+  "view-profile-of": "View {{name}}'s profile",
+  "add-friend-button": "Add friend",
+  "add-friend-user": "Add {{name}} as a friend",
+  "friend-status-requested": "Requested"
 }

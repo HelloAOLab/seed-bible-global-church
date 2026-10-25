@@ -7254,4 +7254,47 @@ export const MORE_FLOWS: Flow[] = [
       return `'${name}' opened Profile showing '${said.slice(0, 60)}'; Close shut it`;
     },
   },
+  {
+    id: "SF1",
+    section: "8. Today, Discover and publishing",
+    title: "Add a friend from a session's roster",
+    rows: ["Friends pane"],
+    checks:
+      "Seed Reader hosts a session and another sample person joins signed in: in the host's Here list that person carries where they stand — Friends, Requested, Accept or Add friend — and the host's own row carries none",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample(/seed ?reader/i);
+      const { code, sid } = await startSession(c);
+      const other = await c.secondPage();
+      await c.open(CH, other);
+      const them = await c.signInAsSample(/^(?!.*seed ?reader)/i, other);
+      await c.open(`${CH}?session=${sid}&code=${code}`, other);
+      const first = them.split(/\s+/)[0]!;
+      const row = c
+        .pane()
+        .locator(".sb-friends-row", { hasText: new RegExp(first, "i") })
+        .first();
+      await row.waitFor({ timeout: 30000 });
+      const mark = row.locator(
+        ".sb-participant-friend-status, .sb-session-participant-action"
+      );
+      await mark.first().waitFor({ timeout: 10000 });
+      const said = (await mark.first().innerText()).trim();
+      if (!/^(friends|requested|accept|add friend)$/i.test(said))
+        throw new Error(`'${them}' carries '${said}'`);
+      const mine = c
+        .pane()
+        .locator(".sb-friends-row", { hasText: /\(you\)/i })
+        .first();
+      if (
+        await mine
+          .locator(
+            ".sb-participant-friend-status, .sb-session-participant-action"
+          )
+          .count()
+      )
+        throw new Error("the host's own row carries a friend mark");
+      return `'${them}' joined and shows '${said}' in the host's list; the host's own row shows none (code ${code})`;
+    },
+  },
 ];

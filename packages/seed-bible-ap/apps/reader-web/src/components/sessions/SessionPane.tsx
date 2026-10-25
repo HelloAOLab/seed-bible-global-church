@@ -6,6 +6,52 @@ import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { requestEndSession } from "./SessionSettings";
+import { standingOf } from "../../state/social/friendship";
+
+/**
+ * The old reader's Add friend on a session participant: where you stand with them (Friends, Requested), their
+ * request to accept, or one to send. Nothing for yourself, for guests (no account), or while you're a guest.
+ */
+function ParticipantFriend(props: {
+  state: ReaderState;
+  agent: string;
+  name: string;
+}) {
+  const { state, agent, name } = props;
+  const { t } = useI18n();
+  const standing = standingOf(state.today.friendsView.value, agent);
+  if (standing === "friend" || standing === "you-asked")
+    return (
+      <span className="sb-participant-friend-status">
+        {standing === "friend"
+          ? t("friends", { defaultValue: "Friends" })
+          : t("friend-status-requested", { defaultValue: "Requested" })}
+      </span>
+    );
+  const asked = standing === "asked-you";
+  return (
+    <button
+      type="button"
+      className="sb-session-participant-action"
+      aria-label={
+        asked
+          ? t("accept-friend-user", {
+              name,
+              defaultValue: "Accept {{name}}'s friend request",
+            })
+          : t("add-friend-user", {
+              name,
+              defaultValue: "Add {{name}} as a friend",
+            })
+      }
+      onClick={() => state.friendship.add(agent, name)}
+    >
+      {asked
+        ? t("accept", { defaultValue: "Accept" })
+        : t("add-friend-button", { defaultValue: "Add friend" })}
+    </button>
+  );
+}
 
 export function SessionPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -378,6 +424,16 @@ export function SessionPane({ state }: { state: ReaderState }) {
                         : ""}
                     </span>
                   </span>
+                  {signedIn &&
+                    !live.guest.value &&
+                    !p.guest &&
+                    p.agent !== live.me.value && (
+                      <ParticipantFriend
+                        state={state}
+                        agent={p.agent}
+                        name={p.name}
+                      />
+                    )}
                   {live.isHost.value && p.agent !== live.me.value && (
                     <select
                       className="sb-session-role-select"

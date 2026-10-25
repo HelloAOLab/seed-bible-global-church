@@ -1,24 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:33 UTC",
+  "when": "2026-10-25 14:37 UTC",
   "results": [
     {
-      "id": "FA1",
+      "id": "SF1",
       "section": "8. Today, Discover and publishing",
-      "title": "Add a friend answers at once",
-      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
+      "title": "Add a friend from a session's roster",
+      "checks": "Seed Reader hosts a session and another sample person joins signed in: in the host's Here list that person carries where they stand — Friends, Requested, Accept or Add friend — and the host's own row carries none",
       "mark": "✅",
-      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
-      "ms": 38677
-    },
-    {
-      "id": "PC1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Tap a friend: their profile",
-      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
-      "mark": "✅",
-      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
-      "ms": 34932
+      "note": "'Alice Okoro' joined and shows 'Add friend' in the host's list; the host's own row shows none (code H8U8JG)",
+      "ms": 80298
     }
   ]
 }
