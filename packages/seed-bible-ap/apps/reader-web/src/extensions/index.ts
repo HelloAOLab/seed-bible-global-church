@@ -10,6 +10,7 @@ import twitch from "./twitch";
 import transcript from "./transcript";
 import defaultContent from "./defaultContent";
 import theographic from "./theographic";
+import interpretations from "./interpretations";
 
 export function registerBuiltInExtensions(host: ExtensionHost) {
   for (const ext of [
@@ -21,6 +22,7 @@ export function registerBuiltInExtensions(host: ExtensionHost) {
     transcript,
     defaultContent,
     theographic,
+    interpretations,
   ])
     host.register(ext);
 }

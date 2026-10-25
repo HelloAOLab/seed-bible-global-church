@@ -1027,5 +1027,7 @@
   "friends-find-you-as": "Friends can find you as",
   "friend-remove-confirm-window": "A small window opened. Tap “Yes, remove them” there to remove {{name}}. It closes by itself.",
   "create-a-note": "Create a note",
-  "discover-no-notes": "You don't have any notes for this chapter."
+  "discover-no-notes": "You don't have any notes for this chapter.",
+  "interpretations-intro": "Where this translation had to decide how to read a verse, the record says which questions it faced, what it chose or kept open, the alternatives, and the writings behind each. Documented interpretations within a declared corpus — never all possible ones, never a score.",
+  "writings-intro": "Not only related Scripture: the writings of the book's own period, the copies that carry it, what was written about it later, and the commentary on its verses — each dated, each saying how it relates. Listed because a record names the passage; never all that exist."
 }

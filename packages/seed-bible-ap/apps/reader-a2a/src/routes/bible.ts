@@ -144,6 +144,40 @@ export function skillForPath(
       maxAge: 300,
     };
   }
+  // THE INTERPRETATION RECORDS AND THE WRITINGS AROUND A CHAPTER (2026-10-25): the Scripture Agent's `chapter-interpretations`,
+  // `interpretation-index` and `passage-writings` skills, asked the same way as a chapter. The translation id is the agent's edition id
+  // for RBS ('rbs'); a translation the agent holds no records for answers an empty list / writings: null, not an error. Writings are about
+  // the CHAPTER (no translation in the path); `?verse=` narrows them to what names that verse.
+  m = /^([A-Za-z0-9_-]+)\/interpretations\.json$/.exec(p);
+  if (m)
+    return {
+      skill: "interpretation-index",
+      args: { edition: m[1] },
+      maxAge: 300,
+    };
+  m =
+    /^([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)\/(\d{1,3})\/interpretations\.json$/.exec(
+      p
+    );
+  if (m)
+    return {
+      skill: "chapter-interpretations",
+      args: { edition: m[1], book: m[2], chapter: Number(m[3]) },
+      maxAge: 300,
+    };
+  m = /^writings\/([A-Za-z0-9_-]+)\/(\d{1,3})\.json$/.exec(p);
+  if (m) {
+    const verse = query.get("verse");
+    return {
+      skill: "passage-writings",
+      args: {
+        book: m[1],
+        chapter: Number(m[2]),
+        ...(verse && /^\d{1,3}$/.test(verse) ? { verse: Number(verse) } : {}),
+      },
+      maxAge: 3600,
+    };
+  }
   m = /^([A-Za-z0-9_-]+)\/(books|verification)\.json$/.exec(p);
   if (m)
     return {
@@ -183,7 +217,7 @@ export function skillForPath(
 
 /** Part of every edge-cache key: change it when the scripture agent's answers change shape or scope, so the edge
  * stops serving what was cached before (the Cache API cannot be purged from outside the worker). */
-const CACHE_EPOCH = "5";
+const CACHE_EPOCH = "6";
 const OWN_CACHE_CONTROL = "x-own-cache-control";
 
 async function edgeCached(

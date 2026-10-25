@@ -38,6 +38,41 @@ describe("which skill a path asks for", () => {
       skill: "audio-timings",
       args: { reader: "david", chapter: 3 },
     });
+  });
+  it("maps the interpretation records and the writings around a chapter (2026-10-25)", () => {
+    expect(
+      skillForPath("/bible/api/rbs/interpretations.json", q)
+    ).toMatchObject({
+      skill: "interpretation-index",
+      args: { edition: "rbs" },
+    });
+    expect(
+      skillForPath("/bible/api/rbs/GEN/1/interpretations.json", q)
+    ).toMatchObject({
+      skill: "chapter-interpretations",
+      args: { edition: "rbs", book: "GEN", chapter: 1 },
+    });
+    // the chapter route must still win for a plain chapter
+    expect(skillForPath("/bible/api/rbs/GEN/1.json", q)).toMatchObject({
+      skill: "read-chapter",
+    });
+    expect(skillForPath("/bible/api/writings/GEN/6.json", q)).toMatchObject({
+      skill: "passage-writings",
+      args: { book: "GEN", chapter: 6 },
+    });
+    const withVerse = skillForPath(
+      "/bible/api/writings/GEN/6.json",
+      new URLSearchParams("verse=2")
+    );
+    expect(withVerse).toMatchObject({
+      args: { book: "GEN", chapter: 6, verse: 2 },
+    });
+    expect(
+      skillForPath(
+        "/bible/api/writings/GEN/6.json",
+        new URLSearchParams("verse=x")
+      )?.args
+    ).not.toHaveProperty("verse");
     expect(
       skillForPath("/bible/api/d/theographic/people/nicodemus_2204.json", q)
     ).toMatchObject({
