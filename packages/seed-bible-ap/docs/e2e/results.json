@@ -1,33 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:29 UTC",
+  "when": "2026-10-25 10:32 UTC",
   "results": [
     {
-      "id": "TL1",
-      "section": "3. Reading",
-      "title": "The translation window, grouped by language",
-      "checks": "The translation code opens the old reader's window (Esc on its download tip closes only the tip): English first and open with BSB ticked; the filter offers Complete / All / Popular translations and Popular keeps only the popular languages; searching 'Español' shows the Spanish section; ⓘ on a row shows its licence; share copies the translation's link; a download can be cancelled part way and its button comes back; Esc closes",
+      "id": "PL2",
+      "section": "10. Playlists and reading plans",
+      "title": "A playlist as the old reader has it",
+      "checks": "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, the bar shows Stop · Previous · the item · Next, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
       "mark": "✅",
-      "note": "grouped by language with English first; filter, search, licence, share and a cancelled download all worked",
-      "ms": 7635
+      "note": "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside; the bar showed Stop, Previous, the item and Next) → 2 of 2 → finished, deleted after the check",
+      "ms": 7370
     },
     {
-      "id": "G5",
-      "section": "3. Reading",
-      "title": "Download a whole translation for offline",
-      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
+      "id": "RP1",
+      "section": "10. Playlists and reading plans",
+      "title": "A reading plan as the old reader shows it",
+      "checks": "A plan of John 1–3 started Daily shows '3 days · started …', 'Next: Day 1 · John 1', and open, 'ends …', '~N min/day' and Day 1–3 tabs; Read plays Day 1 in the reader and at its end asks 'Nice reading! Mark Day 1 complete?' → Mark as complete ticks Day 1; Day 2's Mark complete waits for its reading, then says 'Day 2 complete!'; Delete asks 'Delete reading plan?'",
       "mark": "✅",
-      "note": "BSB downloaded; offline, Obadiah 1 reads (\"1This is the vision of Obadiah:\n\nThis is\")",
-      "ms": 2664
+      "note": "summary, Read with the Nice reading prompt, Day 2 complete!, deleted after the check",
+      "ms": 4362
     },
     {
-      "id": "ER1",
+      "id": "TB1",
       "section": "3. Reading",
-      "title": "When a chapter can't be shown",
-      "checks": "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it and a card offers 'Save BSB for offline reading?' (Not now closes it). /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+      "title": "The old reader's bottom bar; every action within reach",
+      "checks": "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
       "mark": "✅",
-      "note": "Chapter unavailable with Reload and Choose a translation, Reload brought John 4 and the save-for-offline card; Tobit: Book not found, Go to Genesis 1 went there",
-      "ms": 5749
+      "note": "desktop bar: Books · Search · Discover · Places map · Study companion · More; under More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes; Books and Search open; on a phone all 9 actions reachable",
+      "ms": 1262
+    },
+    {
+      "id": "H1",
+      "section": "3. Reading",
+      "title": "The chapter header's actions",
+      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "mark": "✅",
+      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
+      "ms": 906
     }
   ]
 }

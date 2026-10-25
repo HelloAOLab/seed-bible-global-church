@@ -2652,7 +2652,7 @@ export const MORE_FLOWS: Flow[] = [
       "Play a playlist",
     ],
     checks:
-      "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
+      "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, the bar shows Stop · Previous · the item · Next, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
     run: async (c) => {
       let step = "";
       try {
@@ -2707,6 +2707,16 @@ export const MORE_FLOWS: Flow[] = [
           throw new Error(
             "Save and Bookmark still show while the playlist plays"
           );
+        const bar = c.page.locator(".sb-reader-toolbar-desk");
+        await bar
+          .getByRole("button", { name: "Stop" })
+          .waitFor({ timeout: 3000 });
+        if (!(await bar.getByRole("button", { name: "Previous" }).isDisabled()))
+          throw new Error("Previous is not disabled on the first item");
+        const playingLabel = (
+          await bar.locator(".sb-reader-toolbar-playing-label").innerText()
+        ).trim();
+        if (!playingLabel) throw new Error("the bar does not name the item");
         await note.getByRole("button", { name: /hide note/i }).click();
         await c.page.getByRole("button", { name: /show note/i }).click();
         await note.getByRole("button", { name: /next/i }).click();
@@ -2733,7 +2743,7 @@ export const MORE_FLOWS: Flow[] = [
       } catch (e) {
         throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
       }
-      return "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside) → 2 of 2 → finished, deleted after the check";
+      return "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside; the bar showed Stop, Previous, the item and Next) → 2 of 2 → finished, deleted after the check";
     },
   },
   {

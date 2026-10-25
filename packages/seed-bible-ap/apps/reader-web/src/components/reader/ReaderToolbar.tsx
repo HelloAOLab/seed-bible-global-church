@@ -16,6 +16,7 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { AudioScrubber } from "./AudioScrubber";
 import { Avatar } from "../chrome/ConnectedChip";
+import { itemTitle } from "../library/PlaylistNote";
 import { SeedBibleIcon } from "../chrome/icons";
 import type { ComponentChildren } from "preact";
 import { chatBadge } from "../sessions/ChatPanel";
@@ -195,6 +196,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const notes = state.annotations.forChapter(reading.chapterRef.value).value
     .length;
   const pending = state.outbox.pending.value;
+  const playingList = state.playlists.current.value;
   const dark = settings.resolvedTheme().id === "dark";
   const togglePane = (
     p:
@@ -349,13 +351,38 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           <span className="sb-reader-toolbar-divider" aria-hidden="true" />
         </>
       )}
-      <Item
-        icon="chevron_left"
-        className="sb-reader-toolbar-item-arrow"
-        label={t("previous-chapter", { defaultValue: "Previous Chapter" })}
-        disabled={!reading.hasPrev.value}
-        onClick={() => void reading.prev()}
-      />
+      {/* While a playlist plays the arrows step through it, with Stop first (the old reader's playlist mode). */}
+      {playingList ? (
+        <>
+          <Item
+            icon="stop"
+            className="sb-reader-toolbar-item-arrow sb-reader-toolbar-stop-playing"
+            label={t("stop", { defaultValue: "Stop" })}
+            onClick={() => state.playlists.stop()}
+          />
+          <Item
+            icon="skip_previous"
+            className="sb-reader-toolbar-item-arrow"
+            label={t("previous", { defaultValue: "Previous" })}
+            disabled={playingList.index === 0}
+            onClick={() => state.playlists.prev()}
+          />
+          <span
+            className="sb-reader-toolbar-playing-label"
+            title={playingList.playlist.label}
+          >
+            {itemTitle(state, playingList.item)}
+          </span>
+        </>
+      ) : (
+        <Item
+          icon="chevron_left"
+          className="sb-reader-toolbar-item-arrow"
+          label={t("previous-chapter", { defaultValue: "Previous Chapter" })}
+          disabled={!reading.hasPrev.value}
+          onClick={() => void reading.prev()}
+        />
+      )}
       <span
         className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only"
         aria-hidden="true"
@@ -364,13 +391,22 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         className="sb-reader-toolbar-divider sb-reader-toolbar-desk-only sb-reader-toolbar-desk-end"
         aria-hidden="true"
       />
-      <Item
-        icon="chevron_right"
-        className="sb-reader-toolbar-item-arrow sb-reader-toolbar-next"
-        label={t("next-chapter", { defaultValue: "Next Chapter" })}
-        disabled={!reading.hasNext.value}
-        onClick={() => void reading.next()}
-      />
+      {playingList ? (
+        <Item
+          icon="skip_next"
+          className="sb-reader-toolbar-item-arrow sb-reader-toolbar-next"
+          label={t("next", { defaultValue: "Next" })}
+          onClick={() => state.playlists.next()}
+        />
+      ) : (
+        <Item
+          icon="chevron_right"
+          className="sb-reader-toolbar-item-arrow sb-reader-toolbar-next"
+          label={t("next-chapter", { defaultValue: "Next Chapter" })}
+          disabled={!reading.hasNext.value}
+          onClick={() => void reading.next()}
+        />
+      )}
       <Item
         icon="books"
         render={() => <SeedBibleIcon size={24} />}

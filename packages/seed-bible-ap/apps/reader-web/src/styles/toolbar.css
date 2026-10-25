@@ -1725,3 +1725,14 @@
   position: relative;
   display: flex;
 }
+
+/* The playing item's name between Previous and Next while a playlist plays. */
+.sb-reader-toolbar-playing-label {
+  align-self: center;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  padding-inline: 0.5rem;
+}

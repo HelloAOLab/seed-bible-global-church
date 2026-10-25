@@ -10,7 +10,7 @@ import { spanOf } from "../../state/records/marks";
 import type { PlaylistItem } from "@seed/seed-schema";
 import { sharedLinkOf } from "../../state/social/sharedPage";
 
-function title(state: ReaderState, it: PlaylistItem): string {
+export function itemTitle(state: ReaderState, it: PlaylistItem): string {
   if (it["@type"] === "seed:ScriptureItem") {
     const { chapter, start, end } = spanOf(it.aboutPassage);
     const [book, ch] = chapter.split(".");
@@ -51,7 +51,7 @@ export function PlaylistNote({ state }: { state: ReaderState }) {
       </button>
     );
 
-  const label = title(state, it);
+  const label = itemTitle(state, it);
   return (
     <div className="sb-scripture-note-layer sb-playlist-note-layer">
       <div
