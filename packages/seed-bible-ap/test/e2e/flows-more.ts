@@ -6007,4 +6007,56 @@ export const MORE_FLOWS: Flow[] = [
       return `the drag chose ${chosen.join(", ")} and the verse toolbar came up`;
     },
   },
+  {
+    id: "ER1",
+    section: "3. Reading",
+    title: "When a chapter can't be shown",
+    rows: ["Offline reading"],
+    checks:
+      "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it. /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        serviceWorkers: "block",
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      try {
+        // Live, the first chapter comes with the page and the next through the scripture agent: block both lanes,
+        // then turn to John 4 from John 3.
+        await c.open(CH, page);
+        await c.settleTours(page);
+        await c.verse(1, page).waitFor({ timeout: 20000 });
+        const block = (r: import("playwright").Route) => r.abort();
+        await page.route("**/JHN/4.json*", block);
+        await page.route("**/harness/ask", block);
+        await page.keyboard.press("ArrowRight");
+        const err = page.locator(".sb-bible-reader-active .sb-reader-error");
+        await c.waitText(
+          err,
+          /chapter unavailable[\s\S]*unable to load the data for this chapter/i,
+          20000
+        );
+        const buttons = await err.locator("button").allInnerTexts();
+        if (buttons.join() !== "Reload,Choose a translation")
+          throw new Error(`buttons: ${buttons.join(", ")}`);
+        await page.unroute("**/JHN/4.json*");
+        await page.unroute("**/harness/ask");
+        await err.getByRole("button", { name: "Reload" }).click();
+        await c.verse(1, page).waitFor({ timeout: 20000 });
+        await c.open("/read/BSB/TOB/1", page);
+        const nf = page.locator(".sb-bible-reader-active .sb-reader-not-found");
+        await c.waitText(
+          nf,
+          /book not found[\s\S]*couldn't find that book in Berean Standard Bible/i,
+          20000
+        );
+        await nf.getByRole("button", { name: "Go to Genesis 1" }).click();
+        await page.waitForURL(/\/read\/BSB\/GEN\/1/, { timeout: 8000 });
+        return "Chapter unavailable with Reload and Choose a translation, Reload brought John 4; Tobit: Book not found, Go to Genesis 1 went there";
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
 ];

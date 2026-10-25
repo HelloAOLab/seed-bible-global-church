@@ -226,8 +226,21 @@ export function createOfflineTranslations(deps: OfflineDeps) {
     return !!(e?.sha256 && tr.sha256 && e.sha256 !== tr.sha256);
   };
 
+  /** The saved translations (other than `except`) that hold this chapter on the device. */
+  async function holding(book: string, chapter: number, except: string) {
+    const out: OfflineEntry[] = [];
+    for (const d of downloaded.value)
+      if (
+        d.id !== except &&
+        (await deps.chapters.get(chapterKey(d.id, book, chapter)))
+      )
+        out.push(d);
+    return out;
+  }
+
   return {
     downloaded,
+    holding,
     progress,
     error,
     errors,

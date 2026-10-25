@@ -180,7 +180,6 @@
   "start-plan": "Start",
   "restart-plan": "Restart",
   "delete-reading-plan": "Delete",
-  "retry": "Retry",
   "read-from-device": "Read from this device",
   "live-session": "Live session",
   "listen": "Listen",
@@ -931,5 +930,17 @@
   "switch-language-confirm": "Switch",
   "switch-language-dismiss": "Don't Switch",
   "switch-language-never": "Never Ask Again",
-  "switch-language-title": "Switch language?"
+  "switch-language-title": "Switch language?",
+  "book-not-found-action": "Go to {{bookName}} {{chapterNumber}}",
+  "book-not-found-message": "We couldn't find that book in {{translationName}}.",
+  "book-not-found-title": "Book not found",
+  "chapter-unavailable-description": "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+  "chapter-unavailable-download-offline-hint": "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+  "chapter-unavailable-offline-switch-action": "Switch to {{name}}",
+  "chapter-unavailable-offline-switch-choose": "Choose a saved translation",
+  "chapter-unavailable-offline-switch-confirm": "Switch",
+  "reload": "Reload",
+  "chapter-unavailable-offline-switch_one": "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+  "chapter-unavailable-offline-switch_other": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+  "chapter-unavailable-offline-switch": "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}."
 }

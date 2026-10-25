@@ -1,42 +1,15 @@
 {
-  "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:48 UTC",
+  "base": "http://localhost:5207",
+  "when": "2026-10-25 09:52 UTC",
   "results": [
     {
-      "id": "R4",
+      "id": "ER1",
       "section": "3. Reading",
-      "title": "Change translation",
-      "checks": "Tap the translation code, choose another (search 'World English'), the header shows the new code",
+      "title": "When a chapter can't be shown",
+      "checks": "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it. /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
       "mark": "✅",
-      "note": "switched to World English Bible (WEB) download",
-      "ms": 736
-    },
-    {
-      "id": "M2",
-      "section": "4. Marking the text",
-      "title": "Write, edit and delete a note",
-      "checks": "Select 3:16 → Note → type → Save → it is listed under John 3:16; its ⋮ → Edit changes it; ⋮ → Delete asks 'Delete annotation?' and removes it",
-      "mark": "✅",
-      "note": "created, edited, deleted; the pane counts 0 notes",
-      "ms": 1291
-    },
-    {
-      "id": "VS1",
-      "section": "4. Marking the text",
-      "title": "The phone's verse sheet",
-      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
-      "mark": "✅",
-      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
-      "ms": 3232
-    },
-    {
-      "id": "DS2",
-      "section": "4. Marking the text",
-      "title": "Drag over the text to choose verses",
-      "checks": "On John 3, dragging the mouse from the words of verse 3 to the words of verse 5 chooses 3, 4 and 5 and brings up the verse toolbar; the click that ends the drag does not undo it",
-      "mark": "✅",
-      "note": "the drag chose 3, 4, 5 and the verse toolbar came up",
-      "ms": 1687
+      "note": "Chapter unavailable with Reload and Choose a translation, Reload brought John 4; Tobit: Book not found, Go to Genesis 1 went there",
+      "ms": 5595
     }
   ]
 }

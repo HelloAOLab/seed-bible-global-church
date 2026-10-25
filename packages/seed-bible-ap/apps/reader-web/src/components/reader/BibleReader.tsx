@@ -106,6 +106,31 @@ export function BibleReader({
   // `/read/WEB/…` once WEB became ENGWEBP — can never load, so Retry alone would be a dead end.)
   const failed = !!reading.error.value && !chapter;
   const [served, setServed] = useState<boolean | null>(null);
+  // Saved translations that hold this chapter, offered when it fails (the old reader's OfflineFallbackSwitch).
+  const [savedHere, setSavedHere] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [savedPick, setSavedPick] = useState("");
+  useEffect(() => {
+    if (!failed) return setSavedHere([]);
+    let live = true;
+    void state.offline
+      .holding(
+        reading.bookId.value,
+        reading.chapterNumber.value,
+        reading.translationId.value
+      )
+      .then((list) => {
+        if (!live) return;
+        setSavedHere(list);
+        setSavedPick(list[0]?.id ?? "");
+      });
+    return () => {
+      live = false;
+    };
+  }, [failed, reading.bookId.value, reading.chapterNumber.value]);
+  const switchTo = (id: string) =>
+    void reading.goTo(id, reading.bookId.value, reading.chapterNumber.value);
   useEffect(() => {
     if (!failed) return setServed(null);
     let live = true;
@@ -149,7 +174,55 @@ export function BibleReader({
   };
 
   const body = () => {
+    // A book this translation does not have (a link from another Bible): the old reader's "Book not found".
+    const books = reading.books.value;
+    if (
+      reading.error.value &&
+      !chapter &&
+      books.length &&
+      !books.some((b) => b.id === reading.bookId.value)
+    ) {
+      const first = books[0]!;
+      return (
+        <div className="sb-reader-not-found" role="alert">
+          <span
+            className="material-symbols-outlined sb-reader-not-found-icon"
+            aria-hidden="true"
+          >
+            search_off
+          </span>
+          <p className="sb-reader-not-found-title">
+            {t("book-not-found-title", { defaultValue: "Book not found" })}
+          </p>
+          <p className="sb-reader-not-found-body">
+            {t("book-not-found-message", {
+              defaultValue:
+                "We couldn't find that book in {{translationName}}.",
+              translationName:
+                reading.translation.value?.name ?? translationLabel,
+            })}
+          </p>
+          <button
+            type="button"
+            className="sb-reader-not-found-action"
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void reading.goTo(reading.translationId.value, first.id, 1);
+            }}
+          >
+            {t("book-not-found-action", {
+              defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+              bookName: first.name,
+              chapterNumber: 1,
+            })}
+          </button>
+        </div>
+      );
+    }
     if (reading.error.value && !chapter) {
+      const offlineNow =
+        typeof navigator !== "undefined" && navigator.onLine === false;
+      const notSaved = !state.offline.has(reading.translationId.value);
       return (
         <div className="sb-reader-error" role="alert">
           <span className="material-symbols-outlined sb-reader-error-icon">
@@ -164,15 +237,32 @@ export function BibleReader({
                   defaultValue: "Chapter unavailable",
                 })}
           </h3>
-          <p className="sb-reader-error-message">
+          <p
+            className="sb-reader-error-message"
+            title={reading.error.value ?? undefined}
+          >
             {served === false
               ? t("translation-not-served-body", {
                   id: reading.translationId.value,
                   defaultValue:
                     "{{id}} is not among the Bibles this reader serves. Read this chapter in another translation.",
                 })
-              : reading.error.value}
+              : t("chapter-unavailable-description", {
+                  defaultValue:
+                    "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+                })}
           </p>
+          {savedHere.length > 0 && (
+            <p className="sb-reader-error-offline">
+              {t("chapter-unavailable-offline-switch", {
+                count: savedHere.length,
+                bookName: reading.bookName.value,
+                chapterNumber: reading.chapterNumber.value,
+                defaultValue:
+                  "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
+              })}
+            </p>
+          )}
           <div className="sb-reader-error-actions">
             {served === false ? (
               <button
@@ -195,21 +285,76 @@ export function BibleReader({
                 className="sb-reader-error-retry"
                 onClick={() => void reading.retry()}
               >
-                {t("retry", { defaultValue: "Retry" })}
+                {t("reload", { defaultValue: "Reload" })}
               </button>
             )}
-            <button
-              className="sb-reader-error-switch"
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.selector.value = "translations";
-              }}
-            >
-              {t("choose-translation", {
-                defaultValue: "Choose a translation",
-              })}
-            </button>
+            {savedHere.length === 1 ? (
+              <button
+                type="button"
+                className="sb-reader-error-switch"
+                onClick={() => switchTo(savedHere[0]!.id)}
+              >
+                {t("chapter-unavailable-offline-switch-action", {
+                  defaultValue: "Switch to {{name}}",
+                  name: savedHere[0]!.name,
+                })}
+              </button>
+            ) : savedHere.length > 1 ? (
+              <div className="sb-reader-error-offline-pick">
+                <label
+                  className="sb-reader-error-offline-label"
+                  htmlFor="sb-reader-error-offline-select"
+                >
+                  {t("chapter-unavailable-offline-switch-choose", {
+                    defaultValue: "Choose a saved translation",
+                  })}
+                </label>
+                <select
+                  id="sb-reader-error-offline-select"
+                  value={savedPick}
+                  onChange={(e) =>
+                    setSavedPick((e.target as HTMLSelectElement).value)
+                  }
+                >
+                  {savedHere.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="sb-reader-error-switch"
+                  onClick={() => switchTo(savedPick || savedHere[0]!.id)}
+                >
+                  {t("chapter-unavailable-offline-switch-confirm", {
+                    defaultValue: "Switch",
+                  })}
+                </button>
+              </div>
+            ) : (
+              <button
+                className="sb-reader-error-switch"
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  ui.selector.value = "translations";
+                }}
+              >
+                {t("choose-translation", {
+                  defaultValue: "Choose a translation",
+                })}
+              </button>
+            )}
           </div>
+          {offlineNow && notSaved && served !== false && (
+            <p className="sb-reader-error-hint">
+              {t("chapter-unavailable-download-offline-hint", {
+                abbreviation: translationLabel,
+                defaultValue:
+                  "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+              })}
+            </p>
+          )}
         </div>
       );
     }
