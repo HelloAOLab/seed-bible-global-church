@@ -60,7 +60,7 @@ export function ShareDialog({ state }: { state: ReaderState }) {
     }
   };
   const nav = navigator as Navigator & {
-    share?: (d: { title: string; url: string }) => Promise<void>;
+    share?: (d: { title: string; url: string; text?: string }) => Promise<void>;
   };
   const live = state.live;
   const signedIn = !!state.session.value;
@@ -99,9 +99,11 @@ export function ShareDialog({ state }: { state: ReaderState }) {
               defaultValue: "Use your device share sheet",
             }),
             onClick: () => {
-              void nav.share!({ title: share.title, url: share.url }).catch(
-                () => undefined
-              );
+              void nav.share!({
+                title: share.title,
+                url: share.url,
+                ...(share.text ? { text: share.text } : {}),
+              }).catch(() => undefined);
               close();
             },
           },

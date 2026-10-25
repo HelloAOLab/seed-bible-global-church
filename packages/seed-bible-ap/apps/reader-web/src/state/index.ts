@@ -421,19 +421,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   const selection = {
     verses,
+    /** A tap adds or drops that one verse, gaps allowed (the old reader's); Shift extends a run to it. */
     toggle(verse: number, extend = false) {
       const cur = verses.value;
       if (extend && cur.length) {
         const lo = Math.min(...cur, verse);
         const hi = Math.max(...cur, verse);
         verses.value = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
-      } else if (cur.length === 1 && cur[0] === verse) verses.value = [];
-      else if (
-        cur.length &&
-        (verse === Math.max(...cur) + 1 || verse === Math.min(...cur) - 1)
-      )
-        verses.value = [...cur, verse].sort((a, b) => a - b);
-      else verses.value = [verse];
+      } else if (cur.includes(verse))
+        verses.value = cur.filter((v) => v !== verse);
+      else verses.value = [...cur, verse].sort((a, b) => a - b);
     },
     select(start: number, end: number) {
       verses.value = Array.from(
@@ -521,7 +518,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** Compact embed chrome (`?embed=minimal`): the reader alone, no sidebar or toolbars. */
     embed: signal(false),
     /** What the Share dialog is sharing (components/chrome/ShareDialog.tsx); null when closed. */
-    share: signal<{ title: string; url: string } | null>(null),
+    /** The Share window: what it shares, and the words to send with the link (Share via…) when it is verses. */
+    share: signal<{ title: string; url: string; text?: string } | null>(null),
     /** The verse toolbar opened as a menu at the pointer (a right-click on a verse); null when docked. */
     verseMenuAt: signal<{ x: number; y: number } | null>(null),
     /** The shared page open over the reader (`/shared/<shelf>/<kind>/<slug>`); null when none. */

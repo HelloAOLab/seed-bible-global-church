@@ -13,6 +13,8 @@ import { shareUrl } from "../../state/reading/route";
 import { getVersePlainText } from "./chapterContent";
 import { MAX_CUSTOM_COLORS } from "../../state/chrome/settings";
 import { openSavePicker } from "../records/SavePicker";
+import type { HighlightColorId } from "../../state/records/highlights";
+import { copyTextOf, runsLabel, runsOf } from "../../state/reading/verseRuns";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -67,7 +69,15 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   const chapterRef = reading.chapterRef.value;
   const start = Math.min(...verses);
   const end = Math.max(...verses);
-  const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}–${end}`}`;
+  const runs = runsOf(verses);
+  const ref = `${reading.bookName.value} ${reading.chapterNumber.value}:${runsLabel(runs)}`;
+  /** Colour (or clear) each run of the choice. */
+  const markRuns = (colorId?: HighlightColorId | `#${string}`) => {
+    for (const [a, b] of runs)
+      void (colorId
+        ? state.highlights.set(chapterRef, a, b, colorId)
+        : state.highlights.clear(chapterRef, a, b));
+  };
   const current = state.highlights.forChapter(chapterRef).value.find((h) => {
     const v = h.verse;
     return typeof v === "number"
@@ -75,26 +85,29 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       : verses.some((n) => n >= v[0] && n <= v[1]);
   });
 
-  /** The verses' text with their reference — what Copy puts on the clipboard. */
-  const copyText = async () => {
+  /** The chosen verses' words, each run with its reference after it (the old reader's format). */
+  const versesText = () => {
     const chapter = reading.chapterData.value;
-    if (!chapter) return;
-    const text = chapter.chapter.content
-      .flatMap((c) =>
-        c &&
-        typeof c === "object" &&
-        c.type === "verse" &&
-        c.number >= start &&
-        c.number <= end
-          ? [getVersePlainText(c.content)]
-          : []
-      )
-      .join(" ");
-    const label =
-      reading.translation.value?.shortName ?? reading.translationId.value;
+    if (!chapter) return "";
+    const words = new Map<number, string>();
+    for (const c of chapter.chapter.content)
+      if (c && typeof c === "object" && c.type === "verse")
+        words.set(c.number, getVersePlainText(c.content));
+    return copyTextOf(
+      runsOf(state.selection.verses.value),
+      (v) => words.get(v) ?? "",
+      reading.bookName.value,
+      reading.chapterNumber.value,
+      reading.translation.value?.shortName ?? reading.translationId.value
+    );
+  };
+  const copyText = async () => {
+    const text = versesText();
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(`${text}\n— ${ref} (${label})`);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
+      state.ui.toast.value = { key: "copied" };
     } catch {
       /* the clipboard refused */
     }
@@ -249,6 +262,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       onClick={() => {
         state.ui.share.value = {
           title: ref,
+          text: versesText(),
           url: shareUrl(
             location.origin,
             {
@@ -317,7 +331,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             title={c}
             aria-pressed={!current?.customColor && current?.colorId === c}
             onClick={() => {
-              void state.highlights.set(chapterRef, start, end, c);
+              markRuns(c);
               state.selection.clear();
             }}
           >
@@ -343,12 +357,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
             })}
             aria-pressed={current?.customColor === hex}
             onClick={() => {
-              void state.highlights.set(
-                chapterRef,
-                start,
-                end,
-                hex as `#${string}`
-              );
+              markRuns(hex as `#${string}`);
               state.selection.clear();
             }}
             onContextMenu={(e: MouseEvent) => {
@@ -387,12 +396,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
                   ...state.settings.customColors.value.filter((c) => c !== hex),
                   hex,
                 ].slice(-MAX_CUSTOM_COLORS);
-                void state.highlights.set(
-                  chapterRef,
-                  start,
-                  end,
-                  hex as `#${string}`
-                );
+                markRuns(hex as `#${string}`);
                 state.selection.clear();
               }}
             />
@@ -409,7 +413,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           })}
           title={t("clear", { defaultValue: "Clear" })}
           onClick={() => {
-            void state.highlights.clear(chapterRef, start, end);
+            markRuns();
             state.selection.clear();
           }}
         >

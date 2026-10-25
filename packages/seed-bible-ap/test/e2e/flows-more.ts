@@ -3775,7 +3775,7 @@ export const MORE_FLOWS: Flow[] = [
       const clip = await c.page
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
-      if (!/For God so loved the world[\s\S]*— John 3:16 \(BSB\)/.test(clip))
+      if (!/For God so loved the world[\s\S]*\(John 3:16 BSB\)$/.test(clip))
         throw new Error(`clipboard: ${clip.slice(0, 120)}`);
       return clip.replace(/\s+/g, " ").slice(0, 90);
     },
@@ -6187,6 +6187,82 @@ export const MORE_FLOWS: Flow[] = [
       )
         throw new Error("a mouse click in the blank space chose the verse");
       return `phone: a tap ${room}px of blank space after the line chose Psalms 23:1; desktop: a click there chose nothing`;
+    },
+  },
+  {
+    id: "VG1",
+    section: "4. Marking the text",
+    title: "Choose any verses, gaps and all",
+    rows: ["Highlight (6 colours)", "Share a verse / copy link"],
+    checks:
+      "On a phone, tapping John 3:16 then 3:18 chooses both (the sheet says 'John 3:16, 18'), and tapping 16 again drops it ('John 3:18'). On a desktop with 16 and 18 chosen, Copy puts '… (John 3:16 BSB)' and '… (John 3:18 BSB)' a blank line apart and says Copied; a colour highlights 16 and 18 but not 17",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      c.watch(phone);
+      try {
+        await c.open(CH, phone);
+        await c.settleTours(phone);
+        const sheetRef = phone.locator(
+          ".sb-verse-toolbar-mobile .sb-verse-toolbar-ref-text"
+        );
+        await c.tapVerse(16, phone);
+        await c.waitText(sheetRef, /^John 3:16$/, 5000);
+        await c.tapVerse(18, phone);
+        await c.waitText(sheetRef, /^John 3:16, 18$/, 5000);
+        await c.tapVerse(16, phone);
+        await c.waitText(sheetRef, /^John 3:18$/, 5000);
+      } finally {
+        await ctx.close();
+      }
+      const desk = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        permissions: ["clipboard-read", "clipboard-write"],
+      });
+      const page = await desk.newPage();
+      c.watch(page);
+      try {
+        await c.open(CH, page);
+        await c.settleTours(page);
+        await c.selectVerse(16, page);
+        await c.tapVerse(18, page);
+        await page.locator(".sb-verse-toolbar-copy").click();
+        await c.waitText(page.locator(".sb-toast"), /copied/i, 3000);
+        const copied = await page.evaluate(() =>
+          navigator.clipboard.readText()
+        );
+        if (
+          !/^For God so loved the world[^\n]*\(John 3:16 BSB\)\n\n.*\(John 3:18 BSB\)$/s.test(
+            copied
+          )
+        )
+          throw new Error(`copied: ${copied.slice(0, 160)}`);
+        await c.pickColor(4, page);
+        const filled = async (n: number) =>
+          (await c.verse(n, page).locator("[data-highlight-fill]").count()) >
+            0 ||
+          (await page
+            .locator(
+              `.sb-bible-reader-active [data-highlight-fill]:has([data-verse-number="${n}"])`
+            )
+            .count()) > 0;
+        for (let i = 0; i < 30 && !(await filled(18)); i++)
+          await page.waitForTimeout(100);
+        const marks = [await filled(16), await filled(17), await filled(18)];
+        if (marks.join() !== "true,false,true")
+          throw new Error(`highlighted 16, 17, 18: ${marks.join(", ")}`);
+        for (const n of [16, 18]) {
+          await c.selectVerse(n, page);
+          await c.clearHighlight(page);
+        }
+        return "phone: 16 and 18 chosen, then 16 dropped; desktop: Copy gave each verse with its reference, a colour marked 16 and 18 and not 17";
+      } finally {
+        await desk.close();
+      }
     },
   },
 ];
