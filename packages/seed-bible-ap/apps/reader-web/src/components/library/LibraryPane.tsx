@@ -408,6 +408,19 @@ function PlayHistory({ state }: { state: ReaderState }) {
                       ? t("play-again", { defaultValue: "Play again" })
                       : t("resume", { defaultValue: "Resume" })}
                   </button>
+                  <button
+                    type="button"
+                    className="sb-content-kebab"
+                    aria-label={t("playlist-history-remove", {
+                      defaultValue: "Remove from history",
+                    })}
+                    title={t("playlist-history-remove", {
+                      defaultValue: "Remove from history",
+                    })}
+                    onClick={() => playlists.removeHistory(e.playlistId)}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
                 </li>
               );
             })}

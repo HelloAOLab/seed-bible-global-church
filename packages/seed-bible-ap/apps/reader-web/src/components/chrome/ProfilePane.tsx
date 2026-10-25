@@ -169,6 +169,11 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           defaultValue: "Add friends and see what they're reading",
         });
   const pending = state.outbox.pending.value;
+  // The old Profile's Continue: the latest playlist left part-way that is still in the Library.
+  const latest = state.playlists.history.value.find(
+    (h) =>
+      h.currentStep + 1 < h.totalSteps && !!state.playlists.byId(h.playlistId)
+  );
 
   return (
     <section className="sb-pane sb-profile-screen">
@@ -235,6 +240,28 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           </p>
           <NeedsHomeHint error={state.outbox.lastError.value} />
         </div>
+        {latest && (
+          <Row
+            icon="play_circle"
+            title={t("continue-playlist", {
+              title: latest.title,
+              defaultValue: "Continue {{title}}",
+            })}
+            subtitle={t("playlist-history-step", {
+              step: latest.currentStep + 1,
+              total: latest.totalSteps,
+              percent: Math.round(
+                ((latest.currentStep + 1) / Math.max(1, latest.totalSteps)) *
+                  100
+              ),
+              defaultValue: "Step {{step}} of {{total}} ({{percent}}%)",
+            })}
+            onClick={() => {
+              state.playlists.play(latest.playlistId, latest.currentStep);
+              go("none");
+            }}
+          />
+        )}
         <Row
           icon="edit"
           title={t("your-content", { defaultValue: "Your content" })}

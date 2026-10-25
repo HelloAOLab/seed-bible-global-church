@@ -978,5 +978,7 @@
   "annotation-conflict-yours": "Your version",
   "reading-plan-draft": "Draft",
   "playlist-invalid-url": "Enter a valid URL",
-  "playlist-reference-not-found": "Couldn't find that reference"
+  "playlist-reference-not-found": "Couldn't find that reference",
+  "continue-playlist": "Continue {{title}}",
+  "playlist-history-remove": "Remove from history"
 }

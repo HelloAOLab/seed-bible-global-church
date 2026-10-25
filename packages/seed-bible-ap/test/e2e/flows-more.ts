@@ -3887,7 +3887,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Playlist history",
     rows: ["Playlist history"],
     checks:
-      "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over",
+      "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over; its ✕ takes the row out of the history",
     run: async (c) => {
       await c.open(CH);
       const pane = await c.openLibrary("Playlists");
@@ -3929,6 +3929,14 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click()
         .catch(() => undefined);
+      // A row comes out of the history on its own ✕.
+      await history
+        .locator(".sb-play-history-row", { hasText: title })
+        .getByRole("button", { name: "Remove from history" })
+        .click();
+      await history
+        .locator(".sb-play-history-row", { hasText: title })
+        .waitFor({ state: "detached", timeout: 5000 });
       c.page.once("dialog", (d) => void d.accept());
       await ensureOpen(card);
       await card.getByRole("button", { name: /^delete$/i }).click();
@@ -6949,6 +6957,73 @@ export const MORE_FLOWS: Flow[] = [
         } catch {
           /* left for the next run's housekeeping */
         }
+      }
+    },
+  },
+  {
+    id: "CP1",
+    section: "10. Playlists and reading plans",
+    title: "Continue a playlist from the Profile",
+    rows: ["Playlist history"],
+    checks:
+      "Signed in, a two-item playlist stopped on its first item: the Profile offers 'Continue <playlist>' with 'Step 1 of 2'; it plays from there",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      const title = `Flow continue ${stamp()}`;
+      try {
+        await c.open(CH, page);
+        await c.settleTours(page);
+        await c.signInAsSample(/seed ?reader/i, page);
+        await c.settleTours(page);
+        await c.pressToolbar("Library", page);
+        await c.settleTours(page);
+        const pane = c.pane(page);
+        await pane.getByRole("tab", { name: "Playlists" }).click();
+        await pane.locator('input[placeholder^="New playlist"]').fill(title);
+        await pane.getByRole("button", { name: /^create$/i }).click();
+        const card = pane.locator(".sb-note-card", { hasText: title }).first();
+        await card.waitFor({ timeout: 10000 });
+        await ensureOpen(card);
+        const ref = card.getByPlaceholder(/John 3 or John 3:16/i);
+        await ref.fill("Romans 8:28");
+        await ref.press("Enter");
+        await c.waitText(card, /Romans 8:28/, 8000);
+        await card.getByRole("button", { name: /play playlist/i }).click();
+        await page
+          .locator(".sb-reader-toolbar-desk")
+          .getByRole("button", { name: "Stop" })
+          .click();
+        await page.locator(".sb-sidebar-profile-button").click();
+        const prof = page.locator(".sb-profile-screen");
+        const row = prof.locator(".sb-profile-row", {
+          hasText: `Continue ${title}`,
+        });
+        await c.waitText(row, /Step 1 of 2/, 10000);
+        await row.click();
+        await c.waitText(page.locator(".sb-playlist-note"), /1 of 2/, 10000);
+        await page
+          .locator(".sb-reader-toolbar-desk")
+          .getByRole("button", { name: "Stop" })
+          .click()
+          .catch(() => undefined);
+        return `the Profile offered 'Continue ${title}' at step 1 of 2 and it played from there`;
+      } finally {
+        try {
+          const lib = await c.openLibrary("Playlists", page);
+          const pl = lib.locator(".sb-note-card", { hasText: title }).first();
+          if (await pl.count()) {
+            await ensureOpen(pl);
+            await pl.getByRole("button", { name: /^delete$/i }).click();
+            await c.confirmDelete(page);
+          }
+        } catch {
+          /* left for the next run's housekeeping */
+        }
+        await ctx.close();
       }
     },
   },

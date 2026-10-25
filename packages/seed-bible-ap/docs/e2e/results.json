@@ -1,42 +1,24 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 13:56 UTC",
+  "when": "2026-10-25 14:07 UTC",
   "results": [
     {
-      "id": "PL2",
+      "id": "G6",
       "section": "10. Playlists and reading plans",
-      "title": "A playlist as the old reader has it",
-      "checks": "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, the bar shows Stop · Previous · the item · Next, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
+      "title": "Playlist history",
+      "checks": "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over; its ✕ takes the row out of the history",
       "mark": "✅",
-      "note": "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside; the bar showed Stop, Previous, the item and Next) → 2 of 2 → finished, deleted after the check",
-      "ms": 5180
+      "note": "history row Finished today; Play again started it at John 3",
+      "ms": 1414
     },
     {
-      "id": "G11",
-      "section": "13. Getting started",
-      "title": "Guided tour",
-      "checks": "A ?tutorial=introduction link opens the tour; Next walks every step to Done and the tour closes; ?tutorialStep=2 (zero-based, as in the old reader) starts on step 3; Escape closes it",
-      "mark": "✅",
-      "note": "5 steps walked to Done; a link with tutorialStep=2 opened on 3 of 5; Escape closed it",
-      "ms": 5623
-    },
-    {
-      "id": "G12",
-      "section": "8. Today, Discover and publishing",
-      "title": "Shared page for a published playlist",
-      "checks": "Signed in: publish a playlist; its card's Share playlist copies the link ('Playlist URL copied'); Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
-      "mark": "✅",
-      "note": "/shared/seedreader.me/playlist/playlist-d4afa062-e50: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers 404",
-      "ms": 86953
-    },
-    {
-      "id": "PL3",
+      "id": "CP1",
       "section": "10. Playlists and reading plans",
-      "title": "Playlist items: bad input, dragging, a rich note",
-      "checks": "In a new playlist, 'Nowhere 99' says 'Couldn't find that reference' and 'notaurl' says 'Enter a valid URL'; John 3:16 and Romans 8:28 added, dragging Romans onto John puts it first; John's ✎ gives a title and a note in the rich editor, and playing shows the title and the note beside the reading",
+      "title": "Continue a playlist from the Profile",
+      "checks": "Signed in, a two-item playlist stopped on its first item: the Profile offers 'Continue <playlist>' with 'Step 1 of 2'; it plays from there",
       "mark": "✅",
-      "note": "both messages; a drag moved the lower item up; John 3:16's title and rich note showed beside the reading",
-      "ms": 8271
+      "note": "the Profile offered 'Continue Flow continue 140713' at step 1 of 2 and it played from there",
+      "ms": 42097
     }
   ]
 }

@@ -218,6 +218,11 @@ export function createPlaylists(
     onQueueEnd = null;
     playing.value = null;
   };
+  /** Take one playlist's row out of the history. */
+  const removeHistory = (playlistId: string) => {
+    history.value = history.value.filter((h) => h.playlistId !== playlistId);
+    void stores.prefs.set(HISTORY_KEY, history.value).catch(() => undefined);
+  };
   /** Forget the history on this device. */
   const clearHistory = () => {
     history.value = [];
@@ -226,6 +231,7 @@ export function createPlaylists(
 
   return {
     ...works,
+    removeHistory,
     playing,
     current,
     finished,
