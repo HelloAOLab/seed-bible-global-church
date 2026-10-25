@@ -169,10 +169,10 @@ function Removing({ state }: { state: ReaderState }) {
               name: r.label,
               defaultValue: "✓ {{name}} is no longer a friend.",
             })
-          : t("friend-remove-confirm-at-home", {
+          : t("friend-remove-confirm-window", {
               name: r.label,
               defaultValue:
-                "Confirm at your Home to remove {{name}} — the window that opened. It closes by itself, and this updates when you are done.",
+                "A small window opened. Tap “Yes, remove them” there to remove {{name}}. It closes by itself.",
             })}
       </p>
       <button
@@ -388,7 +388,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                         subtitle={
                           at.length
                             ? at.map((p) => p.label ?? p.app).join(" · ")
-                            : (prof?.about ?? (c.name ? c.contact : ""))
+                            : (prof?.about ?? "")
                         }
                       />
                       <span className="sb-friends-row-actions">
@@ -446,8 +446,8 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 className="sb-friends-add-input"
                 value={who}
                 onInput={(e) => setWho((e.target as HTMLInputElement).value)}
-                placeholder={t("friend-add-placeholder-email", {
-                  defaultValue: "A name like ruth.me, or an email address",
+                placeholder={t("friend-add-placeholder-plain", {
+                  defaultValue: "Their email, or their name here",
                 })}
                 aria-label={t("add-friend", { defaultValue: "Add a friend" })}
                 autoComplete="off"
@@ -508,7 +508,9 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 <div className="sb-friends-share-row sb-friends-my-id">
                   <span className="sb-friends-share-text">
                     <span className="sb-friends-share-label">
-                      {t("your-user-id", { defaultValue: "Your user ID" })}
+                      {t("friends-find-you-as", {
+                        defaultValue: "Friends can find you as",
+                      })}
                     </span>
                     <code className="sb-friends-my-id-value">
                       {s.name || me}

@@ -42,17 +42,23 @@ export function friendLink(
   return `${origin}/friend/${agent.toLowerCase()}${q}`;
 }
 
+/** Whether a friend-view row is the person typed or named: their address, their name, or the name without its suffix
+ *  ("ruth" for ruth.me). */
+export function isWho(f: Friend, who: string): boolean {
+  const w = who.toLowerCase();
+  return (
+    f.agent.toLowerCase() === w ||
+    (!!f.name &&
+      (f.name.toLowerCase() === w || f.name.toLowerCase().split(".")[0] === w))
+  );
+}
+
 /** Where someone's standing is: a friend, waiting on you, waiting on them, or none of these. */
 export function standingOf(
   view: FriendsView | null,
   who: string
 ): "friend" | "asked-you" | "you-asked" | "none" {
-  const w = who.toLowerCase();
-  // A typed name may leave off its suffix ("ruth" for ruth.me).
-  const is = (f: Friend) =>
-    f.agent.toLowerCase() === w ||
-    (!!f.name &&
-      (f.name.toLowerCase() === w || f.name.toLowerCase().split(".")[0] === w));
+  const is = (f: Friend) => isWho(f, who);
   if (!view) return "none";
   if (view.friends.some(is)) return "friend";
   if (view.requests.some(is)) return "asked-you";
@@ -103,10 +109,22 @@ export function createFriendship(deps: {
     watch = undefined;
   }
 
+  /** The Home's one-question window for a friend act: `from` lets it show only that question and close itself when
+   *  answered (its opener policy hides who opened it); `name` is how the reader knows them, for the question. */
+  const homeUrl = (
+    act: "add" | "remove",
+    who: string,
+    label?: string | null
+  ) => {
+    const q = new URLSearchParams({ [act]: who, from: "seed-reader" });
+    if (label && label !== who) q.set("name", label);
+    return `${deps.homeOrigin}/contacts?${q}`;
+  };
+
   /** Add someone (ask, or accept their request): the Home signs it; this device watches for it to land. */
   function add(who: string, label?: string | null): void {
     const was = standingOf(deps.friendsView(), who);
-    const url = `${deps.homeOrigin}/contacts?add=${encodeURIComponent(who)}`;
+    const url = homeUrl("add", who, label);
     (
       deps.openWindow ??
       ((u) => window.open(u, "_blank", "popup,width=520,height=760"))
@@ -114,6 +132,7 @@ export function createFriendship(deps: {
     waiting.value = { who, label: label || who, was, landed: false };
     stopWatching();
     const before = known(deps.friendsView());
+    const beforeRead = deps.friendsView() !== null;
     const start = (deps.now ?? Date.now)();
     watch = setInterval(() => {
       void deps.refresh().then(() => {
@@ -121,9 +140,15 @@ export function createFriendship(deps: {
         if (!w) return stopWatching();
         const v = deps.friendsView();
         let now = standingOf(v, w.who);
-        const added = [...(v?.friends ?? []), ...(v?.requested ?? [])].find(
-          (f) => !before.has(f.agent.toLowerCase())
-        );
+        // The one being added, by what was typed; only a name the view cannot match (a name the Home resolved to
+        // someone listed under another) falls back to whoever is new — and "new" means nothing while the view had
+        // not been read when the add began.
+        const rows = [...(v?.friends ?? []), ...(v?.requested ?? [])];
+        const added =
+          rows.find((f) => isWho(f, w.who)) ??
+          (beforeRead
+            ? rows.find((f) => !before.has(f.agent.toLowerCase()))
+            : undefined);
         if (now !== "friend" && added)
           now = v?.friends.includes(added) ? "friend" : "you-asked";
         const landed =
@@ -150,7 +175,7 @@ export function createFriendship(deps: {
   let removeWatch: ReturnType<typeof setInterval> | undefined;
   /** Remove a friend, or take back a request: the Home revokes the grant (its own flyout asks first). */
   function remove(who: string, label?: string | null): void {
-    const url = `${deps.homeOrigin}/contacts?remove=${encodeURIComponent(who)}`;
+    const url = homeUrl("remove", who, label);
     (
       deps.openWindow ??
       ((u) => window.open(u, "_blank", "popup,width=520,height=760"))

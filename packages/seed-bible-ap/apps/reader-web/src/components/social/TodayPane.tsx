@@ -439,10 +439,10 @@ export function FriendWaiting({ state }: { state: ReaderState }) {
       {!w.landed ? (
         <>
           <p>
-            {t("friend-confirm-at-home", {
+            {t("friend-confirm-window", {
               name: w.label,
               defaultValue:
-                "Confirm at your Home to add {{name}} — one tap in the window that opened. It closes by itself, and this updates when you are done.",
+                "A small window opened. Tap “Yes, add them” there to add {{name}}. It closes by itself.",
             })}
           </p>
           {w.was === "you-asked" && (
@@ -460,8 +460,8 @@ export function FriendWaiting({ state }: { state: ReaderState }) {
               className="sb-note-button"
               onClick={() => friendship.add(w.who, w.label)}
             >
-              {t("friend-open-home-again", {
-                defaultValue: "Open your Home again",
+              {t("friend-open-window-again", {
+                defaultValue: "Open it again",
               })}
             </button>
             <button
@@ -539,8 +539,8 @@ function AddFriend({ state }: { state: ReaderState }) {
           <input
             id="sb-friend-add-input"
             className="sb-note-editor"
-            placeholder={t("friend-add-placeholder-email", {
-              defaultValue: "A name like ruth.me, or an email address",
+            placeholder={t("friend-add-placeholder-plain", {
+              defaultValue: "Their email, or their name here",
             })}
             value={who}
             onInput={(e) => setWho((e.target as HTMLInputElement).value)}

@@ -1059,7 +1059,7 @@ export const MORE_FLOWS: Flow[] = [
       const addUrl = await popup(() =>
         page.getByRole("button", { name: /send request/i }).click()
       );
-      if (!/\/contacts\?add=flowtest-nobody\.me$/.test(addUrl))
+      if (!/\/contacts\?add=flowtest-nobody\.me&from=seed-reader$/.test(addUrl))
         throw new Error(`Send request opened ${addUrl}`);
       await c.page
         .locator(".sb-friend-waiting")
@@ -1077,7 +1077,7 @@ export const MORE_FLOWS: Flow[] = [
         const rmUrl = await popup(() =>
           dialog.getByRole("button", { name: /^remove$/i }).click()
         );
-        if (!/\/contacts\?remove=0x[0-9a-f]{40}$/i.test(rmUrl))
+        if (!/\/contacts\?remove=0x[0-9a-f]{40}&from=seed-reader/i.test(rmUrl))
           throw new Error(`Remove opened ${rmUrl}`);
         await c.page
           .locator(".sb-friend-waiting")
@@ -7553,6 +7553,156 @@ export const MORE_FLOWS: Flow[] = [
       await c.check(pane, /show discovered content/i).check();
       await card.waitFor({ timeout: 10000 });
       return `hidden with its note; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
+    },
+  },
+  {
+    id: "AF1",
+    timeoutMs: 240_000,
+    section: "8. Today, Discover and publishing",
+    title: "Add a friend, the whole way",
+    rows: ["Friends pane"],
+    checks:
+      "As someone new to the app, the real way: Sign in with Faithnet (the Home's window; its demo person Seed Reader; Allow), open Friends, type 'alice', Send request; the small window that opens asks 'Add alice.me as a friend?' — Yes, add them — and closes by itself; the reader says Alice was asked. Then Cancel the request the same way ('Remove … as a friend?' — Yes, remove them). Screenshots of every step with E2E_SHOTS",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      let n = 0;
+      const shot = async (pg: import("playwright").Page, name: string) => {
+        if (dir)
+          await pg
+            .screenshot({
+              path: `${dir}/${String(++n).padStart(2, "0")}-${name}.png`,
+            })
+            .catch(() => {});
+      };
+      await c.open(CH);
+      await c.settleTours();
+      await c.pressToolbar("Sign in");
+      await c.pane().waitFor({ timeout: 5000 });
+      await c.page.waitForTimeout(800);
+      await shot(c.page, "signin-pane");
+      const terms = c.page.locator("#sb-login-terms");
+      if (await terms.count()) await terms.check();
+      const loginWin = c.context.waitForEvent("page", { timeout: 15000 });
+      await c
+        .pane()
+        .getByRole("button", { name: /home|sign in with|continue/i })
+        .first()
+        .click();
+      const login = await loginWin;
+      await login.waitForLoadState();
+      await login.waitForTimeout(2500);
+      await shot(login, "login-home");
+      await login.getByText(/demo people/i).click();
+      await login.waitForTimeout(1500);
+      await shot(login, "login-demo-list");
+      await login
+        .getByRole("button", { name: /seed ?reader/i })
+        .first()
+        .click();
+      for (let i = 0; i < 6 && !login.isClosed(); i++) {
+        await login.waitForTimeout(2500).catch(() => {});
+        if (login.isClosed()) break;
+        await shot(login, `login-step-${i}`);
+        const go = login
+          .getByRole("button", { name: /^(allow|authorize|approve)/i })
+          .first();
+        if (await go.isVisible().catch(() => false))
+          await go.click().catch(() => {});
+      }
+      await c.page.waitForTimeout(3000);
+      await shot(c.page, "signed-in");
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
+      const pane = c.page.locator(".sb-friends-pane");
+      await pane.waitFor({ timeout: 5000 });
+      await c.page.waitForTimeout(2500);
+      await shot(c.page, "friends");
+      // One friend act through the Home's small window: its plain question, one tap, and it closes by itself.
+      const confirmInWindow = async (
+        start: () => Promise<void>,
+        yes: RegExp,
+        label: string
+      ) => {
+        const opened = c.context.waitForEvent("page", { timeout: 15000 });
+        await start();
+        const home = await opened;
+        await c.page.waitForTimeout(800);
+        await shot(c.page, `${label}-asked`);
+        const ask = home.locator('[data-testid="ask-authority"]');
+        await ask.waitFor({ timeout: 45000 }).catch(async (e: unknown) => {
+          await shot(home, `${label}-no-question`);
+          throw new Error(
+            `no question in the window: ${(
+              await home
+                .locator("body")
+                .innerText()
+                .catch(() => "")
+            )
+              .replace(/\s+/g, " ")
+              .slice(
+                0,
+                400
+              )} (${e instanceof Error ? e.message.slice(0, 80) : e})`
+          );
+        });
+        await shot(home, `${label}-question`);
+        const question = (await ask.innerText()).split("\n")[0];
+        await ask.getByRole("button", { name: yes }).click();
+        const t0 = Date.now();
+        const closed = home.waitForEvent("close", { timeout: 90000 });
+        void (async () => {
+          for (let i = 0; i < 9 && !home.isClosed(); i++) {
+            await home.waitForTimeout(10000).catch(() => {});
+            if (!home.isClosed()) await shot(home, `${label}-waiting-${i}`);
+          }
+        })();
+        await closed;
+        return { question, secs: Math.round((Date.now() - t0) / 1000) };
+      };
+      // A request left by an earlier run is taken back first, the same way, so the add starts clean.
+      const leftover = pane
+        .locator(".sb-friends-row", { hasText: /alice/i })
+        .filter({ has: c.page.getByRole("button", { name: /cancel/i }) });
+      if (await leftover.count()) {
+        await confirmInWindow(
+          () =>
+            leftover
+              .first()
+              .getByRole("button", { name: /cancel/i })
+              .click(),
+          /yes, remove them/i,
+          "leftover"
+        );
+        await leftover.first().waitFor({ state: "detached", timeout: 60000 });
+        await c.page.waitForTimeout(1500);
+      }
+      await pane.getByLabel("Add a friend").fill("alice");
+      const added = await confirmInWindow(
+        () => pane.getByRole("button", { name: /send request/i }).click(),
+        /yes, add them/i,
+        "add"
+      );
+      await c.waitText(
+        pane.locator(".sb-friend-waiting"),
+        /asked|friends/i,
+        30000
+      );
+      await shot(c.page, "added");
+      const row = pane
+        .locator(".sb-friends-row", { hasText: /alice/i })
+        .first();
+      await row.waitFor({ timeout: 30000 });
+      const removed = await confirmInWindow(
+        () => row.getByRole("button", { name: /cancel/i }).click(),
+        /yes, remove them/i,
+        "cancel"
+      );
+      await row.waitFor({ state: "detached", timeout: 60000 });
+      await shot(c.page, "cancelled");
+      return `'${added.question}' → Yes; the window closed itself in ${added.secs}s and the reader said Alice was asked. '${removed.question}' → Yes; closed in ${removed.secs}s; the request is gone`;
     },
   },
 ];

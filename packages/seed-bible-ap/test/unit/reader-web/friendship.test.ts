@@ -69,7 +69,9 @@ describe("adding a friend", () => {
     vi.useFakeTimers();
     const { f, opened, set } = setup(view({}));
     f.add("ruth.me");
-    expect(opened).toEqual(["https://www.faithnet.me/contacts?add=ruth.me"]);
+    expect(opened).toEqual([
+      "https://www.faithnet.me/contacts?add=ruth.me&from=seed-reader",
+    ]);
     expect(f.waiting.value?.was).toBe("none");
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
     expect(f.waiting.value?.was).toBe("none");
@@ -140,7 +142,9 @@ describe("removing a friend, or taking back a request", () => {
     const ruth = { agent: RUTH, name: "ruth.me", since: "2026-10-22" };
     const { f, opened, set } = setup(view({ friends: [ruth] }));
     f.remove(RUTH, "ruth.me");
-    expect(opened).toEqual([`https://www.faithnet.me/contacts?remove=${RUTH}`]);
+    expect(opened).toEqual([
+      `https://www.faithnet.me/contacts?remove=${RUTH}&from=seed-reader&name=ruth.me`,
+    ]);
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
     expect(f.removing.value).toMatchObject({ label: "ruth.me", done: false });
     set(view({}));
@@ -175,5 +179,32 @@ describe("Not now", () => {
     });
     await tick();
     expect(again.requests.value).toEqual([]);
+  });
+});
+
+describe("the one just added is the one named", () => {
+  it("names who was typed, not whoever else appears once the list is read", async () => {
+    vi.useFakeTimers();
+    const ALICE = "0x" + "a1".repeat(20);
+    let current: FriendsView | null = null;
+    const f = createFriendship({
+      prefs: memoryStores().prefs,
+      friendsView: () => current,
+      refresh: async () => {},
+      homeOrigin: "https://www.faithnet.me",
+      openWindow: () => {},
+    });
+    // The add begins before the list was read; then the list arrives with an old friend and the new request.
+    f.add("alice");
+    current = view({
+      friends: [{ agent: RUTH, name: "ruth.me", since: "2026-10-20" }],
+      requested: [{ agent: ALICE, name: "alice.me", since: "2026-10-25" }],
+    });
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.waiting.value).toMatchObject({
+      landed: true,
+      was: "you-asked",
+      label: "alice.me",
+    });
   });
 });
