@@ -600,60 +600,116 @@ export function NotesPane({ state }: { state: ReaderState }) {
         ))
       )}
       {deleting && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={() => setDeleting(null)}
-        >
-          <div
-            className="sb-footnote-modal sb-content-dialog"
-            role="dialog"
-            aria-label={t("delete-annotation-confirm-title", {
-              defaultValue: "Delete annotation?",
-            })}
-            onClick={(e: MouseEvent) => e.stopPropagation()}
-          >
-            <div className="sb-footnote-modal-header">
-              <h3 className="sb-footnote-modal-title">
-                {t("delete-annotation-confirm-title", {
-                  defaultValue: "Delete annotation?",
-                })}
-              </h3>
-            </div>
-            <div className="sb-confirm-delete">
-              <p className="sb-confirm-delete-message">
-                {t("delete-annotation-confirm-message", {
-                  defaultValue: "Delete this annotation? This can't be undone.",
-                })}
-              </p>
-              <div className="sb-confirm-delete-actions">
-                <button
-                  type="button"
-                  className="sb-note-button"
-                  onClick={() => setDeleting(null)}
-                >
-                  {t("cancel", { defaultValue: "Cancel" })}
-                </button>
-                <button
-                  type="button"
-                  className="sb-note-button sb-note-button-danger"
-                  onClick={() => {
-                    const n = deleting;
-                    setDeleting(null);
-                    void state.annotations.remove(chapterRef, n.id).catch(
-                      () =>
-                        (state.ui.toast.value = {
-                          key: "annotation-delete-failed",
-                        })
-                    );
-                  }}
-                >
-                  {t("delete", { defaultValue: "Delete" })}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DeleteNoteConfirm
+          state={state}
+          note={deleting}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </section>
+  );
+}
+
+/** "Delete annotation?" — the old reader's confirmation before a note goes. */
+function DeleteNoteConfirm(props: {
+  state: ReaderState;
+  note: Note;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const { state } = props;
+  const chapterRef = state.reading.chapterRef.value;
+  return (
+    <div className="sb-footnote-modal-overlay" onClick={() => props.onClose()}>
+      <div
+        className="sb-footnote-modal sb-content-dialog"
+        role="dialog"
+        aria-label={t("delete-annotation-confirm-title", {
+          defaultValue: "Delete annotation?",
+        })}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
+      >
+        <div className="sb-footnote-modal-header">
+          <h3 className="sb-footnote-modal-title">
+            {t("delete-annotation-confirm-title", {
+              defaultValue: "Delete annotation?",
+            })}
+          </h3>
+        </div>
+        <div className="sb-confirm-delete">
+          <p className="sb-confirm-delete-message">
+            {t("delete-annotation-confirm-message", {
+              defaultValue: "Delete this annotation? This can't be undone.",
+            })}
+          </p>
+          <div className="sb-confirm-delete-actions">
+            <button
+              type="button"
+              className="sb-note-button"
+              onClick={() => props.onClose()}
+            >
+              {t("cancel", { defaultValue: "Cancel" })}
+            </button>
+            <button
+              type="button"
+              className="sb-note-button sb-note-button-danger"
+              onClick={() => {
+                const n = props.note;
+                props.onClose();
+                void state.annotations.remove(chapterRef, n.id).catch(
+                  () =>
+                    (state.ui.toast.value = {
+                      key: "annotation-delete-failed",
+                    })
+                );
+              }}
+            >
+              {t("delete", { defaultValue: "Delete" })}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The notes on the chosen verses, grouped as in the Notes pane with ⋮ Edit and Delete — the old reader's phone
+ *  verse sheet shows them when it is pulled up. */
+export function SelectionNotes({ state }: { state: ReaderState }) {
+  const verses = state.selection.verses.value;
+  const notes = state.annotations
+    .forChapter(state.reading.chapterRef.value)
+    .value.filter(
+      (n) => !n.whole && verses.some((v) => v >= n.start && v <= n.end)
+    );
+  const [deleting, setDeleting] = useState<Note | null>(null);
+  if (!notes.length) return null;
+  const groups: Array<{ key: string; label: string; notes: Note[] }> = [];
+  for (const n of notes) {
+    const key = `${n.start}-${n.end}`;
+    const g = groups.find((x) => x.key === key);
+    if (g) g.notes.push(n);
+    else groups.push({ key, label: rangeLabel(state, n), notes: [n] });
+  }
+  return (
+    <div className="sb-verse-toolbar-notes">
+      {groups.map((g) => (
+        <NoteGroup
+          key={g.key}
+          state={state}
+          label={g.label}
+          notes={g.notes}
+          highlighted={false}
+          onDelete={setDeleting}
+        />
+      ))}
+      {deleting && (
+        <DeleteNoteConfirm
+          state={state}
+          note={deleting}
+          onClose={() => setDeleting(null)}
+        />
+      )}
+    </div>
   );
 }

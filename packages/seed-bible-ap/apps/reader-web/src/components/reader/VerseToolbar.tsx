@@ -13,6 +13,7 @@ import { shareUrl } from "../../state/reading/route";
 import { getVersePlainText } from "./chapterContent";
 import { MAX_CUSTOM_COLORS } from "../../state/chrome/settings";
 import { openSavePicker } from "../records/SavePicker";
+import { SelectionNotes } from "../records/NotesPane";
 import type { HighlightColorId } from "../../state/records/highlights";
 import { copyTextOf, runsLabel, runsOf } from "../../state/reading/verseRuns";
 
@@ -548,6 +549,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
               >
                 <div className="sb-verse-toolbar-overflow-row" ref={row}>
                   <div className="sb-verse-toolbar-overflow-pinned">{more}</div>
+                  <SelectionNotes state={state} />
                 </div>
               </div>
             )}

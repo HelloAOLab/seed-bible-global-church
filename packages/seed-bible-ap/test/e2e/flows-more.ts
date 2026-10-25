@@ -6265,4 +6265,51 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "SN1",
+    section: "4. Marking the text",
+    title: "The verse sheet shows the chosen verses' notes",
+    rows: ["See which verses have notes", "Edit / delete a note"],
+    checks:
+      "With a note on John 3:16, a phone's verse sheet for 3:16, pulled up, shows the note under 'John 3:16' with ⋮ Edit and Delete; Delete asks 'Delete annotation?' and the note goes",
+    run: async (c) => {
+      const page = c.page;
+      try {
+        await c.open(CH);
+        await deleteAllNotes(c);
+        await writeNote(c, 16, "a note in the sheet");
+        await page.setViewportSize({ width: 390, height: 664 });
+        await c.open(CH);
+        await c.settleTours();
+        await c.tapVerse(16);
+        const sheet = page.locator(".sb-verse-toolbar-mobile");
+        await sheet.waitFor({ timeout: 5000 });
+        await sheet
+          .locator(".sb-verse-toolbar-handle-area")
+          .tap()
+          .catch(() => sheet.locator(".sb-verse-toolbar-handle-area").click());
+        const notes = sheet.locator(".sb-verse-toolbar-notes");
+        await c.waitText(notes, /John 3:16[\s\S]*a note in the sheet/, 5000);
+        await notes.locator(".sb-annotation-item-menu").first().click();
+        for (const name of [/^edit$/i, /^delete$/i])
+          await page
+            .getByRole("menuitem", { name })
+            .first()
+            .waitFor({ timeout: 3000 });
+        await page.keyboard.press("Escape");
+        await c.noteAction(
+          notes.locator(".sb-annotation-item").first(),
+          /^delete$/i
+        );
+        await notes.waitFor({ state: "detached", timeout: 5000 }).catch(() => {
+          throw new Error("the note stayed in the sheet after Delete");
+        });
+        return "the sheet showed the note under John 3:16 with Edit and Delete; Delete asked and removed it";
+      } finally {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await c.open(CH).catch(() => undefined);
+        await deleteAllNotes(c).catch(() => undefined);
+      }
+    },
+  },
 ];
