@@ -3175,7 +3175,7 @@ export const MORE_FLOWS: Flow[] = [
     id: "EX1",
     section: "12. Extensions",
     title: "The Extensions page",
-    rows: ["Extensions"],
+    rows: ["Extensions page"],
     checks:
       "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
     run: async (c) => {

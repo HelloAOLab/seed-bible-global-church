@@ -3,13 +3,13 @@
   "when": "2026-10-25 09:10 UTC",
   "results": [
     {
-      "id": "X7",
+      "id": "EX1",
       "section": "12. Extensions",
-      "title": "Transcript (read-only)",
-      "checks": "Signed in: Account → Extensions → Available → Transcript → Install; Transcript → choose a one-second recording; it is decoded on the device and marked done with an empty transcript — silence is never sent to the speech model, which would invent words for it",
+      "title": "The Extensions page",
+      "checks": "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
       "mark": "✅",
-      "note": "silence.wav decoded on the device; done, with an empty transcript (silence is not sent)",
-      "ms": 34495
+      "note": "tabs with counts; 40 → 36 cross-references at 1 per verse, reset; companion off and on; the set downloaded",
+      "ms": 2473
     }
   ]
 }
