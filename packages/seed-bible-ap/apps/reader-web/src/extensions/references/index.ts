@@ -69,6 +69,36 @@ export function normalizeReferences(
   };
 }
 
+const NEW_TESTAMENT = new Set([
+  "MAT",
+  "MRK",
+  "LUK",
+  "JHN",
+  "ACT",
+  "ROM",
+  "1CO",
+  "2CO",
+  "GAL",
+  "EPH",
+  "PHP",
+  "COL",
+  "1TH",
+  "2TH",
+  "1TI",
+  "2TI",
+  "TIT",
+  "PHM",
+  "HEB",
+  "JAS",
+  "1PE",
+  "2PE",
+  "1JN",
+  "2JN",
+  "3JN",
+  "JUD",
+  "REV",
+]);
+
 export function itemsFor(
   refs: ChapterReferences,
   verses: number[],
@@ -91,6 +121,7 @@ export function itemsFor(
         title: to,
         description: `from verse ${v.verse}`,
         icon: "link",
+        section: NEW_TESTAMENT.has(r.book) ? "New Testament" : "Old Testament",
         ref: r,
         fromVerse: v.verse,
       });

@@ -5,6 +5,8 @@ import { useEffect, useState, useRef } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
+import { ContentCards, byAuthor } from "./ContentCards";
+import { SectionedRows } from "./DiscoverPanel";
 import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
 
 const KIND_ICON: Record<string, string> = {
@@ -154,30 +156,11 @@ export function ProviderSection({
           })}
         </p>
       )}
-      {items && items.length > 0 && (
-        <ul className="sb-discover-list">
-          {items.map((it) => (
-            <li key={it.id} className="sb-discover-item sb-discover-item--row">
-              <button
-                type="button"
-                className="sb-discover-item-main"
-                onClick={() => it.onOpen?.()}
-              >
-                <span className="material-symbols-outlined sb-discover-item-icon">
-                  {it.icon ?? "auto_stories"}
-                </span>
-                <span className="sb-discover-item-content">
-                  <span className="sb-discover-item-title">{it.title}</span>
-                  {it.description && (
-                    <span className="sb-discover-item-description">
-                      {it.description}
-                    </span>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+      {items && items.length > 0 && byAuthor(items).groups.length > 0 && (
+        <ContentCards groups={byAuthor(items).groups} />
+      )}
+      {items && byAuthor(items).rest.length > 0 && (
+        <SectionedRows items={byAuthor(items).rest} />
       )}
     </div>
   );

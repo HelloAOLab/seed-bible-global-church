@@ -3912,28 +3912,52 @@ export const MORE_FLOWS: Flow[] = [
     title: "Videos and articles in Discover",
     rows: ["Videos and articles"],
     checks:
-      "On Matthew 26, Discover → Videos and articles lists Expedition Bible's Upper Room video and BibleProject's Matthew overview; tapping one opens its own page in a new tab",
+      "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
     run: async (c) => {
-      await c.open("/read/BSB/MAT/26");
-      await c.pressToolbar("Discover");
-      const section = c
-        .pane()
-        .locator(".sb-content-section", { hasText: "Videos and articles" });
-      await c.waitText(section, /Upper Room|Last Supper/i, 20000);
-      await c.waitText(section, /BibleProject/, 5000);
-      const count = await section.locator(".sb-discover-item").count();
-      const [popup] = await Promise.all([
-        c.page.waitForEvent("popup", { timeout: 10000 }),
-        section
-          .locator(".sb-discover-item", { hasText: /Last Supper/i })
+      let step = "";
+      try {
+        step = "cards";
+        await c.open("/read/BSB/MAT/26");
+        await c.pressToolbar("Discover");
+        const pane = c.pane();
+        const eb = pane
+          .locator(".sb-content-cards", { hasText: /Expedition Bible/i })
+          .first();
+        await eb.waitFor({ timeout: 20000 });
+        await pane
+          .locator(".sb-content-cards", { hasText: /BibleProject/ })
           .first()
-          .locator("button")
-          .click(),
-      ]);
-      const url = popup.url();
-      await popup.close();
-      if (!/youtube\.com/.test(url)) throw new Error(`opened ${url}`);
-      return `${count} items for Matthew 26; the Upper Room video opened ${url.slice(0, 50)}`;
+          .waitFor({ timeout: 5000 });
+        const card = eb
+          .locator(".sb-content-card", { hasText: /Last Supper/i })
+          .first();
+        if (!(await card.locator("img").count()))
+          throw new Error("the card has no picture");
+        step = "Read more";
+        const more = card.getByRole("button", { name: /read more/i });
+        if (await more.count()) {
+          await more.click();
+          await card.getByRole("button", { name: /read less/i }).waitFor();
+        }
+        step = "Open page";
+        const [popup] = await Promise.all([
+          c.page.waitForEvent("popup", { timeout: 10000 }),
+          card.getByRole("button", { name: /open page/i }).click(),
+        ]);
+        const url = popup.url();
+        await popup.close();
+        if (!/youtube\.com/.test(url)) throw new Error(`opened ${url}`);
+        step = "plays in place";
+        await card.locator(".sb-content-card-picture").click();
+        const player = card.locator("iframe.sb-content-card-player");
+        await player.waitFor({ timeout: 5000 });
+        const src = (await player.getAttribute("src")) ?? "";
+        if (!/youtube-nocookie\.com\/embed\//.test(src))
+          throw new Error(`player ${src}`);
+        return `picture cards by author; the Upper Room video played in place and its page opened (${url.slice(0, 40)})`;
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
     },
   },
   {
@@ -3942,7 +3966,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "People, places and events",
     rows: ["People, places and events"],
     checks:
-      "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan; Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
+      "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
     run: async (c) => {
       await c.open("/read/BSB/GEN/12");
       await c.pressToolbar("Discover");
@@ -3951,6 +3975,12 @@ export const MORE_FLOWS: Flow[] = [
       });
       await c.waitText(section, /Abraham enters Canaan/, 20000);
       await c.waitText(section, /Haran/, 5000);
+      // Each kind in its own folding section with a count, as the old reader shows them.
+      await c.waitText(
+        section,
+        /People \d+[\s\S]*Places \d+[\s\S]*Events \d+/,
+        5000
+      );
       await section
         .locator(".sb-discover-item", { hasText: /^\s*person\s*Abraham/ })
         .first()

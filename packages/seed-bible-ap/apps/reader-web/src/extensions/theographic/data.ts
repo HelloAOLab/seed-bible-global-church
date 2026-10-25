@@ -118,6 +118,7 @@ export function itemsForChapter(
         .filter(Boolean)
         .join(" · "),
       icon: "person",
+      section: "People",
       apiLink: p.apiLink,
     })),
     ...e.places.filter(keep).map((p) => ({
@@ -125,6 +126,7 @@ export function itemsForChapter(
       title: p.name,
       description: [p.featureType ?? "", verses(p)].filter(Boolean).join(" · "),
       icon: "location_on",
+      section: "Places",
       apiLink: p.apiLink,
     })),
     ...e.events.filter(keep).map((v) => ({
@@ -134,6 +136,7 @@ export function itemsForChapter(
         .filter(Boolean)
         .join(" · "),
       icon: "event",
+      section: "Events",
       apiLink: v.apiLink,
     })),
   ];

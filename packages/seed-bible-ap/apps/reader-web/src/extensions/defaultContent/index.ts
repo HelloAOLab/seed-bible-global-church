@@ -32,6 +32,27 @@ export interface BibleProjectItem {
   image: string;
 }
 
+/** A YouTube or Vimeo page as its embeddable player, to play in place; anything else opens its page. */
+export function videoEmbedOf(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+    if (host === "youtu.be")
+      return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}`;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const v = u.searchParams.get("v");
+      if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
+    }
+    if (host === "vimeo.com") {
+      const id = /^\/(\d+)/.exec(u.pathname)?.[1];
+      if (id) return `https://player.vimeo.com/video/${id}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const covers = (r: ContentReference, book: string, chapter: number) =>
   r.book === book &&
   chapter >= r.chapter &&
@@ -55,6 +76,10 @@ export function contentForChapter(
       icon: /youtube\.com|youtu\.be|vimeo\.com/.test(item.url)
         ? "play_circle"
         : "article",
+      author: item.author,
+      longText: item.description,
+      ...(item.imageUrl ? { image: item.imageUrl } : {}),
+      ...(videoEmbedOf(item.url) ? { embedUrl: videoEmbedOf(item.url)! } : {}),
     });
   }
   const seen = new Set<string>();
@@ -68,6 +93,9 @@ export function contentForChapter(
       title: `${v.title}${v.section ? ` — ${v.section}` : ""}`,
       description: "BibleProject",
       icon: "play_circle",
+      author: "BibleProject",
+      longText: v.description,
+      image: v.image,
     });
   }
   return out;

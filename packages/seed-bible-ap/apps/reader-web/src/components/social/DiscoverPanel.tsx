@@ -9,6 +9,7 @@ import { useI18n } from "../../i18n";
 import type { DiscoverItem } from "../../extensions/host";
 import { noteText } from "../records/noteHtml";
 import { OfferingItem } from "./DiscoverPane";
+import { ContentCards, byAuthor } from "./ContentCards";
 
 export function DiscoverPanel({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -144,52 +145,166 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
           )}
           {sources
             .filter((p) => f === "all" || f === p.id)
-            .map((p) => (
-              <section key={p.id} className="sb-discover-section">
-                <h3 className="sb-discover-section-title">{p.label}</h3>
-                <ul className="sb-discover-list">
-                  {(f === "all" ? found[p.id]!.slice(0, 6) : found[p.id]!).map(
-                    (it) => (
-                      <li
-                        key={it.id}
-                        className="sb-discover-item sb-discover-item--row"
-                      >
-                        <button
-                          type="button"
-                          className="sb-discover-item-main"
-                          onClick={() => it.onOpen?.()}
-                        >
-                          <span className="material-symbols-outlined sb-discover-item-icon">
-                            {it.icon ?? "auto_stories"}
-                          </span>
-                          <span className="sb-discover-item-content">
-                            <span className="sb-discover-item-title">
-                              {it.title}
-                            </span>
-                            {it.description && (
-                              <span className="sb-discover-item-description">
-                                {it.description}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      </li>
-                    )
+            .map((p) => {
+              const { groups, rest } = byAuthor(found[p.id]!);
+              return groups.length > 0 ? (
+                <div key={p.id}>
+                  <ContentCards
+                    groups={groups}
+                    {...(f === "all" ? { limit: 3 } : {})}
+                  />
+                  {f === "all" && found[p.id]!.length > 3 * groups.length && (
+                    <button
+                      type="button"
+                      className="sb-content-see-all"
+                      onClick={() => setFilter(p.id)}
+                    >
+                      {t("see-all", { defaultValue: "See all" })}
+                    </button>
                   )}
-                </ul>
-                {f === "all" && found[p.id]!.length > 6 && (
-                  <button
-                    type="button"
-                    className="sb-content-see-all"
-                    onClick={() => setFilter(p.id)}
-                  >
-                    {t("see-all", { defaultValue: "See all" })}
-                  </button>
-                )}
-              </section>
-            ))}
+                  {rest.length > 0 && <ItemRows items={rest} />}
+                </div>
+              ) : (
+                <ProviderRows
+                  key={p.id}
+                  title={p.label}
+                  items={found[p.id]!}
+                  all={f === "all"}
+                  onSeeAll={() => setFilter(p.id)}
+                />
+              );
+            })}
         </div>
       </div>
     </div>
+  );
+}
+
+function ItemRows({ items }: { items: DiscoverItem[] }) {
+  return (
+    <ul className="sb-discover-list">
+      {items.map((it) => (
+        <li key={it.id} className="sb-discover-item sb-discover-item--row">
+          <button
+            type="button"
+            className="sb-discover-item-main"
+            onClick={() => it.onOpen?.()}
+          >
+            <span className="material-symbols-outlined sb-discover-item-icon">
+              {it.icon ?? "auto_stories"}
+            </span>
+            <span className="sb-discover-item-content">
+              <span className="sb-discover-item-title">{it.title}</span>
+              {it.description && (
+                <span className="sb-discover-item-description">
+                  {it.description}
+                </span>
+              )}
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A source's own section names, in the reader's language. */
+function sectionName(t: ReturnType<typeof useI18n>["t"], name: string) {
+  switch (name) {
+    case "People":
+      return t("discover-people", { defaultValue: "People" });
+    case "Places":
+      return t("discover-places", { defaultValue: "Places" });
+    case "Events":
+      return t("discover-events", { defaultValue: "Events" });
+    case "Old Testament":
+      return t("old-testament", { defaultValue: "Old Testament" });
+    case "New Testament":
+      return t("new-testament", { defaultValue: "New Testament" });
+    default:
+      return name;
+  }
+}
+
+/** One of a source's sections: its name and how many, folding away (the old reader's). */
+function FoldingSection(props: { title: string; items: DiscoverItem[] }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(true);
+  return (
+    <section className="sb-discover-section sb-discover-fold">
+      <button
+        type="button"
+        className="sb-annotation-group-header"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="sb-annotation-group-header-title">
+          {sectionName(t, props.title)}{" "}
+          <span className="sb-discover-fold-count">{props.items.length}</span>
+        </span>
+        <span
+          className={`material-symbols-outlined sb-annotation-group-header-icon${open ? "" : " sb-annotation-group-header-icon--collapsed"}`}
+          aria-hidden="true"
+        >
+          expand_more
+        </span>
+      </button>
+      {open && <ItemRows items={props.items} />}
+    </section>
+  );
+}
+
+/** A source's items split by their section, when they name one. */
+export function SectionedRows({ items }: { items: DiscoverItem[] }) {
+  const order: string[] = [];
+  const by = new Map<string, DiscoverItem[]>();
+  for (const it of items) {
+    const k = it.section ?? "";
+    if (!by.has(k)) order.push(k);
+    by.set(k, [...(by.get(k) ?? []), it]);
+  }
+  return (
+    <>
+      {order.map((k) =>
+        k ? (
+          <FoldingSection key={k} title={k} items={by.get(k)!} />
+        ) : (
+          <ItemRows key="rest" items={by.get(k)!} />
+        )
+      )}
+    </>
+  );
+}
+
+/** A source's section: its rows, six at first with See all. */
+function ProviderRows(props: {
+  title: string;
+  items: DiscoverItem[];
+  all: boolean;
+  onSeeAll: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className="sb-discover-section">
+      <h3 className="sb-discover-section-title">{props.title}</h3>
+      {props.items.some((it) => it.section) ? (
+        <SectionedRows
+          items={props.all ? props.items.slice(0, 12) : props.items}
+        />
+      ) : (
+        <ItemRows items={props.all ? props.items.slice(0, 6) : props.items} />
+      )}
+      {props.all &&
+        props.items.length >
+          (props.items.some((it) => it.section) ? 12 : 6) && (
+          <button
+            type="button"
+            className="sb-content-see-all"
+            onClick={props.onSeeAll}
+          >
+            {t("see-all", { defaultValue: "See all" })}
+          </button>
+        )}
+    </section>
   );
 }

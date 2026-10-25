@@ -443,6 +443,15 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           ))}
         </div>
       )}
+      {/* The old reader's credit under the bar (its "below the toolbar" tool). */}
+      <div className="sb-reader-toolbar-powered-by" aria-hidden="true">
+        <SeedBibleIcon size={12} />
+        <span>
+          {t("powered-by-seed-bible-api", {
+            defaultValue: "Powered by Seed Bible API",
+          })}
+        </span>
+      </div>
     </nav>
   );
 }

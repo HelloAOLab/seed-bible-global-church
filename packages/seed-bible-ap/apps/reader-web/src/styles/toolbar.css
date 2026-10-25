@@ -1699,3 +1699,23 @@
 .sb-reader-toolbar-audio-stop > svg rect {
   fill: var(--sb-reader-toolbar-background);
 }
+
+/* The old reader's "Powered by Seed Bible API" line, just under the bar. */
+.sb-reader-toolbar-powered-by {
+  position: absolute;
+  top: calc(100% + 0.125rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  .sb-reader-toolbar-powered-by {
+    display: none;
+  }
+}

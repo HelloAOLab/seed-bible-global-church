@@ -33,6 +33,15 @@ export interface DiscoverItem {
   description?: string;
   icon?: string;
   onOpen?: () => void;
+  /** A picture for the old reader's content cards (videos and articles), grouped under their `author`. */
+  image?: string;
+  author?: string;
+  /** The full text behind "Read more". */
+  longText?: string;
+  /** A video that can play in place (an embeddable player address). */
+  embedUrl?: string;
+  /** The section it is listed under within its source (People, Places, Events; Old or New Testament). */
+  section?: string;
 }
 export interface DiscoverContext {
   chapterRef: string;

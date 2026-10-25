@@ -896,5 +896,14 @@
   "reading-plan-session-n": "Session {{day}}",
   "reading-plan-session-short": "Session",
   "reading-plan-started-on": "started {{date}}",
-  "reading-plan-streak": "{{count}}-day streak"
+  "reading-plan-streak": "{{count}}-day streak",
+  "discover-events": "Events",
+  "discover-people": "People",
+  "discover-places": "Places",
+  "open-content": "Open {{title}}",
+  "open-page": "Open page",
+  "play-video": "Play {{title}}",
+  "powered-by-seed-bible-api": "Powered by Seed Bible API",
+  "read-less": "Read less",
+  "read-more": "Read more"
 }
