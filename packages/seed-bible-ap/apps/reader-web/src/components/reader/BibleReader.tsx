@@ -7,13 +7,17 @@ import { DiscoverPanel } from "../social/DiscoverPanel";
 import { PresenceGutter, colorOf } from "../sessions/PresenceGutter";
 import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
 import { useEffect, useRef, useState } from "preact/hooks";
-import type { ChapterVerse } from "../../backend/bible";
+import type { ChapterVerse, TranslationBookChapter } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import type { Reading } from "../../state/reading/reading";
 import { useI18n } from "../../i18n";
-import { renderChapterContent } from "./chapterContent";
+import {
+  renderChapterContent,
+  type ChapterContentOptions,
+} from "./chapterContent";
+import { forwardRef } from "preact/compat";
 import { ChapterColumn } from "./ChapterColumn";
-import { attachReaderViewport } from "./readerViewport";
+import { attachReaderViewport, pageScrolls } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
 import { openSavePicker } from "../records/SavePicker";
@@ -45,13 +49,35 @@ export function BibleReader({
     state.live.active.value && state.live.sessionReading() === reading;
   const [footnote, setFootnote] = useState<SelectedFootnote | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const prevPreview = useRef<HTMLDivElement>(null);
+  const nextPreview = useRef<HTMLDivElement>(null);
   // Scroll memory, the linked verse and the swipe, for this pane on this tab's reading.
   useEffect(() => {
     if (!root.current) return;
     return attachReaderViewport(root.current, reading, {
       onNavigate: () => selection.clear(),
+      previews: () =>
+        pageScrolls()
+          ? { prev: prevPreview.current, next: nextPreview.current }
+          : null,
     });
   }, [reading]);
+  // The phone's swipe slides the neighbouring chapter in beside this one: fetch both ahead.
+  const [neighbours, setNeighbours] = useState<{
+    prev: TranslationBookChapter | null;
+    next: TranslationBookChapter | null;
+  }>({ prev: null, next: null });
+  useEffect(() => {
+    if (!chapter || !pageScrolls())
+      return setNeighbours({ prev: null, next: null });
+    let live = true;
+    void Promise.all([reading.peek("prev"), reading.peek("next")]).then(
+      ([prev, next]) => live && setNeighbours({ prev, next })
+    );
+    return () => {
+      live = false;
+    };
+  }, [chapter]);
   const translationLabel =
     reading.translation.value?.shortName ?? reading.translationId.value;
   // The text on screen, checked against what was published (state/reading/scriptureCheck.ts).
@@ -301,30 +327,84 @@ export function BibleReader({
   );
 
   return (
-    <div
-      ref={root}
-      onContextMenu={(e: MouseEvent) => {
-        // A right-click on a verse opens the verse toolbar as a menu at the pointer (the old ContextMenu).
-        const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(
-          "[data-verse-number]"
-        );
-        if (!el || !active) return;
-        e.preventDefault();
-        const n = Number(el.dataset["verseNumber"]);
-        if (!selection.verses.value.includes(n)) selection.select(n, n);
-        ui.verseMenuAt.value = { x: e.clientX, y: e.clientY };
-      }}
-      className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
-      // The translation's own direction (Hebrew, Arabic run right to left), as the old reader sets it.
-      dir={reading.translation.value?.textDirection}
-      onClick={() => selection.clear()}
-    >
-      <div className="sb-bible-reader-mobile-header">
-        <div className="sb-bible-reader-mobile-header-text">
-          <h1 className="sb-bible-reader-mobile-header-title">
+    <>
+      <div
+        ref={root}
+        onContextMenu={(e: MouseEvent) => {
+          // A right-click on a verse opens the verse toolbar as a menu at the pointer (the old ContextMenu).
+          const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+            "[data-verse-number]"
+          );
+          if (!el || !active) return;
+          e.preventDefault();
+          const n = Number(el.dataset["verseNumber"]);
+          if (!selection.verses.value.includes(n)) selection.select(n, n);
+          ui.verseMenuAt.value = { x: e.clientX, y: e.clientY };
+        }}
+        className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
+        // The translation's own direction (Hebrew, Arabic run right to left), as the old reader sets it.
+        dir={reading.translation.value?.textDirection}
+        onClick={() => selection.clear()}
+      >
+        <div className="sb-bible-reader-mobile-header">
+          <div className="sb-bible-reader-mobile-header-text">
+            <h1 className="sb-bible-reader-mobile-header-title">
+              <button
+                type="button"
+                className="sb-bible-reader-mobile-header-translation"
+                aria-label={t("change-translation", {
+                  name: translationLabel,
+                  defaultValue: `Change translation (${translationLabel})`,
+                })}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  ui.selector.value = "translations";
+                }}
+              >
+                {translationLabel}
+              </button>
+            </h1>
+          </div>
+          <div className="sb-bible-reader-mobile-header-actions">
+            {saveButtons}
+            {shareButton}
+            {inSession && <SessionPeopleStack state={state} />}
             <button
               type="button"
-              className="sb-bible-reader-mobile-header-translation"
+              className="sb-bible-reader-mobile-header-settings"
+              aria-label={t("text-settings", { defaultValue: "Text settings" })}
+              title={t("text-settings", { defaultValue: "Text settings" })}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.textSheet.value = true;
+              }}
+            >
+              <span className="material-symbols-outlined">tune</span>
+            </button>
+          </div>
+        </div>
+        <div className="sb-bible-reader-header">
+          <div className="sb-bible-reader-heading">
+            <h2
+              className="sb-bible-reader-title"
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.selector.value = "books";
+              }}
+            >
+              <span className="sb-bible-reader-book">
+                {reading.bookName.value}
+              </span>
+              <span className="sb-bible-reader-title-sep" aria-hidden="true">
+                {" "}
+              </span>
+              <span className="sb-bible-reader-chapter">
+                {reading.chapterNumber.value}
+              </span>
+            </h2>
+            <button
+              type="button"
+              className="sb-bible-reader-translation"
               aria-label={t("change-translation", {
                 name: translationLabel,
                 defaultValue: `Change translation (${translationLabel})`,
@@ -336,179 +416,185 @@ export function BibleReader({
             >
               {translationLabel}
             </button>
-          </h1>
-        </div>
-        <div className="sb-bible-reader-mobile-header-actions">
-          {saveButtons}
-          {shareButton}
-          {inSession && <SessionPeopleStack state={state} />}
-          <button
-            type="button"
-            className="sb-bible-reader-mobile-header-settings"
-            aria-label={t("text-settings", { defaultValue: "Text settings" })}
-            title={t("text-settings", { defaultValue: "Text settings" })}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.textSheet.value = true;
-            }}
-          >
-            <span className="material-symbols-outlined">tune</span>
-          </button>
-        </div>
-      </div>
-      <div className="sb-bible-reader-header">
-        <div className="sb-bible-reader-heading">
-          <h2
-            className="sb-bible-reader-title"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.selector.value = "books";
-            }}
-          >
-            <span className="sb-bible-reader-book">
-              {reading.bookName.value}
-            </span>
-            <span className="sb-bible-reader-title-sep" aria-hidden="true">
-              {" "}
-            </span>
-            <span className="sb-bible-reader-chapter">
-              {reading.chapterNumber.value}
-            </span>
-          </h2>
-          <button
-            type="button"
-            className="sb-bible-reader-translation"
-            aria-label={t("change-translation", {
-              name: translationLabel,
-              defaultValue: `Change translation (${translationLabel})`,
-            })}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.selector.value = "translations";
-            }}
-          >
-            {translationLabel}
-          </button>
-          <ScriptureCheckBadge
-            check={check}
-            translationName={
-              reading.translation.value?.name ?? translationLabel
-            }
-            chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
-          />
-        </div>
-        <div className="sb-bible-reader-actions">
-          {reading.fromDevice.value && (
-            <span
-              className="sb-reader-from-device"
-              title={t("read-from-device", {
-                defaultValue: "Read from this device",
-              })}
-            >
-              <span className="material-symbols-outlined">offline_pin</span>
-            </span>
-          )}
-          {/* The old reader's chapter actions, in its order. */}
-          {saveButtons}
-          <button
-            type="button"
-            className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
-            aria-label={t("discover", { defaultValue: "Discover" })}
-            title={t("discover", { defaultValue: "Discover" })}
-            aria-pressed={ui.pane.value === "discover"}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.pane.value =
-                ui.pane.value === "discover" ? "none" : "discover";
-            }}
-          >
-            <span className="material-symbols-outlined">explore</span>
-          </button>
-          {shareButton}
-          {active && canPlay && (
+            <ScriptureCheckBadge
+              check={check}
+              translationName={
+                reading.translation.value?.name ?? translationLabel
+              }
+              chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
+            />
+          </div>
+          <div className="sb-bible-reader-actions">
+            {reading.fromDevice.value && (
+              <span
+                className="sb-reader-from-device"
+                title={t("read-from-device", {
+                  defaultValue: "Read from this device",
+                })}
+              >
+                <span className="material-symbols-outlined">offline_pin</span>
+              </span>
+            )}
+            {/* The old reader's chapter actions, in its order. */}
+            {saveButtons}
             <button
               type="button"
-              className="sb-bible-reader-play-button"
-              aria-label={
-                playing
-                  ? t("pause", { defaultValue: "Pause" })
-                  : t("listen", { defaultValue: "Listen" })
-              }
-              title={
-                playing
-                  ? t("pause", { defaultValue: "Pause" })
-                  : t("listen", { defaultValue: "Listen" })
-              }
+              className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
+              aria-label={t("discover", { defaultValue: "Discover" })}
+              title={t("discover", { defaultValue: "Discover" })}
+              aria-pressed={ui.pane.value === "discover"}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
-                if (state.tts.isSpeaking.value) state.tts.stop();
-                else if (audio.controller.isPlaying.value) audio.pause();
-                else if (audio.available.value) audio.play();
-                else state.listen();
+                ui.pane.value =
+                  ui.pane.value === "discover" ? "none" : "discover";
               }}
             >
-              <span className="material-symbols-outlined sb-icon-filled">
-                {playing ? "pause" : "play_arrow"}
-              </span>
+              <span className="material-symbols-outlined">explore</span>
             </button>
-          )}
-        </div>
-      </div>
-      <div className="sb-bible-reader-content">
-        <div className="sb-bible-reader-main-content">
-          <h2
-            className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              ui.selector.value = "books";
-            }}
-          >
-            <span className="sb-bible-reader-book">
-              {reading.bookName.value}
-            </span>
-            <span className="sb-bible-reader-chapter">
-              {reading.chapterNumber.value}
-            </span>
-          </h2>
-          {body()}
-        </div>
-        {active && settings.showDiscovered.value && (
-          <DiscoverPanel state={state} />
-        )}
-      </div>
-
-      {footnote && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            setFootnote(null);
-          }}
-        >
-          <div
-            className="sb-footnote-modal"
-            role="dialog"
-            onClick={(e: MouseEvent) => e.stopPropagation()}
-          >
-            <div className="sb-footnote-modal-header">
-              <h3 className="sb-footnote-modal-title">
-                {reading.bookName.value} {reading.chapterNumber.value}
-                {footnote.verse ? `:${footnote.verse.number}` : ""}
-              </h3>
+            {shareButton}
+            {active && canPlay && (
               <button
-                className="sb-footnote-modal-close"
-                aria-label={t("close-footnote", {
-                  defaultValue: "Close footnote",
-                })}
-                onClick={() => setFootnote(null)}
+                type="button"
+                className="sb-bible-reader-play-button"
+                aria-label={
+                  playing
+                    ? t("pause", { defaultValue: "Pause" })
+                    : t("listen", { defaultValue: "Listen" })
+                }
+                title={
+                  playing
+                    ? t("pause", { defaultValue: "Pause" })
+                    : t("listen", { defaultValue: "Listen" })
+                }
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  if (state.tts.isSpeaking.value) state.tts.stop();
+                  else if (audio.controller.isPlaying.value) audio.pause();
+                  else if (audio.available.value) audio.play();
+                  else state.listen();
+                }}
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined sb-icon-filled">
+                  {playing ? "pause" : "play_arrow"}
+                </span>
               </button>
-            </div>
-            <div className="sb-footnote-modal-content">{note?.text ?? ""}</div>
+            )}
           </div>
         </div>
+        <div className="sb-bible-reader-content">
+          <div className="sb-bible-reader-main-content">
+            <h2
+              className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.selector.value = "books";
+              }}
+            >
+              <span className="sb-bible-reader-book">
+                {reading.bookName.value}
+              </span>
+              <span className="sb-bible-reader-chapter">
+                {reading.chapterNumber.value}
+              </span>
+            </h2>
+            {body()}
+          </div>
+          {active && settings.showDiscovered.value && (
+            <DiscoverPanel state={state} />
+          )}
+        </div>
+
+        {footnote && (
+          <div
+            className="sb-footnote-modal-overlay"
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              setFootnote(null);
+            }}
+          >
+            <div
+              className="sb-footnote-modal"
+              role="dialog"
+              onClick={(e: MouseEvent) => e.stopPropagation()}
+            >
+              <div className="sb-footnote-modal-header">
+                <h3 className="sb-footnote-modal-title">
+                  {reading.bookName.value} {reading.chapterNumber.value}
+                  {footnote.verse ? `:${footnote.verse.number}` : ""}
+                </h3>
+                <button
+                  className="sb-footnote-modal-close"
+                  aria-label={t("close-footnote", {
+                    defaultValue: "Close footnote",
+                  })}
+                  onClick={() => setFootnote(null)}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="sb-footnote-modal-content">
+                {note?.text ?? ""}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <SwipePreview
+        ref={prevPreview}
+        chapter={neighbours.prev}
+        scripture={settings.scripture.value}
+        fontSize={settings.fontSize.value}
+      />
+      <SwipePreview
+        ref={nextPreview}
+        chapter={neighbours.next}
+        scripture={settings.scripture.value}
+        fontSize={settings.fontSize.value}
+      />
+    </>
+  );
+}
+
+/** A neighbouring chapter as the swipe shows it sliding in: its title and text, nothing to tap. */
+const SwipePreview = forwardRef<
+  HTMLDivElement,
+  {
+    chapter: TranslationBookChapter | null;
+    scripture: ChapterContentOptions["scriptureElements"];
+    fontSize: string | number;
+  }
+>(function SwipePreview({ chapter, scripture, fontSize }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={`sb-reader-swipe-preview sb-bible-reader sb-font-size-${fontSize}`}
+      dir={chapter?.translation.textDirection}
+      aria-hidden="true"
+      style={{ visibility: "hidden" }}
+    >
+      {chapter && (
+        <>
+          <div className="sb-reader-swipe-preview-header">
+            <span className="sb-reader-swipe-preview-title">
+              {chapter.book.name} {chapter.chapter.number}
+            </span>
+            <span className="sb-reader-swipe-preview-translation">
+              {chapter.translation.shortName}
+            </span>
+          </div>
+          <div className="sb-chapter-content">
+            {renderChapterContent(chapter, {
+              selectedVerses: [],
+              highlights: [],
+              notes: [],
+              scriptureElements: scripture,
+              onVerseClick: () => {},
+              onOpenFootnote: () => {},
+              onAnnotationVerseClick: () => {},
+            })}
+          </div>
+        </>
       )}
     </div>
   );
-}
+});

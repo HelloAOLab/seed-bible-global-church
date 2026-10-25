@@ -922,5 +922,7 @@
   "upload-extensions": "Upload Extensions",
   "login-agree-prefix": "I agree to the",
   "login-error-terms-required": "Please agree to the terms of service to continue.",
-  "signed-out-message": "You've been signed out. Please sign in again."
+  "signed-out-message": "You've been signed out. Please sign in again.",
+  "collapsed-tab-playing-label": "{{label}} — playing audio",
+  "tab-playing-audio": "Playing audio"
 }

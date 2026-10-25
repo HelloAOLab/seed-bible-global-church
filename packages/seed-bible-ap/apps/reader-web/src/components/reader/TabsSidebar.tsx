@@ -22,6 +22,8 @@ import {
 import { openSavePicker } from "../records/SavePicker";
 import { requestEndSession } from "../sessions/SessionSettings";
 import { colorOf } from "../sessions/PresenceGutter";
+import { BookmarkGlyph, bookmarkButtonLabel } from "../records/Bookmarks";
+import type { Reading as ReadingState } from "../../state/reading/reading";
 
 function LayoutPreview({ layout }: { layout: LayoutId }) {
   return (
@@ -273,6 +275,12 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               // The old reader's Shared tab: the one the live session lives in.
               const shared =
                 state.live.active.value && state.sessionTabId.value === tab.id;
+              const bookmarksHere = state.bookmarks.onChapter(
+                chapterRef,
+                r.translationId.value
+              );
+              const front = bookmarksHere[0];
+              const audible = playingIn(state, r, isSelected);
               return (
                 <div
                   key={tab.id}
@@ -300,6 +308,27 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                         {r.translation.value?.shortName ??
                           r.translationId.value}
                       </span>
+                      {front && (
+                        <span
+                          className="sb-tab-bookmark-marker"
+                          role="img"
+                          aria-label={bookmarkButtonLabel(t, bookmarksHere)}
+                          title={bookmarkButtonLabel(t, bookmarksHere)}
+                        >
+                          <BookmarkGlyph colorId={front.colorId} size={12} />
+                        </span>
+                      )}
+                      {audible && (
+                        <span
+                          className="material-symbols-outlined sb-tab-audio-icon"
+                          role="img"
+                          aria-label={t("tab-playing-audio", {
+                            defaultValue: "Playing audio",
+                          })}
+                        >
+                          volume_up
+                        </span>
+                      )}
                       {onScreen && tabs.slotTabIds.value.length > 1 && (
                         <span className="sb-tab-pane-count" aria-hidden="true">
                           {tabs.slotTabIds.value.indexOf(tab.id) + 1}
@@ -426,34 +455,12 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
       {collapsed && (
         <div className="sb-sidebar-collapsed-tab-list">
           {tabs.tabs.value.map((tab) => (
-            <button
+            <CollapsedTile
               key={tab.id}
-              type="button"
-              className={`sb-sidebar-icon-button${tabs.selectedId.value === tab.id ? " sb-sidebar-icon-button-selected" : ""}`}
-              title={`${tab.reading.bookName.value} ${tab.reading.chapterNumber.value}`}
-              aria-label={
-                state.live.active.value && state.sessionTabId.value === tab.id
-                  ? t("collapsed-tab-shared-label", {
-                      title: `${tab.reading.bookName.value} ${tab.reading.chapterNumber.value}`,
-                      count:
-                        state.live.state.value?.participants.filter(
-                          (p) => p.connections > 0
-                        ).length ?? 0,
-                      defaultValue:
-                        "{{title}} — shared session, {{count}} present",
-                    })
-                  : undefined
-              }
-              onClick={() => tabs.selectTab(tab.id)}
-            >
-              {state.live.active.value &&
-                state.sessionTabId.value === tab.id && (
-                  <span className="sb-collapsed-tab-tag">
-                    {t("shared", { defaultValue: "Shared" })}
-                  </span>
-                )}
-              {tab.reading.bookId.value.slice(0, 3)}
-            </button>
+              state={state}
+              tabId={tab.id}
+              reading={tab.reading}
+            />
           ))}
           <button
             type="button"
@@ -573,5 +580,106 @@ function SessionPeople({ state }: { state: ReaderState }) {
         })}
       </div>
     </div>
+  );
+}
+
+/** Whether this tab's reading is the one being heard (a recording of its chapter, or the device voice on the selected tab). */
+function playingIn(
+  state: ReaderState,
+  r: ReadingState,
+  isSelected: boolean
+): boolean {
+  if (isSelected && state.tts.isSpeaking.value) return true;
+  return (
+    state.audio.controller.isPlaying.value &&
+    state.audio.loaded.value ===
+      `${r.translationId.value}/${r.bookId.value}.${r.chapterNumber.value}`
+  );
+}
+
+/** The old reader's collapsed-rail tile: the short title ("JHN 3"), Shared with its people as dots, and a speaker while it plays. */
+function CollapsedTile({
+  state,
+  tabId,
+  reading: r,
+}: {
+  state: ReaderState;
+  tabId: string;
+  reading: ReadingState;
+}) {
+  const { t } = useI18n();
+  const tabs = state.tabs;
+  const isSelected = tabs.selectedId.value === tabId;
+  const shortTitle = r.bookId.value
+    ? `${r.bookId.value} ${r.chapterNumber.value}`
+    : "";
+  const shared = state.live.active.value && state.sessionTabId.value === tabId;
+  const s = state.live.state.value;
+  const rank = (agent: string) =>
+    s?.host?.agent === agent ? 0 : (s?.coHosts ?? []).includes(agent) ? 1 : 2;
+  const people = shared
+    ? (s?.participants ?? [])
+        .filter((p) => p.connections > 0)
+        .sort((a, b) => rank(a.agent) - rank(b.agent))
+    : [];
+  const audible = playingIn(state, r, isSelected);
+  const label =
+    shared && people.length > 0
+      ? t("collapsed-tab-shared-label", {
+          title: shortTitle,
+          count: people.length,
+          defaultValue: "{{title}} — shared session, {{count}} present",
+        })
+      : shortTitle;
+  const shown = people.slice(0, 3);
+  return (
+    <button
+      type="button"
+      className={`sb-collapsed-tab-tile${isSelected ? " sb-collapsed-tab-tile-selected" : ""}${shared ? " sb-collapsed-tab-tile-shared" : ""}`}
+      aria-label={
+        audible
+          ? t("collapsed-tab-playing-label", {
+              label,
+              defaultValue: "{{label}} — playing audio",
+            })
+          : label
+      }
+      title={`${r.bookName.value} ${r.chapterNumber.value}`}
+      onClick={() => tabs.selectTab(tabId)}
+    >
+      {shared && (
+        <span className="sb-collapsed-tab-tag">
+          {t("shared", { defaultValue: "Shared" })}
+        </span>
+      )}
+      <span className="sb-collapsed-tab-title">{shortTitle}</span>
+      {audible && (
+        <span
+          className="material-symbols-outlined sb-collapsed-tab-audio-icon"
+          aria-hidden="true"
+        >
+          volume_up
+        </span>
+      )}
+      {shown.length > 0 && (
+        <span className="sb-collapsed-tab-presence" aria-hidden="true">
+          {shown.map((p) => {
+            const role = rank(p.agent);
+            return (
+              <span
+                key={p.agent}
+                className={`sb-collapsed-tab-presence-dot${role === 0 ? " sb-collapsed-tab-presence-dot-host" : role === 1 ? " sb-collapsed-tab-presence-dot-cohost" : ""}`}
+                style={{ backgroundColor: colorOf(p.agent) }}
+              />
+            );
+          })}
+          {people.length > shown.length && (
+            <span className="sb-collapsed-tab-presence-more">
+              +{people.length - shown.length}
+            </span>
+          )}
+        </span>
+      )}
+    </button>
   );
 }

@@ -115,6 +115,8 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
   const timings = signal<AudioTimings | null>(null);
   const error = signal<string | null>(null);
   let chapter: TranslationBookChapter | null = null;
+  /** The chapter the player is on, as `TRANSLATION/BOOK.CHAPTER` (which tab's reading it plays). */
+  const loaded = signal<string | null>(null);
   let el: AudioLike | null = null;
   let generation = 0;
 
@@ -147,6 +149,9 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
   async function load(next: TranslationBookChapter | null) {
     const gen = ++generation;
     chapter = next;
+    loaded.value = next
+      ? `${next.translation.id}/${next.book.id}.${next.chapter.number}`
+      : null;
     stop();
     timings.value = null;
     duration.value = null;
@@ -282,6 +287,7 @@ export function createChapterAudio(deps: ChapterAudioDeps) {
 
   return {
     available,
+    loaded,
     reader,
     readers,
     setReader,

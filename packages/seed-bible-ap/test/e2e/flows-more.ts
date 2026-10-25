@@ -5461,4 +5461,194 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "TB2",
+    section: "2. Tabs and panes",
+    title: "Tab marks and the collapsed rail",
+    rows: ["Tabs sidebar"],
+    checks:
+      "A bookmark on John 3 puts its ribbon on the tab's row, and Listen puts a speaker there while it plays. With the sidebar closed to its rail, the tab is the old reader's tile: 'JHN 3', the speaker, and a label that says it is playing audio",
+    run: async (c) => {
+      await c.open(CH);
+      const page = c.page;
+      const row = page.locator(".sb-tab-row-selected");
+      await page
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+        )
+        .click();
+      await c.bookmarkPicker();
+      try {
+        await row
+          .locator(".sb-tab-bookmark-marker svg")
+          .waitFor({ timeout: 5000 })
+          .catch(() => {
+            throw new Error("no bookmark ribbon on the tab's row");
+          });
+        const head = page.locator(
+          ".sb-bible-reader-active .sb-bible-reader-actions"
+        );
+        await head.getByRole("button", { name: "Listen" }).click();
+        await row
+          .locator(".sb-tab-audio-icon")
+          .waitFor({ timeout: 15000 })
+          .catch(() => {
+            throw new Error("no speaker on the tab's row while it plays");
+          });
+        await page.locator(".sb-sidebar-collapse-button").click();
+        const tile = page.locator(".sb-collapsed-tab-tile-selected");
+        await tile.waitFor({ timeout: 3000 });
+        const title = (
+          await tile.locator(".sb-collapsed-tab-title").innerText()
+        ).trim();
+        if (title !== "JHN 3") throw new Error(`tile title: ${title}`);
+        await tile
+          .locator(".sb-collapsed-tab-audio-icon")
+          .waitFor({ timeout: 3000 });
+        const label = (await tile.getAttribute("aria-label")) ?? "";
+        if (!/playing audio/i.test(label))
+          throw new Error(`tile label: ${label}`);
+        await head.getByRole("button", { name: "Pause" }).click();
+        await tile
+          .locator(".sb-collapsed-tab-audio-icon")
+          .waitFor({ state: "detached", timeout: 3000 });
+        await page.locator(".sb-sidebar-collapse-button").click();
+        return `row: ribbon and speaker; rail tile '${title}', '${label}'; the speaker went with Pause`;
+      } finally {
+        if (await page.locator(".sb-collapsed-tab-tile").count())
+          await page.locator(".sb-sidebar-collapse-button").click();
+        await page
+          .locator(
+            ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+          )
+          .click();
+        await c.bookmarkPicker({ remove: true });
+      }
+    },
+  },
+  {
+    id: "SW1",
+    section: "3. Reading",
+    title: "The phone's swipe shows the next chapter",
+    rows: ["Swipe between chapters"],
+    checks:
+      "On an iPhone 13 at John 3, dragging the page to the left moves it with the finger and John 4 slides in beside it with its title and text; letting go part-way springs back to John 3, and a full swipe lands on John 4. Dragging right from John 4 shows John 3 coming in from the left",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      try {
+        await c.open(CH, page);
+        await c.settleTours(page);
+        const reader = page.locator(".sb-bible-reader-active").first();
+        const preview = (re: RegExp) =>
+          page
+            .locator(".sb-reader-swipe-preview")
+            .filter({ hasText: re })
+            .first();
+        await preview(/John 4/)
+          .locator(".sb-chapter-content [data-verse-number]")
+          .first()
+          .waitFor({ state: "attached", timeout: 10000 })
+          .catch(() => {
+            throw new Error("John 4 was not fetched ahead");
+          });
+        // Touch events by hand: the reader follows touchstart/move/end.
+        const drag = (from: number, to: number, release: boolean) =>
+          page.evaluate(
+            ({ from, to, release }) => {
+              const el = document.querySelector(
+                ".sb-bible-reader-active .sb-chapter-content"
+              )!;
+              const at = (x: number) =>
+                new Touch({
+                  identifier: 1,
+                  target: el,
+                  clientX: x,
+                  clientY: 300,
+                });
+              const fire = (type: string, x: number) =>
+                el.dispatchEvent(
+                  new TouchEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    touches: type === "touchend" ? [] : [at(x)],
+                    changedTouches: [at(x)],
+                  })
+                );
+              fire("touchstart", from);
+              for (let i = 1; i <= 10; i++)
+                fire("touchmove", from + ((to - from) * i) / 10);
+              if (release) fire("touchend", to);
+            },
+            { from, to, release }
+          );
+        const leftOf = (sel: ReturnType<typeof preview>) =>
+          sel.evaluate((el) => el.getBoundingClientRect().left);
+        await drag(300, 150, false);
+        const next = preview(/John 4/);
+        if (!(await next.isVisible()))
+          throw new Error("John 4 did not show while dragging");
+        const mid = await leftOf(next);
+        if (!(mid > 150 && mid < 300))
+          throw new Error(`John 4 sits at ${Math.round(mid)}px mid-drag`);
+        // Brought back and let go: John 3 stays.
+        await page.evaluate(() => {
+          const el = document.querySelector(
+            ".sb-bible-reader-active .sb-chapter-content"
+          )!;
+          const t = new Touch({
+            identifier: 1,
+            target: el,
+            clientX: 285,
+            clientY: 300,
+          });
+          el.dispatchEvent(
+            new TouchEvent("touchmove", {
+              bubbles: true,
+              cancelable: true,
+              touches: [t],
+              changedTouches: [t],
+            })
+          );
+          el.dispatchEvent(
+            new TouchEvent("touchend", {
+              bubbles: true,
+              cancelable: true,
+              changedTouches: [t],
+            })
+          );
+        });
+        await drag(300, 270, true);
+        await page.waitForTimeout(400);
+        if (!/\/JHN\/3/.test(page.url()))
+          throw new Error(`a short drag turned the page: ${page.url()}`);
+        await drag(320, 40, true);
+        await page.waitForURL(/\/JHN\/4/, { timeout: 5000 }).catch(() => {
+          throw new Error("a full swipe did not land on John 4");
+        });
+        await reader
+          .locator(".sb-bible-reader-mobile-header-title")
+          .waitFor({ timeout: 3000 });
+        await preview(/John 3/)
+          .locator(".sb-chapter-content [data-verse-number]")
+          .first()
+          .waitFor({ state: "attached", timeout: 10000 });
+        await drag(100, 250, false);
+        const back = await leftOf(preview(/John 3/));
+        if (!(back < 0 && back > -390))
+          throw new Error(
+            `John 3 sits at ${Math.round(back)}px dragging right`
+          );
+        await drag(250, 250, true);
+        return `mid-drag John 4 at ${Math.round(mid)}px; a short drag stayed; a full one landed on John 4; dragging right brought John 3 in at ${Math.round(back)}px`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
 ];

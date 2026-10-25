@@ -122,18 +122,23 @@ export function createReading(deps: ReadingDeps) {
         books.value = list;
       }
       let data: TranslationBookChapter;
-      try {
-        data = await deps.api.getTranslationBookChapter(t, b, c);
+      const early = peeked.get(chapterKey(t, b, c));
+      if (early) {
+        data = early;
         fromDevice.value = false;
-        await deps.chapters.set(chapterKey(t, b, c), data);
-      } catch (e) {
-        const cached = (await deps.chapters.get(chapterKey(t, b, c))) as
-          | TranslationBookChapter
-          | undefined;
-        if (!cached) throw e;
-        data = cached;
-        fromDevice.value = true;
-      }
+      } else
+        try {
+          data = await deps.api.getTranslationBookChapter(t, b, c);
+          fromDevice.value = false;
+          await deps.chapters.set(chapterKey(t, b, c), data);
+        } catch (e) {
+          const cached = (await deps.chapters.get(chapterKey(t, b, c))) as
+            | TranslationBookChapter
+            | undefined;
+          if (!cached) throw e;
+          data = cached;
+          fromDevice.value = true;
+        }
       if (gen !== generation) return;
       chapterData.value = data;
     } catch (e) {
@@ -155,6 +160,37 @@ export function createReading(deps: ReadingDeps) {
         }
       : null;
   };
+
+  /** The neighbouring chapters fetched ahead (the phone's swipe shows them sliding in), kept for the turn itself. */
+  const peeked = new Map<string, TranslationBookChapter>();
+  async function peek(
+    direction: "next" | "prev"
+  ): Promise<TranslationBookChapter | null> {
+    const c = chapterData.value;
+    const l = parseLink(
+      (direction === "next"
+        ? c?.nextChapterApiLink
+        : c?.previousChapterApiLink) ?? null
+    );
+    if (!l) return null;
+    const key = chapterKey(l.t, l.b, l.c);
+    const hit = peeked.get(key);
+    if (hit) return hit;
+    let data: TranslationBookChapter | null;
+    try {
+      data = await deps.api.getTranslationBookChapter(l.t, l.b, l.c);
+    } catch {
+      data =
+        ((await deps.chapters.get(key)) as
+          | TranslationBookChapter
+          | undefined) ?? null;
+    }
+    if (data) {
+      if (peeked.size >= 4) peeked.delete(peeked.keys().next().value!);
+      peeked.set(key, data);
+    }
+    return data;
+  }
 
   async function next() {
     const n = parseLink(chapterData.value?.nextChapterApiLink ?? null);
@@ -190,6 +226,7 @@ export function createReading(deps: ReadingDeps) {
     hasNext,
     hasPrev,
     goTo,
+    peek,
     next,
     prev,
     setTranslation,
