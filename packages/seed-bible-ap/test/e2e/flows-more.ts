@@ -4,7 +4,7 @@
 // two Homes that are friends with each other are skipped with the reason: the sample people have no friends.
 import { chromium, firefox, type Page } from "playwright";
 import type { Flow, FlowContext } from "./harness";
-import { BASE } from "./harness";
+import { A2A, BASE } from "./harness";
 
 const CH = "/read/BSB/JHN/3";
 const stamp = () => new Date().toISOString().slice(11, 19).replace(/:/g, "");
@@ -2485,7 +2485,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Publish a note",
     rows: ["Publish a note"],
     checks:
-      "Signed in: a note on John 7:37 → its ⋮ → Publish to your public shelf → marked Published; ⋮ → Copy link gives a link naming the offering; ⋮ → Make private again withdraws it",
+      "Signed in: a note on John 7:37 → its ⋮ → Publish to your public shelf → marked Published; the reader agent's passage answer for John 7:37 lists it from the registry at the verse's canonical id; ⋮ → Copy link gives a link naming the offering; ⋮ → Make private again withdraws it",
     run: async (c) => {
       await c.open("/read/BSB/JHN/7");
       await c.signInAsSample();
@@ -2504,12 +2504,33 @@ export const MORE_FLOWS: Flow[] = [
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
       if (!/offering=/.test(link)) throw new Error(`link "${link}"`);
+      // Found by its verse: the reader agent's passage answer for John 7:37 lists it from the registry, anchored at the
+      // verse's canonical id (the publish nudges a crawl; the registry matches by verse span).
+      const atVerse = async () => {
+        const res = await c.page.request.get(`${A2A}/api/passage/JHN.7.37`);
+        const out = (await res.json()) as {
+          locus: { id: string };
+          items: Array<{ source: string; locus: { id: string; ref: string } }>;
+        };
+        return out.items.filter(
+          (i) => i.source === "registry" && i.locus.id === out.locus.id
+        ).length;
+      };
+      const t0 = Date.now();
+      while (!(await atVerse())) {
+        if (Date.now() - t0 > 120000)
+          throw new Error(
+            "the published note never reached the registry at John 7:37"
+          );
+        await c.page.waitForTimeout(5000);
+      }
+      const foundIn = Math.round((Date.now() - t0) / 1000);
       await c.noteAction(card, /make private again/i);
       await card
         .locator(".sb-note-published-tag")
         .waitFor({ state: "detached", timeout: 120000 });
       await deleteAllNotes(c);
-      return `published, link ${link.replace(BASE, "").slice(0, 70)}…, withdrawn`;
+      return `published, found at John 7:37's canonical id in ${foundIn}s, link ${link.replace(BASE, "").slice(0, 70)}…, withdrawn`;
     },
   },
   {

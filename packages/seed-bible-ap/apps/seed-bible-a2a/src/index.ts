@@ -11,6 +11,7 @@ import {
   applyCrawl,
   listShelves,
   putShelf,
+  queryByLocusId,
   queryByPassage,
   queryByKind,
   queryRecent,
@@ -20,7 +21,7 @@ import {
   wipe,
 } from "./registry/store";
 import { edgeEndpointFor } from "../../../lib/a2a-client";
-import { isOsisRef, chapterOf } from "../../../lib/seed-protocol";
+import { parseLocus, seedRef } from "../../../lib/locus";
 import { fetchPreview } from "./preview";
 export { SvcRunDO };
 
@@ -186,7 +187,9 @@ app.all(
     c.json({ ok: false, error: "no such route" }, 404)
 );
 
-/** The registry, by passage: `?passage=JHN.3` (a verse narrows to its chapter), `&kind=note`. Public: it lists what owners released. */
+/** The registry, by passage: `?passage=` any verse, range, chapter or book (`JHN.3.16`, `John 3:1-8`, `JHN.3`) finds
+ *  what overlaps it; `?locus=0x…` what is anchored at exactly that canonical id; `&kind=note`. Public: it lists what
+ *  owners released. */
 const rowView = (r: OfferingRow) => ({
   owner: r.owner,
   shelf: r.shelf,
@@ -200,6 +203,11 @@ const rowView = (r: OfferingRow) => ({
   descriptor: JSON.parse(r.descriptor_json) as unknown,
   markdownPath: r.markdown_path,
   indexedAt: r.indexed_at,
+  locusId: r.locus_id ?? null,
+  span:
+    r.span_start !== null && r.span_end !== null
+      ? [r.span_start, r.span_end]
+      : null,
 });
 
 app.get("/registry/offerings", async (c) => {
@@ -214,17 +222,32 @@ app.get("/registry/offerings", async (c) => {
       offerings: rows.map(rowView),
     });
   }
-  if (!isOsisRef(passage))
+  const locusId = c.req.query("locus") ?? "";
+  if (/^0x[0-9a-fA-F]{64}$/.test(locusId)) {
+    const rows = await queryByLocusId(c.env.DB, locusId);
+    return c.json({
+      ok: true,
+      locus: locusId.toLowerCase(),
+      count: rows.length,
+      offerings: rows.map(rowView),
+    });
+  }
+  const asked = parseLocus(passage);
+  if (!asked)
     return c.json(
-      { ok: false, error: "passage must be an OSIS reference (JHN.3)" },
+      {
+        ok: false,
+        error: "passage must be a place in the Bible (JHN.3, John 3:16)",
+      },
       400
     );
-  const rows = await queryByPassage(c.env.DB, chapterOf(passage), {
+  const rows = await queryByPassage(c.env.DB, asked, {
     kind: c.req.query("kind") ?? undefined,
   });
   return c.json({
     ok: true,
-    passage: chapterOf(passage),
+    passage: seedRef(asked),
+    locus: { id: asked.id, span: asked.span },
     count: rows.length,
     offerings: rows.map(rowView),
   });

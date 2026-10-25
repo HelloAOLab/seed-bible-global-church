@@ -2,6 +2,7 @@
 // rows (the rebuild smoke proves it). A document the shelf stopped listing becomes a tombstone (`withdrawn_at`),
 // never a silent delete, so a query can say "it was here until …".
 import type { IndexedOffering, Shelf, ShelfCrawl } from "./crawl";
+import { parseLocus, type Locus } from "../../../../lib/locus";
 
 export interface OfferingRow {
   owner: string;
@@ -19,6 +20,10 @@ export interface OfferingRow {
   markdown_path: string | null;
   indexed_at: string;
   withdrawn_at: string | null;
+  /** The canonical locus of passage_ref (null for an offering with no passage, `*`). */
+  locus_id: string | null;
+  span_start: number | null;
+  span_end: number | null;
 }
 
 export async function listShelves(db: D1Database): Promise<Shelf[]> {
@@ -109,9 +114,9 @@ export async function applyCrawl(
   const stmts: D1PreparedStatement[] = c.offerings.map((o: IndexedOffering) =>
     db
       .prepare(
-        `INSERT INTO offerings (owner, entry_id, shelf, version, release_id, release_signed, passage, passage_ref, kind, title, descriptor_id, descriptor_json, markdown_path, indexed_at, withdrawn_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, NULL)
-         ON CONFLICT(owner, entry_id) DO UPDATE SET shelf = ?3, version = ?4, release_id = ?5, release_signed = ?6, passage = ?7, passage_ref = ?8, kind = ?9, title = ?10, descriptor_id = ?11, descriptor_json = ?12, markdown_path = ?13, indexed_at = ?14, withdrawn_at = NULL`
+        `INSERT INTO offerings (owner, entry_id, shelf, version, release_id, release_signed, passage, passage_ref, kind, title, descriptor_id, descriptor_json, markdown_path, indexed_at, withdrawn_at, locus_id, span_start, span_end)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, NULL, ?15, ?16, ?17)
+         ON CONFLICT(owner, entry_id) DO UPDATE SET shelf = ?3, version = ?4, release_id = ?5, release_signed = ?6, passage = ?7, passage_ref = ?8, kind = ?9, title = ?10, descriptor_id = ?11, descriptor_json = ?12, markdown_path = ?13, indexed_at = ?14, withdrawn_at = NULL, locus_id = ?15, span_start = ?16, span_end = ?17`
       )
       .bind(
         o.owner,
@@ -127,7 +132,8 @@ export async function applyCrawl(
         o.descriptorId,
         JSON.stringify(o.descriptor),
         o.markdownPath,
-        now
+        now,
+        ...locusColumns(o.passageRef)
       )
   );
   // Tombstone every live row of this owner the shelf no longer lists.
@@ -168,25 +174,49 @@ export async function applyCrawl(
   return { indexed: c.offerings.length, withdrawn: gone.length };
 }
 
+const locusColumns = (
+  passageRef: string
+): [string | null, number | null, number | null] => {
+  const l = parseLocus(passageRef);
+  return l ? [l.id, l.span[0], l.span[1]] : [null, null, null];
+};
+
+/** Live offerings whose passage overlaps the locus asked — a verse finds the range and the chapter that hold it, a
+ *  chapter or a book finds everything inside. A row indexed before the span existed is matched by its chapter. */
 export async function queryByPassage(
   db: D1Database,
-  passage: string,
+  passage: string | Locus,
   opts: { kind?: string; max?: number } = {}
 ): Promise<OfferingRow[]> {
+  const l = typeof passage === "string" ? parseLocus(passage) : passage;
+  if (!l) return [];
   const max = Math.min(Math.max(opts.max ?? 50, 1), 200);
-  const r = opts.kind
-    ? await db
-        .prepare(
-          "SELECT * FROM offerings WHERE passage = ?1 AND kind = ?2 AND withdrawn_at IS NULL ORDER BY indexed_at DESC LIMIT ?3"
-        )
-        .bind(passage, opts.kind, max)
-        .all<OfferingRow>()
-    : await db
-        .prepare(
-          "SELECT * FROM offerings WHERE passage = ?1 AND withdrawn_at IS NULL ORDER BY indexed_at DESC LIMIT ?2"
-        )
-        .bind(passage, max)
-        .all<OfferingRow>();
+  const chapter = l.chapter !== undefined ? `${l.book}.${l.chapter}` : "";
+  const r = await db
+    .prepare(
+      `SELECT * FROM offerings
+        WHERE withdrawn_at IS NULL
+          AND ((span_start <= ?1 AND span_end >= ?2) OR (span_start IS NULL AND passage = ?3))
+          ${opts.kind ? "AND kind = ?5" : ""}
+        ORDER BY indexed_at DESC LIMIT ?4`
+    )
+    .bind(l.span[1], l.span[0], chapter, max, ...(opts.kind ? [opts.kind] : []))
+    .all<OfferingRow>();
+  return r.results ?? [];
+}
+
+/** Live offerings anchored at exactly this canonical locus id. */
+export async function queryByLocusId(
+  db: D1Database,
+  locusId: string,
+  max = 50
+): Promise<OfferingRow[]> {
+  const r = await db
+    .prepare(
+      "SELECT * FROM offerings WHERE locus_id = ?1 AND withdrawn_at IS NULL ORDER BY indexed_at DESC LIMIT ?2"
+    )
+    .bind(locusId.toLowerCase(), Math.min(Math.max(max, 1), 200))
+    .all<OfferingRow>();
   return r.results ?? [];
 }
 

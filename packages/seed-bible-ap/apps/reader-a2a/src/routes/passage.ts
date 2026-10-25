@@ -392,15 +392,14 @@ export async function composePassage(
         )
       )
     ),
-    gather(
-      perChapter(async (c) => {
-        const out = await platformGet<{ offerings?: Offering[] }>(
-          env,
-          `/registry/offerings?passage=${encodeURIComponent(`${asked.book}.${c}`)}`
-        );
-        return offeringItems(asked, out.offerings ?? []);
-      })
-    ),
+    // The registry matches by verse span itself: one ask for the whole locus, a range across chapters included.
+    gather(async () => {
+      const out = await platformGet<{ offerings?: Offering[] }>(
+        env,
+        `/registry/offerings?passage=${encodeURIComponent(seedRef(asked))}`
+      );
+      return offeringItems(asked, out.offerings ?? []);
+    }),
     person
       ? gather(
           perChapter(async (c) =>

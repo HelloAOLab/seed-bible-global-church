@@ -13,6 +13,10 @@ import {
 export const BASE = (
   process.env["E2E_BASE"] ?? "https://seed-reader.faithnet.io"
 ).replace(/\/$/, "");
+/** The reader agent the page talks to (its own origin, for a flow that asks it directly). */
+export const A2A = (
+  process.env["E2E_A2A"] ?? "https://seed-reader-a2a.faithnet.io"
+).replace(/\/$/, "");
 
 export interface FlowResult {
   id: string;
