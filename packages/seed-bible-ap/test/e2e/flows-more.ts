@@ -7869,4 +7869,56 @@ export const MORE_FLOWS: Flow[] = [
       return "after the sign-in's time was up the reader signed out, said why, and More offered Sign in";
     },
   },
+  {
+    id: "SI2",
+    section: "1. Signing in",
+    title: "Sign in right where you are",
+    rows: ["Signing in and out"],
+    checks:
+      "Signed out, the Profile and Today each show the sign-in itself — the terms and Sign in with Faithnet — instead of a Log in button that leads to Account",
+    run: async (c) => {
+      await c.open(CH);
+      await c.settleTours();
+      const seen: string[] = [];
+      const check = async (
+        open: () => Promise<void>,
+        where: string,
+        pane: string
+      ) => {
+        await open();
+        const p = c.page.locator(pane);
+        await p.waitFor({ timeout: 8000 });
+        await p
+          .getByRole("button", { name: /sign in with faithnet/i })
+          .waitFor({ timeout: 5000 });
+        await p.getByText(/I agree to the/).waitFor({ timeout: 2000 });
+        if (await p.getByRole("button", { name: /^log in$/i }).count())
+          throw new Error(`${where} still has Log in`);
+        seen.push(where);
+      };
+      await check(
+        async () => {
+          await c.page
+            .locator(".sb-tabs-sidebar")
+            .getByRole("button", { name: /profile|account/i })
+            .last()
+            .click();
+        },
+        "Profile",
+        ".sb-profile-screen"
+      );
+      await check(
+        async () => {
+          await c.page
+            .locator(".sb-reader-toolbar-desk")
+            .getByRole("button", { name: "More", exact: true })
+            .click();
+          await c.page.getByRole("menuitem", { name: "Today" }).click();
+        },
+        "Today",
+        ".sb-app-pane"
+      );
+      return `the sign-in itself in ${seen.join(", ")}`;
+    },
+  },
 ];

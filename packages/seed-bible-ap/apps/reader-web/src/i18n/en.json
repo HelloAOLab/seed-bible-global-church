@@ -138,8 +138,6 @@
   "first-run-playbook": "Your agent does not offer the reader's behaviour yet. Open your Home once — it gives your agent the behaviour by itself — then come back here: the reader retries on its own.",
   "open-home": "Open your Home",
   "sync-now": "Sync now",
-  "account-signin-title": "Keep your marks in your Library",
-  "account-signin-blurb": "Sign in with your Home. This page holds no key; your Home does the ceremony.",
   "sign-in-with": "Sign in with {{name}}",
   "try-sample-people": "Or try it as one of the Home's sample people",
   "church-theme": "Church theme",
@@ -563,8 +561,6 @@
   "edit-profile": "Edit profile",
   "change-profile-picture": "Change profile picture",
   "profile-signed-out-message": "Sign in to keep your highlights, notes and plans on every device.",
-  "log-in": "Log in",
-  "profile-more-ways": "More ways to sign in",
   "friends-count": "{{count}} friend",
   "friends-count-plural": "{{count}} friends",
   "requests-count": "{{count}} request",
@@ -1042,5 +1038,7 @@
   "not-now": "Not now",
   "friend-finish-adding": "Finish adding",
   "friend-joined-line": "accepted your invitation",
-  "signed-out-expired": "You were signed out because your sign-in expired. Sign in again to keep your highlights and notes."
+  "signed-out-expired": "You were signed out because your sign-in expired. Sign in again to keep your highlights and notes.",
+  "account-signin-blurb-plain": "Keep your highlights, notes and plans on every device. A small window opens: continue with Google or your email. New here? That creates your account.",
+  "account-signin-title-plain": "Sign in"
 }

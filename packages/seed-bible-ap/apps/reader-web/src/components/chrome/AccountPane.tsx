@@ -699,14 +699,14 @@ export function AccountCard({ state }: { state: ReaderState }) {
       ) : (
         <div className="sb-account-card sb-signin-card">
           <p className="sb-signin-title">
-            {t("account-signin-title", {
-              defaultValue: "Keep your marks in your Library",
+            {t("account-signin-title-plain", {
+              defaultValue: "Sign in",
             })}
           </p>
           <p className="sb-small sb-muted">
-            {t("account-signin-blurb", {
+            {t("account-signin-blurb-plain", {
               defaultValue:
-                "Sign in with your Home. This page holds no key; your Home does the ceremony.",
+                "Keep your highlights, notes and plans on every device. A small window opens: continue with Google or your email. New here? That creates your account.",
             })}
           </p>
           <label className="sb-login-terms" htmlFor="sb-login-terms">

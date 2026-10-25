@@ -6,6 +6,7 @@
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { AccountCard } from "./AccountPane";
 import {
   DEFAULT_ESTATE,
   HOME_SIGNIN_AVAILABLE,
@@ -324,33 +325,9 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           title={t("profile", { defaultValue: "Profile" })}
         />
         <div className="sb-profile-content">
-          <div className="sb-profile-identity">
-            <span className="sb-profile-avatar" aria-hidden="true">
-              <span className="material-symbols-outlined">account_circle</span>
-            </span>
-            <p className="sb-profile-signin-hint">
-              {t("profile-signed-out-message", {
-                defaultValue:
-                  "Sign in to keep your highlights, notes and plans on every device.",
-              })}
-            </p>
-            <button
-              type="button"
-              className="sb-profile-signin"
-              disabled={!HOME_SIGNIN_AVAILABLE}
-              onClick={() => go("account")}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
-            <button
-              type="button"
-              className="sb-note-button sb-profile-more-ways"
-              onClick={() => go("account")}
-            >
-              {t("profile-more-ways", {
-                defaultValue: "More ways to sign in",
-              })}
-            </button>
+          {/* The sign-in itself, here: the terms and Sign in with Faithnet, no detour through Account. */}
+          <div className="sb-profile-signin-card">
+            <AccountCard state={state} />
           </div>
         </div>
       </section>

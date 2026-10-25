@@ -541,3 +541,10 @@ button.sb-profile-plans-link {
 .sb-profile-about-count {
   align-self: flex-end;
 }
+
+/* Signed out, the Profile is the sign-in itself: the Account card, centred. */
+.sb-profile-signin-card {
+  width: 100%;
+  max-width: 34rem;
+  margin: 1.5rem auto 0;
+}

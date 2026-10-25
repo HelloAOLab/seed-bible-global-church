@@ -5,6 +5,7 @@ import { HuddleCard } from "./HuddleCall";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { AccountCard } from "../chrome/AccountPane";
 import { requestEndSession } from "./SessionSettings";
 import { standingOf } from "../../state/social/friendship";
 
@@ -101,16 +102,10 @@ export function SessionPane({ state }: { state: ReaderState }) {
             <p className="sb-small">
               {t("session-sign-in", {
                 defaultValue: "Sign in to read together.",
-              })}{" "}
-              <button
-                type="button"
-                className="sb-discover-empty-action"
-                onClick={() => (state.ui.pane.value = "account")}
-              >
-                {t("log-in", { defaultValue: "Log in" })}
-              </button>
+              })}
             </p>
           )}
+          {!signedIn && <AccountCard state={state} />}
           <p className="sb-small sb-muted">
             {t("session-start-blurb", {
               defaultValue:

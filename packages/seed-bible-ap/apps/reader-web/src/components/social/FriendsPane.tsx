@@ -16,6 +16,7 @@ import {
   connectViaHome,
 } from "../../session";
 import { FriendWaiting } from "./TodayPane";
+import { AccountCard } from "../chrome/AccountPane";
 import { Description } from "../chrome/ProfilePane";
 import type { FriendProfile } from "../../state/social/profile";
 
@@ -220,14 +221,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                   "Sign in to add friends and see what they're reading.",
               })}
             </p>
-            <button
-              type="button"
-              className="sb-friends-button sb-friends-button--primary"
-              disabled={!HOME_SIGNIN_AVAILABLE}
-              onClick={() => (state.ui.pane.value = "account")}
-            >
-              {t("log-in", { defaultValue: "Log in" })}
-            </button>
+            <AccountCard state={state} />
           </div>
         </div>
       </section>
