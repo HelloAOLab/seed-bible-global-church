@@ -2,7 +2,7 @@
 // plans, church themes, the extensions, links and first visit. Signed-in flows use the Home's sample person Seed
 // Reader and tidy up after themselves (what they publish is withdrawn, what they make is deleted). Rows that need
 // two Homes that are friends with each other are skipped with the reason: the sample people have no friends.
-import { chromium, firefox } from "playwright";
+import { chromium, firefox, type Page } from "playwright";
 import type { Flow, FlowContext } from "./harness";
 import { BASE } from "./harness";
 
@@ -5465,7 +5465,7 @@ export const MORE_FLOWS: Flow[] = [
     id: "TB2",
     section: "2. Tabs and panes",
     title: "Tab marks and the collapsed rail",
-    rows: ["Tabs sidebar"],
+    rows: ["Sidebar buttons"],
     checks:
       "A bookmark on John 3 puts its ribbon on the tab's row, and Listen puts a speaker there while it plays. With the sidebar closed to its rail, the tab is the old reader's tile: 'JHN 3', the speaker, and a label that says it is playing audio",
     run: async (c) => {
@@ -5530,7 +5530,7 @@ export const MORE_FLOWS: Flow[] = [
     id: "SW1",
     section: "3. Reading",
     title: "The phone's swipe shows the next chapter",
-    rows: ["Swipe between chapters"],
+    rows: ["Next / previous chapter"],
     checks:
       "On an iPhone 13 at John 3, dragging the page to the left moves it with the finger and John 4 slides in beside it with its title and text; letting go part-way springs back to John 3, and a full swipe lands on John 4. Dragging right from John 4 shows John 3 coming in from the left",
     run: async (c) => {
@@ -5646,6 +5646,98 @@ export const MORE_FLOWS: Flow[] = [
           );
         await drag(250, 250, true);
         return `mid-drag John 4 at ${Math.round(mid)}px; a short drag stayed; a full one landed on John 4; dragging right brought John 3 in at ${Math.round(back)}px`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
+  {
+    id: "LS1",
+    section: "1. Getting started",
+    title: "Switch language?",
+    rows: ["Interface language"],
+    checks:
+      "Picking a Spanish Bible from the English interface asks '¿Cambiar de idioma?' in Spanish with Cambiar, No cambies and Nunca vuelvas a preguntar; No cambies keeps English and it is not asked again in that tab. In a new tab Cambiar turns the interface Spanish. Back to an English Bible it asks in English; Never Ask Again stops it for good",
+    run: async (c) => {
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+      });
+      const fresh = async () => {
+        const page = await ctx.newPage();
+        c.watch(page);
+        await c.open("/read/BSB/JHN/3", page);
+        await c.settleTours(page);
+        return page;
+      };
+      const pickIn = async (page: Page, language: RegExp, search: string) => {
+        await page
+          .locator(".sb-bible-reader-active .sb-bible-reader-translation")
+          .click();
+        const win = page.locator(".sb-translation-picker .modal");
+        await win
+          .locator(".sb-translation-list-language")
+          .first()
+          .waitFor({ timeout: 40000 });
+        await c.settleTours(page);
+        await win.locator("#translation-search-input").fill(search);
+        const section = win
+          .locator(".sb-translation-list-language")
+          .filter({ hasText: language })
+          .first();
+        await section.waitFor({ timeout: 10000 });
+        const option = win
+          .locator('[role="option"].translation-option:visible')
+          .first();
+        await option.waitFor({ timeout: 1500 }).catch(() => section.click());
+        await option.click({ timeout: 5000 });
+        await win.waitFor({ state: "detached", timeout: 5000 });
+      };
+      const prompt = (page: Page) =>
+        page.locator(".sb-onboarding-card[role=dialog]");
+      try {
+        let page = await fresh();
+        await pickIn(page, /español/i, "Español");
+        await c.waitText(prompt(page), /¿cambiar de idioma\?/i, 5000);
+        const buttons = await prompt(page).locator("button").allInnerTexts();
+        if (buttons.join() !== "Cambiar,No cambies,Nunca vuelvas a preguntar")
+          throw new Error(`buttons: ${buttons.join(", ")}`);
+        await prompt(page).getByRole("button", { name: "No cambies" }).click();
+        await prompt(page).waitFor({ state: "detached", timeout: 3000 });
+        if ((await page.evaluate(() => document.documentElement.lang)) === "es")
+          throw new Error("No cambies switched the interface");
+        await pickIn(page, /english/i, "English");
+        await pickIn(page, /español/i, "Español");
+        await page.waitForTimeout(800);
+        if (await prompt(page).count())
+          throw new Error("asked twice in one tab");
+        await page.close();
+
+        page = await fresh();
+        await pickIn(page, /español/i, "Español");
+        await prompt(page).getByRole("button", { name: "Cambiar" }).click();
+        await page
+          .waitForFunction(() => document.documentElement.lang === "es", null, {
+            timeout: 5000,
+          })
+          .catch(() => {
+            throw new Error("Cambiar did not switch the interface to Spanish");
+          });
+        await page.close();
+
+        page = await fresh();
+        await pickIn(page, /english/i, "English");
+        await c.waitText(prompt(page), /switch language\?/i, 5000);
+        await prompt(page)
+          .getByRole("button", { name: "Never Ask Again" })
+          .click();
+        await page.close();
+
+        page = await fresh();
+        await pickIn(page, /english/i, "English");
+        await page.waitForTimeout(800);
+        if (await prompt(page).count())
+          throw new Error("asked again after Never Ask Again");
+        return "asked in Spanish with its three answers; No cambies kept English and it stayed quiet in that tab; Cambiar turned Spanish; back to English it asked in English; Never Ask Again stopped it";
       } finally {
         await ctx.close();
       }

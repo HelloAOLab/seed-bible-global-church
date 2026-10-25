@@ -924,5 +924,10 @@
   "login-error-terms-required": "Please agree to the terms of service to continue.",
   "signed-out-message": "You've been signed out. Please sign in again.",
   "collapsed-tab-playing-label": "{{label}} — playing audio",
-  "tab-playing-audio": "Playing audio"
+  "tab-playing-audio": "Playing audio",
+  "switch-language-body": "Do you want to switch your language to {{nativeLanguageName}}?",
+  "switch-language-confirm": "Switch",
+  "switch-language-dismiss": "Don't Switch",
+  "switch-language-never": "Never Ask Again",
+  "switch-language-title": "Switch language?"
 }

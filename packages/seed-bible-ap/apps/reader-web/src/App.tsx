@@ -42,6 +42,7 @@ import { HuddleBar } from "./components/sessions/HuddleCall";
 import { LibraryPane } from "./components/library/LibraryPane";
 import { Onboarding } from "./components/chrome/Onboarding";
 import { AboutPane } from "./components/chrome/AboutPane";
+import { LanguageSwitchPrompt } from "./components/chrome/LanguageSwitchPrompt";
 import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
 import { completeRedirectIfReturning } from "./session";
 
@@ -219,6 +220,7 @@ export function App({ state }: { state: ReaderState }) {
       <ChatPanel state={state} />
       <PlaylistNote state={state} />
       <PlaylistFinished state={state} />
+      <LanguageSwitchPrompt />
       <PlanNudge state={state} />
       <SessionSettingsWindow state={state} />
       <SessionCloseConfirm state={state} />

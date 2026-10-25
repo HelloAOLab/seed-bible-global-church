@@ -102,3 +102,50 @@ export function useI18n(): {
     String(i18next.t(key, { lng: lang, ...options }));
   return { t, language: lang, isRtl: isRightToLeftLanguage(lang), setLanguage };
 }
+
+/** The old reader's "Switch language?": a Bible picked in another language offers the interface in it, written in that
+ *  language; once a session at most, and never again after "Never Ask Again". */
+export const languageSwitchOffer = signal<{ target: string; t: T } | null>(
+  null
+);
+const NEVER_ASK_KEY = "sbr.languageSwitch.never";
+const SHOWN_KEY = "sbr.languageSwitch.shown";
+
+export async function offerLanguageFor(
+  bcp47: string | null | undefined
+): Promise<void> {
+  if (!bcp47) return;
+  const base = bcp47.toLowerCase().split("-")[0]!;
+  const target = bestMatch([bcp47]);
+  if (target.toLowerCase().split("-")[0] !== base) return;
+  if (target === language.value) return;
+  try {
+    if (localStorage.getItem(NEVER_ASK_KEY)) return;
+    if (sessionStorage.getItem(SHOWN_KEY)) return;
+    sessionStorage.setItem(SHOWN_KEY, "1");
+  } catch {
+    /* storage blocked: offer it anyway */
+  }
+  if (!i18next.hasResourceBundle(target, "translation")) {
+    const mod = await locales[`./${target}.json`]!();
+    i18next.addResourceBundle(target, "translation", mod.default, true, true);
+  }
+  const fixed = i18next.getFixedT(target);
+  languageSwitchOffer.value = {
+    target,
+    t: (key, options) => String(fixed(key, options)),
+  };
+}
+
+export function answerLanguageSwitch(answer: "switch" | "no" | "never") {
+  const offer = languageSwitchOffer.value;
+  languageSwitchOffer.value = null;
+  if (!offer) return;
+  if (answer === "switch") void setLanguage(offer.target);
+  if (answer === "never")
+    try {
+      localStorage.setItem(NEVER_ASK_KEY, "1");
+    } catch {
+      /* storage blocked */
+    }
+}

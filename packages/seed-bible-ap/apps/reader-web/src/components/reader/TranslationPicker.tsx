@@ -6,7 +6,8 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
-import { useI18n } from "../../i18n";
+import { offerLanguageFor, useI18n } from "../../i18n";
+import { bibleLanguageToBcp47 } from "../../state/media/languages";
 import type { Translation } from "../../backend/bible";
 import {
   DEFAULT_POPULAR_LANGUAGES,
@@ -516,6 +517,7 @@ export function TranslationPicker({ state }: { state: ReaderState }) {
   const pick = (tr: Translation) => {
     void reading.setTranslation(tr.id);
     close();
+    void offerLanguageFor(bibleLanguageToBcp47(tr.language));
   };
   const share = (tr: Translation) => {
     const url = `${location.origin}${routeOf({
