@@ -54,3 +54,10 @@
 .sb-account-id-value {
   word-break: break-all;
 }
+
+/* The terms line inside an Account card: the card's own `label { display: block }` must not undo its layout. */
+.sb-account-card .sb-login-terms,
+.sb-invite-welcome .sb-login-terms {
+  display: flex;
+  margin: 0.75rem 0;
+}

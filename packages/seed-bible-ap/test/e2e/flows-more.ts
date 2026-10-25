@@ -7431,7 +7431,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "An emailed invitation opens in the reader",
     rows: ["An emailed invitation"],
     checks:
-      "The link /invite/<token> opens the reader with 'Ruth wants to be friends' and Ruth's note, and, signed out, Sign in to accept; a dead link says 'This invitation can't be opened'; signed in, Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for the signature. (The invitation calls are answered by the test)",
+      "The link /invite/<token> opens a welcome: 'Ruth invited you to Seed Bible' with Ruth's note, the terms and one Continue (it asks for the terms first); a dead link says 'This invitation can't be opened'; signed in, 'Welcome' and Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for one tap. (The invitation calls are answered by the test)",
     run: async (c) => {
       const good = "c".repeat(40);
       const RUTH = "0x" + "12".repeat(20);
@@ -7481,12 +7481,17 @@ export const MORE_FLOWS: Flow[] = [
       await dialog.getByRole("button", { name: "Close" }).click();
 
       await c.open(`/invite/${good}`);
-      await c.waitText(dialog, /Ruth wants to be friends/, 15000);
+      // Signed out: who invited you and their note, the terms, one Continue.
+      await c.waitText(dialog, /Ruth invited you to Seed Bible/, 15000);
       await c.waitText(dialog, /Come read John with me/, 3000);
-      await dialog.getByRole("button", { name: /sign in to accept/i }).click();
+      await dialog.getByRole("button", { name: "Continue" }).click();
+      await c.waitText(dialog, /agree to the terms/i, 3000);
+      await dialog
+        .getByRole("button", { name: /other ways to sign in/i })
+        .click();
       await c.signInAsSample(undefined, c.page, { paneOpen: true });
-      // Signed in, Account steps aside and the invitation is back.
-      await c.waitText(dialog, /Ruth wants to be friends/, 15000);
+      // Signed in, Account steps aside and the welcome asks to add Ruth.
+      await c.waitText(dialog, /Welcome/, 15000);
       const popup = c.context.waitForEvent("page", { timeout: 10000 });
       await dialog
         .getByRole("button", { name: /add ruth as a friend/i })
@@ -7494,11 +7499,12 @@ export const MORE_FLOWS: Flow[] = [
       const home = await popup;
       const homeUrl = home.url();
       await home.close();
+      await c.waitText(dialog, /Adding Ruth|You and Ruth are friends/, 5000);
       await c.page.waitForTimeout(500);
       if (!claimed) throw new Error("the invitation was not taken");
       if (!homeUrl.includes(`add=${RUTH}`))
         throw new Error(`the Home opened at ${homeUrl}`);
-      return "a dead link: can't be opened; Ruth's invitation with her note and Sign in to accept; signed in, Add took it and opened the Home to add Ruth";
+      return "a dead link: can't be opened; 'Ruth invited you to Seed Bible' with her note; Continue asks for the terms; signed in, 'Welcome' and Add took the invitation and opened the Home to add Ruth";
     },
   },
   {

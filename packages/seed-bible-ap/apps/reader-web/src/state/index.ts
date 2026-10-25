@@ -23,7 +23,13 @@ import { createToday } from "./social/today";
 import { createPresence } from "./social/presence";
 import { createProfile } from "./social/profile";
 import { claimDevice, forgetPerson } from "./records/deviceOwner";
-import { createFriendship, parseFriendLink } from "./social/friendship";
+import {
+  createFriendship,
+  parseFriendLink,
+  type FriendInvite,
+} from "./social/friendship";
+
+const INVITE_KEY = "sbr.invite";
 import { A2A_BASE } from "../api";
 import { createInvites, parseInviteLink } from "./social/invites";
 import { estateById } from "../../../../estate/faithnet";
@@ -776,6 +782,15 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       typeof location !== "undefined"
         ? parseInviteLink(location.pathname)
         : null;
+    // …or one still open before a sign-in restarted the page, read before anything can clear it.
+    const keptInvite = ((): FriendInvite | null => {
+      try {
+        const kept = sessionStorage.getItem(INVITE_KEY);
+        return kept ? (JSON.parse(kept) as FriendInvite) : null;
+      } catch {
+        return null;
+      }
+    })();
     // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
     if (typeof location !== "undefined") {
       const legacy = legacyTarget(location.pathname, location.search);
@@ -888,6 +903,17 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         document.removeEventListener("visibilitychange", onBack),
       // Leaving writes the last tab change at once rather than losing it to the debounce.
       saveTabsNow,
+      // An open invitation outlives a sign-in that restarts the page (someone else's copy on this device).
+      effect(() => {
+        const inv = friendship.invite.value;
+        try {
+          if (inv && !inv.error)
+            sessionStorage.setItem(INVITE_KEY, JSON.stringify(inv));
+          else sessionStorage.removeItem(INVITE_KEY);
+        } catch {
+          /* storage blocked */
+        }
+      }),
       // Signing in to accept an invitation goes straight back to it: Account closes once you're signed in.
       effect(() => {
         if (
@@ -946,8 +972,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.
       const tour = parseTutorialLink(q);
       if (tour) setTimeout(() => tours.start(tour.id, tour.step), 800);
-      // Who invited you, offered once the page is up.
+      // Who invited you, offered once the page is up — or the one still open before a sign-in restarted the page.
       if (friendInvite) friendship.invite.value = friendInvite;
+      else if (!inviteToken && keptInvite) friendship.invite.value = keptInvite;
       if (inviteToken)
         void invites.lookup(inviteToken).then((r) => {
           friendship.invite.value =

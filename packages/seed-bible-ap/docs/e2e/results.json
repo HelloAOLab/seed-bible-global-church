@@ -1,51 +1,33 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 18:32 UTC",
+  "when": "2026-10-25 21:05 UTC",
   "results": [
     {
-      "id": "S1",
+      "id": "FA1",
       "section": "8. Today, Discover and publishing",
-      "title": "Discover for a chapter",
-      "checks": "The Discover pane opens for John 3 and lists what was published (or says nothing yet) without an error",
+      "title": "Add a friend answers at once",
+      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
       "mark": "✅",
-      "note": "Discover + Create close NOTES You don't have any notes for this chapter. Create a note Cross-referen",
-      "ms": 3485
+      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
+      "ms": 33832
     },
     {
-      "id": "G10",
-      "section": "3. Reading",
-      "title": "Customize the bottom toolbar",
-      "checks": "Account → Toolbar: tick Today into the bar, move Discover up twice; the bar shows Discover then Today and More no longer lists Today; kept after a reload; Reset puts Today back under More",
-      "mark": "✅",
-      "note": "bar Discover, Places map, Study companion; Today ticked in, Discover moved before it, kept after a reload; Reset put it back under More",
-      "ms": 2576
-    },
-    {
-      "id": "PH2",
-      "section": "13. Links and embedding",
-      "title": "The bottom toolbar fits its window, in Firefox and Chrome",
-      "checks": "In Firefox and in Chrome, at 1440, 1100, 900 and 740 px wide: every button sits inside the bar and on screen, and the bar keeps clear of the sidebar; where the whole bar is wider than the reading area it folds under More, and More opens on screen and clear of the sidebar; widened to 1600 px the bar unfolds again",
-      "mark": "✅",
-      "note": "every button inside the bar, clear of the sidebar: firefox at 1440px whole; firefox at 1100px whole; firefox at 900px folded under More; firefox at 740px folded under More; chromium at 1440px whole; chromium at 1100px whole; chromium at 900px folded under More; chromium at 740px folded under More",
-      "ms": 73180
-    },
-    {
-      "id": "DP1",
+      "id": "IN1",
       "section": "8. Today, Discover and publishing",
-      "title": "Discover as the old reader's: notes first, Create a note",
-      "checks": "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
+      "title": "Invite a friend by email",
+      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
       "mark": "✅",
-      "note": "Discover: NOTES · Cross-references · Places · Videos and articles; Create a note opened the editor; + Create offers Note and Playlist",
-      "ms": 1405
+      "note": "'flow-210334@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
+      "ms": 32707
     },
     {
-      "id": "TB3",
-      "section": "2. Getting around",
-      "title": "The bar keeps what fits beside a pane",
-      "checks": "On a 1600px desktop with Discover open beside the chapter, the bar keeps Books, Search and as many of its buttons as fit (Discover among them, first in line), and only the rest are under More; every button sits inside the bar",
+      "id": "IN2",
+      "section": "8. Today, Discover and publishing",
+      "title": "An emailed invitation opens in the reader",
+      "checks": "The link /invite/<token> opens a welcome: 'Ruth invited you to Seed Bible' with Ruth's note, the terms and one Continue (it asks for the terms first); a dead link says 'This invitation can't be opened'; signed in, 'Welcome' and Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for one tap. (The invitation calls are answered by the test)",
       "mark": "✅",
-      "note": "bar: chevron_left | chevron_right | Books | search Search | explore Discover | map Places map | local_fire_department Study companion | more_horiz More; More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes",
-      "ms": 2102
+      "note": "a dead link: can't be opened; 'Ruth invited you to Seed Bible' with her note; Continue asks for the terms; signed in, 'Welcome' and Add took the invitation and opened the Home to add Ruth",
+      "ms": 94643
     }
   ]
 }
