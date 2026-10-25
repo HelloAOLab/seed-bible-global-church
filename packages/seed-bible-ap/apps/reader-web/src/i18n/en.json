@@ -1001,5 +1001,7 @@
   "friend-already-friends": "You're already friends.",
   "friend-request-accepted-theirs": "They'd already asked you, so you're now friends.",
   "friend-request-already-sent": "You've already sent them a request.",
-  "friend-request-self": "That's your own account."
+  "friend-request-self": "That's your own account.",
+  "person-profile-empty": "This person hasn't set up their profile yet.",
+  "view-profile-of": "View {{name}}'s profile"
 }

@@ -7195,7 +7195,6 @@ export const MORE_FLOWS: Flow[] = [
         await c.waitText(pane.locator(".sb-friends-answer"), re, 5000);
       };
       await ask("seedreader", /That's your own account/);
-      // A friend's name as the list shows it.
       // A friend's name as the list shows it: a row with Remove.
       const friendRow = pane
         .locator(".sb-friends-row", {
@@ -7211,6 +7210,48 @@ export const MORE_FLOWS: Flow[] = [
       await c.page.waitForTimeout(800);
       if (popups) throw new Error("a Home window opened");
       return `own name: That's your own account; '${friend}': You're already friends; no Home window`;
+    },
+  },
+  {
+    id: "PC1",
+    section: "8. Today, Discover and publishing",
+    title: "Tap a friend: their profile",
+    rows: ["Friends pane"],
+    checks:
+      "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
+      const pane = c.page.locator(".sb-friends-pane");
+      await pane.waitFor({ timeout: 5000 });
+      const person = pane
+        .getByRole("button", { name: /^View .+'s profile$/ })
+        .first();
+      await person.waitFor({ timeout: 10000 });
+      const name = (
+        await person.locator(".sb-friends-person-name").innerText()
+      ).trim();
+      await person.click();
+      const card = c.page.getByRole("dialog", { name: "Profile" });
+      await card.waitFor({ timeout: 3000 });
+      const shown = (
+        await card.locator(".sb-friends-person-name").innerText()
+      ).trim();
+      if (shown !== name)
+        throw new Error(`card shows '${shown}', not '${name}'`);
+      const about = card.locator(
+        ".sb-friend-link-description, .sb-friend-link-note"
+      );
+      await about.first().waitFor({ timeout: 2000 });
+      const said = (await about.first().innerText()).trim();
+      await card.getByRole("button", { name: "Close" }).click();
+      await card.waitFor({ state: "detached", timeout: 2000 });
+      return `'${name}' opened Profile showing '${said.slice(0, 60)}'; Close shut it`;
     },
   },
 ];

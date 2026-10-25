@@ -78,7 +78,13 @@ function Header({
 }
 
 /** The description, one line until Read more (the old reader's ExpandableText). */
-function Description({ text }: { text: string }) {
+export function Description({
+  text,
+  className = "sb-profile-description",
+}: {
+  text: string;
+  className?: string;
+}) {
   const { t } = useI18n();
   const ref = useRef<HTMLParagraphElement>(null);
   const [open, setOpen] = useState(false);
@@ -91,7 +97,7 @@ function Description({ text }: { text: string }) {
     <>
       <p
         ref={ref}
-        className={`sb-profile-description${open ? "" : " sb-profile-description-clamped"}`}
+        className={`${className}${open ? "" : " sb-profile-description-clamped"}`}
       >
         {text}
       </p>

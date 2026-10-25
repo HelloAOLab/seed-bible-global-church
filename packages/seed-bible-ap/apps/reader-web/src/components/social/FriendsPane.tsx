@@ -14,6 +14,8 @@ import {
   connectViaHome,
 } from "../../session";
 import { FriendWaiting } from "./TodayPane";
+import { Description } from "../chrome/ProfilePane";
+import type { FriendProfile } from "../../state/social/profile";
 
 function Heading(props: { icon: string; children: string }) {
   return (
@@ -58,9 +60,11 @@ function Person(props: {
   name: string;
   subtitle?: ComponentChildren;
   picture?: string | undefined;
+  onOpen?: () => void;
 }) {
-  return (
-    <span className="sb-friends-person-button">
+  const { t } = useI18n();
+  const shown = (
+    <>
       {props.picture ? (
         <img className="sb-friends-avatar" src={props.picture} alt="" />
       ) : (
@@ -77,7 +81,51 @@ function Person(props: {
           <span className="sb-friends-person-subtitle">{props.subtitle}</span>
         ) : null}
       </span>
-    </span>
+    </>
+  );
+  return props.onOpen ? (
+    <button
+      type="button"
+      className="sb-friends-person-button"
+      aria-label={t("view-profile-of", {
+        name: props.name,
+        defaultValue: "View {{name}}'s profile",
+      })}
+      onClick={props.onOpen}
+    >
+      {shown}
+    </button>
+  ) : (
+    <span className="sb-friends-person-button">{shown}</span>
+  );
+}
+
+/** The old reader's person card: someone's picture and name, and their description when they've written one. */
+function PersonCard(props: {
+  name: string;
+  profile?: FriendProfile | undefined;
+}) {
+  const { t } = useI18n();
+  const p = props.profile;
+  const empty = !p?.displayName && !p?.about && !p?.picture;
+  return (
+    <div className="sb-confirm-delete">
+      <div className="sb-friend-link-about">
+        <div className="sb-friend-link-person">
+          <Person name={props.name} picture={p?.picture} />
+        </div>
+        {p?.about ? (
+          <Description text={p.about} className="sb-friend-link-description" />
+        ) : null}
+        {empty ? (
+          <p className="sb-friend-link-note">
+            {t("person-profile-empty", {
+              defaultValue: "This person hasn't set up their profile yet.",
+            })}
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -144,6 +192,10 @@ export function FriendsPane({ state }: { state: ReaderState }) {
   const s = state.session.value;
   const [who, setWho] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{
+    agent: string;
+    name: string;
+  } | null>(null);
   const [confirming, setConfirming] = useState<{
     agent: string;
     name: string;
@@ -214,6 +266,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                     <li key={r.agent} className="sb-friends-row">
                       <Person
                         name={name}
+                        onOpen={() => setViewing({ agent: r.agent, name })}
                         picture={
                           today.profiles.value[r.agent.toLowerCase()]?.picture
                         }
@@ -266,6 +319,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                     <li key={c.contact} className="sb-friends-row">
                       <Person
                         name={name}
+                        onOpen={() => setViewing({ agent: c.contact, name })}
                         picture={prof?.picture}
                         subtitle={
                           at.length
@@ -449,6 +503,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                     <li key={r.agent} className="sb-friends-row">
                       <Person
                         name={name}
+                        onOpen={() => setViewing({ agent: r.agent, name })}
                         subtitle={t("friend-request-pending", {
                           defaultValue: "Waiting for them to accept",
                         })}
@@ -475,6 +530,38 @@ export function FriendsPane({ state }: { state: ReaderState }) {
           )}
         </div>
       </div>
+
+      {viewing && (
+        <div
+          className="sb-footnote-modal-overlay"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="sb-footnote-modal sb-content-dialog sb-person-profile"
+            role="dialog"
+            aria-label={t("profile", { defaultValue: "Profile" })}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
+            <div className="sb-footnote-modal-header">
+              <h3 className="sb-footnote-modal-title">
+                {t("profile", { defaultValue: "Profile" })}
+              </h3>
+              <button
+                type="button"
+                className="sb-footnote-modal-close"
+                aria-label={t("close", { defaultValue: "Close" })}
+                onClick={() => setViewing(null)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <PersonCard
+              name={viewing.name}
+              profile={today.profiles.value[viewing.agent.toLowerCase()]}
+            />
+          </div>
+        </div>
+      )}
 
       {confirming && (
         <div

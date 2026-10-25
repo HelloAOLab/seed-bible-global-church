@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:28 UTC",
+  "when": "2026-10-25 14:33 UTC",
   "results": [
     {
       "id": "FA1",
@@ -9,7 +9,16 @@
       "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
       "mark": "✅",
       "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
-      "ms": 36048
+      "ms": 38677
+    },
+    {
+      "id": "PC1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Tap a friend: their profile",
+      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
+      "mark": "✅",
+      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
+      "ms": 34932
     }
   ]
 }
