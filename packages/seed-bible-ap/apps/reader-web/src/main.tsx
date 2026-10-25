@@ -32,6 +32,7 @@ import "./styles/huddle.css";
 import "./styles/floating-search.css";
 import "./styles/chat.css";
 import "./styles/session-qr.css";
+import "./styles/session-people.css";
 import "./styles/share.css";
 import "./styles/discover-panel.css";
 import "./styles/mobile-settings.css";

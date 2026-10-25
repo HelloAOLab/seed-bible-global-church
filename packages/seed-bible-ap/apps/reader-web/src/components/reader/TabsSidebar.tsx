@@ -431,6 +431,19 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               type="button"
               className={`sb-sidebar-icon-button${tabs.selectedId.value === tab.id ? " sb-sidebar-icon-button-selected" : ""}`}
               title={`${tab.reading.bookName.value} ${tab.reading.chapterNumber.value}`}
+              aria-label={
+                state.live.active.value && state.sessionTabId.value === tab.id
+                  ? t("collapsed-tab-shared-label", {
+                      title: `${tab.reading.bookName.value} ${tab.reading.chapterNumber.value}`,
+                      count:
+                        state.live.state.value?.participants.filter(
+                          (p) => p.connections > 0
+                        ).length ?? 0,
+                      defaultValue:
+                        "{{title}} — shared session, {{count}} present",
+                    })
+                  : undefined
+              }
               onClick={() => tabs.selectTab(tab.id)}
             >
               {state.live.active.value &&

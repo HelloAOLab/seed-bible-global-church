@@ -826,5 +826,6 @@
   "share-sheet-title": "Share",
   "share-via-subtitle": "Use your device share sheet",
   "start-share-session": "Start and share session",
-  "start-share-session-subtitle": "Invite others to read along live"
+  "start-share-session-subtitle": "Invite others to read along live",
+  "collapsed-tab-shared-label": "{{title}} — shared session, {{count}} present"
 }

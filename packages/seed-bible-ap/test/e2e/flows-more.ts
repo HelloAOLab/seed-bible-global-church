@@ -597,6 +597,77 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "PP1",
+    section: "9. Reading together",
+    title: "Who is here, on a phone",
+    rows: ["Who is here, and where"],
+    checks:
+      "The host starts a session on a computer; a guest joins on a phone: the chapter's top bar shows a stack of faces (2 people); a tap opens the Participants sheet with the host marked Host and the guest marked (you), and its Session settings opens the settings window",
+    run: async (c) => {
+      let step = "";
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        step = "start";
+        await c.open(CH);
+        await c.signInAsSample();
+        const { code, sid } = await startSession(c);
+        step = "the guest on a phone";
+        const page = await ctx.newPage();
+        c.watch(page);
+        await c.open(`${CH}?session=${sid}&code=${code}`, page);
+        const join = page.locator(".sb-session-join").first();
+        await join.waitFor({ timeout: 15000 });
+        await join
+          .locator('input[placeholder*="name" i]')
+          .first()
+          .fill("Phone guest")
+          .catch(() => undefined);
+        await join.getByRole("button", { name: /join as a guest/i }).tap();
+        await c.waitText(page.locator(".sb-app-pane"), /connected/i, 20000);
+        await page.keyboard.press("Escape");
+        step = "the stack";
+        const stack = page
+          .locator(
+            ".sb-bible-reader-active .sb-bible-reader-mobile-header .sb-session-participants-stack"
+          )
+          .first();
+        await stack.waitFor({ timeout: 15000 });
+        const faces = await stack
+          .locator(".sb-session-participants-stack-item")
+          .count();
+        if (faces !== 2) throw new Error(`${faces} faces in the stack`);
+        step = "the sheet";
+        await stack.tap();
+        const sheet = page.getByRole("dialog", { name: "Participants" });
+        await c.waitText(
+          sheet,
+          /host[\s\S]*seed reader|seed reader[\s\S]*host/i,
+          5000
+        );
+        await c.waitText(sheet, /phone guest \(you\)/i, 5000);
+        await sheet.getByRole("button", { name: /session settings/i }).tap();
+        await page
+          .getByRole("dialog", { name: "Session settings" })
+          .waitFor({ timeout: 5000 });
+        await c.page.keyboard.press("Escape");
+        await c.pressToolbar("Live session");
+        await c
+          .pane()
+          .getByRole("button", { name: /end session/i })
+          .click();
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      } finally {
+        await ctx.close();
+      }
+      return "the phone's top bar showed 2 faces; the sheet named the Host and the guest (you); Session settings opened";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",

@@ -1,25 +1,7 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 05:46 UTC",
+  "when": "2026-10-25 05:50 UTC",
   "results": [
-    {
-      "id": "R5",
-      "section": "3. Reading",
-      "title": "Share link selects verses",
-      "checks": "?v=16-18 opens with John 3:16–18 selected and the verse toolbar's Highlight naming them",
-      "mark": "✅",
-      "note": "toolbar \"John 3:16–18\", 3 verses selected",
-      "ms": 1048
-    },
-    {
-      "id": "M4",
-      "section": "4. Marking the text",
-      "title": "Share a verse: link and embed code",
-      "checks": "Select 3:16 → Share opens the old reader's Share window; Share a link copies a link ending in ?v=16; Embed gives an iframe of the compact reader, dark when Dark is chosen",
-      "mark": "✅",
-      "note": "https://seed-reader.faithnet.io/read/BSB/JHN/3?v=16; embed <iframe src=\"https://seed-reader.faithnet.io/read/BSB/JHN/3?…",
-      "ms": 1125
-    },
     {
       "id": "SH1",
       "section": "9. Reading together",
@@ -27,34 +9,25 @@
       "checks": "The host starts a session in John 3 and a guest joins: that tab is marked Shared with the people on it (Host first); its ⋮ has Session settings, Share session and Open chat instead of Save. A new tab moved to Romans 8 does not move the session (the guest stays in John 3). Closing the Shared tab from its ⋮ ends the session for the guest",
       "mark": "✅",
       "note": "the session's tab showed Shared with its people and the session menu; another tab left the guest in John 3; closing the tab ended it",
-      "ms": 43466
+      "ms": 44141
     },
     {
-      "id": "SP1",
+      "id": "PP1",
       "section": "9. Reading together",
-      "title": "Start and share a session from Share",
-      "checks": "Signed in, the chapter's Share → Start and share session starts one and copies its link (with the session and its code); Share again offers Share current session and the session's QR card; tapping the code opens a large Scan to join view",
+      "title": "Who is here, on a phone",
+      "checks": "The host starts a session on a computer; a guest joins on a phone: the chapter's top bar shows a stack of faces (2 people); a tap opens the Participants sheet with the host marked Host and the guest marked (you), and its Session settings opens the settings window",
       "mark": "✅",
-      "note": "Share started a session and copied its link; Share again offered Share current session and the QR, whose large view opened",
-      "ms": 36856
+      "note": "the phone's top bar showed 2 faces; the sheet named the Host and the guest (you); Session settings opened",
+      "ms": 39905
     },
     {
-      "id": "G7",
-      "section": "9. Reading together",
-      "title": "Session QR code",
-      "checks": "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image; tapping it opens a large Scan to join view, Esc closes it",
+      "id": "PH1",
+      "section": "13. Links and embedding",
+      "title": "A phone: the old reader's phone shell",
+      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
       "mark": "✅",
-      "note": "QR 13 KB PNG with Save image; tapped, a 296px Scan to join view",
-      "ms": 41626
-    },
-    {
-      "id": "H1",
-      "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
-      "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 941
+      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
+      "ms": 1418
     }
   ]
 }

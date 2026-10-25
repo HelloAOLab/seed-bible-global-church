@@ -18,6 +18,7 @@ import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
 import { openSavePicker } from "../records/SavePicker";
 import { BookmarkStackIcon, bookmarkButtonLabel } from "../records/Bookmarks";
+import { SessionPeopleStack } from "../sessions/SessionPeopleStack";
 
 interface SelectedFootnote {
   noteId: number;
@@ -340,6 +341,7 @@ export function BibleReader({
         <div className="sb-bible-reader-mobile-header-actions">
           {saveButtons}
           {shareButton}
+          {inSession && <SessionPeopleStack state={state} />}
           <button
             type="button"
             className="sb-bible-reader-mobile-header-settings"
