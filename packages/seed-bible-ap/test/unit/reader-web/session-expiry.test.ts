@@ -75,9 +75,8 @@ describe("session expiry", () => {
     expect(
       library.text(READER, "seed-bible/highlights/JHN", "3.jsonld")
     ).toBeNull();
-    // The device still shows the mark; the session is still held (the reader decides, not the device).
+    // The device still shows the mark. (The lapse signs the reader out on its own clock — the next test.)
     expect(state.highlights.forChapter("JHN.3").value).toHaveLength(1);
-    expect(state.session.value?.sub).toBe(READER);
 
     // The Home issues a new token: sign in again, and what waited goes up.
     const token = await home.issueIdToken({
@@ -136,5 +135,16 @@ describe("session expiry", () => {
     expect(
       library.text(READER, "seed-bible/highlights/JHN", "3.jsonld")
     ).toContain("JHN.3.16");
+  });
+  it("the moment the sign-in lapses the reader is signed out too, and told", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    vi.setSystemTime(T0);
+    const { state } = await signedIn({ tokenHours: 1, wireHours: 24 });
+    expect(state.session.value?.sub).toBe(READER);
+    await vi.advanceTimersByTimeAsync(3_600_000 - 1000);
+    expect(state.session.value?.sub).toBe(READER);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(state.session.value).toBeNull();
+    expect(state.ui.toast.value).toMatchObject({ key: "signed-out-expired" });
   });
 });

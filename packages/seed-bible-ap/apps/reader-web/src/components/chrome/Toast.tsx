@@ -12,6 +12,11 @@ function line(
   values: Record<string, string>
 ): string {
   switch (key) {
+    case "signed-out-expired":
+      return t("signed-out-expired", {
+        defaultValue:
+          "You were signed out because your sign-in expired. Sign in again to keep your highlights and notes.",
+      });
     case "signed-in-as":
       return t("signed-in-as", {
         defaultValue: "Signed in as {{name}}",

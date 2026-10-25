@@ -1041,5 +1041,6 @@
   "invite-yours": "This is your own invitation",
   "not-now": "Not now",
   "friend-finish-adding": "Finish adding",
-  "friend-joined-line": "accepted your invitation"
+  "friend-joined-line": "accepted your invitation",
+  "signed-out-expired": "You were signed out because your sign-in expired. Sign in again to keep your highlights and notes."
 }

@@ -761,7 +761,7 @@ export const MORE_FLOWS: Flow[] = [
     id: "SI1",
     section: "2. Getting in",
     title: "Sign-in asks for the terms",
-    rows: ["Sign in with your Home"],
+    rows: ["Signing in and out"],
     checks:
       "Today says why to sign in with a Log in button, which opens sign-in; there, signing in without ticking 'I agree to the Terms of service' says 'Please agree to the terms of service to continue.'; under it Privacy policy, Code of conduct and Terms of service open those pages; the old ?privacy=open link opens the privacy policy",
     run: async (c) => {
@@ -7823,6 +7823,50 @@ export const MORE_FLOWS: Flow[] = [
         )
           throw new Error(`${m} is in the bar and in More`);
       return `bar: ${words}; More: ${inMore.join(", ")}`;
+    },
+  },
+  {
+    id: "SX1",
+    section: "1. Signing in",
+    title: "A lapsed sign-in signs the reader out",
+    rows: ["Signing in and out"],
+    checks:
+      "Signed in as Seed Reader; when the sign-in's time is up (the stored token's expiry set an hour back, then a reload), the reader is signed out and says 'You were signed out because your sign-in expired', and More offers Sign in again",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page.evaluate(() => {
+        const s = JSON.parse(sessionStorage.getItem("sbr.session") ?? "null");
+        const [h, p, sig] = String(s.token).split(".");
+        const body = JSON.parse(atob(p!.replace(/-/g, "+").replace(/_/g, "/")));
+        body.exp = Math.floor(Date.now() / 1000) - 3600;
+        const enc = btoa(JSON.stringify(body))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+        sessionStorage.setItem(
+          "sbr.session",
+          JSON.stringify({ ...s, token: `${h}.${enc}.${sig}` })
+        );
+      });
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await c.waitText(
+        c.page.locator(".sb-toast"),
+        /signed out because your sign-in expired/i,
+        15000
+      );
+      await c.settleTours();
+      await c.page
+        .locator(".sb-reader-toolbar-desk")
+        .getByRole("button", { name: "More", exact: true })
+        .click();
+      await c.page
+        .locator(".sb-reader-toolbar-more-signin")
+        .waitFor({ timeout: 5000 });
+      return "after the sign-in's time was up the reader signed out, said why, and More offered Sign in";
     },
   },
 ];

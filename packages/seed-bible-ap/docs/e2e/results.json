@@ -1,16 +1,7 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 21:57 UTC",
+  "when": "2026-10-25 22:02 UTC",
   "results": [
-    {
-      "id": "FR1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Friends: the old reader's full page",
-      "checks": "Signed in: Profile → Friends opens a full page (the reading area gives way) with ← back to Profile: Friends (each with Remove), Add a friend (Send request; your friend link with Copy and Email it; your user ID with Copy) and, when there are any, Friend requests (Accept, Decline) and Sent requests (Cancel). Send request opens your Home's add-a-contact page for exactly that name; Remove asks first (Remove friend?) and then opens your Home's page to remove exactly that friend. (The test records the Home address instead of opening it, so nothing is signed)",
-      "mark": "✅",
-      "note": "full page with Friend requests · Friends · Add a friend; Send request opened the Home for that name; Remove asked first, then opened the Home to remove exactly that friend; ← back to Profile",
-      "ms": 33898
-    },
     {
       "id": "FA1",
       "section": "8. Today, Discover and publishing",
@@ -18,25 +9,16 @@
       "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
       "mark": "✅",
       "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
-      "ms": 34020
+      "ms": 33823
     },
     {
-      "id": "PC1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Tap a friend: their profile",
-      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
+      "id": "SX1",
+      "section": "1. Signing in",
+      "title": "A lapsed sign-in signs the reader out",
+      "checks": "Signed in as Seed Reader; when the sign-in's time is up (the stored token's expiry set an hour back, then a reload), the reader is signed out and says 'You were signed out because your sign-in expired', and More offers Sign in again",
       "mark": "✅",
-      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
-      "ms": 33466
-    },
-    {
-      "id": "IN1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Invite a friend by email",
-      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
-      "mark": "✅",
-      "note": "'flow-215708@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
-      "ms": 34089
+      "note": "after the sign-in's time was up the reader signed out, said why, and More offered Sign in",
+      "ms": 33956
     }
   ]
 }

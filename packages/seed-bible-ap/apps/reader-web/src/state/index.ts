@@ -65,6 +65,7 @@ import { computed, effect } from "@preact/signals";
 import {
   DEFAULT_ESTATE,
   loadSession,
+  sessionExpiresAt,
   signOut as forgetSession,
   type ReaderSession,
 } from "../session";
@@ -699,6 +700,30 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       void live.join(pj.sessionId, pj.code).catch(() => {});
     }
   }
+  /** The sign-in lapsed (the Home's single sign-on ended): this reader is signed out too, and says so. What was
+   *  made here and not yet sent stays on the device for the next sign-in; nothing is sent as them meanwhile. */
+  async function expire() {
+    await presence.gone().catch(() => undefined);
+    forgetSession();
+    session.value = null;
+    buckets.reset();
+    ui.toast.value = { key: "signed-out-expired" };
+  }
+  // The moment the sign-in lapses — on a page left open, or one opened after it already had.
+  effect(() => {
+    const s = session.value;
+    if (!s) return;
+    const at = sessionExpiresAt(s);
+    if (at === null) return;
+    const left = at - Date.now();
+    if (left <= 0) {
+      void expire();
+      return;
+    }
+    const timer = setTimeout(() => void expire(), Math.min(left, 2 ** 31 - 1));
+    return () => clearTimeout(timer);
+  });
+
   async function signOut() {
     await presence.gone();
     await forgetPerson(stores.prefs);
