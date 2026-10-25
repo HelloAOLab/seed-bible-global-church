@@ -10,7 +10,6 @@ import { useI18n } from "../../i18n";
 import { friendLink, standingOf } from "../../state/social/friendship";
 import { isEmail } from "../../state/social/invites";
 import { addFriendOrInvite } from "./addFriend";
-import { FRIEND_ACTS_READY } from "../../state/social/friendActs";
 import {
   DEFAULT_ESTATE,
   HOME_SIGNIN_AVAILABLE,
@@ -170,35 +169,12 @@ function Removing({ state }: { state: ReaderState }) {
               name: r.label,
               defaultValue: "✓ {{name}} is no longer a friend.",
             })
-          : r.problem
-            ? t("friend-remove-here-failed", {
-                name: r.label,
-                problem: r.problem,
-                defaultValue:
-                  "Couldn't remove {{name}} here ({{problem}}). Your Home can do it.",
-              })
-            : r.how === "here"
-              ? t("friend-removing-here", {
-                  name: r.label,
-                  defaultValue: "Removing {{name}}…",
-                })
-              : t("friend-remove-at-home", {
-                  name: r.label,
-                  defaultValue:
-                    "Confirm at your Home to remove {{name}} — the window that opened. This updates by itself when you are done.",
-                })}
+          : t("friend-remove-confirm-at-home", {
+              name: r.label,
+              defaultValue:
+                "Confirm at your Home to remove {{name}} — the window that opened. It closes by itself, and this updates when you are done.",
+            })}
       </p>
-      {r.problem && (
-        <button
-          type="button"
-          className="sb-note-button sb-note-button-primary"
-          onClick={() =>
-            state.friendship.remove(r.who, r.label, { atHome: true })
-          }
-        >
-          {t("friend-open-home", { defaultValue: "Open your Home" })}
-        </button>
-      )}
       <button
         type="button"
         className="sb-note-button"
@@ -208,68 +184,6 @@ function Removing({ state }: { state: ReaderState }) {
           ? t("done", { defaultValue: "Done" })
           : t("cancel", { defaultValue: "Cancel" })}
       </button>
-    </div>
-  );
-}
-
-/** Adding friends here, without the Home's window: allowed once at the Home (30 days), or not yet. */
-function FriendActsCard({ state }: { state: ReaderState }) {
-  const { t, language } = useI18n();
-  const acts = state.friendActs;
-  if (!FRIEND_ACTS_READY || state.session.value?.via === "dev-stub")
-    return null;
-  if (acts.allowed.value) {
-    const until = acts.until.value
-      ? new Date(acts.until.value * 1000).toLocaleDateString(language, {
-          day: "numeric",
-          month: "short",
-        })
-      : null;
-    return (
-      <p className="sb-small sb-muted sb-friend-acts-on">
-        {until
-          ? t("friend-acts-on-until", {
-              date: until,
-              defaultValue:
-                "✓ Friends are added and removed right here, with no Home window, until {{date}}.",
-            })
-          : t("friend-acts-on", {
-              defaultValue:
-                "✓ Friends are added and removed right here, with no Home window.",
-            })}{" "}
-        <button
-          type="button"
-          className="sb-profile-read-more"
-          onClick={() => void acts.forget()}
-        >
-          {t("friend-acts-stop", { defaultValue: "Stop" })}
-        </button>
-      </p>
-    );
-  }
-  return (
-    <div className="sb-friend-acts">
-      <p className="sb-small">
-        {t("friend-acts-offer", {
-          defaultValue:
-            "Add friends in one tap: let Seed Bible add and remove friends for you, without opening your Home each time. You approve it once at your Home; it lasts 30 days, and you can take it back there.",
-        })}
-      </p>
-      <button
-        type="button"
-        className="sb-friends-button"
-        disabled={acts.asking.value}
-        onClick={() => void acts.allow()}
-      >
-        {acts.asking.value
-          ? t("friend-acts-asking", { defaultValue: "Waiting for your Home…" })
-          : t("friend-acts-allow", { defaultValue: "Allow" })}
-      </button>
-      {acts.error.value && (
-        <p className="sb-small sb-muted" role="status">
-          {acts.error.value}
-        </p>
-      )}
     </div>
   );
 }
@@ -556,7 +470,6 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 {answer}
               </p>
             )}
-            <FriendActsCard state={state} />
             {link && (
               <div className="sb-friends-share">
                 <div className="sb-friends-share-row sb-friends-my-link">

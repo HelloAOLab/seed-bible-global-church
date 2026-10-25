@@ -71,50 +71,12 @@ export class PersonAgent {
     message: string,
     opts: { addressee?: string } = {}
   ): Promise<PersonAgentOutcome<T>> {
-    const asked = await this.ask(this.planBody(steps, message, opts));
-    return this.outcome<T>(steps, asked.reply, asked.runRef);
-  }
-
-  /**
-   * The same, for an ACT the reader pre-authorized (act-as-me): when the step parks for their authority, a standing
-   * wire that covers it derives the mandate (`derive`) and THE SAME run resumes with it. No covering wire ⇒ the step
-   * stays parked and the refusal says so — the caller falls back to the Home's window.
-   */
-  async runActing<T>(
-    steps: PlanStep[],
-    message: string,
-    derive: (
-      reply: Record<string, unknown>
-    ) => Promise<
-      { ok: true; presented: unknown[] } | { ok: false; reason: string }
-    >,
-    via: { client: string; template: string }
-  ): Promise<PersonAgentOutcome<T>> {
-    const first = await this.ask(this.planBody(steps, message, {}));
-    if (first.reply.kind !== "authority_required" || !first.runRef)
-      return this.outcome<T>(steps, first.reply, first.runRef);
-    const derived = await derive(first.reply as Record<string, unknown>);
-    if (!derived.ok)
-      throw new WireRefusal(409, `needs-signature: ${derived.reason}`);
-    const resumed = await this.ask({
-      addressee: this.reader,
-      runRef: first.runRef,
-      presented: derived.presented,
-      via,
-    });
-    return this.outcome<T>(
-      steps,
-      resumed.reply,
-      resumed.runRef ?? first.runRef
-    );
-  }
-
-  private planBody(
-    steps: PlanStep[],
-    message: string,
-    opts: { addressee?: string }
-  ): Record<string, unknown> {
-    return {
+    const nonce = [...crypto.getRandomValues(new Uint8Array(8))]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const raw = JSON.stringify({
+      method: STANDARD_SURFACE_SKILL,
+      nonce,
       // An organization the reader stewards may be the addressee: the ask is still as the reader (the assertion and
       // the wire are theirs); the runtime derives their standing at the organization.
       addressee: (opts.addressee ?? this.reader).toLowerCase(),
@@ -127,20 +89,6 @@ export class PersonAgent {
       ...(steps.every((st) => /\.(read|list)$/.test(st.toolId))
         ? { background: true }
         : {}),
-    };
-  }
-
-  /** One signed call to `/harness/ask` as the reader: the reply and its run, or a refusal. */
-  private async ask(
-    body: Record<string, unknown>
-  ): Promise<{ reply: Reply; runRef: string | null }> {
-    const nonce = [...crypto.getRandomValues(new Uint8Array(8))]
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    const raw = JSON.stringify({
-      method: STANDARD_SURFACE_SKILL,
-      nonce,
-      ...body,
     });
     const base: Omit<CallerAssertionV1, "signature"> = {
       agent: this.reader,
@@ -191,23 +139,14 @@ export class PersonAgent {
     const stages = (
       reply as { plannerTrace?: { stages?: Record<string, number> } }
     ).plannerTrace?.stages;
-    const plan = (body["plan"] as { steps?: PlanStep[] } | undefined)?.steps;
-    if (stages && plan)
+    if (stages)
       console.log(
-        `[agent-timing] ${plan.map((s) => s.toolId).join("+")} ${JSON.stringify(stages)}`
+        `[agent-timing] ${steps.map((s) => s.toolId).join("+")} ${JSON.stringify(stages)}`
       );
     const runRef =
       typeof out["runRef"] === "string"
         ? out["runRef"]
         : (reply.runRef ?? null);
-    return { reply, runRef };
-  }
-
-  private outcome<T>(
-    steps: PlanStep[],
-    reply: Reply,
-    runRef: string | null
-  ): PersonAgentOutcome<T> {
     if (reply.kind === "refused" || reply.kind === "error")
       throw new WireRefusal(
         409,

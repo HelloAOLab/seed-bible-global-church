@@ -28,7 +28,7 @@ import {
   estateById,
   type EstateId,
 } from "../../../estate/faithnet";
-import { connectActWires, connectWire, whoAmI } from "./api";
+import { connectWire, whoAmI } from "./api";
 
 export const CLIENT_ID = READER_CLIENT_ID;
 export const RELAY_CHANNEL = "seed-bible-reader-connect-relay";
@@ -42,9 +42,6 @@ export const HOME_SIGNIN_AVAILABLE = /^0x[0-9a-fA-F]{40}$/.test(
 );
 export const DEV_READER_AVAILABLE = Boolean(import.meta.env.DEV);
 const ASK_AS_ME = "ask-as-me";
-const ACT_AS_ME = "act-as-me";
-/** The acts the reader asks to run without the Home's window (the Home registers only these for this client). */
-export const FRIEND_ACTS = ["person.contact.invite", "person.contact.remove"];
 
 const KEY = "sbr.session";
 const PENDING_KEY = "sbr.connect.pending";
@@ -55,8 +52,6 @@ export interface ReaderSession {
   readonly name: string;
   readonly sub: string;
   readonly via: "home" | "quick-connect" | "dev-stub";
-  /** A sample person's handle at the Home (quick-connect), to ask for them again. */
-  readonly handle?: string;
   /** Whether reader-a2a now holds this reader's ask-as-me wire (their Library can be written as them). */
   readonly wire: boolean;
   /** Why the wire is missing, in the Home's or the workspace's words — reading still works without it. */
@@ -102,10 +97,7 @@ function isAllowedIssuer(estateId: EstateId, origin: string): boolean {
   }
 }
 
-function clientFor(
-  estateId: EstateId,
-  template: string = ASK_AS_ME
-): ConnectClient {
+function clientFor(estateId: EstateId): ConnectClient {
   const est = estateById(estateId);
   if (!est) throw new Error("unknown estate");
   const c = createConnectClient({
@@ -123,9 +115,8 @@ function clientFor(
     start: Awaited<ReturnType<ConnectClient["startEnrollment"]>>
   ) => {
     const u = new URL(start.url);
-    u.searchParams.set("delegation_template", template);
-    // Allowing an act is for the person already signed in here, not a choice of who.
-    if (template === ASK_AS_ME) u.searchParams.set("prompt", "select_account");
+    u.searchParams.set("delegation_template", ASK_AS_ME);
+    u.searchParams.set("prompt", "select_account");
     return { ...start, url: u.toString() };
   };
   return {
@@ -141,12 +132,7 @@ async function exchange(
   authOrigin: string,
   code: string,
   codeVerifier: string
-): Promise<{
-  idToken: string;
-  askDelegation?: Wire;
-  delegation?: Wire;
-  delegations?: Wire[];
-}> {
+): Promise<{ idToken: string; askDelegation?: Wire; delegation?: Wire }> {
   const base = authOrigin.replace(/\/$/, "");
   const r = (await fetch(`${base}/token`, {
     method: "POST",
@@ -163,12 +149,10 @@ async function exchange(
     error?: string;
     delegation?: Wire;
     askDelegation?: Wire;
-    delegations?: Wire[];
   };
   if (!r.id_token) throw new Error(r.error || "the Home returned no id_token");
   return {
     idToken: r.id_token,
-    ...(r.delegations ? { delegations: r.delegations } : {}),
     ...(r.askDelegation ? { askDelegation: r.askDelegation } : {}),
     ...(r.delegation ? { delegation: r.delegation } : {}),
   };
@@ -338,7 +322,6 @@ export async function connectAsSamplePerson(
     name: r.agent_name ?? handle,
     sub: r.sub ?? "",
     via: "quick-connect",
-    handle,
     ...handed,
   };
   save(s);
@@ -364,76 +347,4 @@ export function signInAsDevReader(
   };
   save(s);
   return s;
-}
-
-/**
- * Let the reader add and remove friends with no Home window each time (act-as-me): ONE consent at the Home for just
- * those two acts, good for 30 days and revocable there under Connected assistants. The Home returns a standing wire
- * per act, naming reader-a2a's act key; reader-a2a keeps them. A sample person's custodian signs them at the Home
- * without a window; anyone else approves in the Home's window.
- */
-export async function allowFriendActs(
-  s: ReaderSession,
-  onProgress?: (msg: string) => void
-): Promise<{ ok: boolean; error?: string }> {
-  const est = estateById(s.estate);
-  if (!est) return { ok: false, error: "unknown estate" };
-  let token: string;
-  let ask: Wire | undefined;
-  let acts: Wire[] | undefined;
-  if (s.via === "quick-connect") {
-    if (!s.handle) return { ok: false, error: "sign in again to allow this" };
-    const r = (await fetch(`${est.home}/connect/demo-signin`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        handle: s.handle,
-        client_id: CLIENT_ID,
-        delegation_template: ACT_AS_ME,
-        act: { capabilities: FRIEND_ACTS },
-      }),
-    })
-      .then((res) => res.json())
-      .catch(() => ({ error: "the Home could not be reached" }))) as {
-      id_token?: string;
-      delegation?: Wire;
-      delegations?: Wire[];
-      error?: string;
-    };
-    if (!r.id_token) return { ok: false, error: r.error ?? "the Home said no" };
-    token = r.id_token;
-    ask = r.delegation;
-    acts = r.delegations;
-  } else if (s.via === "home") {
-    const c = clientFor(s.estate, ACT_AS_ME);
-    onProgress?.("Opening your Home…");
-    const popup = await connectViaPopup(
-      c,
-      undefined,
-      RELAY_CHANNEL,
-      onProgress
-    );
-    if (popup.status === "cancelled") return { ok: false };
-    if (popup.status !== "success")
-      return {
-        ok: false,
-        error:
-          "your browser blocked the Home's window — allow pop-ups for this site and try again",
-      };
-    const ex = await exchange(popup.authOrigin, popup.code, popup.codeVerifier);
-    await c.verifyIdToken(popup.authOrigin, ex.idToken, popup.stash.nonce);
-    token = ex.idToken;
-    ask = ex.delegation;
-    acts = ex.delegations;
-  } else {
-    return { ok: false, error: "a dev reader has no Home" };
-  }
-  if (!acts?.length)
-    return {
-      ok: false,
-      error: "the Home returned no permission for these acts",
-    };
-  // The consent also renewed the ask-as-me wire (the act set rides beside it).
-  if (ask) await connectWire(token, ask).catch(() => null);
-  return connectActWires(token, acts);
 }

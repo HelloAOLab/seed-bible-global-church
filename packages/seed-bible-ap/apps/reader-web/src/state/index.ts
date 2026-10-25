@@ -26,7 +26,6 @@ import { claimDevice, forgetPerson } from "./records/deviceOwner";
 import { createFriendship, parseFriendLink } from "./social/friendship";
 import { A2A_BASE } from "../api";
 import { createInvites, parseInviteLink } from "./social/invites";
-import { createFriendActs } from "./social/friendActs";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
 import { browserPeerFactory, createVoice } from "./sessions/voice";
@@ -58,7 +57,6 @@ import { bibleLanguageToBcp47 } from "./media/languages";
 import { getVersePlainText } from "../components/reader/chapterContent";
 import { computed, effect } from "@preact/signals";
 import {
-  allowFriendActs,
   DEFAULT_ESTATE,
   loadSession,
   signOut as forgetSession,
@@ -155,19 +153,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
   const today = createToday(backend, stores);
-  const friendActs = createFriendActs({
-    base: A2A_BASE,
-    bearer: () => {
-      const s = session.value;
-      return s && s.via !== "dev-stub" ? s.token : null;
-    },
-    consent: () =>
-      session.value
-        ? allowFriendActs(session.value)
-        : Promise.resolve({ ok: false, error: "sign in first" }),
-  });
   const friendship = createFriendship({
-    acting: friendActs.acting,
     prefs: stores.prefs,
     friendsView: () => today.friendsView.value,
     refresh: () => today.refreshContacts(),
@@ -184,7 +170,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (!session.value) return;
     void invites.refresh();
     void invites.loadFindable();
-    void friendActs.refresh();
   });
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
@@ -1017,7 +1002,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     today,
     profile,
     friendship,
-    friendActs,
     invites,
     presence,
     live,

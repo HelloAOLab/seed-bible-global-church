@@ -97,29 +97,6 @@ export async function connectWire(
   };
 }
 
-/** Hand reader-a2a the reader's act-as-me standing wires (adding and removing a friend without the Home's window). */
-export async function connectActWires(
-  token: string,
-  delegations: Record<string, unknown>[]
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${A2A_BASE}/api/connect/act`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ delegations }),
-  }).catch(() => null);
-  if (!res)
-    return { ok: false, error: "the reader workspace could not be reached" };
-  return (await res
-    .json()
-    .catch(() => ({ ok: false, error: `HTTP ${res.status}` }))) as {
-    ok: boolean;
-    error?: string;
-  };
-}
-
 /** Who the workspace says you are, verified against your Home, and whether it holds your wire. */
 export async function whoAmI(token: string): Promise<{
   ok: boolean;

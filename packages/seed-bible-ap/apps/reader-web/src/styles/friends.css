@@ -383,22 +383,3 @@
   white-space: nowrap;
   font-size: 0.75rem;
 }
-
-/* Adding friends here, without the Home's window: the offer, and the line once allowed. */
-.sb-friend-acts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
-}
-.sb-friend-acts p {
-  flex: 1 1 14rem;
-  margin: 0;
-}
-.sb-friend-acts-on {
-  margin-top: 10px;
-}

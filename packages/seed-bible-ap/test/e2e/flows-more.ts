@@ -1639,12 +1639,14 @@ export const MORE_FLOWS: Flow[] = [
         .locator("select")
         .selectOption("l");
       const read = () =>
-        c.page.evaluate(() => ({
-          ...document.documentElement.dataset,
-          width: document.documentElement.style.getPropertyValue(
-            "--sb-scripture-width"
-          ),
-        }));
+        c.page.evaluate(
+          (): Record<string, string | undefined> => ({
+            ...document.documentElement.dataset,
+            width: document.documentElement.style.getPropertyValue(
+              "--sb-scripture-width"
+            ),
+          })
+        );
       const now = await read();
       if (
         now["sbLine"] !== "relaxed" ||
