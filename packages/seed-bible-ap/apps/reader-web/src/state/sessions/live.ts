@@ -12,6 +12,23 @@ import {
   type SessionState,
 } from "../../backend/room";
 import type { Reading } from "../reading/reading";
+import {
+  canDecorate,
+  canNavigate,
+  isHostish,
+  settingsOf,
+  type SessionSettings,
+} from "@seed/seed-protocol/session";
+
+/** A verse someone tapped, flaring on everyone's screen for a moment (the old reader's selection effect). */
+export interface VerseFlare {
+  id: string;
+  agent: string;
+  chapter: string;
+  verse: number;
+}
+
+const FLARE_MS = 1200;
 
 export interface PresenceView {
   agent: string;
@@ -60,19 +77,39 @@ export function createLiveSession(deps: LiveDeps) {
       state.value?.participants.find((p) => p.agent === me.value)?.role ??
       "reader"
   );
+  /** Whether this device moves the passage for everyone (the host, a co-host, Navigate, or everyone when the host allows). */
   const isLeader = computed(
-    () => myRole.value === "leader" || myRole.value === "navigator"
+    () => !!state.value && canNavigate(state.value, me.value)
+  );
+  const canHighlight = computed(
+    () => !!state.value && canDecorate(state.value, me.value)
   );
   const isHost = computed(
     () => !!me.value && state.value?.host?.agent === me.value
   );
+  /** The host, a co-host or the leader: changes the settings. */
+  const isHostLike = computed(
+    () => !!state.value && isHostish(state.value, me.value)
+  );
+  const settings = computed(() => settingsOf(state.value));
+  /** Ticks while someone else's highlight is waiting to fade, so it goes on time. */
+  const clock = signal(Date.now());
+  let ticker: ReturnType<typeof setInterval> | null = null;
+  const flares = signal<VerseFlare[]>([]);
+  const lastVerse = new Map<string, number | null>();
   const active = computed(() => !!sessionId.value && !state.value?.endedAt);
   /** The session's decorations for the chapter on screen, drawn as broadcast highlights. */
   const decorations = computed(() => {
     const r = deps.reading();
     const chapter = r.chapterRef.value;
+    const seconds = settings.value.highlightSeconds;
+    const now = clock.value;
     return (state.value?.decorations ?? []).filter(
-      (d) => d.chapter === chapter
+      (d) =>
+        d.chapter === chapter &&
+        (seconds === null ||
+          d.by === me.value ||
+          now - Date.parse(d.at) < seconds * 1000)
     );
   });
 
@@ -81,8 +118,11 @@ export function createLiveSession(deps: LiveDeps) {
     bookId: r.bookId.value,
     chapterNumber: r.chapterNumber.value,
   });
+  // With the translation shared it is part of where everyone is; otherwise each keeps their own.
   const key = (p: SessionPassage) =>
-    `${p.translationId}/${p.bookId}/${p.chapterNumber}`;
+    settings.value.shareTranslation
+      ? `${p.translationId}/${p.bookId}/${p.chapterNumber}`
+      : `${p.bookId}/${p.chapterNumber}`;
 
   function attach(id: string, token: string) {
     room?.close();
@@ -102,19 +142,31 @@ export function createLiveSession(deps: LiveDeps) {
       },
       onState: (s) => {
         state.value = s;
-        // Follow the leader: the room's passage moves this device unless this device leads.
-        if (s.passage && !isLeader.value) {
+        // The room's passage moved (by whoever may move it): this device goes there too, in the shared translation
+        // or its own. Its own move set lastSeenPassage first, so it does not bounce back.
+        if (s.passage) {
           const k = key(s.passage);
           if (k !== lastSeenPassage) {
             lastSeenPassage = k;
             const r = deps.reading();
             if (key(passageOf(r)) !== k)
               void r.goTo(
-                s.passage.translationId,
+                settings.value.shareTranslation
+                  ? s.passage.translationId
+                  : r.translationId.value,
                 s.passage.bookId,
                 s.passage.chapterNumber
               );
           }
+        }
+        const timed =
+          settingsOf(s).highlightSeconds !== null &&
+          s.decorations.some((d) => d.by !== me.value);
+        if (timed && !ticker)
+          ticker = setInterval(() => (clock.value = Date.now()), 1000);
+        else if (!timed && ticker) {
+          clearInterval(ticker);
+          ticker = null;
         }
         if (s.endedAt) leave();
       },
@@ -124,7 +176,8 @@ export function createLiveSession(deps: LiveDeps) {
           if (f.to === me.value) onRtc?.(f.from, f.payload);
         } else if (f.t === "voice") {
           /* the participant flag arrives with the state; the frame is a nudge */
-        } else if (f.t === "presence")
+        } else if (f.t === "presence") {
+          flareFrom(f.by, f.verse, f.chapter);
           presence.value = {
             ...presence.value,
             [f.by]: {
@@ -137,8 +190,30 @@ export function createLiveSession(deps: LiveDeps) {
               at: f.at,
             },
           };
+        }
       },
     });
+  }
+
+  /** A newly tapped verse flares, when the settings say whose taps do. */
+  function flareFrom(agent: string, verse: number | null, chapter?: string) {
+    const before = lastVerse.get(agent);
+    lastVerse.set(agent, verse);
+    const s = state.value;
+    if (!s || verse === null || verse === before) return;
+    const who = settings.value.selectionEffects;
+    if (who === "none" || (who === "hosts-only" && !isHostish(s, agent)))
+      return;
+    const at =
+      chapter ??
+      (s.passage ? `${s.passage.bookId}.${s.passage.chapterNumber}` : null);
+    if (!at) return;
+    const flare = { id: `${agent}:${Date.now()}`, agent, chapter: at, verse };
+    flares.value = [...flares.value.filter((x) => x.agent !== agent), flare];
+    setTimeout(
+      () => (flares.value = flares.value.filter((x) => x.id !== flare.id)),
+      FLARE_MS
+    );
   }
 
   async function start() {
@@ -202,6 +277,10 @@ export function createLiveSession(deps: LiveDeps) {
   }
 
   function leave() {
+    if (ticker) clearInterval(ticker);
+    ticker = null;
+    flares.value = [];
+    lastVerse.clear();
     room?.close();
     room = null;
     guest.value = null;
@@ -232,7 +311,11 @@ export function createLiveSession(deps: LiveDeps) {
     me,
     myRole,
     isLeader,
+    canHighlight,
     isHost,
+    isHostLike,
+    settings,
+    flares,
     active,
     decorations,
     shareLink,
@@ -258,13 +341,25 @@ export function createLiveSession(deps: LiveDeps) {
     presenceAt: (
       verse: number | null,
       view?: { chapter: string; from: number; to: number } | null
-    ) => room?.presence(verse, view) ?? Promise.resolve(),
+    ) =>
+      // Presence is best effort: a frame lost while the line drops is replaced by the next.
+      room?.presence(verse, view).catch(() => {}) ?? Promise.resolve(),
     setRole: (
       agent: string,
       role: "leader" | "navigator" | "decorator" | "reader"
     ) => room?.setRole(agent, role) ?? Promise.resolve(0),
+    setSettings: (patch: Partial<SessionSettings>) =>
+      room?.setSettings(patch) ?? Promise.resolve(0),
+    setCoHost: (agent: string, on: boolean) =>
+      room?.setCoHost(agent, on) ?? Promise.resolve(0),
+    /** The host leaves the session to someone else, who becomes its host. */
+    handOver: async (agent: string) => {
+      await room?.handOver(agent);
+      leave();
+    },
     end: async () => {
-      await room?.end();
+      // The room closes every line as it ends, which can beat its answer to this call: either way it ended.
+      await room?.end().catch(() => {});
       leave();
     },
   };

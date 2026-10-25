@@ -463,6 +463,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     bookmarkPicker: signal<{ chapterRef: string; edition?: string } | null>(
       null
     ),
+    /** The live session's settings window, and the host's "end it or hand it over" question. */
+    sessionSettings: signal(false),
+    sessionClose: signal(false),
     /** The save window (the old SaveCategoryPicker): the passage to file, and the save when it is already saved. */
     savePicker: signal<{
       chapterRef: string;

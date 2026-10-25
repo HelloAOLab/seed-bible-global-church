@@ -6,11 +6,16 @@
 // kept in their Library when the session started.
 import { Agent, callable, getCurrentAgent, type Connection } from "agents";
 
-import type {
-  Decoration,
-  SessionPassage,
-  SessionRole,
-  SessionState,
+import {
+  canDecorate,
+  canNavigate,
+  isHostish,
+  settingsOf,
+  type Decoration,
+  type SessionPassage,
+  type SessionRole,
+  type SessionSettings,
+  type SessionState,
 } from "../../../../lib/seed-protocol/session";
 export type {
   Decoration,
@@ -276,11 +281,6 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
     if (!who) throw new Error("not admitted");
     return who;
   }
-  private roleOf(agent: string): SessionRole {
-    return (
-      this.state.participants.find((p) => p.agent === agent)?.role ?? "reader"
-    );
-  }
   private log(by: string, kind: string, body: unknown): number {
     const seq = this.state.seq + 1;
     this
@@ -293,9 +293,8 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
   @callable()
   follow(passage: SessionPassage) {
     const who = this.actor(this.currentConnection());
-    const role = this.roleOf(who.agent);
-    if (role !== "leader" && role !== "navigator")
-      throw new Error("only the leader navigates");
+    if (!canNavigate(this.state, who.agent))
+      throw new Error("only the host navigates");
     const decorations = this.state.decorations.filter(
       (d) => d.chapter === `${passage.bookId}.${passage.chapterNumber}`
     );
@@ -306,9 +305,8 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
   @callable()
   decorate(d: { start: number; end: number; colorId: string }) {
     const who = this.actor(this.currentConnection());
-    const role = this.roleOf(who.agent);
-    if (role !== "leader" && role !== "decorator")
-      throw new Error("only the leader decorates");
+    if (!canDecorate(this.state, who.agent))
+      throw new Error("only the host highlights");
     const p = this.state.passage;
     if (!p) throw new Error("no passage");
     const deco: Decoration = {
@@ -331,9 +329,8 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
   @callable()
   undecorate(id: string) {
     const who = this.actor(this.currentConnection());
-    const role = this.roleOf(who.agent);
-    if (role !== "leader" && role !== "decorator")
-      throw new Error("only the leader decorates");
+    if (!canDecorate(this.state, who.agent))
+      throw new Error("only the host highlights");
     this.setState({
       ...this.state,
       decorations: this.state.decorations.filter((d) => d.id !== id),
@@ -358,6 +355,90 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
       leader: role === "leader" ? agent : this.state.leader,
     });
     return this.log(who.agent, "role", { agent, role });
+  }
+
+  /** The host or a co-host changes the session's settings. */
+  @callable()
+  setSettings(patch: Partial<SessionSettings>) {
+    const who = this.actor(this.currentConnection());
+    if (!isHostish(this.state, who.agent))
+      throw new Error("only the host changes the settings");
+    const cur = settingsOf(this.state);
+    const p = patch ?? {};
+    const next: SessionSettings = {
+      hostOnlyNavigate:
+        typeof p.hostOnlyNavigate === "boolean"
+          ? p.hostOnlyNavigate
+          : cur.hostOnlyNavigate,
+      hostOnlyHighlight:
+        typeof p.hostOnlyHighlight === "boolean"
+          ? p.hostOnlyHighlight
+          : cur.hostOnlyHighlight,
+      highlightSeconds:
+        p.highlightSeconds === null ||
+        (typeof p.highlightSeconds === "number" &&
+          [8, 16, 20].includes(p.highlightSeconds))
+          ? p.highlightSeconds
+          : cur.highlightSeconds,
+      selectionEffects:
+        p.selectionEffects === "hosts-only" ||
+        p.selectionEffects === "everyone" ||
+        p.selectionEffects === "none"
+          ? p.selectionEffects
+          : cur.selectionEffects,
+      shareTranslation:
+        typeof p.shareTranslation === "boolean"
+          ? p.shareTranslation
+          : cur.shareTranslation,
+    };
+    this.setState({ ...this.state, settings: next });
+    return this.log(who.agent, "settings", next);
+  }
+
+  /** The host or a co-host makes someone a co-host, or takes it back; a guest never is one. */
+  @callable()
+  setCoHost(agent: string, on: boolean) {
+    const who = this.actor(this.currentConnection());
+    if (!isHostish(this.state, who.agent))
+      throw new Error("only the host appoints co-hosts");
+    if (agent.startsWith("guest:"))
+      throw new Error("a guest cannot be a co-host");
+    if (!this.state.participants.some((p) => p.agent === agent))
+      throw new Error("not in the session");
+    const cur = (this.state.coHosts ?? []).filter((a) => a !== agent);
+    this.setState({ ...this.state, coHosts: on ? [...cur, agent] : cur });
+    return this.log(who.agent, "cohost", { agent, on: on === true });
+  }
+
+  /**
+   * The host leaves without ending it: the session goes on with someone else as its host (the old reader's
+   * "appoint a co-host" on close). Never to a guest, who has no standing to keep a session.
+   */
+  @callable()
+  handOver(agent: string) {
+    const who = this.actor(this.currentConnection());
+    if (who.agent !== this.state.host?.agent)
+      throw new Error("only the host hands the session over");
+    const next = this.state.participants.find(
+      (p) => p.agent === agent && !p.guest && p.connections > 0
+    );
+    if (!next || agent === who.agent)
+      throw new Error("hand over to someone in the session");
+    const participants = this.state.participants.map((p) =>
+      p.agent === agent
+        ? { ...p, role: "leader" as SessionRole }
+        : p.agent === who.agent
+          ? { ...p, role: "reader" as SessionRole }
+          : p
+    );
+    this.setState({
+      ...this.state,
+      host: { agent: next.agent, name: next.name },
+      leader: next.agent,
+      coHosts: (this.state.coHosts ?? []).filter((a) => a !== agent),
+      participants,
+    });
+    return this.log(who.agent, "handover", { to: agent });
   }
 
   /** The host decides whether guests may come in with the share code. */

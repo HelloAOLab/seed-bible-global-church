@@ -221,6 +221,8 @@ export interface ChapterContentOptions {
   verseChecks?: Record<string, VerseCheck>;
   /** What a verse's check says, for its title. */
   verseCheckTitle?: (status: VerseCheck) => string;
+  /** Verses someone in the live session just tapped: their numbers flare in that person's colour. */
+  flares?: Array<{ id: string; verse: number; color: string }>;
 }
 
 export function renderChapterContent(
@@ -268,15 +270,23 @@ export function renderChapterContent(
     // A verse that does not match is always marked, verse numbers shown or not; a checked one marks its number.
     const alarm = check === "text-differs" || check === "not-in-corpus";
     if (scriptureElements.showVerseNumbers) {
+      const flare = opts.flares?.find((f) => f.verse === verseNumber);
       return (
         <sup
+          // A new key per flare restarts the animation when the same verse is tapped again.
+          key={flare?.id}
           className={[
             "sb-verse-number",
             annotated ? "sb-verse-number-annotated" : "",
             check ? `sb-verse-check-${check}` : "",
+            flare ? "sb-verse-number-flare" : "",
           ]
             .filter(Boolean)
             .join(" ")}
+          style={
+            flare ? { "--sb-selection-flare-color": flare.color } : undefined
+          }
+          data-flare={flare ? "true" : undefined}
           title={check ? opts.verseCheckTitle?.(check) : undefined}
           data-verse-check={check}
           onClick={annotated ? handle : undefined}

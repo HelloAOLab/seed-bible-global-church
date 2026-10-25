@@ -28,6 +28,10 @@ import { FloatingSearch } from "./components/reader/FloatingSearch";
 import { MobileSettingsSheet } from "./components/chrome/MobileSettingsSheet";
 import { SavePicker } from "./components/records/SavePicker";
 import { BookmarkPicker } from "./components/records/Bookmarks";
+import {
+  SessionCloseConfirm,
+  SessionSettingsWindow,
+} from "./components/sessions/SessionSettings";
 import { HuddleBar } from "./components/sessions/HuddleCall";
 import { LibraryPane } from "./components/library/LibraryPane";
 import { Onboarding } from "./components/chrome/Onboarding";
@@ -206,6 +210,8 @@ export function App({ state }: { state: ReaderState }) {
       <MobileSettingsSheet state={state} />
       <SavePicker state={state} />
       <BookmarkPicker state={state} />
+      <SessionSettingsWindow state={state} />
+      <SessionCloseConfirm state={state} />
       <BibleSelector state={state} />
       <ShareDialog state={state} />
       {state.ui.shared.value && <SharedPageView state={state} />}

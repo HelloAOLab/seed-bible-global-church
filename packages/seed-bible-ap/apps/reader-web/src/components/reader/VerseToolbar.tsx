@@ -152,9 +152,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
         !tool.isVisible || tool.isVisible({ chapterRef, start, end, verses })
     );
   const canShowEveryone =
-    state.live.active.value &&
-    (state.live.myRole.value === "leader" ||
-      state.live.myRole.value === "decorator");
+    state.live.active.value && state.live.canHighlight.value;
 
   const highlightA = (
     <Action

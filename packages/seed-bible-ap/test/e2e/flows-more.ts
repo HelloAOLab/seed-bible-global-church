@@ -275,6 +275,104 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "SS1",
+    section: "9. Reading together",
+    title: "Session settings",
+    rows: ["Live session settings"],
+    checks:
+      "The host starts a session and a guest joins. Session settings shows the session's link, Navigation and Sharing, and the participants with a Host badge. By default the guest's › moves the host too; with 'Only host can navigate' ticked the guest's › moves only the guest. A verse the host taps flares on the guest's screen. The host's End Session ends it for the guest",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "start and join";
+        await c.open(CH);
+        await c.signInAsSample();
+        const { code, sid } = await startSession(c);
+        const guest = await joinAsGuest(c, sid, code);
+        await guest.keyboard.press("Escape");
+
+        step = "the settings window";
+        await c
+          .pane()
+          .getByRole("button", { name: /session settings/i })
+          .click();
+        const win = c.page.getByRole("dialog", { name: "Session settings" });
+        await win.waitFor({ timeout: 5000 });
+        await c.waitText(
+          win,
+          /session url[\s\S]*navigation[\s\S]*sharing[\s\S]*participants/i,
+          5000
+        );
+        await c.waitText(
+          win.locator(".sb-session-participants"),
+          /host[\s\S]*flow guest/i,
+          10000
+        );
+        if (!(await win.locator("#sb-session-share-translation").isEnabled()))
+          throw new Error("the host cannot change the settings");
+
+        step = "everyone navigates by default";
+        await win
+          .getByRole("button", { name: /^close$/i })
+          .last()
+          .click();
+        await guest.keyboard.press("ArrowRight");
+        await c.page.waitForURL(/\/JHN\/4/, { timeout: 15000 }).catch(() => {
+          throw new Error(
+            `the guest moved; the host stayed at ${c.page.url()}`
+          );
+        });
+
+        step = "only the host navigates";
+        await c
+          .pane()
+          .getByRole("button", { name: /session settings/i })
+          .click();
+        await win.locator("#sb-session-only-host-navigate").check();
+        await win
+          .getByRole("button", { name: /^close$/i })
+          .last()
+          .click();
+        await guest.waitForTimeout(800);
+        await guest.keyboard.press("ArrowRight");
+        await guest.waitForURL(/\/JHN\/5/, { timeout: 15000 });
+        await c.page.waitForTimeout(2000);
+        if (!/\/JHN\/4/.test(c.page.url()))
+          throw new Error(`the host was moved to ${c.page.url()}`);
+
+        step = "the host's tap flares for the guest";
+        await c.page.keyboard.press("ArrowRight");
+        await guest.waitForURL(/\/JHN\/5/, { timeout: 15000 });
+        await c.page.waitForURL(/\/JHN\/5/, { timeout: 15000 });
+        await c.page.waitForTimeout(800);
+        await c.tapVerse(3);
+        await guest
+          .locator(
+            '.sb-bible-reader-active .sb-verse-number[data-flare="true"]'
+          )
+          .first()
+          .waitFor({ state: "attached", timeout: 10000 });
+
+        step = "End Session";
+        await c.page.keyboard.press("Escape");
+        await c
+          .pane()
+          .getByRole("button", { name: /session settings/i })
+          .click();
+        await win.getByRole("button", { name: /end session/i }).click();
+        await c.pressToolbar("Live session", guest);
+        await c.waitText(
+          guest.locator(".sb-app-pane"),
+          /start a session|join a session|session id/i,
+          20000
+        );
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "link, settings and participants shown; the guest moved the host by default and not after Only host can navigate; the host's tap flared on the guest's screen; End Session ended it";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",

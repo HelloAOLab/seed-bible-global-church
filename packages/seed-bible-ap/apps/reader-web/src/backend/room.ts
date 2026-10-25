@@ -7,9 +7,10 @@ import type {
   SessionPassage,
   SessionRole,
   SessionState,
+  SessionSettings,
 } from "@seed/seed-protocol/session";
 
-export type { SessionState, SessionPassage, SessionRole };
+export type { SessionState, SessionPassage, SessionRole, SessionSettings };
 
 export interface ChatFrame {
   t: "chat";
@@ -63,6 +64,9 @@ export interface Room {
   ): Promise<void>;
   setRole(agent: string, role: SessionRole): Promise<number>;
   setGuests(allow: boolean): Promise<number>;
+  setSettings(patch: Partial<SessionSettings>): Promise<number>;
+  setCoHost(agent: string, on: boolean): Promise<number>;
+  handOver(agent: string): Promise<number>;
   voice(on: boolean): Promise<void>;
   signal(to: string, payload: unknown): Promise<void>;
   end(): Promise<void>;
@@ -120,6 +124,9 @@ export function openRoom(
       call<void>("presence", [{ verse, ...(view ?? {}) }]),
     setRole: (agent, role) => call<number>("setRole", [agent, role]),
     setGuests: (allow) => call<number>("setGuests", [allow]),
+    setSettings: (patch) => call<number>("setSettings", [patch]),
+    setCoHost: (agent, on) => call<number>("setCoHost", [agent, on]),
+    handOver: (agent) => call<number>("handOver", [agent]),
     voice: (on) => call<void>("voice", [on]),
     signal: (to, payload) => call<void>("signal", [to, payload]),
     end: () => call<void>("end"),

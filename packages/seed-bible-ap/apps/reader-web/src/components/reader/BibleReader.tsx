@@ -4,7 +4,7 @@
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
 import { DiscoverPanel } from "../social/DiscoverPanel";
-import { PresenceGutter } from "../sessions/PresenceGutter";
+import { PresenceGutter, colorOf } from "../sessions/PresenceGutter";
 import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
@@ -193,6 +193,15 @@ export function BibleReader({
                     ? d.start
                     : ([d.start, d.end] as [number, number]),
               }))
+            : [],
+          flares: active
+            ? state.live.flares.value
+                .filter((f) => f.chapter === reading.chapterRef.value)
+                .map((f) => ({
+                  id: f.id,
+                  verse: f.verse,
+                  color: colorOf(f.agent),
+                }))
             : [],
           notes,
           scriptureElements: settings.scripture.value,

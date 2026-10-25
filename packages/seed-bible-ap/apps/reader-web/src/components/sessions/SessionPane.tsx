@@ -5,6 +5,7 @@ import { HuddleCard } from "./HuddleCall";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { requestEndSession } from "./SessionSettings";
 
 export function SessionPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -322,10 +323,19 @@ export function SessionPane({ state }: { state: ReaderState }) {
               </label>
             )}
             <div className="sb-note-card-actions">
+              <button
+                className="sb-note-button"
+                onClick={() => (state.ui.sessionSettings.value = true)}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  settings
+                </span>{" "}
+                {t("session-settings", { defaultValue: "Session settings" })}
+              </button>
               {live.isHost.value ? (
                 <button
                   className="sb-note-button sb-note-button-danger"
-                  onClick={() => void live.end()}
+                  onClick={() => requestEndSession(state)}
                 >
                   {t("session-end", { defaultValue: "End session" })}
                 </button>
