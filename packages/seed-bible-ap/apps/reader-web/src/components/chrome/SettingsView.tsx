@@ -2,6 +2,7 @@
 // sidebar turns the sidebar into the Settings list — Account settings, Display & Theme, Toolbar, Extensions, Install
 // App, Launch tutorial, Customize, About Seed Bible, then Language and the version — and each row opens its page in
 // the sidebar, with ← back to the list. The pages hold the same cards as the Account settings pane.
+import { HighlightColorsCard } from "./HighlightColorsCard";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import type { SettingsPage } from "../../state";
@@ -109,6 +110,7 @@ export function SettingsView({ state }: { state: ReaderState }) {
         return (
           <>
             <ThemeGallery state={state} />
+            <HighlightColorsCard state={state} />
             <div className="sb-account-card">
               <ReadingFields state={state} />
             </div>

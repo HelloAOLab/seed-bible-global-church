@@ -6647,4 +6647,83 @@ export const MORE_FLOWS: Flow[] = [
       return `the guest saw 'Highlighted verse 30' with the host's face, then '${label}', which brought verse 30 into view`;
     },
   },
+  {
+    id: "HC2",
+    section: "4. Marking the text",
+    title: "Your own highlight colours",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "Settings → Display & Theme → Highlight colors lists the twelve; setting Yellow's background to #00ff00 turns a yellow highlight on John 3:5 green, kept after a reload; its reset (and Reset all custom colors) brings the theme's yellow back",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(CH);
+      await c.selectVerse(5);
+      await c.pickColor(0);
+      const ribbon = page
+        .locator(".sb-bible-reader-active .sb-highlight-ribbon")
+        .first();
+      await ribbon.waitFor({ state: "attached", timeout: 5000 });
+      const fill = () => ribbon.evaluate((el) => getComputedStyle(el).fill);
+      const before = await fill();
+      const side = page.locator(".sb-tabs-sidebar");
+      const openColors = async () => {
+        await side.getByRole("button", { name: "Open settings" }).click();
+        await side.getByText("Display & Theme").click();
+        const card = side.locator(".sb-highlight-colors-card");
+        await card.waitFor({ timeout: 5000 });
+        return card;
+      };
+      try {
+        let card = await openColors();
+        const rows = await card.locator(".sb-theme-color-row").count();
+        if (rows !== 12) throw new Error(`${rows} colours listed`);
+        await card
+          .getByLabel("yellow highlight background color")
+          .evaluate((el, v) => {
+            const i = el as HTMLInputElement;
+            i.value = v;
+            i.dispatchEvent(new Event("input", { bubbles: true }));
+            i.dispatchEvent(new Event("change", { bubbles: true }));
+          }, "#00ff00");
+        // The ribbon's colour eases over a quarter second.
+        for (let i = 0; i < 30 && !/0, 255, 0/.test(await fill()); i++)
+          await page.waitForTimeout(100);
+        const green = await fill();
+        if (!/0, 255, 0|#00ff00/i.test(green))
+          throw new Error(`the yellow highlight is ${green}`);
+        await c.open(CH);
+        await ribbon.waitFor({ state: "attached", timeout: 8000 });
+        if (!/0, 255, 0|#00ff00/i.test(await fill()))
+          throw new Error("the colour was not kept after a reload");
+        card = await openColors();
+        await card
+          .locator(
+            '.sb-theme-color-row[data-color="yellow"] .sb-theme-color-reset'
+          )
+          .click();
+        for (let i = 0; i < 30 && (await fill()) !== before; i++)
+          await page.waitForTimeout(100);
+        if ((await fill()) !== before)
+          throw new Error("the reset did not bring the yellow back");
+        return `twelve listed; yellow became ${green} and stayed after a reload; its reset brought back ${before}`;
+      } finally {
+        await page.evaluate(() => {
+          try {
+            const k = Object.keys(localStorage).find((x) =>
+              x.includes("settings")
+            );
+            if (!k) return;
+            const v = JSON.parse(localStorage.getItem(k) || "{}");
+            delete v.highlightOverrides;
+            localStorage.setItem(k, JSON.stringify(v));
+          } catch {
+            /* nothing to undo */
+          }
+        });
+        await c.open(CH);
+        await c.selectVerse(5);
+        await c.clearHighlight();
+      }
+    },
+  },
 ];

@@ -958,5 +958,9 @@
   "offscreen-highlight-above": "Highlight above, verse {{verses}}. Show it",
   "offscreen-highlight-below": "Highlight below, verse {{verses}}. Show it",
   "offscreen-highlight-scroll-left": "More highlights to the left",
-  "offscreen-highlight-scroll-right": "More highlights to the right"
+  "offscreen-highlight-scroll-right": "More highlights to the right",
+  "reset-all-custom-colors": "Reset all custom colors",
+  "reset-to-default": "Reset to default",
+  "id_highlight-background-color": "{{id}} highlight background color",
+  "id_highlight-text-color": "{{id}} highlight text color"
 }

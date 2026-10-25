@@ -64,9 +64,37 @@ interface Persisted {
   keepScreenAwake?: boolean;
   textStyle?: TextStyle;
   customColors?: string[];
+  highlightOverrides?: HighlightOverrides;
   bookOrder?: BookOrder;
   showDiscovered?: boolean;
   selectionEffects?: SelectionEffects;
+}
+
+/** The reader's own colours for the twelve highlight colours (Settings → Themes → Highlight colors): background and
+ *  text, each optional; what is not here is the theme's. */
+export type HighlightOverrides = Record<
+  string,
+  { color?: string; fontColor?: string }
+>;
+const HEX = /^#[0-9a-f]{6}$/i;
+function cleanOverrides(raw: unknown): HighlightOverrides {
+  const out: HighlightOverrides = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [id, v] of Object.entries(raw as Record<string, unknown>)) {
+    const o = v as { color?: unknown; fontColor?: unknown };
+    const color =
+      typeof o?.color === "string" && HEX.test(o.color) ? o.color : undefined;
+    const fontColor =
+      typeof o?.fontColor === "string" && HEX.test(o.fontColor)
+        ? o.fontColor
+        : undefined;
+    if (color || fontColor)
+      out[id] = {
+        ...(color ? { color } : {}),
+        ...(fontColor ? { fontColor } : {}),
+      };
+  }
+  return out;
 }
 
 function read(): Persisted {
@@ -99,6 +127,9 @@ export function createSettings(deps: SettingsDeps = {}) {
       .filter((c) => /^#[0-9a-f]{6}$/i.test(c))
       .slice(0, MAX_CUSTOM_COLORS)
   );
+  const highlightOverrides = signal<HighlightOverrides>(
+    cleanOverrides(saved.highlightOverrides)
+  );
   const bookOrder = signal<BookOrder>(
     saved.bookOrder === "tanakh" ? "tanakh" : "traditional"
   );
@@ -129,8 +160,18 @@ export function createSettings(deps: SettingsDeps = {}) {
 
   const prefersDark = () =>
     theme.value === "dark" || (theme.value === "system" && systemDark.value);
-  const resolvedTheme = (): BibleTheme =>
-    deps.brand?.(prefersDark()) ?? (prefersDark() ? DARK_THEME : LIGHT_THEME);
+  /** The theme for the scheme (a customization's, else the reader's), with the reader's own highlight colours. */
+  const resolvedTheme = (): BibleTheme => {
+    const base =
+      deps.brand?.(prefersDark()) ?? (prefersDark() ? DARK_THEME : LIGHT_THEME);
+    const own = highlightOverrides.value;
+    if (!Object.keys(own).length) return base;
+    const highlightColors = { ...base.highlightColors };
+    for (const [id, o] of Object.entries(own))
+      if (highlightColors[id])
+        highlightColors[id] = { ...highlightColors[id]!, ...o };
+    return { ...base, highlightColors };
+  };
 
   // Theme variables are injected body-scoped (what the old ThemeManager did), so they beat the :root defaults.
   const dispose = effect(() => {
@@ -198,6 +239,7 @@ export function createSettings(deps: SettingsDeps = {}) {
         keepScreenAwake: keepScreenAwake.value,
         textStyle: textStyle.value,
         customColors: customColors.value,
+        highlightOverrides: highlightOverrides.value,
         bookOrder: bookOrder.value,
         showDiscovered: showDiscovered.value,
         selectionEffects: selectionEffects.value,
@@ -222,6 +264,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     keepScreenAwake,
     textStyle,
     customColors,
+    highlightOverrides,
     bookOrder,
     showDiscovered,
     selectionEffects,
