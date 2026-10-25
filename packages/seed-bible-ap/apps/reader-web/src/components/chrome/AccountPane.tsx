@@ -34,6 +34,11 @@ import {
   signInAsDevReader,
 } from "../../session";
 import { TOWN, estateById } from "../../../../../estate/faithnet";
+import type {
+  BookOrder,
+  FontSize,
+  SelectionEffects,
+} from "../../state/chrome/settings";
 
 const progress = signal("");
 const samplePeople = signal<QuickConnectIdentity[]>([]);
@@ -888,10 +893,10 @@ export function ReadingFields({ state }: { state: ReaderState }) {
           value={state.settings.fontSize.value}
           onChange={(e) =>
             (state.settings.fontSize.value = (e.target as HTMLSelectElement)
-              .value as "xs" | "s" | "m" | "l" | "xl")
+              .value as FontSize)
           }
         >
-          {["xs", "s", "m", "l", "xl"].map((f) => (
+          {(["xs", "s", "m", "l", "xl", "xxl"] as const).map((f) => (
             <option key={f} value={f}>
               {f.toUpperCase()}
             </option>
@@ -908,6 +913,7 @@ export function ReadingFields({ state }: { state: ReaderState }) {
               ["compact", "Compact"],
               ["normal", "Normal"],
               ["relaxed", "Relaxed"],
+              ["loose", "Loose"],
             ],
           ],
           [
@@ -926,6 +932,7 @@ export function ReadingFields({ state }: { state: ReaderState }) {
               ["s", "Small"],
               ["m", "Normal"],
               ["l", "Large"],
+              ["xl", "Extra large"],
             ],
           ],
         ] as const
@@ -971,6 +978,64 @@ export function ReadingFields({ state }: { state: ReaderState }) {
           {label}
         </label>
       ))}
+      <label className="sb-small sb-account-row">
+        <span>{t("book-order", { defaultValue: "Book order" })}</span>
+        <select
+          value={state.settings.bookOrder.value}
+          onChange={(e) =>
+            (state.settings.bookOrder.value = (e.target as HTMLSelectElement)
+              .value as BookOrder)
+          }
+        >
+          <option value="traditional">
+            {t("traditional", { defaultValue: "Traditional" })}
+          </option>
+          <option value="tanakh">
+            {t("tanakh", { defaultValue: "Tanakh" })}
+          </option>
+        </select>
+      </label>
+      <label className="sb-small sb-check">
+        <input
+          type="checkbox"
+          checked={state.settings.showDiscovered.value}
+          onChange={(e) =>
+            (state.settings.showDiscovered.value = (
+              e.target as HTMLInputElement
+            ).checked)
+          }
+        />{" "}
+        {t("show-discovered-content", {
+          defaultValue: "Show discovered content",
+        })}
+      </label>
+      <label className="sb-small sb-account-row">
+        <span>
+          {t("verse-selection-effects", {
+            defaultValue: "Verse selection effects",
+          })}
+        </span>
+        <select
+          value={state.settings.selectionEffects.value}
+          onChange={(e) =>
+            (state.settings.selectionEffects.value = (
+              e.target as HTMLSelectElement
+            ).value as SelectionEffects)
+          }
+        >
+          <option value="default">
+            {t("verse-selection-effects-default", { defaultValue: "Default" })}
+          </option>
+          <option value="enabled">
+            {t("verse-selection-effects-enabled", { defaultValue: "Enabled" })}
+          </option>
+          <option value="disabled">
+            {t("verse-selection-effects-disabled", {
+              defaultValue: "Disabled",
+            })}
+          </option>
+        </select>
+      </label>
     </>
   );
 }

@@ -472,7 +472,9 @@ export function BibleReader({
           </h2>
           {body()}
         </div>
-        {active && <DiscoverPanel state={state} />}
+        {active && settings.showDiscovered.value && (
+          <DiscoverPanel state={state} />
+        )}
       </div>
 
       {footnote && (

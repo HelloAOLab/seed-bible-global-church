@@ -56,6 +56,8 @@ export interface LiveDeps {
   reading: () => Reading;
   identity: () => { agent: string; name: string } | null;
   openRoom?: typeof openRoom;
+  /** This device's own choice about verse flares: as the host set, always, or never. */
+  selectionEffects?: () => "default" | "enabled" | "disabled";
 }
 
 export function createLiveSession(deps: LiveDeps) {
@@ -286,8 +288,13 @@ export function createLiveSession(deps: LiveDeps) {
     lastVerse.set(agent, verse);
     const s = state.value;
     if (!s || verse === null || verse === before) return;
+    const mine = deps.selectionEffects?.() ?? "default";
+    if (mine === "disabled") return;
     const who = settings.value.selectionEffects;
-    if (who === "none" || (who === "hosts-only" && !isHostish(s, agent)))
+    if (
+      mine === "default" &&
+      (who === "none" || (who === "hosts-only" && !isHostish(s, agent)))
+    )
       return;
     const at =
       chapter ??

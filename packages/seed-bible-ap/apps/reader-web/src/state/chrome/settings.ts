@@ -25,10 +25,14 @@ export interface ScriptureElementsBehavior {
 }
 
 export type ThemeChoice = "light" | "dark" | "system";
-export type FontSize = "xs" | "s" | "m" | "l" | "xl";
-export type LineHeight = "compact" | "normal" | "relaxed";
+export type FontSize = "xs" | "s" | "m" | "l" | "xl" | "xxl";
+export type LineHeight = "compact" | "normal" | "relaxed" | "loose";
 export type Margins = "narrow" | "normal" | "wide";
-export type UiScale = "s" | "m" | "l";
+export type UiScale = "s" | "m" | "l" | "xl";
+/** The Old Testament in the Christian order, or the Tanakh's (Torah, Prophets, Writings). */
+export type BookOrder = "traditional" | "tanakh";
+/** Whose verse taps flare in a live session, on this device: as the host set (default), always, or never. */
+export type SelectionEffects = "default" | "enabled" | "disabled";
 
 /** A theme's font stylesheet is loaded only from Google Fonts or the serving plane's files — never anywhere else. */
 export function allowedFontStylesheet(url: string | undefined): string | null {
@@ -60,6 +64,9 @@ interface Persisted {
   keepScreenAwake?: boolean;
   textStyle?: TextStyle;
   customColors?: string[];
+  bookOrder?: BookOrder;
+  showDiscovered?: boolean;
+  selectionEffects?: SelectionEffects;
 }
 
 function read(): Persisted {
@@ -91,6 +98,17 @@ export function createSettings(deps: SettingsDeps = {}) {
     (saved.customColors ?? [])
       .filter((c) => /^#[0-9a-f]{6}$/i.test(c))
       .slice(0, MAX_CUSTOM_COLORS)
+  );
+  const bookOrder = signal<BookOrder>(
+    saved.bookOrder === "tanakh" ? "tanakh" : "traditional"
+  );
+  /** The Discover card beside the chapter (the old reader's "Show discovered content"). */
+  const showDiscovered = signal(saved.showDiscovered !== false);
+  const selectionEffects = signal<SelectionEffects>(
+    saved.selectionEffects === "enabled" ||
+      saved.selectionEffects === "disabled"
+      ? saved.selectionEffects
+      : "default"
   );
   const scripture = signal<ScriptureElementsBehavior>({
     showVerseNumbers: true,
@@ -180,6 +198,9 @@ export function createSettings(deps: SettingsDeps = {}) {
         keepScreenAwake: keepScreenAwake.value,
         textStyle: textStyle.value,
         customColors: customColors.value,
+        bookOrder: bookOrder.value,
+        showDiscovered: showDiscovered.value,
+        selectionEffects: selectionEffects.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
     } catch {
@@ -201,6 +222,9 @@ export function createSettings(deps: SettingsDeps = {}) {
     keepScreenAwake,
     textStyle,
     customColors,
+    bookOrder,
+    showDiscovered,
+    selectionEffects,
     resolvedTheme,
     toggleTheme,
     dispose,

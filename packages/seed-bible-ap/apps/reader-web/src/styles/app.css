@@ -1053,6 +1053,9 @@ html[data-sb-scale="s"] {
 html[data-sb-scale="l"] {
   font-size: 112.5%;
 }
+html[data-sb-scale="xl"] {
+  font-size: 125%;
+}
 .sb-bible-reader {
   line-height: var(--sb-reader-line-height, inherit);
 }
@@ -1065,6 +1068,9 @@ html[data-sb-line="compact"] .sb-bible-reader {
 }
 html[data-sb-line="relaxed"] .sb-bible-reader {
   line-height: 1.95;
+}
+html[data-sb-line="loose"] .sb-bible-reader {
+  line-height: 2.5;
 }
 html[data-sb-margins="narrow"] .sb-chapter-content {
   max-width: 34rem;

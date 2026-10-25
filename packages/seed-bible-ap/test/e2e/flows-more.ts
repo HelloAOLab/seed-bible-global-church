@@ -673,6 +673,91 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "DS1",
+    section: "3. Reading",
+    title: "The old reader's display choices",
+    rows: ["Margins, line height, UI scale, custom fonts"],
+    checks:
+      "Settings → Display & Theme: text size XXL, line height Loose (2.5), interface Extra large (125%); Book order Tanakh puts Isaiah right after 2 Kings in the book picker; Show discovered content off takes the Discover card away; Verse selection effects offers Default, Enabled, Disabled",
+    run: async (c) => {
+      let step = "";
+      try {
+        await c.open(CH);
+        const side = c.page.locator(".sb-tabs-sidebar");
+        await side.getByRole("button", { name: "Open settings" }).click();
+        await side.getByText("Display & Theme").click();
+        const select = (label: string) =>
+          side.locator("label", { hasText: label }).locator("select").first();
+        step = "XXL";
+        await select("A").selectOption("xxl");
+        await c.page
+          .locator(".sb-bible-reader-active.sb-font-size-xxl")
+          .waitFor({ timeout: 5000 });
+        step = "Loose";
+        await select("Line height").selectOption("loose");
+        const lh = await c.page
+          .locator(".sb-bible-reader-active")
+          .evaluate((e) => getComputedStyle(e).lineHeight);
+        const fs = await c.page
+          .locator(".sb-bible-reader-active")
+          .evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+        if (Math.abs(parseFloat(lh) / fs - 2.5) > 0.05)
+          throw new Error(`line height ${lh} at ${fs}px`);
+        step = "Extra large";
+        await select("Interface size").selectOption("xl");
+        const root = await c.page.evaluate(
+          () => getComputedStyle(document.documentElement).fontSize
+        );
+        if (root !== "20px") throw new Error(`the interface is ${root}`);
+        await select("Interface size").selectOption("m");
+        step = "Tanakh";
+        await select("Book order").selectOption("tanakh");
+        await c.page
+          .locator(".sb-bible-reader-active .sb-bible-reader-title")
+          .click();
+        await c.page
+          .locator(".sb-selector-book-name")
+          .first()
+          .waitFor({ timeout: 10000 });
+        const flat = (
+          await c.page.locator(".sb-selector-book-name").allInnerTexts()
+        ).map((n) => n.trim());
+        const k = flat.findIndex((n) => /^2 Kings$/.test(n));
+        if (k < 0 || !/^Isaiah$/.test(flat[k + 1] ?? ""))
+          throw new Error(`after 2 Kings: ${flat.slice(k, k + 3).join(", ")}`);
+        await c.page.keyboard.press("Escape");
+        await select("Book order").selectOption("traditional");
+        step = "Show discovered content";
+        await c.page
+          .locator(".sb-discover-content-panel")
+          .first()
+          .waitFor({ timeout: 15000 });
+        await side
+          .locator("label", { hasText: "Show discovered content" })
+          .locator("input")
+          .uncheck();
+        await c.page
+          .locator(".sb-discover-content-panel")
+          .waitFor({ state: "detached", timeout: 5000 });
+        await side
+          .locator("label", { hasText: "Show discovered content" })
+          .locator("input")
+          .check();
+        step = "Verse selection effects";
+        const opts = await select("Verse selection effects")
+          .locator("option")
+          .allInnerTexts();
+        if (opts.join() !== "Default,Enabled,Disabled")
+          throw new Error(`effects: ${opts.join(", ")}`);
+        await select("A").selectOption("m");
+        await select("Line height").selectOption("normal");
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "XXL, Loose and Extra large applied; Tanakh order put Isaiah after 2 Kings; the Discover card hid and came back; the effects choice is there";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",
@@ -720,10 +805,12 @@ export const MORE_FLOWS: Flow[] = [
         await sheet.getByRole("button", { name: "Change line spacing" }).tap();
         const l1 = await lineOf();
         if (l1 === l0) throw new Error(`line spacing stayed ${l0}`);
-        await sheet.getByRole("button", { name: "Change line spacing" }).tap();
-        await sheet.getByRole("button", { name: "Change line spacing" }).tap();
+        for (let i = 0; i < 3; i++)
+          await sheet
+            .getByRole("button", { name: "Change line spacing" })
+            .tap();
         if ((await lineOf()) !== l0)
-          throw new Error("three taps did not come back to the first spacing");
+          throw new Error("four taps did not come back to the first spacing");
         await sheet.getByRole("button", { name: "L", exact: true }).tap();
         if (
           (await page.evaluate(

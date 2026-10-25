@@ -249,7 +249,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   };
   const cols = columnsFor(width);
   const phone = width <= MOBILE_BREAKPOINT;
-  const groups = groupByTestament(books);
+  const groups = groupByTestament(books, state.settings.bookOrder.value);
   const grid = (list: TranslationBook[], columns: number) => (
     <BooksGrid
       books={list}

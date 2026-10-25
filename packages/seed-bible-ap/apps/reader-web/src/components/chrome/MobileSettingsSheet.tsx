@@ -10,13 +10,13 @@ import type {
   UiScale,
 } from "../../state/chrome/settings";
 
-const FONT_SIZES: FontSize[] = ["xs", "s", "m", "l", "xl"];
-const LINE_HEIGHTS: LineHeight[] = ["compact", "normal", "relaxed"];
-const UI_SIZES: UiScale[] = ["s", "m", "l"];
+const FONT_SIZES: FontSize[] = ["xs", "s", "m", "l", "xl", "xxl"];
+const LINE_HEIGHTS: LineHeight[] = ["compact", "normal", "relaxed", "loose"];
+const UI_SIZES: UiScale[] = ["s", "m", "l", "xl"];
 
 /** The old reader's line-spacing glyph: three bars, wider apart as the spacing grows. */
 function LineHeightIcon({ index }: { index: number }) {
-  const gap = 3.5 + index * 1.5;
+  const gap = 3 + index * 1.2;
   return (
     <svg
       width="20"

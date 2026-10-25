@@ -839,5 +839,13 @@
   "publish-note-menu": "Publish to your public shelf",
   "save-shortcut": "Save (Ctrl+Enter)",
   "save-shortcut-mac": "Save (⌘+Enter)",
-  "plain-editor-note": "The full editor could not be loaded, so this is plain text."
+  "plain-editor-note": "The full editor could not be loaded, so this is plain text.",
+  "book-order": "Book order",
+  "show-discovered-content": "Show discovered content",
+  "tanakh": "Tanakh",
+  "traditional": "Traditional",
+  "verse-selection-effects": "Verse selection effects",
+  "verse-selection-effects-default": "Default",
+  "verse-selection-effects-disabled": "Disabled",
+  "verse-selection-effects-enabled": "Enabled"
 }

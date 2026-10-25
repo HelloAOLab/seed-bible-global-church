@@ -308,6 +308,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     backend,
     reading: sessionReading,
     identity: () => backend.identity(),
+    selectionEffects: () => settings.selectionEffects.value,
   });
   effect(() => {
     const id = live.sessionId.value;
