@@ -71,7 +71,12 @@ describe("translation keys", () => {
 
   it("every en.json key is named by a component, or is built at runtime (allowlisted)", () => {
     const unreferenced = [...keys]
-      .filter((k) => !used.has(k) && !runtimeBuilt.some((re) => re.test(k)))
+      .filter(
+        (k) =>
+          // A plural form (`key_one`, `key_other`) belongs to the key a component names.
+          !used.has(k.replace(/_(zero|one|two|few|many|other)$/, "")) &&
+          !runtimeBuilt.some((re) => re.test(k))
+      )
       .sort();
     expect(unreferenced, "en.json keys no component names").toEqual([]);
   });

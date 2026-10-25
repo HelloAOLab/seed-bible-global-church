@@ -2652,7 +2652,7 @@ export const MORE_FLOWS: Flow[] = [
       "Play a playlist",
     ],
     checks:
-      "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
+      "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: Save and Bookmark leave the chapter header, and a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
     run: async (c) => {
       let step = "";
       try {
@@ -2697,6 +2697,16 @@ export const MORE_FLOWS: Flow[] = [
         const note = c.page.locator(".sb-playlist-note");
         await note.waitFor({ timeout: 10000 });
         await c.waitText(note, /1 of 2/, 5000);
+        if (
+          await c.page
+            .locator(
+              ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button, .sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
+            )
+            .count()
+        )
+          throw new Error(
+            "Save and Bookmark still show while the playlist plays"
+          );
         await note.getByRole("button", { name: /hide note/i }).click();
         await c.page.getByRole("button", { name: /show note/i }).click();
         await note.getByRole("button", { name: /next/i }).click();
@@ -2723,7 +2733,7 @@ export const MORE_FLOWS: Flow[] = [
       } catch (e) {
         throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
       }
-      return "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 → 2 of 2 → finished, deleted after the check";
+      return "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 (Save and Bookmark stepped aside) → 2 of 2 → finished, deleted after the check";
     },
   },
   {
@@ -5887,6 +5897,73 @@ export const MORE_FLOWS: Flow[] = [
         await ctx.close();
       }
       return seen.join("; ");
+    },
+  },
+  {
+    id: "RD2",
+    section: "3. Reading",
+    title: "Footnote links, an embed's marks, the phone's note count",
+    rows: ["Headings, poetry, red letters, footnotes"],
+    checks:
+      "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone's header shows the note count, and it opens the note",
+    run: async (c) => {
+      const page = c.page;
+      let step = "";
+      try {
+        step = "a footnote's reference";
+        await c.open("/read/BSB/JHN/1");
+        await c.verse(23).locator(".sb-inline-footnote-button").first().click();
+        const link = page
+          .locator(".sb-footnote-modal-content a")
+          .filter({ hasText: "Isaiah 40:3" });
+        await link.waitFor({ timeout: 5000 });
+        await link.click();
+        await page.waitForURL(/\/read\/BSB\/ISA\/40/, { timeout: 8000 });
+        await page
+          .locator(
+            '.sb-bible-reader-active [data-verse-number="3"].sb-verse-selected, .sb-bible-reader-active .sb-verse-selected[data-verse-number="3"]'
+          )
+          .first()
+          .waitFor({ timeout: 8000 })
+          .catch(() => {
+            throw new Error("Isaiah 40:3 is not chosen");
+          });
+        step = "the embed leaves out the visitor's highlight";
+        await c.open(CH);
+        await c.selectVerse(3);
+        await c.pickColor(0);
+        const fill = ".sb-bible-reader-active [data-highlight-fill]";
+        await page.locator(fill).first().waitFor({ timeout: 5000 });
+        await c.open(`${CH}?embed=minimal`);
+        await c.verse(3).waitFor({ timeout: 20000 });
+        await page.waitForTimeout(800);
+        if (await page.locator(fill).count())
+          throw new Error("the embed draws the visitor's highlight");
+        await c.open(CH);
+        await c.selectVerse(3);
+        await c.clearHighlight();
+        step = "the phone's note count";
+        await deleteAllNotes(c);
+        await writeNote(c, 16, "a note for the count");
+        await page.setViewportSize({ width: 390, height: 664 });
+        await c.open(CH);
+        const count = page.locator(
+          ".sb-bible-reader-active .sb-bible-reader-mobile-header-notes"
+        );
+        await count.waitFor({ timeout: 8000 });
+        const label = (await count.getAttribute("aria-label")) ?? "";
+        if (!/^1 note for this chapter$/i.test(label))
+          throw new Error(`note count: ${label}`);
+        await count.click();
+        await c.waitText(c.pane(), /a note for the count/, 8000);
+        return `John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone header said '${label}' and opened it`;
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message}`);
+      } finally {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await c.open(CH).catch(() => undefined);
+        await deleteAllNotes(c).catch(() => undefined);
+      }
     },
   },
 ];

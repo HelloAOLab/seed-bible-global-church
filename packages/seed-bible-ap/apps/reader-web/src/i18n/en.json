@@ -72,6 +72,8 @@
   "notes": "Notes",
   "note": "Note",
   "chapter-notes-count": "{{count}} notes for this chapter",
+  "chapter-notes-count_one": "{{count}} note for this chapter",
+  "chapter-notes-count_other": "{{count}} notes for this chapter",
   "resume-reading": "Continue where you left off",
   "your-content": "Your content",
   "see-all": "See all",

@@ -17,6 +17,7 @@ import {
 } from "./chapterContent";
 import { forwardRef } from "preact/compat";
 import { ChapterColumn } from "./ChapterColumn";
+import { ReferenceText } from "./ReferenceText";
 import { attachReaderViewport, pageScrolls } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
@@ -42,8 +43,13 @@ export function BibleReader({
   const { settings, ui, selection } = state;
   const chapter = reading.chapterData.value;
   const chapterRef = reading.chapterRef.value;
-  const highlights = state.highlights.forChapter(chapterRef).value;
-  const notes = state.annotations.forChapter(chapterRef).value;
+  // An embed is someone else's page: the visitor's own highlights and notes are not drawn on it.
+  const highlights = ui.embed.value
+    ? []
+    : state.highlights.forChapter(chapterRef).value;
+  const notes = ui.embed.value
+    ? []
+    : state.annotations.forChapter(chapterRef).value;
   // This pane shows the live session's tab: the room's marks and where everyone is are drawn here.
   const inSession =
     state.live.active.value && state.live.sessionReading() === reading;
@@ -307,8 +313,9 @@ export function BibleReader({
     </>
   );
 
-  // The chapter's own actions, the same on the desktop header and the phone's.
-  const saveButtons = (
+  // The chapter's own actions, the same on the desktop header and the phone's; Save and Bookmark step aside while a
+  // playlist plays (the old reader's rule: the playlist's own card is what is being read).
+  const saveButtons = state.playlists.playing.value ? null : (
     <>
       <button
         type="button"
@@ -404,6 +411,34 @@ export function BibleReader({
               </button>
             </h1>
           </div>
+          {!embed && notes.length > 0 && (
+            <button
+              type="button"
+              className="sb-bible-reader-mobile-header-notes"
+              aria-label={t("chapter-notes-count", {
+                defaultValue: "{{count}} notes for this chapter",
+                count: notes.length,
+              })}
+              title={t("chapter-notes-count", {
+                defaultValue: "{{count}} notes for this chapter",
+                count: notes.length,
+              })}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                ui.pane.value = "notes";
+                ui.focusNoteVerse.value = Math.min(
+                  ...notes.map((n) => n.start || 1)
+                );
+              }}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                sticky_note_2
+              </span>
+              <span className="sb-bible-reader-mobile-header-notes-count">
+                {notes.length}
+              </span>
+            </button>
+          )}
           <div className="sb-bible-reader-mobile-header-actions">
             {embed ? (
               embedActions
@@ -583,7 +618,18 @@ export function BibleReader({
                 </button>
               </div>
               <div className="sb-footnote-modal-content">
-                {note?.text ?? ""}
+                <ReferenceText
+                  text={note?.text ?? ""}
+                  books={reading.books.value}
+                  onReference={(r) => {
+                    setFootnote(null);
+                    void reading
+                      .goTo(reading.translationId.value, r.bookId, r.chapter)
+                      .then(() => {
+                        if (r.from) selection.select(r.from, r.to ?? r.from);
+                      });
+                  }}
+                />
               </div>
             </div>
           </div>

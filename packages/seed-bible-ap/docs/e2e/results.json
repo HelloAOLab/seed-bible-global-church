@@ -1,60 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:38 UTC",
+  "when": "2026-10-25 09:45 UTC",
   "results": [
     {
-      "id": "R6",
-      "section": "13. Links and embedding",
-      "title": "Embed and theme parameters",
-      "checks": "?embed=minimal hides the sidebar and toolbars; ?theme=dark applies the dark theme",
-      "mark": "✅",
-      "note": "embed hides the chrome; data-sb-theme=\"dark\"",
-      "ms": 4680
-    },
-    {
-      "id": "CH1",
-      "section": "9. Reading together",
-      "title": "The chat panel",
-      "checks": "The host starts a session; the bar gains Chat, which opens the old reader's chat panel listing Session chat and Study companion. A guest joins: the host's chat says 'Flow guest joined'. The guest types @ and picks the host from the list, adds 'see John 3:16': the host sees 'Flow guest is typing...', then the line with their @name marked and John 3:16 as a link, which opens John 3 with verse 16 chosen. With the chat closed, '@everyone hello' puts @ on the host's Chat button; opening the chat clears it",
-      "mark": "✅",
-      "note": "Chat listed Session chat and Study companion; the join, typing, the @mention, the John 3:16 link and the @ badge all worked",
-      "ms": 43354
-    },
-    {
-      "id": "L2",
-      "section": "9. Reading together",
-      "title": "Show everyone, the roster, chat, the record",
-      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
-      "mark": "✅",
-      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code FH45HD)",
-      "ms": 43710
-    },
-    {
-      "id": "TB1",
+      "id": "RD2",
       "section": "3. Reading",
-      "title": "The old reader's bottom bar; every action within reach",
-      "checks": "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
+      "title": "Footnote links, an embed's marks, the phone's note count",
+      "checks": "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone's header shows the note count, and it opens the note",
       "mark": "✅",
-      "note": "desktop bar: Books · Search · Discover · Places map · Study companion · More; under More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes; Books and Search open; on a phone all 9 actions reachable",
-      "ms": 1367
-    },
-    {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
-      "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1471
-    },
-    {
-      "id": "LK2",
-      "section": "13. Links and embedding",
-      "title": "The old reader's page links",
-      "checks": "/en/about opens About; ?today=open opens Today; ?search=open opens the floating search; ?chatFirst=true puts Chat first on the desktop bar outside a live session, and on a phone makes Chat the fourth tab with Search under More",
-      "mark": "✅",
-      "note": "/en/about → About; ?today=open → Today; ?search=open → search; desktop: Books · Search · Chat · Discover; phone: Today · You · Bible · Chat · More, Search under More",
-      "ms": 13929
+      "note": "John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone header said '1 note for this chapter' and opened it",
+      "ms": 29000
     }
   ]
 }

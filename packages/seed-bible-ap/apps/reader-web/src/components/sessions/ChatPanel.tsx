@@ -23,7 +23,7 @@ const GROUP_GAP_MS = 5 * 60_000;
 const TYPING_RESEND_MS = 3000;
 
 /** A Bible reference found in a line: where it is in the text and where it goes. */
-interface FoundReference {
+export interface FoundReference {
   start: number;
   end: number;
   bookId: string;
