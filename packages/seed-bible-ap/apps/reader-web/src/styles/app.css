@@ -518,16 +518,13 @@ body {
 .sb-reader-toolbar-more-empty .sb-reader-toolbar-more-button {
   display: none;
 }
-/* The buttons still in the bar are listed in More only while the bar is folded. */
+/* A button still in the bar is not listed again in More (one folded out of it is: ReaderToolbar marks which). */
 .sb-reader-toolbar-more-item.sb-reader-toolbar-more-item-in-bar {
   display: none;
 }
-.sb-reader-toolbar-folded .sb-reader-toolbar-more-item-in-bar {
-  display: flex;
-}
-/* A narrow phone, or a bar wider than its reading area (ReaderToolbar measures that): the actions after the chapter
-   controls go under "More". */
-.sb-reader-toolbar-folded .sb-reader-toolbar-secondary {
+/* A bar wider than its reading area (ReaderToolbar measures that): the actions that do not fit go under "More",
+   from the end; the rest stay in the bar. */
+.sb-reader-toolbar-folded .sb-reader-toolbar-secondary-folded {
   display: none;
 }
 .sb-reader-toolbar-folded .sb-reader-toolbar-more-button {

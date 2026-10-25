@@ -4387,6 +4387,28 @@ export const MORE_FLOWS: Flow[] = [
       await c.open("/read/BSB/GEN/1");
       await c.signInAsSample();
       const lib = await c.openLibrary("Playlists");
+      // Pages an earlier run left published (it failed before withdrawing) are withdrawn and deleted first: they
+      // show in everyone's Discover for Genesis 1.
+      for (let i = 0; i < 10; i++) {
+        const old = lib
+          .locator(".sb-note-card", { hasText: /Flow page \d+/ })
+          .first();
+        if (!(await old.count())) break;
+        await ensureOpen(old);
+        const published = old.locator("button", {
+          hasText: /(^|\s)Published\s*$/,
+        });
+        if (await published.count()) {
+          await published.click();
+          await old
+            .locator("button", { hasText: /(^|\s)Publish\s*$/ })
+            .waitFor({ timeout: 120000 });
+        }
+        c.page.once("dialog", (d) => void d.accept());
+        await old.getByRole("button", { name: /^delete$/i }).click();
+        await c.confirmDelete();
+        await c.page.waitForTimeout(800);
+      }
       const title = `Flow page ${stamp()}`;
       await lib.locator('input[placeholder^="New playlist"]').fill(title);
       await lib.getByRole("button", { name: /^create$/i }).click();
@@ -4411,14 +4433,16 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(`Share playlist copied "${shared}"`);
       await c.pressToolbar("Discover");
       const item = c.pane().locator(".sb-discover-item", { hasText: title });
+      // Opening Discover reads afresh: closed and opened again until the registry has it.
       for (let i = 0; i < 12 && !(await item.count()); i++) {
+        await c.page.waitForTimeout(5000);
         await c
           .pane()
-          .getByRole("button", { name: /refresh/i })
+          .getByRole("button", { name: "Close" })
           .first()
           .click()
           .catch(() => undefined);
-        await c.page.waitForTimeout(5000);
+        await c.pressToolbar("Discover");
       }
       if (!(await item.count())) throw new Error("not listed in Discover");
       await item.locator(".sb-discover-item-main").click();
@@ -7703,6 +7727,96 @@ export const MORE_FLOWS: Flow[] = [
       await row.waitFor({ state: "detached", timeout: 60000 });
       await shot(c.page, "cancelled");
       return `'${added.question}' → Yes; the window closed itself in ${added.secs}s and the reader said Alice was asked. '${removed.question}' → Yes; closed in ${removed.secs}s; the request is gone`;
+    },
+  },
+  {
+    id: "DP1",
+    section: "8. Today, Discover and publishing",
+    title: "Discover as the old reader's: notes first, Create a note",
+    rows: ["Discover"],
+    checks:
+      "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
+    run: async (c) => {
+      await c.open("/read/BSB/OBA/1");
+      await c.settleTours();
+      await c.pressToolbar("Discover");
+      const pane = c.page.locator(".sb-discover-pane");
+      await pane.waitFor({ timeout: 8000 });
+      await c.waitText(
+        pane,
+        /You don't have any notes for this chapter/,
+        15000
+      );
+      const sections = await pane
+        .locator(".sb-discover-section-title, .sb-content-section-title")
+        .allInnerTexts();
+      if (!/notes/i.test(sections[0] ?? ""))
+        throw new Error(`first section is ${sections[0]}`);
+      if (await pane.getByText("Nothing for this chapter.").count())
+        throw new Error("an empty source still shows");
+      await pane.getByRole("button", { name: "+ Create" }).click();
+      const menu = pane.getByRole("menu");
+      await menu
+        .getByRole("menuitem", { name: "Note" })
+        .waitFor({ timeout: 2000 });
+      await menu
+        .getByRole("menuitem", { name: "Playlist" })
+        .waitFor({ timeout: 2000 });
+      await pane.getByRole("button", { name: "+ Create" }).click();
+      await pane.getByRole("button", { name: "Create a note" }).click();
+      await c.page
+        .locator(".sb-note-editor, [contenteditable=true]")
+        .first()
+        .waitFor({ timeout: 8000 });
+      return `Discover: ${sections.slice(0, 4).join(" · ")}; Create a note opened the editor; + Create offers Note and Playlist`;
+    },
+  },
+  {
+    id: "TB3",
+    section: "2. Getting around",
+    title: "The bar keeps what fits beside a pane",
+    rows: ["The bottom toolbar fits its window"],
+    checks:
+      "On a 1600px desktop with Discover open beside the chapter, the bar keeps Books, Search and as many of its buttons as fit (Discover among them, first in line), and only the rest are under More; every button sits inside the bar",
+    run: async (c) => {
+      await c.page.setViewportSize({ width: 1600, height: 820 });
+      await c.open("/read/BSB/GEN/1");
+      await c.settleTours();
+      await c.pressToolbar("Discover");
+      await c.page.locator(".sb-discover-pane").waitFor({ timeout: 8000 });
+      await c.page.waitForTimeout(800);
+      const bar = c.page.locator(".sb-reader-toolbar-desk");
+      const visible = (
+        await bar.locator(".sb-reader-toolbar-item:visible").allInnerTexts()
+      )
+        .map((x) => x.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      const outside = await bar.evaluate((n) => {
+        const r = n.getBoundingClientRect();
+        return [...n.querySelectorAll(".sb-reader-toolbar-item")]
+          .map((k) => k.getBoundingClientRect())
+          .filter(
+            (k) => k.width && (k.right > r.right + 1 || k.left < r.left - 1)
+          ).length;
+      });
+      if (outside) throw new Error(`${outside} buttons fall outside the bar`);
+      const words = visible.join(" | ");
+      for (const w of ["Books", "Search", "Discover"])
+        if (!words.includes(w)) throw new Error(`no ${w} in the bar: ${words}`);
+      await bar.getByRole("button", { name: "More", exact: true }).click();
+      const inMore = (
+        await c.page
+          .locator(".sb-reader-toolbar-more-menu [role=menuitem]:visible")
+          .allInnerTexts()
+      ).map((x) => x.replace(/\s+/g, " ").trim());
+      for (const m of inMore)
+        if (
+          visible.some(
+            (v) => v.endsWith(m.replace(/^\S+\s/, "")) && m.length > 3
+          )
+        )
+          throw new Error(`${m} is in the bar and in More`);
+      return `bar: ${words}; More: ${inMore.join(", ")}`;
     },
   },
 ];

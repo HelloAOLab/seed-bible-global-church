@@ -446,3 +446,51 @@
   font-weight: 400;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
+
+/* The Discover pane's header: + Create (a note, a playlist) beside ✕, and its little menu. */
+.sb-discover-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sb-discover-create {
+  position: relative;
+}
+.sb-discover-create-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--sb-background);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 14%);
+}
+.sb-discover-create-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.sb-discover-create-menu button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+/* "Create a note" inside the empty Notes line: a link in the accent colour. */
+.sb-discover-create-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font: inherit;
+  cursor: pointer;
+}

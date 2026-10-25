@@ -215,9 +215,6 @@
   "session-at-verse": "at verse {{verse}}",
   "discover-yours": "yours",
   "discover-no-body": "This release has no text beside it.",
-  "discover-provider-empty": "Nothing for this chapter.",
-  "discover-empty": "Nothing released for this chapter yet. Publish one of your notes to be the first.",
-  "discover-how": "The Seed registry indexes what people and churches release on their public shelves; it re-crawls every 15 minutes.",
   "recent-reading": "Recent reading",
   "today-no-bookmarks": "No bookmarks yet.",
   "today-no-saves": "No saves yet.",
@@ -1028,5 +1025,7 @@
   "friend-confirm-window": "A small window opened. Tap “Yes, add them” there to add {{name}}. It closes by itself.",
   "friend-open-window-again": "Open it again",
   "friends-find-you-as": "Friends can find you as",
-  "friend-remove-confirm-window": "A small window opened. Tap “Yes, remove them” there to remove {{name}}. It closes by itself."
+  "friend-remove-confirm-window": "A small window opened. Tap “Yes, remove them” there to remove {{name}}. It closes by itself.",
+  "create-a-note": "Create a note",
+  "discover-no-notes": "You don't have any notes for this chapter."
 }

@@ -86,13 +86,7 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
           <button
             type="button"
             className="sb-dcp-create-btn"
-            onClick={() => {
-              const v = state.selection.verses.value;
-              const start = v.length ? Math.min(...v) : 1;
-              const end = v.length ? Math.max(...v) : start;
-              ui.noteDraft.value = { start, end };
-              ui.pane.value = "notes";
-            }}
+            onClick={() => createNote(state)}
           >
             + {t("create-playlist", { defaultValue: "Create" })}
           </button>
@@ -131,37 +125,7 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
         )}
         <div className="sb-discover-content-panel-scroll">
           {(f === "all" || f === "notes") && hasNotes && (
-            <section className="sb-discover-section">
-              <h3 className="sb-discover-section-title">
-                {t("notes", { defaultValue: "Notes" })}
-              </h3>
-              <ul className="sb-discover-list">
-                {notes.map((n) => (
-                  <li key={n.id} className="sb-discover-item">
-                    <button
-                      type="button"
-                      className="sb-discover-item-main"
-                      onClick={() => {
-                        ui.pane.value = "notes";
-                        ui.focusNoteVerse.value = n.start;
-                      }}
-                    >
-                      <span className="sb-discover-item-content">
-                        <span className="sb-discover-item-title">
-                          {ref(n.start, n.end)}
-                        </span>
-                        <span className="sb-discover-item-description">
-                          {noteText(n.note).slice(0, 160)}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-                {released.map((o) => (
-                  <OfferingItem key={o.descriptorId} state={state} o={o} />
-                ))}
-              </ul>
-            </section>
+            <ChapterNotes state={state} />
           )}
           {sources
             .filter((p) => f === "all" || f === p.id)
@@ -197,6 +161,84 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Start a note on the chosen verses (else verse 1), in the Notes pane — the old reader's Create a note. */
+export function createNote(state: ReaderState) {
+  const v = state.selection.verses.value;
+  const start = v.length ? Math.min(...v) : 1;
+  const end = v.length ? Math.max(...v) : start;
+  state.ui.noteDraft.value = { start, end };
+  state.ui.pane.value = "notes";
+}
+
+/**
+ * NOTES for the chapter on screen, the old reader's first Discover section: yours, and what people shared for it. With
+ * `empty`, an empty chapter says so and offers Create a note (the Discover pane); without, it renders nothing (the card).
+ */
+export function ChapterNotes({
+  state,
+  empty,
+}: {
+  state: ReaderState;
+  empty?: boolean;
+}) {
+  const { t } = useI18n();
+  const { reading, ui } = state;
+  const chapterRef = reading.chapterRef.value;
+  const notes = state.annotations.forChapter(chapterRef).value;
+  const released = state.discover.forChapter(chapterRef).value?.offerings ?? [];
+  if (!notes.length && !released.length && !empty) return null;
+  const ref = (start: number, end: number) =>
+    `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}-${end}`}`;
+  return (
+    <section className="sb-discover-section">
+      <h3 className="sb-discover-section-title">
+        {t("notes", { defaultValue: "Notes" })}
+      </h3>
+      {!notes.length && !released.length ? (
+        <p className="sb-discover-empty">
+          {t("discover-no-notes", {
+            defaultValue: "You don't have any notes for this chapter.",
+          })}{" "}
+          <button
+            type="button"
+            className="sb-discover-create-link"
+            onClick={() => createNote(state)}
+          >
+            {t("create-a-note", { defaultValue: "Create a note" })}
+          </button>
+        </p>
+      ) : (
+        <ul className="sb-discover-list">
+          {notes.map((n) => (
+            <li key={n.id} className="sb-discover-item">
+              <button
+                type="button"
+                className="sb-discover-item-main"
+                onClick={() => {
+                  ui.pane.value = "notes";
+                  ui.focusNoteVerse.value = n.start;
+                }}
+              >
+                <span className="sb-discover-item-content">
+                  <span className="sb-discover-item-title">
+                    {ref(n.start, n.end)}
+                  </span>
+                  <span className="sb-discover-item-description">
+                    {noteText(n.note).slice(0, 160)}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+          {released.map((o) => (
+            <OfferingItem key={o.descriptorId} state={state} o={o} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

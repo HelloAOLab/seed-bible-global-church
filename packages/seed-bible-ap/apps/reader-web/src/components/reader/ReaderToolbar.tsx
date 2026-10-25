@@ -273,7 +273,10 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   // before the paint.
   const navRef = useRef<HTMLElement>(null);
   const fullWidth = useRef(0);
-  const [folded, setFolded] = useState(false);
+  /** How many of the bar's own buttons stay in it when it is too wide: the rest go under More, as many kept as fit
+   *  (the old reader's bar keeps what it can). Null when nothing is folded. */
+  const [keep, setKeep] = useState<number | null>(null);
+  const folded = keep !== null;
   const [fontsLoaded, setFontsLoaded] = useState(false);
   useEffect(() => {
     void document.fonts?.ready.then(() => setFontsLoaded(true));
@@ -291,15 +294,39 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     reading.bookName.value,
     reading.chapterNumber.value,
   ].join("|");
-  useLayoutEffect(() => setFolded(false), [contentKey]);
+  const widths = useRef<number[]>([]);
+  const moreWidth = useRef(0);
+  useLayoutEffect(() => setKeep(null), [contentKey]);
   useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    if (!folded) fullWidth.current = nav.scrollWidth;
-    const fold = mainWidth > 0 && fullWidth.current > mainWidth - 16;
-    if (fold === folded) return;
-    setFolded(fold);
-    if (!fold) setMoreOpen(false);
+    if (!folded) {
+      fullWidth.current = nav.scrollWidth;
+      widths.current = [
+        ...nav.querySelectorAll<HTMLElement>(".sb-reader-toolbar-secondary"),
+      ].map((el) => el.getBoundingClientRect().width);
+      moreWidth.current =
+        nav
+          .querySelector<HTMLElement>(".sb-reader-toolbar-more-button")
+          ?.getBoundingClientRect().width ?? 0;
+    }
+    const room = mainWidth - 16;
+    let next: number | null = null;
+    if (mainWidth > 0 && fullWidth.current > room) {
+      // Take buttons off the end until the bar, with More, fits.
+      const w = widths.current;
+      let width =
+        fullWidth.current +
+        (nav.querySelector(".sb-reader-toolbar-more-button")
+          ? 0
+          : moreWidth.current);
+      let k = w.length;
+      while (k > 0 && width > room) width -= w[--k]!;
+      next = k;
+    }
+    if (next === keep) return;
+    setKeep(next);
+    if (next === null) setMoreOpen(false);
   });
 
   return (
@@ -427,7 +454,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
         active={ui.searchOpen.value}
         onClick={openSearch}
       />
-      {shown.map((a) => (
+      {shown.map((a, i) => (
         <Item
           key={a.id}
           icon={a.icon}
@@ -435,7 +462,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           labeled
           active={a.active}
           badge={a.badge}
-          className="sb-reader-toolbar-secondary"
+          className={`sb-reader-toolbar-secondary${keep !== null && i >= keep ? " sb-reader-toolbar-secondary-folded" : ""}`}
           onClick={a.onClick}
         />
       ))}
@@ -470,7 +497,8 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
             </button>
           )}
           {[
-            ...shown.map((a) => ({ a, inBar: true })),
+            // In More only while folded out of the bar.
+            ...shown.map((a, i) => ({ a, inBar: keep === null || i < keep })),
             ...more.map((a) => ({ a, inBar: false })),
           ].map(({ a, inBar }) => (
             <button

@@ -1,12 +1,12 @@
-// DISCOVER — what Seed Bible agents released for the chapter on screen, from the Seed registry through the
-// workspace: published notes, studies, offerings. Dressed by the copied `discover.css` (`sb-discover-*`).
+// DISCOVER — the old reader's Discover pane for the chapter on screen: + Create (a note, a playlist), NOTES (yours and
+// what people shared for it, or "Create a note"), then each source's sections. Dressed by the copied `discover.css`.
 import { sharedPathOf, sharedRefOf } from "../../state/social/sharedPage";
 import { useEffect, useState, useRef } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
 import { ContentCards, byAuthor } from "./ContentCards";
-import { SectionedRows } from "./DiscoverPanel";
+import { ChapterNotes, createNote, SectionedRows } from "./DiscoverPanel";
 import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
 
 const KIND_ICON: Record<string, string> = {
@@ -145,6 +145,8 @@ export function ProviderSection({
     selected,
     state.extensions.settings.value,
   ]);
+  // A source with nothing for this chapter takes no room, as in the old reader.
+  if (items && !items.length) return null;
   return (
     <div className="sb-content-section">
       <div className="sb-content-section-head">
@@ -155,13 +157,7 @@ export function ProviderSection({
           {t("loading", { defaultValue: "Loading…" })}
         </p>
       )}
-      {items && !items.length && (
-        <p className="sb-content-empty">
-          {t("discover-provider-empty", {
-            defaultValue: "Nothing for this chapter.",
-          })}
-        </p>
-      )}
+
       {items && items.length > 0 && byAuthor(items).groups.length > 0 && (
         <ContentCards groups={byAuthor(items).groups} />
       )}
@@ -174,9 +170,12 @@ export function ProviderSection({
 
 export function DiscoverPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
+  const [creating, setCreating] = useState(false);
   const chapterRef = state.reading.chapterRef.value;
-  const result = state.discover.forChapter(chapterRef).value;
-  const loading = state.discover.loading.value;
+  // Opening Discover reads what was shared afresh: there is no Refresh to find.
+  useEffect(() => {
+    void state.discover.refresh(chapterRef);
+  }, [chapterRef]);
   return (
     <section
       className="sb-pane sb-discover-pane"
@@ -184,18 +183,49 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
     >
       <header className="sb-pane-header">
         <h2 className="sb-discover-title">
-          {t("discover", { defaultValue: "Discover" })} ·{" "}
-          {state.reading.bookName.value} {state.reading.chapterNumber.value}
+          {t("discover", { defaultValue: "Discover" })}
         </h2>
-        <div>
-          <button
-            className="sb-pane-close"
-            aria-label={t("refresh", { defaultValue: "Refresh" })}
-            title={t("refresh", { defaultValue: "Refresh" })}
-            onClick={() => void state.discover.refresh(chapterRef)}
-          >
-            <span className="material-symbols-outlined">refresh</span>
-          </button>
+        <div className="sb-discover-header-actions">
+          <div className="sb-discover-create">
+            <button
+              type="button"
+              className="sb-dcp-create-btn"
+              aria-haspopup="menu"
+              aria-expanded={creating}
+              onClick={() => setCreating(!creating)}
+            >
+              + {t("create-playlist", { defaultValue: "Create" })}
+            </button>
+            {creating && (
+              <div className="sb-discover-create-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setCreating(false);
+                    createNote(state);
+                  }}
+                >
+                  <span className="material-symbols-outlined">
+                    sticky_note_2
+                  </span>
+                  {t("note", { defaultValue: "Note" })}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setCreating(false);
+                    state.ui.libraryTab.value = "playlists";
+                    state.ui.pane.value = "library";
+                  }}
+                >
+                  <span className="material-symbols-outlined">queue_music</span>
+                  {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+                </button>
+              </div>
+            )}
+          </div>
           <button
             className="sb-pane-close"
             aria-label={t("close", { defaultValue: "Close" })}
@@ -205,38 +235,10 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
           </button>
         </div>
       </header>
-      {state.discover.error.value && (
-        <p className="sb-pane-error">{state.discover.error.value}</p>
-      )}
-      {loading && !result && (
-        <p className="sb-muted sb-small">
-          {t("loading", { defaultValue: "Loading…" })}
-        </p>
-      )}
-      {result && !result.offerings.length && (
-        <p className="sb-pane-empty">
-          {t("discover-empty", {
-            defaultValue:
-              "Nothing released for this chapter yet. Publish one of your notes to be the first.",
-          })}
-        </p>
-      )}
-      {result && result.offerings.length > 0 && (
-        <ul className="sb-discover-list">
-          {result.offerings.map((o) => (
-            <OfferingItem key={o.descriptorId} state={state} o={o} />
-          ))}
-        </ul>
-      )}
+      <ChapterNotes state={state} empty />
       {state.extensions.providers.value.map((p) => (
         <ProviderSection key={p.id} state={state} provider={p} />
       ))}
-      <p className="sb-small sb-muted">
-        {t("discover-how", {
-          defaultValue:
-            "The Seed registry indexes what people and churches release on their public shelves; it re-crawls every 15 minutes.",
-        })}
-      </p>
     </section>
   );
 }
