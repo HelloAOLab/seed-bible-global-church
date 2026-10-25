@@ -1,24 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:07 UTC",
+  "when": "2026-10-25 14:13 UTC",
   "results": [
     {
-      "id": "G6",
+      "id": "P2",
       "section": "10. Playlists and reading plans",
-      "title": "Playlist history",
-      "checks": "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over; its ✕ takes the row out of the history",
+      "title": "Make a reading plan, start it, tick a reading",
+      "checks": "Library → Reading plans → up to chapter 5 → Create plan; open it → Start; tick the first reading; the progress label moves; delete the plan",
       "mark": "✅",
-      "note": "history row Finished today; Play again started it at John 3",
-      "ms": 1414
+      "note": "plan of 5 chapters; progress \"0/5\" → \"1/5\"",
+      "ms": 1610
     },
     {
-      "id": "CP1",
+      "id": "RP1",
       "section": "10. Playlists and reading plans",
-      "title": "Continue a playlist from the Profile",
-      "checks": "Signed in, a two-item playlist stopped on its first item: the Profile offers 'Continue <playlist>' with 'Step 1 of 2'; it plays from there",
+      "title": "A reading plan as the old reader shows it",
+      "checks": "A plan of John 1–3 started Daily shows '3 days · started …', 'Next: Day 1 · John 1', and open, 'ends …', '~N min/day' and Day 1–3 tabs; Read plays Day 1 in the reader and at its end asks 'Nice reading! Mark Day 1 complete?' → Mark as complete ticks Day 1; Day 2's Mark complete waits for its reading, then says 'Day 2 complete!'; Delete asks 'Delete reading plan?'",
       "mark": "✅",
-      "note": "the Profile offered 'Continue Flow continue 140713' at step 1 of 2 and it played from there",
-      "ms": 42097
+      "note": "summary, Read with the Nice reading prompt, Day 2 complete!, deleted after the check",
+      "ms": 7627
+    },
+    {
+      "id": "G13",
+      "section": "10. Playlists and reading plans",
+      "title": "Edit a reading plan",
+      "checks": "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
+      "mark": "✅",
+      "note": "DAY 1 DAY 2 Comfort radio_button_unchecked menu_book Psalms 23 · BSB ~2 min radio_button_unchecked menu_book J; kept after a reload, Start · Weekly offered",
+      "ms": 4259
+    },
+    {
+      "id": "PB1",
+      "section": "10. Playlists and reading plans",
+      "title": "A chapter's plans at its end; Nice reading!",
+      "checks": "With a started plan of John 1–5, John 3 ends with a 'Reading Plans' card naming the plan and 'Mark John 3 as read'; reading on to the card (twelve seconds on the chapter) raises 'Nice reading! Mark John 3 complete?' — Mark as complete ticks the plan there",
+      "mark": "✅",
+      "note": "John 3 ended with the plan's card; after the read the nudge's Mark as complete ticked it",
+      "ms": 15914
     }
   ]
 }

@@ -7027,4 +7027,67 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "PB1",
+    timeoutMs: 120_000,
+    section: "10. Playlists and reading plans",
+    title: "A chapter's plans at its end; Nice reading!",
+    rows: ["Start a plan, tick readings"],
+    checks:
+      "With a started plan of John 1–5, John 3 ends with a 'Reading Plans' card naming the plan and 'Mark John 3 as read'; reading on to the card (twelve seconds on the chapter) raises 'Nice reading! Mark John 3 complete?' — Mark as complete ticks the plan there",
+    run: async (c) => {
+      const page = c.page;
+      await c.open("/read/BSB/JHN/1");
+      const pane = await c.openLibrary("Reading plans");
+      const title = `Flow belongs ${stamp()}`;
+      await pane.locator('input[placeholder^="Plan title"]').fill(title);
+      await pane
+        .locator('input[type="number"], input[placeholder="21"]')
+        .first()
+        .fill("5");
+      await pane.getByRole("button", { name: /create plan/i }).click();
+      const plan = pane.locator(".sb-rp-card", { hasText: title }).first();
+      await plan.waitFor({ timeout: 10000 });
+      await ensureOpen(plan);
+      await plan
+        .getByRole("button", { name: /^start/i })
+        .first()
+        .click();
+      try {
+        await c.open(CH);
+        const card = page.locator(".sb-bible-reader-active .sb-rpb-card");
+        await card.waitFor({ timeout: 10000 });
+        await c.waitText(
+          card,
+          new RegExp(
+            `Reading Plans[\\s\\S]*${title}[\\s\\S]*Mark John 3 as read`,
+            "i"
+          ),
+          5000
+        );
+        await card.scrollIntoViewIfNeeded();
+        const toast = page.locator(".sb-rpb-toast", {
+          hasText: "Mark John 3 complete?",
+        });
+        await c.waitText(toast, /Nice reading!/, 25000);
+        await toast.getByRole("button", { name: "Mark as complete" }).click();
+        await card
+          .locator(".sb-rpb-row", { hasText: title })
+          .locator(".sb-rpb-check-done")
+          .waitFor({ timeout: 8000 });
+        return "John 3 ended with the plan's card; after the read the nudge's Mark as complete ticked it";
+      } finally {
+        const lib = await c.openLibrary("Reading plans");
+        const p = lib.locator(".sb-rp-card", { hasText: title }).first();
+        if (await p.count()) {
+          await ensureOpen(p).catch(() => undefined);
+          await p
+            .getByRole("button", { name: /^delete$/i })
+            .click()
+            .catch(() => undefined);
+          await c.confirmDelete().catch(() => undefined);
+        }
+      }
+    },
+  },
 ];

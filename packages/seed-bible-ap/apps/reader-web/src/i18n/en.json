@@ -980,5 +980,6 @@
   "playlist-invalid-url": "Enter a valid URL",
   "playlist-reference-not-found": "Couldn't find that reference",
   "continue-playlist": "Continue {{title}}",
-  "playlist-history-remove": "Remove from history"
+  "playlist-history-remove": "Remove from history",
+  "reading-plan-mark-passage-complete": "Mark {{passage}} as read"
 }

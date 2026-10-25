@@ -18,6 +18,7 @@ import {
 import { forwardRef } from "preact/compat";
 import { ChapterColumn } from "./ChapterColumn";
 import { ReferenceText } from "./ReferenceText";
+import { PlanBelongs } from "../library/PlanBelongs";
 import { cueStyle, type CueMark } from "../../state/reading/offscreenCues";
 import { attachReaderViewport, pageScrolls } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
@@ -496,6 +497,7 @@ export function BibleReader({
             ? { verseChecks, verseCheckTitle: verseCheckTitle(t) }
             : {}),
         })}
+        {active && !embed && <PlanBelongs state={state} reading={reading} />}
         {chapter.translation.licenseNotice && (
           <p className="sb-translation-license-notice">
             {chapter.translation.licenseNotice}
