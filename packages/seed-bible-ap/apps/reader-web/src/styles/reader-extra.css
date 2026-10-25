@@ -433,3 +433,17 @@
     transition: none;
   }
 }
+
+/* Our avatar in the gutter: the person's initials on their colour (the old reader drew an animal or a picture). */
+.sb-presence-initials {
+  display: inline-grid;
+  place-items: center;
+  width: var(--sb-presence-avatar-size);
+  height: var(--sb-presence-avatar-size);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}

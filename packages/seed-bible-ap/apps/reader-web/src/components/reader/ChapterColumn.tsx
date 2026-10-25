@@ -23,6 +23,8 @@ interface Ribbon {
 export function ChapterColumn(props: {
   chapterId: string;
   stale?: boolean;
+  /** The session's presence gutter, drawn inside the column (which then keeps room for it). */
+  gutter?: ComponentChildren;
   children: ComponentChildren;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -113,8 +115,9 @@ export function ChapterColumn(props: {
   return (
     <div
       ref={contentRef}
-      className={`sb-chapter-content${props.stale ? " sb-chapter-content-stale" : ""}`}
+      className={`sb-chapter-content${props.stale ? " sb-chapter-content-stale" : ""}${props.gutter ? " sb-chapter-content-presence" : ""}`}
     >
+      {props.gutter}
       <svg className="sb-highlight-layer" aria-hidden="true">
         {ribbons.map((ribbon) => (
           <path

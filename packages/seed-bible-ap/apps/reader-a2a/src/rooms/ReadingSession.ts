@@ -446,9 +446,15 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
     }>`SELECT seq, at, by, kind, body FROM ops WHERE seq > ${afterSeq} ORDER BY seq ASC LIMIT ${Math.min(Math.max(max, 1), 1000)}`;
   }
 
-  /** Where a device is (its selected verse); a raw frame to the others, never state, ≤10 Hz per sender. */
+  /** Where a device is (its selected verse, and the chapter and verses on its screen); a raw frame to the others, never
+   *  state, ≤10 Hz per sender. */
   @callable()
-  presence(frame: { verse: number | null }) {
+  presence(frame: {
+    verse: number | null;
+    chapter?: string;
+    from?: number;
+    to?: number;
+  }) {
     const who = this.actor(this.currentConnection());
     const now = Date.now();
     if (now - (this.lastPresence.get(who.agent) ?? 0) < PRESENCE_MIN_MS) return;
@@ -459,6 +465,14 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
         by: who.agent,
         name: who.name,
         verse: frame?.verse ?? null,
+        ...(typeof frame?.chapter === "string" &&
+        /^[1-4]?[A-Z]{2,3}\.\d{1,3}$/.test(frame.chapter) &&
+        Number.isInteger(frame.from) &&
+        Number.isInteger(frame.to) &&
+        frame.from! > 0 &&
+        frame.to! >= frame.from!
+          ? { chapter: frame.chapter, from: frame.from, to: frame.to }
+          : {}),
         at: now,
       }),
       [this.currentConnection().id]

@@ -24,6 +24,10 @@ export interface PresenceFrame {
   by: string;
   name: string;
   verse: number | null;
+  /** The chapter and verses on the sender's screen, when it says. */
+  chapter?: string;
+  from?: number;
+  to?: number;
   at: number;
 }
 export interface VoiceFrame {
@@ -53,7 +57,10 @@ export interface Room {
   undecorate(id: string): Promise<number>;
   chat(text: string): Promise<number>;
   chatPage(afterSeq?: number): Promise<ChatFrame[]>;
-  presence(verse: number | null): Promise<void>;
+  presence(
+    verse: number | null,
+    view?: { chapter: string; from: number; to: number } | null
+  ): Promise<void>;
   setRole(agent: string, role: SessionRole): Promise<number>;
   setGuests(allow: boolean): Promise<number>;
   voice(on: boolean): Promise<void>;
@@ -109,7 +116,8 @@ export function openRoom(
     undecorate: (id) => call<number>("undecorate", [id]),
     chat: (text) => call<number>("chat", [text]),
     chatPage: (afterSeq = 0) => call<ChatFrame[]>("chatPage", [afterSeq]),
-    presence: (verse) => call<void>("presence", [{ verse }]),
+    presence: (verse, view) =>
+      call<void>("presence", [{ verse, ...(view ?? {}) }]),
     setRole: (agent, role) => call<number>("setRole", [agent, role]),
     setGuests: (allow) => call<number>("setGuests", [allow]),
     voice: (on) => call<void>("voice", [on]),

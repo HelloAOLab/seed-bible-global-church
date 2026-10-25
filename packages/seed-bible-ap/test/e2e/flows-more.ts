@@ -178,6 +178,59 @@ async function chipTalking(
 
 export const MORE_FLOWS: Flow[] = [
   {
+    id: "PS1",
+    section: "9. Reading together",
+    title: "Where everyone is in the text; connection notices",
+    rows: ["Where everyone is"],
+    checks:
+      "Signed in, the host starts a session and a guest joins. The guest reads further down John 3: on the host's screen a bar in the guest's colour runs beside the verses on the guest's screen, with the guest's initials at its top. When the host leaves the page, the guest is told 'The host disconnected'",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const { code, sid } = await startSession(c);
+      const guest = await joinAsGuest(c, sid, code);
+      await guest.keyboard.press("Escape");
+      await c.page.keyboard.press("Escape");
+      await guest.evaluate(() =>
+        document
+          .querySelector('.sb-bible-reader-active [data-verse-number="16"]')
+          ?.scrollIntoView({ block: "center" })
+      );
+      const bar = c.page
+        .locator('.sb-presence-marker[data-agent^="guest:"]')
+        .first();
+      await bar.waitFor({ timeout: 20000 });
+      // The bar moves once the guest's scrolling rests and their verses reach this screen.
+      await c.page
+        .waitForFunction(
+          () => {
+            const m = document
+              .querySelector<HTMLElement>(
+                '.sb-presence-marker[data-agent^="guest:"]'
+              )
+              ?.getBoundingClientRect();
+            const v = document
+              .querySelector('.sb-bible-reader-active [data-verse-number="16"]')
+              ?.getBoundingClientRect();
+            return !!m && !!v && m.top <= v.top + 2 && m.bottom >= v.top;
+          },
+          undefined,
+          { timeout: 15000 }
+        )
+        .catch(() => {
+          throw new Error("the guest's bar does not run beside John 3:16");
+        });
+      const initials = (
+        await c.page.locator(".sb-presence-initials").first().innerText()
+      ).trim();
+      if (initials !== "FG")
+        throw new Error(`the guest's avatar reads "${initials}"`);
+      await c.page.goto("about:blank");
+      await c.waitText(guest.locator(".sb-toast"), /host disconnected/i, 20000);
+      return `the guest's bar ran beside John 3:16 with "${initials}" at its top; the guest was told the host disconnected`;
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",

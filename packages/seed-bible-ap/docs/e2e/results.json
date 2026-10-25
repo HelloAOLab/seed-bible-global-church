@@ -1,42 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-24 22:54 UTC",
+  "when": "2026-10-25 03:45 UTC",
   "results": [
     {
-      "id": "MS1",
-      "section": "3. Reading",
-      "title": "The phone's Theme & text sheet",
-      "checks": "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
+      "id": "PS1",
+      "section": "9. Reading together",
+      "title": "Where everyone is in the text; connection notices",
+      "checks": "Signed in, the host starts a session and a guest joins. The guest reads further down John 3: on the host's screen a bar in the guest's colour runs beside the verses on the guest's screen, with the guest's initials at its top. When the host leaves the page, the guest is told 'The host disconnected'",
       "mark": "✅",
-      "note": "text m → l → m; spacing normal → relaxed and back; UI size L then M; keep awake toggled; Go to all settings opened Settings",
-      "ms": 2223
-    },
-    {
-      "id": "G15",
-      "section": "3. Reading",
-      "title": "Choose the reader's fonts",
-      "checks": "Account → Text: Verses in Inter, light, italic; Headings in Roboto; the verse text and the heading are drawn in those fonts (Google Fonts loaded only for them); kept after a reload; Reset returns the defaults",
-      "mark": "✅",
-      "note": "verses Inter, sans-serif|300|italic; headings Roboto, sans-serif; kept after a reload; Reset → Plus Jakarta Sans, sans-serif",
-      "ms": 1863
-    },
-    {
-      "id": "ST1",
-      "section": "3. Reading",
-      "title": "Settings in the sidebar",
-      "checks": "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — Account settings, Display & Theme, Toolbar, Extensions, Install App, Launch tutorial, Customize, About Seed Bible, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
-      "mark": "✅",
-      "note": "⚙ → Settings: Account settings · Display & Theme · Toolbar · Extensions · Install App · Launch tutorial · Customize · About Seed Bible; Display & Theme's line height reached the chapter; ← back to the list; ✕ brought the tabs back",
-      "ms": 760
-    },
-    {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
-      "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1516
+      "note": "the guest's bar ran beside John 3:16 with \"FG\" at its top; the guest was told the host disconnected",
+      "ms": 39524
     }
   ]
 }

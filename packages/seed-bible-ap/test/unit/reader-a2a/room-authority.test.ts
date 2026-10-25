@@ -250,6 +250,36 @@ describe("room authority", () => {
     expect(r.state.seq).toBe(3); // create + two joins — presence is never an op
   });
 
+  it("relays the chapter and verses on a device's screen, and drops a malformed range", async () => {
+    const { r, create, invite, connect, as } = await room();
+    await create();
+    const host = await connect(
+      (await invite({ agent: HOST.agent, name: HOST.name })).token!
+    );
+    const bob = await connect(
+      (await invite({ agent: "0x" + "bb".repeat(20), name: "Bob", code: CODE }))
+        .token!
+    );
+    as(bob, () =>
+      r.presence({ verse: null, chapter: "JHN.3", from: 12, to: 18 })
+    );
+    vi.setSystemTime(new Date("2026-10-22T10:00:01.000Z"));
+    as(bob, () =>
+      r.presence({ verse: null, chapter: "<script>", from: 18, to: 12 })
+    );
+    const frames = host.sent
+      .map((f) => JSON.parse(f) as Record<string, unknown>)
+      .filter((f) => f["t"] === "presence");
+    expect(frames[0]).toMatchObject({
+      by: "0x" + "bb".repeat(20),
+      chapter: "JHN.3",
+      from: 12,
+      to: 18,
+    });
+    expect(frames[1]).not.toHaveProperty("chapter");
+    expect(frames[1]).not.toHaveProperty("from");
+  });
+
   it("wipe closes every device and forgets the room; the record is elsewhere", async () => {
     const { r, internal, create, invite, connect } = await room();
     await create();

@@ -709,5 +709,11 @@
   "increase-scripture-font-size": "Increase scripture font size",
   "scripture-settings": "Scripture settings",
   "theme-and-text": "Theme & text",
-  "ui-size": "UI size"
+  "ui-size": "UI size",
+  "plan-url-copied": "Reading plan URL copied",
+  "playlist-url-copied": "Playlist URL copied",
+  "session-connection-lost": "You lost connection to the session. Reconnecting…",
+  "session-host-disconnected": "The host disconnected",
+  "session-host-reconnected": "The host reconnected",
+  "session-rejoined": "You rejoined the session"
 }

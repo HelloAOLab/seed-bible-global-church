@@ -514,10 +514,40 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   effect(() => {
     if (!verses.value.length) ui.verseMenuAt.value = null;
   });
-  // A device's selected verse is its presence in the room.
+  // The session's connection, said as it changes (the old reader's notices): this device's own, and the host's.
+  let lostRoom = false;
+  let hostWasHere = true;
+  effect(() => {
+    const on = live.connected.value;
+    if (!live.active.value) {
+      lostRoom = false;
+      hostWasHere = true;
+      return;
+    }
+    if (!on && !lostRoom && live.state.peek()) {
+      lostRoom = true;
+      ui.toast.value = { key: "session-connection-lost" };
+    } else if (on && lostRoom) {
+      lostRoom = false;
+      ui.toast.value = { key: "session-rejoined" };
+    }
+  });
+  effect(() => {
+    const st = live.state.value;
+    if (!st?.host || !live.connected.value || live.isHost.value) return;
+    const host = st.participants.find((p) => p.agent === st.host!.agent);
+    const here = (host?.connections ?? 0) > 0;
+    if (here !== hostWasHere)
+      ui.toast.value = {
+        key: here ? "session-host-reconnected" : "session-host-disconnected",
+      };
+    hostWasHere = here;
+  });
+  // A device's presence in the room: its selected verse, and the chapter and verses on its screen.
   effect(() => {
     const first = verses.value[0] ?? null;
-    if (live.active.value) void live.presenceAt(first);
+    const view = live.view.value;
+    if (live.active.value) void live.presenceAt(first, view);
   });
 
   async function signIn(s: ReaderSession, opts: { announce?: boolean } = {}) {

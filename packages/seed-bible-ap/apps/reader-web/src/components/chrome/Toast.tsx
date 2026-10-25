@@ -5,6 +5,43 @@ import { useI18n } from "../../i18n";
 
 const SHOWN_MS = 3500;
 
+/** Every line a toast can say, by its key; an unknown key is shown as it is. */
+function line(
+  t: ReturnType<typeof useI18n>["t"],
+  key: string,
+  values: Record<string, string>
+): string {
+  switch (key) {
+    case "signed-in-as":
+      return t("signed-in-as", {
+        defaultValue: "Signed in as {{name}}",
+        name: values["name"] ?? "",
+      });
+    case "playlist-url-copied":
+      return t("playlist-url-copied", { defaultValue: "Playlist URL copied" });
+    case "plan-url-copied":
+      return t("plan-url-copied", { defaultValue: "Reading plan URL copied" });
+    case "session-connection-lost":
+      return t("session-connection-lost", {
+        defaultValue: "You lost connection to the session. Reconnecting…",
+      });
+    case "session-rejoined":
+      return t("session-rejoined", {
+        defaultValue: "You rejoined the session",
+      });
+    case "session-host-disconnected":
+      return t("session-host-disconnected", {
+        defaultValue: "The host disconnected",
+      });
+    case "session-host-reconnected":
+      return t("session-host-reconnected", {
+        defaultValue: "The host reconnected",
+      });
+    default:
+      return key;
+  }
+}
+
 export function Toast({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const toast = state.ui.toast.value;
@@ -16,12 +53,7 @@ export function Toast({ state }: { state: ReaderState }) {
   if (!toast) return null;
   return (
     <div className="sb-toast" role="status">
-      {toast.key === "signed-in-as"
-        ? t("signed-in-as", {
-            defaultValue: "Signed in as {{name}}",
-            name: toast.values?.["name"] ?? "",
-          })
-        : toast.key}
+      {line(t, toast.key, toast.values ?? {})}
     </div>
   );
 }

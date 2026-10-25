@@ -4,6 +4,7 @@
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
 import { DiscoverPanel } from "../social/DiscoverPanel";
+import { PresenceGutter } from "../sessions/PresenceGutter";
 import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ChapterVerse } from "../../backend/bible";
@@ -166,6 +167,11 @@ export function BibleReader({
       <ChapterColumn
         chapterId={`${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`}
         stale={reading.loading.value}
+        gutter={
+          active && state.live.active.value ? (
+            <PresenceGutter state={state} />
+          ) : undefined
+        }
       >
         {renderChapterContent(chapter, {
           selectedVerses: active ? selection.verses.value : [],

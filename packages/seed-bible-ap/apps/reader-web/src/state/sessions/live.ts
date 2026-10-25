@@ -17,6 +17,10 @@ export interface PresenceView {
   agent: string;
   name: string;
   verse: number | null;
+  /** The chapter and verses on their screen. */
+  chapter?: string;
+  from?: number;
+  to?: number;
   at: number;
 }
 
@@ -35,6 +39,10 @@ export function createLiveSession(deps: LiveDeps) {
   const connected = signal(false);
   const chat = signal<ChatFrame[]>([]);
   const presence = signal<Record<string, PresenceView>>({});
+  /** The chapter and verses on this device's screen (the reader measures it as it scrolls); sent as its presence. */
+  const view = signal<{ chapter: string; from: number; to: number } | null>(
+    null
+  );
   const error = signal<string | null>(null);
   const recordRef = signal<string | null>(null);
   let room: Room | null = null;
@@ -119,7 +127,15 @@ export function createLiveSession(deps: LiveDeps) {
         } else if (f.t === "presence")
           presence.value = {
             ...presence.value,
-            [f.by]: { agent: f.by, name: f.name, verse: f.verse, at: f.at },
+            [f.by]: {
+              agent: f.by,
+              name: f.name,
+              verse: f.verse,
+              ...(f.chapter && f.from && f.to
+                ? { chapter: f.chapter, from: f.from, to: f.to }
+                : {}),
+              at: f.at,
+            },
           };
       },
     });
@@ -210,6 +226,7 @@ export function createLiveSession(deps: LiveDeps) {
     connected,
     chat,
     presence,
+    view,
     error,
     recordRef,
     me,
@@ -238,8 +255,10 @@ export function createLiveSession(deps: LiveDeps) {
     decorate: (start: number, end: number, colorId: string) =>
       room?.decorate({ start, end, colorId }) ?? Promise.resolve(""),
     undecorate: (id: string) => room?.undecorate(id) ?? Promise.resolve(0),
-    presenceAt: (verse: number | null) =>
-      room?.presence(verse) ?? Promise.resolve(),
+    presenceAt: (
+      verse: number | null,
+      view?: { chapter: string; from: number; to: number } | null
+    ) => room?.presence(verse, view) ?? Promise.resolve(),
     setRole: (
       agent: string,
       role: "leader" | "navigator" | "decorator" | "reader"
