@@ -1,33 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 21:05 UTC",
+  "when": "2026-10-25 21:28 UTC",
   "results": [
     {
-      "id": "FA1",
+      "id": "AF1",
       "section": "8. Today, Discover and publishing",
-      "title": "Add a friend answers at once",
-      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
+      "title": "Add a friend, the whole way",
+      "checks": "As someone new to the app, the real way: Sign in with Faithnet (the Home's window; its demo person Seed Reader; Allow), open Friends, type 'alice', Send request; the small window that opens asks 'Add alice.me as a friend?' — Yes, add them — and closes by itself; the reader says Alice was asked. Then Cancel the request the same way ('Remove … as a friend?' — Yes, remove them). Screenshots of every step with E2E_SHOTS",
       "mark": "✅",
-      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
-      "ms": 33832
-    },
-    {
-      "id": "IN1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Invite a friend by email",
-      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
-      "mark": "✅",
-      "note": "'flow-210334@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
-      "ms": 32707
-    },
-    {
-      "id": "IN2",
-      "section": "8. Today, Discover and publishing",
-      "title": "An emailed invitation opens in the reader",
-      "checks": "The link /invite/<token> opens a welcome: 'Ruth invited you to Seed Bible' with Ruth's note, the terms and one Continue (it asks for the terms first); a dead link says 'This invitation can't be opened'; signed in, 'Welcome' and Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for one tap. (The invitation calls are answered by the test)",
-      "mark": "✅",
-      "note": "a dead link: can't be opened; 'Ruth invited you to Seed Bible' with her note; Continue asks for the terms; signed in, 'Welcome' and Add took the invitation and opened the Home to add Ruth",
-      "ms": 94643
+      "note": "'Add alice as a friend?' → Yes; the window closed itself in 15s and the reader said Alice was asked. 'Remove alice.me as a friend?' → Yes; closed in 9s; the request is gone",
+      "ms": 71625
     }
   ]
 }
