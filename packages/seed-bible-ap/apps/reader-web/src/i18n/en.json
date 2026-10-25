@@ -976,5 +976,6 @@
   "annotation-conflict-resolve-failed": "Couldn't apply that choice. It'll be tried again.",
   "annotation-conflict-theirs": "The other version",
   "annotation-conflict-title": "This note changed in two places",
-  "annotation-conflict-yours": "Your version"
+  "annotation-conflict-yours": "Your version",
+  "reading-plan-draft": "Draft"
 }

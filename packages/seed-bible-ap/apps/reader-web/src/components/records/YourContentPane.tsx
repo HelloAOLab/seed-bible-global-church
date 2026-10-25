@@ -3,6 +3,7 @@
 // by a search over their own things and a row of chips, with + Create beside them. "All" shows the first few of each
 // section with See all; every item has its ⋯ menu; a note or a highlight quotes its verse, from any chapter. Dressed
 // by the copied `your-content.css`. The Bible itself is searched from the floating search box (Search).
+import { planProblem } from "../../state/library/planEdits";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
@@ -241,8 +242,11 @@ function HighlightRow(props: {
   );
 }
 
-/** Where the reader is with a plan, in a few words: Not started, Day 3 of 10 (2/5 sessions self-paced), Completed. */
+/** Where the reader is with a plan, in a few words: Draft (still being written: no name or no readings yet), Not
+ *  started, Day 3 of 10 (2/5 sessions self-paced), Completed. */
 function planStatus(v: PlanView, t: ReturnType<typeof useI18n>["t"]) {
+  if (planProblem(v.plan))
+    return t("reading-plan-draft", { defaultValue: "Draft" });
   if (!v.progress)
     return t("reading-plan-not-started", { defaultValue: "Not started" });
   const sessions = v.plan.hasSession.length;

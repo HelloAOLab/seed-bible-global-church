@@ -6792,4 +6792,46 @@ export const MORE_FLOWS: Flow[] = [
       return "asked 'Sync device content?' about highlights; Don't add took it off; Add to account kept it";
     },
   },
+  {
+    id: "YC2",
+    section: "5. Your Content and search",
+    title: "A plan still being written says Draft",
+    rows: ["Your content"],
+    checks:
+      "Library → Reading plans → Start a blank plan, then Your content → Reading plans: the blank plan's card says Draft, as the old reader marks a plan still being written",
+    run: async (c) => {
+      await c.open(CH);
+      const pane = await c.openLibrary("Reading plans");
+      const title = `Flow draft ${stamp()}`;
+      await pane.locator('input[placeholder^="Plan title"]').fill(title);
+      await pane.locator(".sb-plan-blank").click();
+      await pane.locator(".sb-plan-editor").waitFor({ timeout: 10000 });
+      try {
+        await c.pressToolbar("Your content");
+        const yc = c.pane();
+        await yc
+          .locator(".sb-content-chip", { hasText: "Reading plans" })
+          .click();
+        const card = yc.locator("*", { hasText: title }).last();
+        await card.waitFor({ timeout: 10000 });
+        await c.waitText(
+          yc.locator(".sb-content-section, .sb-content-list").first(),
+          new RegExp(`${title}[\\s\\S]*Draft`),
+          10000
+        );
+        return `'${title}' listed as Draft`;
+      } finally {
+        const lib = await c.openLibrary("Reading plans");
+        const plan = lib.locator(".sb-rp-card", { hasText: title }).first();
+        if (await plan.count()) {
+          await ensureOpen(plan).catch(() => undefined);
+          await plan
+            .getByRole("button", { name: /^delete$/i })
+            .click()
+            .catch(() => undefined);
+          await c.confirmDelete().catch(() => undefined);
+        }
+      }
+    },
+  },
 ];
