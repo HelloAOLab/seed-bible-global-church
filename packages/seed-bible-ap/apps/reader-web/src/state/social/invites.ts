@@ -42,6 +42,9 @@ export function createInvites(deps: {
   const f = deps.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const sent = signal<SentInvite[]>([]);
   const findable = signal<boolean | null>(null);
+  /** The reader's public name (alice.me) — what friends can type to find them; null when they have none, undefined
+   *  until read. */
+  const publicName = signal<string | null | undefined>(undefined);
   const url = (path: string) => `${deps.base}${path}`;
 
   async function call<T>(
@@ -144,6 +147,13 @@ export function createInvites(deps: {
     if (typeof r?.email === "boolean") findable.value = r.email;
   }
 
+  async function loadPublicName(address: string): Promise<void> {
+    const r = await call<{ name?: string | null }>(
+      `/api/public-name?address=${encodeURIComponent(address.toLowerCase())}`
+    ).catch(() => null);
+    if (r && "name" in r) publicName.value = r.name ?? null;
+  }
+
   async function setFindable(on: boolean): Promise<void> {
     const was = findable.value;
     findable.value = on;
@@ -165,6 +175,8 @@ export function createInvites(deps: {
     claim,
     loadFindable,
     setFindable,
+    publicName,
+    loadPublicName,
   };
 }
 

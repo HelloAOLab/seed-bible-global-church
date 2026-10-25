@@ -17,6 +17,7 @@ import {
 } from "../../session";
 import { FriendWaiting } from "./TodayPane";
 import { AccountCard } from "../chrome/AccountPane";
+import { sessionEmail } from "../../session";
 import { Description } from "../chrome/ProfilePane";
 import type { FriendProfile } from "../../state/social/profile";
 
@@ -207,6 +208,9 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     if (!s) return;
     void today.refresh();
     void state.invites.refresh();
+    void state.invites.loadFindable();
+    const address = s.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0];
+    if (address) void state.invites.loadPublicName(address);
   }, [!!s]);
 
   if (!s)
@@ -228,6 +232,8 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     );
 
   const me = s.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0] ?? "";
+  const publicName = state.invites.publicName.value;
+  const email = sessionEmail(s);
   const myName = state.profile.mine.value?.displayName || s.name || "";
   const link = me ? friendLink(location.origin, me, myName) : "";
   const invitation = t("friend-link-message", {
@@ -506,24 +512,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                     {t("friend-link-email", { defaultValue: "Email it" })}
                   </a>
                 </div>
-                <div className="sb-friends-share-row sb-friends-my-id">
-                  <span className="sb-friends-share-text">
-                    <span className="sb-friends-share-label">
-                      {t("friends-find-you-as", {
-                        defaultValue: "Friends can find you as",
-                      })}
-                    </span>
-                    <code className="sb-friends-my-id-value">
-                      {s.name || me}
-                    </code>
-                  </span>
-                  <CopyButton
-                    text={s.name || me}
-                    label={t("copy-your-user-id", {
-                      defaultValue: "Copy your user ID",
-                    })}
-                  />
-                </div>
+                <FindMeAs state={state} name={publicName} email={email} />
               </div>
             )}
           </section>
@@ -703,5 +692,84 @@ export function FriendsPane({ state }: { state: ReaderState }) {
         </div>
       )}
     </section>
+  );
+}
+
+/** What a friend can really type to find you: your public name, or your email when you let people find you by it —
+ *  never a display name, which finds no one. With neither, it says so and offers the email switch right here. */
+function FindMeAs({
+  state,
+  name,
+  email,
+}: {
+  state: ReaderState;
+  name: string | null | undefined;
+  email: string | null;
+}) {
+  const { t } = useI18n();
+  const findable = state.invites.findable.value;
+  if (name === undefined) return null;
+  if (name)
+    return (
+      <div className="sb-friends-share-row sb-friends-my-id">
+        <span className="sb-friends-share-text">
+          <span className="sb-friends-share-label">
+            {t("friends-find-you-as", {
+              defaultValue: "Friends can find you as",
+            })}
+          </span>
+          <code className="sb-friends-my-id-value">{name}</code>
+        </span>
+        <CopyButton
+          text={name}
+          label={t("copy-your-user-id", { defaultValue: "Copy your user ID" })}
+        />
+      </div>
+    );
+  return (
+    <div className="sb-friends-share-row sb-friends-my-id sb-friends-find-me">
+      <span className="sb-friends-share-text">
+        {findable && email ? (
+          <>
+            <span className="sb-friends-share-label">
+              {t("friends-find-you-by-email", {
+                defaultValue: "Friends can find you by your email",
+              })}
+            </span>
+            <code className="sb-friends-my-id-value">{email}</code>
+          </>
+        ) : (
+          <span className="sb-friends-share-label">
+            {t("friends-find-you-nothing", {
+              defaultValue:
+                "You don't have a name friends can type yet, so they can't find you by searching. Send them your friend link instead.",
+            })}
+          </span>
+        )}
+        {email && findable !== null && (
+          <label className="sb-friends-find-me-email">
+            <input
+              type="checkbox"
+              checked={findable}
+              onChange={(e) =>
+                void state.invites.setFindable(
+                  (e.currentTarget as HTMLInputElement).checked
+                )
+              }
+            />{" "}
+            {t("findable-by-email-here", {
+              email,
+              defaultValue: "Let people who have my email ({{email}}) find me",
+            })}
+          </label>
+        )}
+      </span>
+      {findable && email && (
+        <CopyButton
+          text={email}
+          label={t("copy-your-email", { defaultValue: "Copy your email" })}
+        />
+      )}
+    </div>
   );
 }

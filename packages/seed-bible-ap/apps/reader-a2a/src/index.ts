@@ -325,6 +325,19 @@ app.get("/api/friends/invites/lookup", async (c) =>
     { signedOut: true }
   )
 );
+// The public name an agent address resolves to (the chain's reverse record, forward-confirmed at the Home), or null —
+// what a friend can actually type to find someone. Public: no sign-in needed.
+app.get("/api/public-name", async (c) => {
+  const address = (c.req.query("address") ?? "").trim().toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/.test(address))
+    return c.json({ ok: false, error: "address (0x…40) required" }, 400);
+  return homeForward(
+    c,
+    `/connect/reverse-name?address=${address}`,
+    { method: "GET" },
+    { signedOut: true }
+  );
+});
 app.get("/api/findable", async (c) =>
   homeForward(c, "/connect/findable", { method: "GET" })
 );

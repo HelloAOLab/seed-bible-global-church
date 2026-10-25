@@ -80,6 +80,18 @@ function save(s: ReaderSession | null): void {
 
 /** When this sign-in stops being accepted: the id_token's own `exp` (the Home's single sign-on lasts as long), in ms.
  *  Null for a sign-in without one (a dev reader). */
+/** The email the Home shared with the reader at sign-in (the id_token's `email`), if it shared one. */
+export function sessionEmail(s: ReaderSession): string | null {
+  try {
+    const part = s.token.split(".")[1] ?? "";
+    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+    const email = (JSON.parse(json) as { email?: unknown }).email;
+    return typeof email === "string" && email.includes("@") ? email : null;
+  } catch {
+    return null;
+  }
+}
+
 export function sessionExpiresAt(s: ReaderSession): number | null {
   if (s.via === "dev-stub") return null;
   try {

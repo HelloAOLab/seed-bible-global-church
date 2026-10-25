@@ -383,3 +383,12 @@
   white-space: nowrap;
   font-size: 0.75rem;
 }
+
+.sb-friends-find-me-email {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}

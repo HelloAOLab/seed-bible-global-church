@@ -1040,5 +1040,9 @@
   "friend-joined-line": "accepted your invitation",
   "signed-out-expired": "You were signed out because your sign-in expired. Sign in again to keep your highlights and notes.",
   "account-signin-blurb-plain": "Keep your highlights, notes and plans on every device. A small window opens: continue with Google or your email. New here? That creates your account.",
-  "account-signin-title-plain": "Sign in"
+  "account-signin-title-plain": "Sign in",
+  "copy-your-email": "Copy your email",
+  "findable-by-email-here": "Let people who have my email ({{email}}) find me",
+  "friends-find-you-by-email": "Friends can find you by your email",
+  "friends-find-you-nothing": "You don't have a name friends can type yet, so they can't find you by searching. Send them your friend link instead."
 }
