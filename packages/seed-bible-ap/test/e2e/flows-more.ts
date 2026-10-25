@@ -1544,6 +1544,136 @@ export const MORE_FLOWS: Flow[] = [
       return "placed on John 3, moved to Romans 8, a second in red, both in the sidebar; five is the most";
     },
   },
+  {
+    id: "TL1",
+    section: "3. Reading",
+    title: "The translation window, grouped by language",
+    rows: ["Change translation"],
+    checks:
+      "The translation code opens the old reader's window (Esc on its download tip closes only the tip): English first and open with BSB ticked; the filter offers Complete / All / Popular translations and Popular keeps only the popular languages; searching 'Español' shows the Spanish section; ⓘ on a row shows its licence; share copies the translation's link; a download can be cancelled part way and its button comes back; Esc closes",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "open";
+        await c.keepTours();
+        await c.open("/read/BSB/JHN/3");
+        await c.page
+          .locator(".sb-bible-reader-active .sb-bible-reader-translation")
+          .click();
+        const win = c.page.locator(".sb-translation-picker .modal");
+        const first = win.locator(".sb-translation-list-language").first();
+        await first.waitFor({ timeout: 40000 });
+        step = "Esc on the download tip leaves the window open";
+        const tip = c.page.locator(".sb-tour-card");
+        await tip.waitFor({ timeout: 5000 });
+        await c.page.keyboard.press("Escape");
+        await tip.waitFor({ state: "detached", timeout: 3000 });
+        await c.page.waitForTimeout(300);
+        if (!(await win.isVisible()))
+          throw new Error("Esc on the tip closed the translation window too");
+        const justThis = c.page.getByRole("button", { name: /just this one/i });
+        // Skipping a tip asks whether to turn tutorials off.
+        await justThis.waitFor({ timeout: 3000 }).catch(() => undefined);
+        if (await justThis.isVisible().catch(() => false))
+          await justThis.click();
+        step = "English first, open, BSB ticked";
+        if (!/english/i.test(await first.innerText()))
+          throw new Error(`first section: ${await first.innerText()}`);
+        if ((await first.getAttribute("aria-expanded")) !== "true")
+          throw new Error("English is not open");
+        await win
+          .locator('.translation-option[aria-selected="true"]', {
+            hasText: "(BSB)",
+          })
+          .waitFor({ timeout: 5000 });
+
+        step = "the filter";
+        const countAll = async () =>
+          win.locator(".sb-translation-list-language").count();
+        await win.locator(".filters-icon").click();
+        const menu = c.page.locator(".sb-translation-view-mode-menu");
+        await c.waitText(
+          menu,
+          /complete translations[\s\S]*all translations[\s\S]*popular translations/i,
+          3000
+        );
+        await menu
+          .getByRole("menuitemradio", { name: /all translations/i })
+          .click();
+        const all = await countAll();
+        await win.locator(".filters-icon").click();
+        await menu
+          .getByRole("menuitemradio", { name: /popular translations/i })
+          .click();
+        const popular = await countAll();
+        if (!(popular > 0 && popular < all && popular <= 6))
+          throw new Error(`popular ${popular} of ${all} languages`);
+
+        step = "search a language";
+        await win.locator("#translation-search-input").fill("Español");
+        await c.waitText(
+          win.locator(".sb-translation-list-language").first(),
+          /español/i,
+          10000
+        );
+
+        step = "the licence";
+        await win.locator("#translation-search-input").fill("");
+        const info = win.locator(".sb-translation-info-button").first();
+        if (await info.count()) {
+          await info.click();
+          await c.page
+            .locator(".translationInfoModal")
+            .waitFor({ timeout: 3000 });
+          // Esc takes the note away and leaves the window.
+          await c.page.keyboard.press("Escape");
+          await c.page
+            .locator(".translationInfoModal")
+            .waitFor({ state: "detached", timeout: 3000 });
+          if (!(await win.isVisible()))
+            throw new Error(
+              `Esc on the licence closed the window too (${await c.page.locator(".sb-translation-picker").count()} pickers, ${await c.page
+                .locator(".sb-translation-picker .modal")
+                .evaluate((e) => JSON.stringify(e.getBoundingClientRect()))
+                .catch(() => "none")})`
+            );
+        }
+
+        step = "share";
+        await c.context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        const bsb = win
+          .locator(".translation-option", { hasText: "(BSB)" })
+          .first();
+        await bsb.locator(".share-btn").click();
+        const clip = await c.page.evaluate(() =>
+          navigator.clipboard.readText()
+        );
+        if (!/\/read\/BSB\/JHN\/3/.test(clip))
+          throw new Error(`clipboard: ${clip}`);
+
+        step = "cancel a download";
+        const web = win
+          .locator(".translation-option", { hasText: /\(WEB\w*\)/ })
+          .first();
+        await win.locator("#translation-search-input").fill("World English");
+        await web.waitFor({ timeout: 10000 });
+        await web.locator(".sb-offline-btn").first().click();
+        const going = web.locator(".sb-offline-btn.downloading");
+        await going.waitFor({ timeout: 10000 });
+        await going.click();
+        await web
+          .locator(".sb-offline-btn:not(.downloading):not(.downloaded)")
+          .waitFor({ timeout: 10000 });
+
+        step = "Esc closes";
+        await c.page.keyboard.press("Escape");
+        await win.waitFor({ state: "detached", timeout: 3000 });
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "grouped by language with English first; filter, search, licence, share and a cancelled download all worked";
+    },
+  },
   // ── 8. Today, Discover and publishing ──────────────────────────────────────────────────────────────────────
   {
     id: "S3",
@@ -2724,31 +2854,44 @@ export const MORE_FLOWS: Flow[] = [
       await c.page
         .locator(".sb-bible-reader-active .sb-bible-reader-translation")
         .click();
-      await c.page.locator('input[type="search"]').first().fill("BSB");
+      await c.page.locator("#translation-search-input").fill("BSB");
       const item = c.page
-        .locator(".sb-translation-item")
-        .filter({
-          has: c.page.locator(".sb-translation-row-short", {
-            hasText: /^BSB$/,
-          }),
-        })
+        .locator(".translation-option", { hasText: "(BSB)" })
         .first();
-      await item.locator(".sb-translation-offline").click();
+      await item.locator(".sb-offline-btn").first().click();
       await item
-        .locator(".sb-translation-offline-on")
+        .locator(".sb-offline-btn.downloaded")
         .waitFor({ timeout: 180000 });
       await c.page.keyboard.press("Escape");
+      await c.page
+        .locator(".sb-translation-picker")
+        .waitFor({ state: "detached", timeout: 5000 });
       await c.context.setOffline(true);
       try {
         await c.page
           .locator(".sb-bible-reader-active .sb-bible-reader-title")
           .click();
-        await c.page.locator('input[type="search"]').first().fill("Obadiah");
         await c.page
-          .getByRole("button", { name: /^Obadiah$/ })
+          .locator('input[type="search"]')
           .first()
-          .click();
-        await c.page.getByRole("button", { name: /^1$/ }).first().click();
+          .fill("Obadiah")
+          .catch((e: Error) => {
+            throw new Error(`book search: ${e.message.split("\n")[0]}`);
+          });
+        // A search down to one book opens its chapters already; a tap on the book would fold them.
+        const one = c.page.getByRole("button", { name: /^1$/ }).first();
+        if (!(await one.isVisible().catch(() => false)))
+          await c.page
+            .getByRole("button", { name: /^Obadiah$/ })
+            .first()
+            .click();
+        await c.page
+          .getByRole("button", { name: /^1$/ })
+          .first()
+          .click()
+          .catch((e: Error) => {
+            throw new Error(`chapter 1: ${e.message.split("\n")[0]}`);
+          });
         await c.page.waitForURL(/\/read\/BSB\/OBA\/1/, { timeout: 20000 });
         await c.waitText(c.verse(1), /vision of Obadiah/i, 20000);
         const text = (await c.verse(1).innerText()).slice(0, 40);
@@ -2760,13 +2903,15 @@ export const MORE_FLOWS: Flow[] = [
           .click()
           .catch(() => undefined);
         await c.page
-          .locator('input[type="search"]')
-          .first()
+          .locator("#translation-search-input")
           .fill("BSB")
           .catch(() => undefined);
-        c.page.once("dialog", (d) => void d.accept());
         await item
-          .locator(".sb-translation-offline")
+          .locator(".sb-offline-btn.downloaded")
+          .click()
+          .catch(() => undefined);
+        await c.page
+          .locator(".sb-offline-delete-confirm")
           .click()
           .catch(() => undefined);
       }

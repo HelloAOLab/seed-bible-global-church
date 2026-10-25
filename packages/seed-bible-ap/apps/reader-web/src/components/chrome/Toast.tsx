@@ -37,6 +37,21 @@ function line(
       return t("session-host-reconnected", {
         defaultValue: "The host reconnected",
       });
+    case "copied-translation-share-link":
+      return t("copied-translation-share-link", {
+        defaultValue: "Copied translation share link",
+      });
+    case "translation-removed-from-device":
+      return t("translation-removed-from-device", {
+        defaultValue: "{{name}} was removed from this device",
+        name: values["name"] ?? "",
+      });
+    case "translation-download-failed":
+      return t("translation-download-failed", {
+        defaultValue:
+          "Couldn't download {{name}}. Tap its download button to try again.",
+        name: values["name"] ?? "",
+      });
     default:
       return key;
   }

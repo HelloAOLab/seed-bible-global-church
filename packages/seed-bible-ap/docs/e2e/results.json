@@ -1,69 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 04:25 UTC",
+  "when": "2026-10-25 04:55 UTC",
   "results": [
     {
-      "id": "M3",
-      "section": "4. Marking the text",
-      "title": "Bookmark and save a chapter; see them in Your Content",
-      "checks": "Header bookmark and ☆ toggle; Your Content lists John 3 under Bookmarks and Saves",
-      "mark": "✅",
-      "note": "John 3 listed under bookmarks and saves",
-      "ms": 1256
-    },
-    {
-      "id": "M9",
-      "section": "4. Marking the text",
-      "title": "Bookmark names and colours, save folders",
-      "checks": "Bookmark John 3 → Your Content → its ⋯ → Edit bookmark → name 'Nicodemus' and a colour → shown; save the chapter → its ⋯ → Edit save → folder 'Study' → shown beside it",
-      "mark": "✅",
-      "note": "bookmark named Nicodemus with a colour; save filed under Study",
-      "ms": 1596
-    },
-    {
-      "id": "SV1",
-      "section": "4. Marking the text",
-      "title": "The save window: several folders, rename and delete a folder",
-      "checks": "Select 3:16 → Save opens the save window with My Saves ticked → Add to new 'Memory' → Save: the sidebar's saves list it under My Saves and Memory; Save again opens it as Edit save; Memory's ⋮ → Rename 'Verses' moves it; Edit save → untick My Saves → it is only in Verses; Verses' ⋮ → Delete puts it back in My Saves; Remove from all folders unsaves it",
-      "mark": "✅",
-      "note": "saved to My Saves and a new folder; renamed, moved, deleted and removed",
-      "ms": 2633
-    },
-    {
-      "id": "BM1",
-      "section": "4. Marking the text",
-      "title": "The movable bookmark",
-      "checks": "John 3's bookmark button opens the bookmark window with 'My bookmark' in orange ready → Save: the button shows the ribbon and names it; on Romans 8 the window says to tap a bookmark to move it → tap: it leaves John 3 for Romans 8; + New bookmark offers 'My bookmark 2' in red → Save: two ribbons; the sidebar's bookmarks list both as 'Romans 8 • BSB'; at five, + New bookmark is off and says why",
-      "mark": "✅",
-      "note": "placed on John 3, moved to Romans 8, a second in red, both in the sidebar; five is the most",
-      "ms": 11473
-    },
-    {
-      "id": "H1",
+      "id": "G5",
       "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "title": "Download a whole translation for offline",
+      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
       "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 1030
-    },
-    {
-      "id": "SB1",
-      "section": "6. Tabs and panes",
-      "title": "The old reader's sidebar: Tasks, Bookmarks, Saves, the tab's star and menu",
-      "checks": "Beside Tabs: ☑ Tasks opens Today, 🔖 shows the bookmarks above the tabs, ☆ shows the saves in My Saves; the open tab's ☆ saves the chapter; a save made in BSB opens in BSB from the Saves panel and from Your content while the KJV is open; the tab's ⋮ → Open in new panel adds a pane; the top row has ⊞ Panels and ⋮ More",
-      "mark": "✅",
-      "note": "Tasks opened Today; the tab's ☆ saved John 3 and the bookmarks and saves panels listed it; the BSB save opened in BSB from the KJV (panel and Your content); Open in new panel added a pane; ⊞ and ⋮ at the top",
-      "ms": 3282
-    },
-    {
-      "id": "PH1",
-      "section": "13. Links and embedding",
-      "title": "A phone: the old reader's phone shell",
-      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
-      "mark": "✅",
-      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1436
+      "note": "BSB downloaded; offline, Obadiah 1 reads (\"1This is the vision of Obadiah:\n\nThis is\")",
+      "ms": 10584
     }
   ]
 }

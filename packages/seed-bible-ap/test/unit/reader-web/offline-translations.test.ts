@@ -3,7 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
 import { createReading } from "../../../apps/reader-web/src/state/reading/reading";
-import { createOfflineTranslations } from "../../../apps/reader-web/src/state/reading/offlineTranslations";
+import {
+  CANCELLED,
+  createOfflineTranslations,
+} from "../../../apps/reader-web/src/state/reading/offlineTranslations";
 import type { CompleteTranslation } from "../../../apps/reader-web/src/backend/bible";
 
 const chapter = (n: number, words: string) => ({
@@ -86,6 +89,7 @@ describe("offline translations", () => {
       name: "TST",
       chapters: 3,
       at: "2026-10-22T10:00:00Z",
+      sizeBytes: 50,
     });
     expect(fractions.some((f) => f > 0 && f < 1)).toBe(true);
     expect(offline.progress.value).toBeNull();
@@ -145,7 +149,60 @@ describe("offline translations", () => {
     });
     await expect(offline.download("NOPE")).rejects.toThrow(/404/);
     expect(offline.error.value).toMatch(/404/);
+    expect(offline.errors.value["NOPE"]).toMatch(/404/);
     expect(offline.downloaded.value).toEqual([]);
     expect(await stores.chapters.keys()).toEqual([]);
+  });
+
+  it("a download is cancelled part way and nothing is kept; a retry clears the error", async () => {
+    const stores = memoryStores();
+    let fail = true;
+    const offline = createOfflineTranslations({
+      api: {
+        getCompleteTranslation: (_t, o) =>
+          new Promise((resolve, reject) => {
+            o?.onProgress?.(10, null);
+            if (fail) {
+              fail = false;
+              reject(new Error("Failed request: 500"));
+              return;
+            }
+            o?.signal?.addEventListener("abort", () =>
+              reject(new Error("aborted"))
+            );
+            setTimeout(() => resolve(FULL), 50);
+          }),
+      },
+      chapters: stores.chapters,
+      prefs: stores.prefs,
+    });
+    await expect(offline.download("TST")).rejects.toThrow(/500/);
+    expect(offline.errors.value["TST"]).toMatch(/500/);
+    const going = offline.download("TST");
+    // Trying again clears the old failure while it runs.
+    expect(offline.errors.value["TST"]).toBeUndefined();
+    expect(offline.progress.value).toMatchObject({
+      id: "TST",
+      phase: "downloading",
+      receivedBytes: 10,
+    });
+    offline.cancel("TST");
+    await expect(going).rejects.toThrow(CANCELLED);
+    expect(offline.progress.value).toBeNull();
+    expect(offline.has("TST")).toBe(false);
+    expect(offline.errors.value["TST"]).toBeUndefined();
+  });
+
+  it("a newer file in the list shows as an update", async () => {
+    const stores = memoryStores();
+    const offline = createOfflineTranslations({
+      api: { getCompleteTranslation: async () => FULL },
+      chapters: stores.chapters,
+      prefs: stores.prefs,
+    });
+    const tr = { ...FULL.translation, sha256: "aaa" };
+    await offline.download(tr);
+    expect(offline.updateAvailable(tr)).toBe(false);
+    expect(offline.updateAvailable({ ...tr, sha256: "bbb" })).toBe(true);
   });
 });

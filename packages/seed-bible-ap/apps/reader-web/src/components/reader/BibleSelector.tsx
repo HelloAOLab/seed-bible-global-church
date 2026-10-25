@@ -12,6 +12,7 @@ import {
 } from "../../state/reading/testaments";
 import type { TranslationBook } from "../../backend/bible";
 import type * as preact from "preact";
+import { TranslationPicker } from "./TranslationPicker";
 
 /** The old reader's columns: Old Testament 3 + New 2 on a desktop, 2 + 1 below 1200 px, one each on a phone. */
 const MOBILE_BREAKPOINT = 480;
@@ -192,14 +193,8 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   useEffect(() => {
     if (mode === "translations") void reading.loadTranslations();
     // The first time each list opens, its short tour (once; never if tutorials are off).
-    if (mode)
-      setTimeout(
-        () =>
-          state.tours.startContextual(
-            mode === "books" ? "selector" : "offline-download"
-          ),
-        400
-      );
+    if (mode === "books")
+      setTimeout(() => state.tours.startContextual("selector"), 400);
     if (mode) {
       setSearch("");
       setBookPick(null);
@@ -220,6 +215,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   }, [mode, bookPick]);
 
   if (!mode) return null;
+  if (mode === "translations") return <TranslationPicker state={state} />;
   const close = () => (state.ui.selector.value = null);
   const q = search.trim().toLowerCase();
   const shortName =
@@ -242,14 +238,6 @@ export function BibleSelector({ state }: { state: ReaderState }) {
       b.name.toLowerCase().includes(bookQuery) ||
       b.commonName.toLowerCase().includes(bookQuery) ||
       b.id.toLowerCase().includes(bookQuery)
-  );
-  const translations = reading.translations.value.filter(
-    (tr) =>
-      !q ||
-      tr.id.toLowerCase().includes(q) ||
-      tr.name.toLowerCase().includes(q) ||
-      tr.englishName.toLowerCase().includes(q) ||
-      (tr.languageEnglishName ?? "").toLowerCase().includes(q)
   );
   // The book on screen opens with the picker; a search down to one book opens that one.
   const picked =
@@ -325,14 +313,13 @@ export function BibleSelector({ state }: { state: ReaderState }) {
               <button
                 type="button"
                 className="sidebar-translation-selector flex-between-center"
-                aria-expanded={mode === "translations"}
+                aria-expanded={false}
                 aria-label={t("choose-translation", {
                   name: shortName,
                   defaultValue: "Translation: {{name}}",
                 })}
                 onClick={() => {
-                  state.ui.selector.value =
-                    mode === "translations" ? "books" : "translations";
+                  state.ui.selector.value = "translations";
                 }}
               >
                 <span className="sidebar-selected-title flex-align-center">
@@ -340,7 +327,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                 </span>
                 <span
                   style={{ transition: "transform 0.3s" }}
-                  className={`material-symbols-outlined${mode === "translations" ? " upside-down" : ""}`}
+                  className="material-symbols-outlined"
                   aria-hidden="true"
                 >
                   expand_more
@@ -512,116 +499,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
               </div>
             )}
           </div>
-        ) : (
-          <div
-            className="sidebar-results sb-translation-list"
-            onKeyDown={(e) =>
-              handleVerticalListKeyNav(
-                e as KeyboardEvent,
-                e.currentTarget as HTMLElement
-              )
-            }
-          >
-            {!translations.length && (
-              <p className="sb-selector-section-title">
-                {reading.translations.value.length
-                  ? t("no-search-results", { defaultValue: "Nothing matches." })
-                  : t("loading", { defaultValue: "Loading…" })}
-              </p>
-            )}
-            {translations.map((tr) => {
-              const onDevice = state.offline.has(tr.id);
-              const going = state.offline.progress.value?.id === tr.id;
-              return (
-                <div key={tr.id} className="sb-translation-item">
-                  <button
-                    className={`sb-translation-row${tr.id === reading.translationId.value ? " sb-translation-row-current" : ""}`}
-                    onClick={() => {
-                      void reading.setTranslation(tr.id);
-                      close();
-                    }}
-                  >
-                    <span className="sb-translation-row-short">
-                      {tr.shortName ?? tr.id}
-                    </span>
-                    <span className="sb-translation-row-name">
-                      {tr.name}
-                      {tr.englishName && tr.englishName !== tr.name
-                        ? ` · ${tr.englishName}`
-                        : ""}
-                    </span>
-                    <span className="sb-translation-row-lang">
-                      {tr.languageEnglishName ?? tr.language}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`sb-translation-offline${onDevice ? " sb-translation-offline-on" : ""}`}
-                    disabled={!!state.offline.progress.value && !going}
-                    aria-label={
-                      onDevice
-                        ? t("offline-remove", {
-                            name: tr.shortName ?? tr.id,
-                            defaultValue: "Remove {{name}} from this device",
-                          })
-                        : t("offline-download", {
-                            name: tr.shortName ?? tr.id,
-                            defaultValue: "Download {{name}} to read offline",
-                          })
-                    }
-                    title={
-                      onDevice
-                        ? t("offline-on-device", {
-                            defaultValue:
-                              "On this device: reads without a connection. Tap to remove.",
-                          })
-                        : t("offline-download-hint", {
-                            defaultValue:
-                              "Download the whole translation to read it without a connection",
-                          })
-                    }
-                    onClick={() => {
-                      if (going) return;
-                      if (onDevice) {
-                        if (
-                          confirm(
-                            t("offline-remove-confirm", {
-                              name: tr.shortName ?? tr.id,
-                              defaultValue:
-                                "Remove {{name}} from this device? Chapters will need a connection again.",
-                            })
-                          )
-                        )
-                          void state.offline.remove(tr.id);
-                      } else void state.offline.download(tr).catch(() => {});
-                    }}
-                  >
-                    {going ? (
-                      <span className="sb-translation-offline-progress">
-                        {Math.round(
-                          (state.offline.progress.value?.fraction ?? 0) * 100
-                        )}
-                        %
-                      </span>
-                    ) : (
-                      <span className="material-symbols-outlined">
-                        {onDevice ? "offline_pin" : "download"}
-                      </span>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-            {state.offline.error.value && (
-              <p className="sb-selector-section-title sb-pane-error">
-                {t("offline-failed", {
-                  reason: state.offline.error.value,
-                  defaultValue: "The download did not finish: {{reason}}",
-                })}
-              </p>
-            )}
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

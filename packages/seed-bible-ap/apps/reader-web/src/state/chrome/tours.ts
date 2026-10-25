@@ -194,7 +194,7 @@ export const TOURS: Record<
     desktop: [
       step(
         "offline",
-        ".sb-translation-offline",
+        '.translation-option[aria-selected="true"] .sb-offline-btn',
         "offlineDownload",
         "Tap to keep it on your device",
         "Any translation with this icon can be saved for offline reading."

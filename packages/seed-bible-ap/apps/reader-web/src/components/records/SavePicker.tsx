@@ -2,7 +2,7 @@
 // (the verse toolbar, the chapter's ☆, a tab's ☆, Edit save). Tick any number of folders; "Add to new" stages a
 // folder that is only made when you press Save, so closing the window leaves nothing behind. A passage already saved
 // opens its save to change its folders (and its label), with Remove from all folders.
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { MY_SAVES } from "../../state/records/saves";
@@ -57,18 +57,21 @@ function Picker({ state }: { state: ReaderState }) {
   const [busy, setBusy] = useState(false);
   const close = () => (state.ui.savePicker.value = null);
 
+  // Read through a ref so an Esc right after "Add to new" opened still sees it (see TranslationPicker).
+  const addingNow = useRef(adding);
+  addingNow.current = adding;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.stopPropagation();
-      if (adding) {
+      if (addingNow.current) {
         setAdding(false);
         setDraft("");
       } else close();
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [adding]);
+  }, []);
 
   const name = (f: string) =>
     f === MY_SAVES ? t("my-saves", { defaultValue: MY_SAVES }) : f;

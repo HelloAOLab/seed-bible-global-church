@@ -103,10 +103,10 @@ const BASE_FLOWS: Flow[] = [
       await c.page
         .locator(".sb-bible-reader-active .sb-bible-reader-translation")
         .click();
-      const search = c.page.locator('input[type="search"]').first();
+      const search = c.page.locator("#translation-search-input");
       await search.waitFor({ timeout: 10000 });
       await search.fill("World English");
-      const row = c.page.locator(".sb-translation-row").first();
+      const row = c.page.locator(".translation-option").first();
       // The list comes from the scripture agent, which can take a while on a cold start.
       await row.waitFor({ timeout: 40000 });
       const label = (await row.innerText()).replace(/\s+/g, " ");

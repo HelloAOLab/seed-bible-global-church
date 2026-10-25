@@ -345,43 +345,6 @@ body {
   cursor: default;
 }
 
-/* The translation list in the selector. */
-.sb-translation-list {
-  display: grid;
-  gap: 0.25rem;
-  overflow: auto;
-}
-.sb-translation-row {
-  display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  align-items: baseline;
-  text-align: start;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  padding: 0.5rem 0.625rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-.sb-translation-row:hover,
-.sb-translation-row-current {
-  background: var(--sb-secondary-color);
-  color: var(--sb-secondary-font-color);
-}
-.sb-translation-row-short {
-  font-weight: 700;
-}
-.sb-translation-row-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sb-translation-row-lang {
-  font-size: 0.8125rem;
-  opacity: 0.7;
-}
 .sb-selector-pane-picker {
   display: flex;
   gap: 0.375rem;
@@ -875,9 +838,6 @@ body {
 }
 .sb-companion-text {
   white-space: pre-wrap;
-}
-.sb-compare-pane .sb-translation-list {
-  max-height: 14rem;
 }
 
 /* Embed mode: the reader alone */
@@ -1381,38 +1341,6 @@ html[data-sb-margins="wide"] .sb-chapter-content {
 }
 .sb-verse-toolbar-menu .sb-verse-toolbar-tools {
   flex-wrap: wrap;
-}
-
-/* A translation row with its download control beside it. */
-.sb-translation-item {
-  display: flex;
-  align-items: stretch;
-  gap: 0.25rem;
-}
-.sb-translation-item .sb-translation-row {
-  flex: 1;
-  min-width: 0;
-}
-.sb-translation-offline {
-  flex: 0 0 2.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.7;
-}
-.sb-translation-offline:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  opacity: 1;
-}
-.sb-translation-offline-on {
-  color: var(--sb-primary-color, #e07a4a);
-  opacity: 1;
-}
-.sb-translation-offline-progress {
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
 }
 
 /* Playlist history under the Playlists tab: one row per playlist, grouped by day. */

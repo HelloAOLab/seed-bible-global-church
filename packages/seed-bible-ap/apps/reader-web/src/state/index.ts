@@ -750,7 +750,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       if (e.key !== "Escape" || !tours.active.value) return;
       tours.done();
       e.preventDefault();
-      e.stopPropagation();
+      // Immediate: the windows' own Esc listeners sit on the same window, after this one.
+      e.stopImmediatePropagation();
     };
     const keysOn = typeof window !== "undefined";
     if (keysOn) {
