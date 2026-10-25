@@ -1,7 +1,7 @@
 // THE SELECTOR — the old BibleSelector's overlay panel (`sb-selector-overlay` / `sb-selector-panel` and the books,
 // chapters and translation lists its stylesheet dresses), with the search box and the testament filter (All / Old /
 // New, and the Apocrypha when the translation carries it).
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { handleGridKeyNav, handleVerticalListKeyNav } from "../keyboardNav";
@@ -48,9 +48,15 @@ function BooksGrid(props: {
   currentChapter: number;
   onToggle: (id: string) => void;
   onChapter: (book: string, chapter: number) => void;
+  /** A long press on a chapter (a finger, held a second) opens it in a new tab, as the old reader's phone picker. */
+  onChapterNewTab: (book: string, chapter: number) => void;
 }) {
   const { t } = useI18n();
   const { books, columns, open } = props;
+  const press = useRef<{ timer: number; fired: boolean } | null>(null);
+  const endPress = () => {
+    if (press.current) clearTimeout(press.current.timer);
+  };
   const rows =
     columns <= 1
       ? books.length
@@ -92,7 +98,32 @@ function BooksGrid(props: {
           style={hidden ? { display: "none" } : undefined}
           className={`chapter-btn flex-center${current ? " chapter-btn-current" : ""}`}
           aria-current={current ? "true" : undefined}
-          onClick={() => props.onChapter(b.id, c)}
+          onClick={() => {
+            endPress();
+            if (press.current?.fired) {
+              press.current = null;
+              return;
+            }
+            props.onChapter(b.id, c);
+          }}
+          onPointerDown={(e: PointerEvent) => {
+            if (e.pointerType !== "touch") return;
+            endPress();
+            const hold = {
+              fired: false,
+              timer: window.setTimeout(() => {
+                hold.fired = true;
+                props.onChapterNewTab(b.id, c);
+              }, 1000),
+            };
+            press.current = hold;
+          }}
+          onPointerUp={endPress}
+          onPointerCancel={endPress}
+          onPointerLeave={endPress}
+          onContextMenu={(e: MouseEvent) => {
+            if (press.current) e.preventDefault();
+          }}
         >
           <span
             className={`sidebar-chapter-itm ${current ? "highlight" : "un-highlight"}`}
@@ -187,6 +218,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   const { reading } = state;
   const [search, setSearch] = useState("");
   const [bookPick, setBookPick] = useState<string | null>(null);
+  const [apocryphaInfo, setApocryphaInfo] = useState(false);
   const [testament, setTestament] = useState<TestamentFilter>("all");
   const width = useViewportWidth();
 
@@ -231,14 +263,19 @@ export function BibleSelector({ state }: { state: ReaderState }) {
           ? t("new-testament", { defaultValue: "New Testament" })
           : t("apocrypha", { defaultValue: "Apocrypha" });
   // "John 3" searches for John and keeps the 3 for Enter.
-  const bookQuery = q.replace(/\s*\d+$/, "").trim() || q;
-  const books = reading.books.value.filter(
-    (b) =>
-      !q ||
-      b.name.toLowerCase().includes(bookQuery) ||
-      b.commonName.toLowerCase().includes(bookQuery) ||
-      b.id.toLowerCase().includes(bookQuery)
-  );
+  const queryOf = (query: string) =>
+    query.replace(/\s*\d+$/, "").trim() || query;
+  const matching = (query: string) => {
+    const bq = queryOf(query);
+    return reading.books.value.filter(
+      (b) =>
+        !query ||
+        b.name.toLowerCase().includes(bq) ||
+        b.commonName.toLowerCase().includes(bq) ||
+        b.id.toLowerCase().includes(bq)
+    );
+  };
+  const books = matching(q);
   // The book on screen opens with the picker; a search down to one book opens that one.
   const picked =
     bookPick ??
@@ -259,11 +296,36 @@ export function BibleSelector({ state }: { state: ReaderState }) {
       currentChapter={reading.chapterNumber.value}
       onToggle={(id) => setBookPick(id === picked ? "" : id)}
       onChapter={goTo}
+      onChapterNewTab={(book, chapter) => {
+        state.tabs.addTab({
+          translationId: reading.translationId.value,
+          bookId: book,
+          chapterNumber: chapter,
+        });
+        close();
+      }}
     />
+  );
+
+  const apocryphaButton = (
+    <button
+      type="button"
+      className="material-symbols-outlined apocrypha-info-button"
+      aria-label={t("about-apocrypha", { defaultValue: "About the Apocrypha" })}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        setApocryphaInfo(true);
+      }}
+    >
+      info
+    </button>
   );
 
   return (
     <div className="sb-selector-overlay open" onClick={close}>
+      {apocryphaInfo && (
+        <ApocryphaInfo onClose={() => setApocryphaInfo(false)} />
+      )}
       <div
         className="sb-selector-panel"
         onClick={(e: Event) => e.stopPropagation()}
@@ -363,18 +425,29 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                 onKeyDown={(e) => {
                   if ((e as KeyboardEvent).key !== "Enter" || mode !== "books")
                     return;
-                  const n = /(\d+)$/.exec(q)?.[1];
-                  const only = books.length === 1 ? books[0]! : null;
+                  // "John 3": the book named exactly, else the top one (John before 1 John), at that chapter.
+                  // What is in the box now: Enter can come before the typing has re-rendered.
+                  const typed = (e.currentTarget as HTMLInputElement).value
+                    .trim()
+                    .toLowerCase();
+                  const found = matching(typed);
+                  const n = /\s(\d+)$/.exec(typed)?.[1];
+                  const top =
+                    found.find(
+                      (b) =>
+                        b.name.toLowerCase() === queryOf(typed) ||
+                        b.commonName.toLowerCase() === queryOf(typed)
+                    ) ?? found[0];
                   if (
-                    only &&
+                    top &&
                     n &&
                     Number(n) >= 1 &&
-                    Number(n) <= only.numberOfChapters
+                    Number(n) <= top.numberOfChapters
                   )
-                    goTo(only.id, Number(n));
-                  else if (books[0]) {
-                    setSearch(books[0].name);
-                    setBookPick(books[0].id);
+                    goTo(top.id, Number(n));
+                  else if (top) {
+                    setSearch(top.name);
+                    setBookPick(top.id);
                   }
                 }}
                 autoFocus
@@ -464,6 +537,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                   >
                     <span className="testament-title">
                       {testamentLabel("apocrypha")}
+                      {apocryphaButton}
                     </span>
                     {grid(groups.apocrypha, 1)}
                   </div>
@@ -481,6 +555,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                   {(testament === "apocrypha" || width > MOBILE_BREAKPOINT) && (
                     <span className="testament-title">
                       {testamentLabel(testament)}
+                      {testament === "apocrypha" && apocryphaButton}
                     </span>
                   )}
                   {groups[testament].length ? (
@@ -502,5 +577,60 @@ export function BibleSelector({ state }: { state: ReaderState }) {
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** "About the Apocrypha" — the old reader's note on why those books are kept apart. */
+function ApocryphaInfo({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  return (
+    <>
+      <div
+        className="sb-apocrypha-info-backdrop"
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          onClose();
+        }}
+      />
+      <div
+        id="apocrypha-info"
+        className="sb-apocrypha-info-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="apocrypha-info-title"
+        onClick={(e: MouseEvent) => e.stopPropagation()}
+      >
+        <div className="sb-apocrypha-info">
+          <div className="sb-apocrypha-info-header">
+            <h2 id="apocrypha-info-title" className="sb-apocrypha-info-title">
+              {t("about-apocrypha", { defaultValue: "About the Apocrypha" })}
+            </h2>
+            <button
+              type="button"
+              className="sb-apocrypha-info-close"
+              aria-label={t("close", { defaultValue: "Close" })}
+              onClick={onClose}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div className="sb-apocrypha-info-content">
+            {t("apocrypha-info-text", {
+              defaultValue:
+                "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
+            })}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

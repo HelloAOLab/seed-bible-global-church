@@ -6405,4 +6405,96 @@ export const MORE_FLOWS: Flow[] = [
       return `dragged by ${dx}, ${dy}; a new choice brought it back beside the verses`;
     },
   },
+  {
+    id: "BK1",
+    section: "3. Reading",
+    title: "The book picker: type and Enter, hold for a new tab",
+    rows: ["Open a book and chapter"],
+    checks:
+      "From Romans 8, Books → type 'John 3' and Enter opens John 3 (the book named, not 1 John); '1 John 2' and Enter opens 1 John 2. On an iPhone 13, holding a finger on John's chapter 5 opens John 5 in a new tab, the old one kept",
+    run: async (c) => {
+      const page = c.page;
+      const typeAndEnter = async (text: string) => {
+        await page
+          .locator(".sb-selector-panel")
+          .waitFor({ state: "detached", timeout: 5000 });
+        await c.settleTours();
+        await c.pressToolbar("Books");
+        await c.settleTours();
+        if (!(await page.locator(".sb-selector-panel").count()))
+          await c.pressToolbar("Books");
+        const box = page.getByPlaceholder("Search books...");
+        await box.waitFor({ timeout: 5000 });
+        await box.fill(text);
+        await box.press("Enter");
+      };
+      await c.open("/read/BSB/ROM/8");
+      await typeAndEnter("John 3");
+      await page
+        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 8000 })
+        .catch(() => {
+          throw new Error(`'John 3' + Enter went to ${page.url()}`);
+        });
+      await typeAndEnter("1 John 2");
+      await page
+        .waitForURL(/\/read\/BSB\/1JN\/2/, { timeout: 8000 })
+        .catch(() => {
+          throw new Error(`'1 John 2' + Enter went to ${page.url()}`);
+        });
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      c.watch(phone);
+      try {
+        await c.open(CH, phone);
+        await c.settleTours(phone);
+        await phone
+          .locator(
+            ".sb-phone-nav .sb-reader-toolbar-mobile-tab-button[aria-label='Bible']"
+          )
+          .click();
+        await c.settleTours(phone);
+        // The picker opens on the book being read (John), its chapters showing.
+        const five = phone.locator(".sb-selector-panel #chapter-btn-5").first();
+        await five.waitFor({ timeout: 5000 });
+        const b = (await five.boundingBox())!;
+        const cdp = await ctx.newCDPSession(phone);
+        const point = [{ x: b.x + b.width / 2, y: b.y + b.height / 2 }];
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: point,
+        });
+        await phone.waitForTimeout(1300);
+        await cdp.send("Input.dispatchTouchEvent", {
+          type: "touchEnd",
+          touchPoints: [],
+        });
+        await phone.waitForURL(/\/read\/BSB\/JHN\/5/, { timeout: 8000 });
+        await phone
+          .locator(".sb-selector-panel")
+          .waitFor({ state: "detached", timeout: 5000 });
+        // More → Tabs: John 3 is still there beside the new John 5.
+        await c.settleTours(phone);
+        await phone.locator(".sb-phone-more-tab > button").click();
+        await phone
+          .locator(".sb-mobile-more-menu button", { hasText: "Tabs" })
+          .first()
+          .click();
+        const rows = await phone
+          .locator(".sb-tabs-sidebar-drawer .sb-tab-main-title")
+          .allInnerTexts();
+        if (
+          !rows.some((r) => /John 3/.test(r)) ||
+          !rows.some((r) => /John 5/.test(r))
+        )
+          throw new Error(`tabs: ${rows.join(", ")}`);
+        return `John 3 and 1 John 2 by typing; a held finger opened John 5 in a new tab beside ${rows.join(", ")}`;
+      } finally {
+        await ctx.close();
+      }
+    },
+  },
 ];

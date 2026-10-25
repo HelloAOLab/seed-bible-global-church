@@ -1,24 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:17 UTC",
+  "when": "2026-10-25 10:26 UTC",
   "results": [
     {
-      "id": "X2",
-      "section": "12. Extensions",
-      "title": "Compare translations",
-      "checks": "Select 3:16 → Compare in the verse toolbar; the pane shows the verse in other translations",
+      "id": "BK1",
+      "section": "3. Reading",
+      "title": "The book picker: type and Enter, hold for a new tab",
+      "checks": "From Romans 8, Books → type 'John 3' and Enter opens John 3 (the book named, not 1 John); '1 John 2' and Enter opens 1 John 2. On an iPhone 13, holding a finger on John's chapter 5 opens John 5 in a new tab, the old one kept",
       "mark": "✅",
-      "note": "Compare close John 3:16 add Add translation BSB Berean Standard Bible 16 For God",
-      "ms": 1308
-    },
-    {
-      "id": "VS1",
-      "section": "4. Marking the text",
-      "title": "The phone's verse sheet",
-      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
-      "mark": "✅",
-      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
-      "ms": 3103
+      "note": "John 3 and 1 John 2 by typing; a held finger opened John 5 in a new tab beside John 3, John 5",
+      "ms": 10187
     }
   ]
 }
