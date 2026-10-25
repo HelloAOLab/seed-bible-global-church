@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { relayCodeIfPopupReturn } from "@agenticprimitives/connect-client";
 import { App } from "./App";
-import { RELAY_CHANNEL } from "./session";
+import { RELAY_CHANNEL, relayThen } from "./session";
 import { createReaderState } from "./state";
 import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "./backend/bible";
 import { SEED_GLOBAL } from "./entry-server";
@@ -73,7 +73,22 @@ async function boot() {
 }
 
 // A popup landing back with its code relays it to the opener and closes; render only if it is still here.
-if (search.get("ac_relay") === "1" && search.get("code")) {
+const then = relayThen(search.get("ac_then"));
+if (search.get("ac_relay") === "1" && search.get("code") && then) {
+  // Signed in, and the Home named one more step for this same window (adding the friend who invited them): hand the
+  // code to the reader that opened it, then go on there instead of closing.
+  const ch = new BroadcastChannel(RELAY_CHANNEL);
+  ch.postMessage({
+    kind: "ac-relay",
+    code: search.get("code"),
+    state: search.get("state"),
+    iss: search.get("ac_iss") ?? undefined,
+  });
+  window.setTimeout(() => {
+    ch.close();
+    location.replace(then);
+  }, 150);
+} else if (search.get("ac_relay") === "1" && search.get("code")) {
   relayCodeIfPopupReturn(RELAY_CHANNEL);
   window.setTimeout(() => {
     if (window.closed) return;

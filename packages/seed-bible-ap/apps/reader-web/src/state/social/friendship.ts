@@ -109,7 +109,7 @@ export function createFriendship(deps: {
     watch = undefined;
   }
 
-  /** The Home's one-question window for a friend act: `from` lets it show only that question and close itself when
+  /** The Home's one-question window for a friend act (also what a sign-in names as its next step): `from` lets it show only that question and close itself when
    *  answered (its opener policy hides who opened it); `name` is how the reader knows them, for the question. */
   const homeUrl = (
     act: "add" | "remove",
@@ -122,13 +122,20 @@ export function createFriendship(deps: {
   };
 
   /** Add someone (ask, or accept their request): the Home signs it; this device watches for it to land. */
-  function add(who: string, label?: string | null): void {
+  /** Add someone (ask, or accept their request): the Home signs it in its window; this device watches for it to
+   *  land. `alreadyAsked`: the Home's window is already on it (a sign-in that goes on to this add) — only watch. */
+  function add(
+    who: string,
+    label?: string | null,
+    opts: { alreadyAsked?: boolean } = {}
+  ): void {
     const was = standingOf(deps.friendsView(), who);
     const url = homeUrl("add", who, label);
-    (
-      deps.openWindow ??
-      ((u) => window.open(u, "_blank", "popup,width=520,height=760"))
-    )(url);
+    if (!opts.alreadyAsked)
+      (
+        deps.openWindow ??
+        ((u) => window.open(u, "_blank", "popup,width=520,height=760"))
+      )(url);
     waiting.value = { who, label: label || who, was, landed: false };
     stopWatching();
     const before = known(deps.friendsView());
@@ -203,6 +210,7 @@ export function createFriendship(deps: {
   }
 
   return {
+    homeUrl,
     invite,
     waiting,
     requests,

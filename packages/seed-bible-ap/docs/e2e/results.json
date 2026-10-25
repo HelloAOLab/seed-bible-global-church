@@ -1,33 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 22:09 UTC",
+  "when": "2026-10-25 22:55 UTC",
   "results": [
     {
-      "id": "IN2",
+      "id": "IN3",
       "section": "8. Today, Discover and publishing",
-      "title": "An emailed invitation opens in the reader",
-      "checks": "The link /invite/<token> opens a welcome: 'Ruth invited you to Seed Bible' with Ruth's note, the terms and one Continue (it asks for the terms first); a dead link says 'This invitation can't be opened'; signed in, 'Welcome' and Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for one tap. (The invitation calls are answered by the test)",
+      "title": "Invited: sign in and add your friend in one window",
+      "checks": "Alice's emailed invitation, opened signed out: agree, Continue — ONE Home window signs in (Demo people → Seed Reader → Allow) and, in that same window, asks 'Add Alice Okoro as a friend?'; Yes, and it closes by itself; the reader says Alice was added. (The invitation's lookup is answered by the test; Seed Reader's request to Alice is taken back at the end.)",
       "mark": "✅",
-      "note": "a dead link: can't be opened; 'Ruth invited you to Seed Bible' with her note; Continue asks for the terms; signed in, 'Welcome' and Add took the invitation and opened the Home to add Ruth",
-      "ms": 68531
-    },
-    {
-      "id": "SX1",
-      "section": "1. Signing in",
-      "title": "A lapsed sign-in signs the reader out",
-      "checks": "Signed in as Seed Reader; when the sign-in's time is up (the stored token's expiry set an hour back, then a reload), the reader is signed out and says 'You were signed out because your sign-in expired', and More offers Sign in again",
-      "mark": "✅",
-      "note": "after the sign-in's time was up the reader signed out, said why, and More offered Sign in",
-      "ms": 34312
-    },
-    {
-      "id": "SI2",
-      "section": "1. Signing in",
-      "title": "Sign in right where you are",
-      "checks": "Signed out, the Profile and Today each show the sign-in itself — the terms and Sign in with Faithnet — instead of a Log in button that leads to Account",
-      "mark": "✅",
-      "note": "the sign-in itself in Profile, Today",
-      "ms": 1898
+      "note": "one Home window: signed in, then 'Add Alice Okoro as a friend?' → Yes, closed by itself after 122s; the reader: 'Adding Alice Okoro…'",
+      "ms": 139037
     }
   ]
 }

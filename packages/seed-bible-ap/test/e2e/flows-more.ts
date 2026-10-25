@@ -7921,4 +7921,133 @@ export const MORE_FLOWS: Flow[] = [
       return `the sign-in itself in ${seen.join(", ")}`;
     },
   },
+  {
+    id: "IN3",
+    timeoutMs: 480_000,
+    section: "8. Today, Discover and publishing",
+    title: "Invited: sign in and add your friend in one window",
+    rows: ["An emailed invitation"],
+    checks:
+      "Alice's emailed invitation, opened signed out: agree, Continue — ONE Home window signs in (Demo people → Seed Reader → Allow) and, in that same window, asks 'Add Alice Okoro as a friend?'; Yes, and it closes by itself; the reader says Alice was added. (The invitation's lookup is answered by the test; Seed Reader's request to Alice is taken back at the end.)",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      let n = 0;
+      const shot = async (pg: import("playwright").Page, name: string) => {
+        if (dir)
+          await pg
+            .screenshot({
+              path: `${dir}/${String(++n).padStart(2, "0")}-${name}.png`,
+            })
+            .catch(() => {});
+      };
+      const ALICE = "0xb0d11ce19b756a682e78b4904cd8d832303b3d11";
+      const token = "e".repeat(40);
+      await c.context.route("**/api/friends/invites**", async (route) => {
+        const req = route.request();
+        const cors = {
+          "access-control-allow-origin": "*",
+          "access-control-allow-headers": "authorization, content-type",
+        };
+        if (req.method() === "OPTIONS")
+          return route.fulfill({ status: 204, headers: cors });
+        if (new URL(req.url()).pathname.endsWith("/lookup"))
+          return route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            headers: cors,
+            body: JSON.stringify({
+              ok: true,
+              from: ALICE,
+              fromName: "Alice Okoro",
+              note: "Read Ruth with me?",
+              accepted: false,
+            }),
+          });
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: cors,
+          body: JSON.stringify({ ok: true, claimed: true, sent: [] }),
+        });
+      });
+      await c.open(`/invite/${token}`);
+      const dialog = c.page.locator(".sb-friend-invite-dialog");
+      await c.waitText(dialog, /Alice Okoro invited you/, 15000);
+      await dialog.locator("#sb-invite-terms").check();
+      await shot(c.page, "invite");
+      const opened = c.context.waitForEvent("page", { timeout: 15000 });
+      await dialog.getByRole("button", { name: "Continue" }).click();
+      const home = await opened;
+      await home.waitForLoadState();
+      await home.getByText(/demo people/i).click({ timeout: 20000 });
+      await home
+        .getByRole("button", { name: /seed ?reader/i })
+        .first()
+        .click();
+      // Allow the reader, then — the same window — the friend question.
+      const ask = home.locator('[data-testid="ask-authority"]');
+      for (let i = 0; i < 20 && !(await ask.count()); i++) {
+        await home.waitForTimeout(1500);
+        const allow = home.getByRole("button", { name: /^allow/i }).first();
+        if (await allow.isVisible().catch(() => false)) {
+          await shot(home, "allow");
+          await allow.click().catch(() => {});
+        }
+      }
+      await ask.waitFor({ timeout: 45000 });
+      await shot(home, "question");
+      const question = (await ask.innerText()).split("\n")[0];
+      if (!/Alice/i.test(question))
+        throw new Error(`the window asked: ${question}`);
+      await ask.getByRole("button", { name: /yes, add them/i }).click();
+      const tapped = Date.now();
+      await home.waitForEvent("close", { timeout: 240000 }).catch(async () => {
+        await shot(home, "stuck");
+        throw new Error(
+          `the window stayed open: ${(
+            await home
+              .locator("body")
+              .innerText()
+              .catch(() => "")
+          )
+            .replace(/\s+/g, " ")
+            .slice(0, 300)}`
+        );
+      });
+      await c.waitText(dialog, /friends|Adding Alice/i, 30000);
+      await shot(c.page, "done");
+      const said = (await dialog.innerText()).split("\n")[0];
+      // Leave Seed Reader as it was: take the request to Alice back.
+      await dialog
+        .getByRole("button", { name: /start reading|close/i })
+        .first()
+        .click()
+        .catch(() => {});
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
+      const row = c.page
+        .locator(".sb-friends-pane .sb-friends-row", { hasText: /alice/i })
+        .filter({ has: c.page.getByRole("button", { name: /cancel/i }) })
+        .first();
+      if (
+        await row
+          .waitFor({ timeout: 30000 })
+          .then(() => true)
+          .catch(() => false)
+      ) {
+        const w = c.context.waitForEvent("page", { timeout: 15000 });
+        await row.getByRole("button", { name: /cancel/i }).click();
+        const rm = await w;
+        await rm
+          .locator('[data-testid="ask-authority"]')
+          .getByRole("button", { name: /yes, remove them/i })
+          .click({ timeout: 45000 });
+        await rm.waitForEvent("close", { timeout: 90000 }).catch(() => {});
+      }
+      return `one Home window: signed in, then '${question}' → Yes, closed by itself after ${Math.round((Date.now() - tapped) / 1000)}s; the reader: '${said}'`;
+    },
+  },
 ];

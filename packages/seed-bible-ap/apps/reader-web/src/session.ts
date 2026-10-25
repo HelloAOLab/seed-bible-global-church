@@ -111,7 +111,7 @@ function isAllowedIssuer(estateId: EstateId, origin: string): boolean {
   }
 }
 
-function clientFor(estateId: EstateId): ConnectClient {
+function clientFor(estateId: EstateId, then?: string): ConnectClient {
   const est = estateById(estateId);
   if (!est) throw new Error("unknown estate");
   const c = createConnectClient({
@@ -131,6 +131,8 @@ function clientFor(estateId: EstateId): ConnectClient {
     const u = new URL(start.url);
     u.searchParams.set("delegation_template", ASK_AS_ME);
     u.searchParams.set("prompt", "select_account");
+    // One friend act the same Home window takes after signing in (the Home accepts only that).
+    if (then) u.searchParams.set("then", then);
     return { ...start, url: u.toString() };
   };
   return {
@@ -236,13 +238,14 @@ export async function finish(
 /** Sign in with your own Home. Popup first; a full-page redirect when the popup is blocked, announced. */
 export async function connectViaHome(
   estateId: EstateId,
-  onProgress?: (msg: string) => void
+  onProgress?: (msg: string) => void,
+  opts: { then?: string } = {}
 ): Promise<ReaderSession | null> {
   if (!HOME_SIGNIN_AVAILABLE)
     throw new Error(
       `Home sign-in is not registered yet (client "${CLIENT_ID}" needs a delegate — VITE_CONNECT_DELEGATE).`
     );
-  const c = clientFor(estateId);
+  const c = clientFor(estateId, opts.then);
   onProgress?.("Opening your Home…");
   const popup = await connectViaPopup(c, undefined, RELAY_CHANNEL, onProgress);
   if (popup.status === "success") {
@@ -361,4 +364,18 @@ export function signInAsDevReader(
   };
   save(s);
   return s;
+}
+
+/** The Home's next step for a window that relayed its sign-in (`ac_then`): only a Contacts page on an allowed Home. */
+export function relayThen(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    return u.pathname === "/contacts" &&
+      ALL_ESTATES.some((e) => isAllowedIssuer(e.id, u.origin))
+      ? u.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }

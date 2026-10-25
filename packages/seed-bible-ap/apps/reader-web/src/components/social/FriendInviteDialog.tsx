@@ -106,8 +106,24 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
     setProblem(null);
     setBusy(t("invite-opening-home", { defaultValue: "Opening sign-in…" }));
     try {
-      const out = await connectViaHome(DEFAULT_ESTATE, (m) => setBusy(m));
-      if (out) await state.signIn(out);
+      // One Home window: it signs them in, then asks "Add <inviter> as a friend?" before it closes.
+      const addPath = /^0x[0-9a-f]{40}$/.test(inv.agent)
+        ? new URL(friendship.homeUrl("add", inv.agent, inv.name)).pathname +
+          new URL(friendship.homeUrl("add", inv.agent, inv.name)).search
+        : undefined;
+      const out = await connectViaHome(
+        DEFAULT_ESTATE,
+        (m) => setBusy(m),
+        addPath ? { then: addPath } : {}
+      );
+      if (out) {
+        await state.signIn(out);
+        if (addPath) {
+          if (inv.token) void state.invites.claim(inv.token);
+          friendship.add(inv.agent, inv.name, { alreadyAsked: true });
+          setAdded(true);
+        }
+      }
     } catch (e) {
       setProblem(e instanceof Error ? e.message : String(e));
     } finally {
