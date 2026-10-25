@@ -481,6 +481,21 @@ export class ReadingSession extends Agent<RoomEnv, SessionState> {
       if (c.state?.agent === to) c.send(frame);
   }
 
+  /** "Typing…" in the chat: a raw frame to the others, never stored. */
+  @callable()
+  typing(on: boolean) {
+    const who = this.actor(this.currentConnection());
+    this.broadcast(
+      JSON.stringify({
+        t: "typing",
+        by: who.agent,
+        name: who.name,
+        on: on === true,
+      }),
+      [this.currentConnection().id]
+    );
+  }
+
   /** A chat line: kept in the op log (the scope's messaging topic is a later cut), fanned out as a frame. */
   @callable()
   chat(text: string) {

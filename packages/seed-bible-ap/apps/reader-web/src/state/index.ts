@@ -463,6 +463,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     bookmarkPicker: signal<{ chapterRef: string; edition?: string } | null>(
       null
     ),
+    /** The old reader's floating chat panel, above the reader bar. */
+    chatOpen: signal(false),
+    /** What the chat panel shows: the list of chats, or the session's chat. */
+    chatView: signal<"list" | "session">("list"),
     /** The live session's settings window, and the host's "end it or hand it over" question. */
     sessionSettings: signal(false),
     sessionClose: signal(false),

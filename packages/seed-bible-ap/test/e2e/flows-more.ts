@@ -373,6 +373,104 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "CH1",
+    section: "9. Reading together",
+    title: "The chat panel",
+    rows: ["Chat"],
+    checks:
+      "The host starts a session; the bar gains Chat, which opens the old reader's chat panel listing Session chat and Study companion. A guest joins: the host's chat says 'Flow guest joined'. The guest types @ and picks the host from the list, adds 'see John 3:16': the host sees 'Flow guest is typing...', then the line with their @name marked and John 3:16 as a link, which opens John 3 with verse 16 chosen. With the chat closed, '@everyone hello' puts @ on the host's Chat button; opening the chat clears it",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "start";
+        await c.open(CH);
+        await c.signInAsSample();
+        const { code, sid } = await startSession(c);
+        await c.page.keyboard.press("Escape");
+        const chatButton = c.page
+          .locator('.sb-reader-toolbar-desk button[aria-label="Chat"]')
+          .first();
+        await chatButton.click();
+        const panel = c.page.locator(".sb-floating-chat-panel");
+        step = "the chat list";
+        await c.waitText(panel, /session chat[\s\S]*study companion/i, 5000);
+        await panel
+          .locator(".sb-floating-chat-list-item", { hasText: /session chat/i })
+          .click();
+        await c.waitText(panel, /start a conversation/i, 5000);
+
+        step = "a guest joins";
+        const guest = await joinAsGuest(c, sid, code);
+        await c.waitText(panel, /flow guest joined/i, 20000);
+
+        step = "the guest mentions the host";
+        await guest
+          .locator(".sb-app-pane")
+          .getByRole("button", { name: /open chat/i })
+          .click();
+        const gpanel = guest.locator(".sb-floating-chat-panel");
+        const input = gpanel.locator(".sb-chat-view-input");
+        await input.click();
+        await input.pressSequentially("@Se", { delay: 60 });
+        await gpanel
+          .locator(".sb-chat-view-mention-picker-item", {
+            hasText: /seed reader/i,
+          })
+          .first()
+          .click();
+        await input.pressSequentially("see John 3:16", { delay: 60 });
+        await c.waitText(panel, /flow guest is typing/i, 10000);
+        await input.press("Enter");
+
+        step = "the host sees it";
+        const line = panel.locator(".sb-chat-view-message", {
+          hasText: /see John 3:16/,
+        });
+        await line.waitFor({ timeout: 15000 }).catch(async () => {
+          throw new Error(
+            `host: ${(await panel.innerText()).replace(/\s+/g, " ").slice(-200)} | guest: ${(await gpanel.innerText()).replace(/\s+/g, " ").slice(-200)}`
+          );
+        });
+        await line
+          .locator(".sb-chat-mention-self", { hasText: /@seed reader/i })
+          .waitFor({ timeout: 3000 });
+        await line.locator(".sb-verse-reference-link").click();
+        await c.page
+          .locator(
+            '.sb-bible-reader-active [data-verse-number="16"].sb-verse-selected, .sb-bible-reader-active .sb-verse-selected[data-verse-number="16"]'
+          )
+          .first()
+          .waitFor({ state: "attached", timeout: 10000 })
+          .catch(async () => {
+            if (!(await c.page.locator(".sb-verse-toolbar").count()))
+              throw new Error("the link did not choose John 3:16");
+          });
+
+        step = "unread @";
+        await panel.getByRole("button", { name: /^close$/i }).click();
+        await panel.waitFor({ state: "detached", timeout: 3000 });
+        await input.fill("@everyone hello");
+        await input.press("Enter");
+        await c.waitText(
+          c.page.locator(
+            ".sb-reader-toolbar-desk .sb-reader-toolbar-unread-indicator"
+          ),
+          /^@$/,
+          15000
+        );
+        await chatButton.click();
+        await c.page
+          .locator(
+            ".sb-reader-toolbar-desk .sb-reader-toolbar-unread-indicator"
+          )
+          .waitFor({ state: "detached", timeout: 5000 });
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "Chat listed Session chat and Study companion; the join, typing, the @mention, the John 3:16 link and the @ badge all worked";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",
@@ -1982,10 +2080,22 @@ export const MORE_FLOWS: Flow[] = [
         )
         .first()
         .waitFor({ timeout: 20000 });
-      const gp = guest.locator(".sb-app-pane");
-      await gp.locator("input, textarea").last().fill("hello from the flow");
-      await gp.getByRole("button", { name: /^send$/i }).click();
-      await c.waitText(c.pane(), /hello from the flow/, 20000);
+      await guest
+        .locator(".sb-app-pane")
+        .getByRole("button", { name: /open chat/i })
+        .click();
+      const gchat = guest.locator(".sb-floating-chat-panel");
+      await gchat.locator(".sb-chat-view-input").fill("hello from the flow");
+      await gchat.getByRole("button", { name: /send message/i }).click();
+      await c
+        .pane()
+        .getByRole("button", { name: /open chat/i })
+        .click();
+      await c.waitText(
+        c.page.locator(".sb-floating-chat-panel"),
+        /hello from the flow/,
+        20000
+      );
       return `record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code ${code})`;
     },
   },

@@ -18,6 +18,7 @@ import { AudioScrubber } from "./AudioScrubber";
 import { Avatar } from "../chrome/ConnectedChip";
 import { SeedBibleIcon } from "../chrome/icons";
 import type { ComponentChildren } from "preact";
+import { chatBadge } from "../sessions/ChatPanel";
 
 interface ToolbarAction {
   id: string;
@@ -25,7 +26,7 @@ interface ToolbarAction {
   label: string;
   onClick: () => void;
   active?: boolean;
-  badge?: number;
+  badge?: number | string;
 }
 
 function Item(props: {
@@ -35,7 +36,7 @@ function Item(props: {
   disabled?: boolean;
   active?: boolean;
   className?: string;
-  badge?: number;
+  badge?: number | string;
   /** Drawn instead of the icon (the signed-in reader's avatar). */
   render?: () => ComponentChildren;
   /** The word under the icon, off a phone (the old reader's labelled bar). */
@@ -103,6 +104,19 @@ export function toolbarActions(
         : {}),
       onClick: () => togglePane("session"),
     },
+    // The old reader's Chat: while in a live session (its chat, and the study companion), with what came unread.
+    ...(state.live.active.value
+      ? [
+          {
+            id: "chat",
+            icon: "chat_bubble_outline",
+            label: t("chat", { defaultValue: "Chat" }),
+            active: ui.chatOpen.value,
+            ...(chatBadge(state) ? { badge: chatBadge(state) } : {}),
+            onClick: () => (ui.chatOpen.value = !ui.chatOpen.value),
+          },
+        ]
+      : []),
     {
       id: "today",
       icon: "today",

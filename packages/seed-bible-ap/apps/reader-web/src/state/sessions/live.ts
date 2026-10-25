@@ -29,6 +29,16 @@ export interface VerseFlare {
 }
 
 const FLARE_MS = 1200;
+/** How long "typing…" shows without a fresh keystroke from that person. */
+const TYPING_MS = 6000;
+
+/** A line in the chat that nobody typed: someone joined. */
+export interface ChatEvent {
+  kind: "join";
+  key: string;
+  names: string[];
+  at: string;
+}
 
 export interface PresenceView {
   agent: string;
@@ -96,6 +106,14 @@ export function createLiveSession(deps: LiveDeps) {
   const clock = signal(Date.now());
   let ticker: ReturnType<typeof setInterval> | null = null;
   const flares = signal<VerseFlare[]>([]);
+  /** Who is typing in the chat now (by agent: name and until when). */
+  const typing = signal<Record<string, { name: string; until: number }>>({});
+  const chatEvents = signal<ChatEvent[]>([]);
+  /** Lines from others that came while the chat was not on screen. */
+  const unread = signal<ChatFrame[]>([]);
+  /** Whether the session's chat is on screen (the chat panel sets it); while it is, nothing is unread. */
+  const chatOnScreen = signal(false);
+  let knownPeople: Set<string> | null = null;
   const lastVerse = new Map<string, number | null>();
   const active = computed(() => !!sessionId.value && !state.value?.endedAt);
   /** The session's decorations for the chapter on screen, drawn as broadcast highlights. */
@@ -128,6 +146,10 @@ export function createLiveSession(deps: LiveDeps) {
     room?.close();
     chat.value = [];
     presence.value = {};
+    typing.value = {};
+    chatEvents.value = [];
+    unread.value = [];
+    knownPeople = null;
     room = open(id, token, {
       onOpen: () => {
         connected.value = true;
@@ -142,6 +164,7 @@ export function createLiveSession(deps: LiveDeps) {
       },
       onState: (s) => {
         state.value = s;
+        noteJoins(s);
         // The room's passage moved (by whoever may move it): this device goes there too, in the shared translation
         // or its own. Its own move set lastSeenPassage first, so it does not bounce back.
         if (s.passage) {
@@ -171,8 +194,31 @@ export function createLiveSession(deps: LiveDeps) {
         if (s.endedAt) leave();
       },
       onFrame: (f) => {
-        if (f.t === "chat") chat.value = [...chat.value, f];
-        else if (f.t === "rtc") {
+        if (f.t === "chat") {
+          chat.value = [...chat.value, f];
+          if (f.by !== me.value) {
+            const { [f.by]: _done, ...rest } = typing.value;
+            typing.value = rest;
+            if (!chatOnScreen.value) unread.value = [...unread.value, f];
+          }
+        } else if (f.t === "typing") {
+          if (f.by === me.value) return;
+          const { [f.by]: _was, ...rest } = typing.value;
+          typing.value = f.on
+            ? {
+                ...rest,
+                [f.by]: { name: f.name, until: Date.now() + TYPING_MS },
+              }
+            : rest;
+          if (f.on)
+            setTimeout(() => {
+              const cur = typing.value[f.by];
+              if (cur && cur.until <= Date.now()) {
+                const { [f.by]: _gone, ...left } = typing.value;
+                typing.value = left;
+              }
+            }, TYPING_MS + 50);
+        } else if (f.t === "rtc") {
           if (f.to === me.value) onRtc?.(f.from, f.payload);
         } else if (f.t === "voice") {
           /* the participant flag arrives with the state; the frame is a nudge */
@@ -194,6 +240,45 @@ export function createLiveSession(deps: LiveDeps) {
       },
     });
   }
+
+  /** "X joined" in the chat for each person who came after this device did. */
+  function noteJoins(s: SessionState) {
+    const here = new Set(
+      s.participants.filter((p) => p.connections > 0).map((p) => p.agent)
+    );
+    if (knownPeople) {
+      const came = s.participants.filter(
+        (p) =>
+          here.has(p.agent) &&
+          !knownPeople!.has(p.agent) &&
+          p.agent !== me.value
+      );
+      if (came.length)
+        chatEvents.value = [
+          ...chatEvents.value,
+          {
+            kind: "join",
+            key: `join:${s.seq}`,
+            names: came.map((p) => p.name),
+            at: new Date().toISOString(),
+          },
+        ];
+    }
+    knownPeople = here;
+  }
+
+  /** Whether a line names this person (@Name) or everyone (@everyone). */
+  function mentionsMe(text: string): boolean {
+    const name = (guest.value?.name ?? deps.identity()?.name ?? "").trim();
+    const lower = text.toLowerCase();
+    return (
+      /(^|\s)@everyone\b/.test(lower) ||
+      (!!name && lower.includes(`@${name.toLowerCase()}`))
+    );
+  }
+  const mentioned = computed(() =>
+    unread.value.some((f) => mentionsMe(f.text))
+  );
 
   /** A newly tapped verse flares, when the settings say whose taps do. */
   function flareFrom(agent: string, verse: number | null, chapter?: string) {
@@ -279,6 +364,10 @@ export function createLiveSession(deps: LiveDeps) {
   function leave() {
     if (ticker) clearInterval(ticker);
     ticker = null;
+    typing.value = {};
+    chatEvents.value = [];
+    unread.value = [];
+    knownPeople = null;
     flares.value = [];
     lastVerse.clear();
     room?.close();
@@ -316,6 +405,16 @@ export function createLiveSession(deps: LiveDeps) {
     isHostLike,
     settings,
     flares,
+    typing,
+    chatEvents,
+    unread,
+    mentioned,
+    mentionsMe,
+    chatOnScreen,
+    /** The chat is on screen: what came is read. */
+    markRead: () => (unread.value = []),
+    setTyping: (on: boolean) =>
+      room?.typing(on).catch(() => {}) ?? Promise.resolve(),
     active,
     decorations,
     shareLink,

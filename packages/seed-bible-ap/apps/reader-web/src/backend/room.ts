@@ -43,7 +43,18 @@ export interface RtcFrame {
   to: string;
   payload: unknown;
 }
-export type RoomFrame = ChatFrame | PresenceFrame | VoiceFrame | RtcFrame;
+export interface TypingFrame {
+  t: "typing";
+  by: string;
+  name: string;
+  on: boolean;
+}
+export type RoomFrame =
+  | ChatFrame
+  | PresenceFrame
+  | VoiceFrame
+  | RtcFrame
+  | TypingFrame;
 
 export interface RoomHandlers {
   onState: (s: SessionState) => void;
@@ -67,6 +78,7 @@ export interface Room {
   setSettings(patch: Partial<SessionSettings>): Promise<number>;
   setCoHost(agent: string, on: boolean): Promise<number>;
   handOver(agent: string): Promise<number>;
+  typing(on: boolean): Promise<void>;
   voice(on: boolean): Promise<void>;
   signal(to: string, payload: unknown): Promise<void>;
   end(): Promise<void>;
@@ -127,6 +139,7 @@ export function openRoom(
     setSettings: (patch) => call<number>("setSettings", [patch]),
     setCoHost: (agent, on) => call<number>("setCoHost", [agent, on]),
     handOver: (agent) => call<number>("handOver", [agent]),
+    typing: (on) => call<void>("typing", [on]),
     voice: (on) => call<void>("voice", [on]),
     signal: (to, payload) => call<void>("signal", [to, payload]),
     end: () => call<void>("end"),

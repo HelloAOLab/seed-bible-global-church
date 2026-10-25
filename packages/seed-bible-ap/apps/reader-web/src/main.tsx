@@ -30,6 +30,7 @@ import "./styles/discover.css";
 import "./styles/friends.css";
 import "./styles/huddle.css";
 import "./styles/floating-search.css";
+import "./styles/chat.css";
 import "./styles/discover-panel.css";
 import "./styles/mobile-settings.css";
 import "./styles/playlists.css";

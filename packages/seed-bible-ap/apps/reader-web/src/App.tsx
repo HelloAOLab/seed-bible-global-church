@@ -28,6 +28,7 @@ import { FloatingSearch } from "./components/reader/FloatingSearch";
 import { MobileSettingsSheet } from "./components/chrome/MobileSettingsSheet";
 import { SavePicker } from "./components/records/SavePicker";
 import { BookmarkPicker } from "./components/records/Bookmarks";
+import { ChatPanel } from "./components/sessions/ChatPanel";
 import {
   SessionCloseConfirm,
   SessionSettingsWindow,
@@ -210,6 +211,7 @@ export function App({ state }: { state: ReaderState }) {
       <MobileSettingsSheet state={state} />
       <SavePicker state={state} />
       <BookmarkPicker state={state} />
+      <ChatPanel state={state} />
       <SessionSettingsWindow state={state} />
       <SessionCloseConfirm state={state} />
       <BibleSelector state={state} />

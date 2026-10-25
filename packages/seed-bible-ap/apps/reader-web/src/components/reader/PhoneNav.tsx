@@ -11,13 +11,14 @@ import { AudioScrubber } from "./AudioScrubber";
 import { TasksIcon } from "./SidebarPanels";
 import { toolbarActions } from "./ReaderToolbar";
 import type { ComponentChildren } from "preact";
+import { chatBadge } from "../sessions/ChatPanel";
 
 function Tab(props: {
   label: string;
   icon?: string;
   node?: ComponentChildren;
   active: boolean;
-  badge?: number;
+  badge?: number | string;
   onClick: () => void;
 }) {
   return (
@@ -323,6 +324,12 @@ export function PhoneNav({ state }: { state: ReaderState }) {
             <span className="sb-reader-toolbar-mobile-tab-label">
               {t("more", { defaultValue: "More" })}
             </span>
+            {/* Chat lives in More on a phone, so More carries what came unread there. */}
+            {!moreOpen && chatBadge(state) && (
+              <span className="sb-reader-toolbar-unread-indicator">
+                {chatBadge(state)}
+              </span>
+            )}
           </button>
           {moreOpen && (
             <div className="sb-mobile-more-menu" role="menu">

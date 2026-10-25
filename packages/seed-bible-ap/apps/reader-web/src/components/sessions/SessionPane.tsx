@@ -1,8 +1,8 @@
-// THE SESSION PANE — start or join a live reading, who is here and where, the share link, roles (host), chat,
-// and the end button. Participants and the room's decorations show in the reader; this is the roster and the chat.
+// THE SESSION PANE — start or join a live reading, who is here and where, the share link, roles (host), the way to
+// the chat (the floating chat panel, components/sessions/ChatPanel.tsx), settings, and the end button.
 import { SessionQRCode } from "./SessionQRCode";
 import { HuddleCard } from "./HuddleCall";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { requestEndSession } from "./SessionSettings";
@@ -11,20 +11,14 @@ export function SessionPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const live = state.live;
   const signedIn = !!state.session.value;
-  const [text, setText] = useState("");
   const [joinId, setJoinId] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [guestName, setGuestName] = useState("");
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
-  const log = useRef<HTMLDivElement>(null);
   const s = live.state.value;
   // The session's own voice (the peer mesh) is for guests, and for anyone where the estate's call is not offered.
   const mesh = !signedIn || !!live.guest.value || !state.huddle.available.value;
-
-  useEffect(() => {
-    log.current?.scrollTo({ top: log.current.scrollHeight });
-  }, [live.chat.value.length]);
 
   const copy = async () => {
     const link = live.shareLink.value;
@@ -409,49 +403,22 @@ export function SessionPane({ state }: { state: ReaderState }) {
             })}
           </div>
 
-          <div className="sb-content-section">
-            <div className="sb-content-section-head">
-              <h3 className="sb-content-section-title">
-                {t("session-chat", { defaultValue: "Chat" })}
-              </h3>
-            </div>
-            <div className="sb-session-chat" ref={log}>
-              {live.chat.value.map((m) => (
-                <div
-                  key={m.seq}
-                  className={`sb-session-chat-line${m.by === live.me.value ? " sb-session-chat-mine" : ""}`}
-                >
-                  <span className="sb-session-chat-name">{m.name}</span>{" "}
-                  <span className="sb-session-chat-text">{m.text}</span>
-                </div>
-              ))}
-            </div>
-            <form
-              className="sb-session-say"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const v = text.trim();
-                if (!v) return;
-                void live.say(v);
-                setText("");
+          <div className="sb-note-card-actions">
+            <button
+              className="sb-note-button"
+              onClick={() => {
+                state.ui.chatView.value = "session";
+                state.ui.chatOpen.value = true;
               }}
             >
-              <input
-                className="sb-note-editor"
-                value={text}
-                placeholder={t("session-say", {
-                  defaultValue: "Say something…",
-                })}
-                onInput={(e) => setText((e.target as HTMLInputElement).value)}
-              />
-              <button
-                type="submit"
-                className="sb-note-button sb-note-button-primary"
-                disabled={!text.trim()}
-              >
-                {t("send", { defaultValue: "Send" })}
-              </button>
-            </form>
+              <span className="material-symbols-outlined" aria-hidden="true">
+                chat_bubble_outline
+              </span>{" "}
+              {t("open-chat", { defaultValue: "Open chat" })}
+              {live.unread.value.length > 0
+                ? ` (${live.unread.value.length})`
+                : ""}
+            </button>
           </div>
         </>
       )}
