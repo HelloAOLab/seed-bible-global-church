@@ -324,6 +324,29 @@ export function PictureField({
           }}
         />
       </label>
+      {/* Take a photo where a file input can open the camera (phones); a desktop would only show a file dialog. */}
+      {typeof HTMLInputElement !== "undefined" &&
+        "capture" in HTMLInputElement.prototype &&
+        !disabled && (
+          <label className="sb-note-button sb-picture-camera">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              photo_camera
+            </span>{" "}
+            {t("take-photo", { defaultValue: "Take a photo" })}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(e) => {
+                const input = e.target as HTMLInputElement;
+                const f = input.files?.[0];
+                input.value = "";
+                if (f && f.type.startsWith("image/")) setFile(f);
+              }}
+            />
+          </label>
+        )}
       <button
         type="button"
         className="sb-note-button sb-picture-earlier"

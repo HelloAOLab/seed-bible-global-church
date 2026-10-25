@@ -11,6 +11,7 @@ import {
   connectViaHome,
 } from "../../session";
 import { NeedsHomeHint, ProfileCard } from "./AccountPane";
+import { planSummary } from "../../state/library/planSummary";
 
 function Row(props: {
   icon: string;
@@ -88,6 +89,187 @@ const initialsOf = (name: string) =>
     .slice(0, 2)
     .map((w) => Array.from(w)[0] ?? "")
     .join("");
+
+/** The plan furthest along that is under way: its name, how far, the next day, the streak (the old Profile's card). */
+function ReadingPlansCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const now = Date.now();
+  let best: {
+    title: string;
+    fraction: number;
+    day: number;
+    total: number;
+    streak: number;
+  } | null = null;
+  for (const v of state.plans.views.value) {
+    if (!v.progress) continue;
+    const s = planSummary(v.plan, v.progress, now);
+    if (!s.days.length || !s.next) continue;
+    const c = {
+      title: v.plan.label,
+      fraction: s.doneDays / s.days.length,
+      day: s.next.index + 1,
+      total: s.days.length,
+      streak: s.streak,
+    };
+    if (!best || c.fraction > best.fraction) best = c;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-profile-plans"
+      onClick={() => {
+        state.ui.libraryTab.value = "plans";
+        state.ui.pane.value = "library";
+      }}
+    >
+      <span className="sb-profile-plans-head">
+        <span className="sb-profile-tile" aria-hidden="true">
+          <span className="material-symbols-outlined">menu_book</span>
+        </span>
+        <span className="sb-profile-plans-title">
+          {t("my-reading-plans", { defaultValue: "My reading plans" })}
+        </span>
+        <span className="sb-profile-plans-link">
+          {t("all-plans", { defaultValue: "All plans" })}
+          <span className="material-symbols-outlined">arrow_forward</span>
+        </span>
+      </span>
+      {best ? (
+        <>
+          <span
+            className="sb-profile-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={best.total}
+            aria-valuenow={best.day}
+          >
+            <span
+              className="sb-profile-progress-fill"
+              style={{ width: `${Math.round(best.fraction * 100)}%` }}
+            />
+          </span>
+          <span className="sb-profile-plans-foot">
+            <span className="sb-profile-plans-name">{best.title}</span>
+            <span className="sb-profile-plans-stats">
+              {t("plan-day-of", {
+                day: best.day,
+                total: best.total,
+                defaultValue: "Day {{day}} of {{total}}",
+              })}
+              {best.streak > 0 && (
+                <>
+                  {" · "}
+                  <span className="material-symbols-outlined">
+                    local_fire_department
+                  </span>
+                  {best.streak}
+                </>
+              )}
+            </span>
+          </span>
+        </>
+      ) : (
+        <span className="sb-profile-plans-foot">
+          <span className="sb-profile-plans-name">
+            {t("no-active-reading-plan", {
+              defaultValue: "You haven't started a plan yet.",
+            })}
+          </span>
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** The latest playlist played: Continue (or Replay) it, how far it got, and View all (the old Profile's card). */
+function PlaylistHistoryCard({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const latest = [...state.playlists.history.value].sort(
+    (a, b) => b.startedAt - a.startedAt
+  )[0];
+  const complete = !!latest && latest.currentStep + 1 >= latest.totalSteps;
+  const percent = latest
+    ? Math.round(
+        ((latest.currentStep + 1) / Math.max(1, latest.totalSteps)) * 100
+      )
+    : 0;
+  const exists = !!latest && !!state.playlists.byId(latest.playlistId);
+  return (
+    <div className="sb-profile-playlist-history">
+      <span className="sb-profile-plans-head">
+        <span className="sb-profile-tile" aria-hidden="true">
+          <span className="material-symbols-outlined">playlist_play</span>
+        </span>
+        <span className="sb-profile-plans-title">
+          {t("my-playlist-history", { defaultValue: "My playlist history" })}
+        </span>
+        <button
+          type="button"
+          className="sb-profile-plans-link"
+          onClick={() => {
+            state.ui.libraryTab.value = "playlists";
+            state.ui.pane.value = "library";
+          }}
+        >
+          {t("view-all", { defaultValue: "View all" })}
+          <span className="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </span>
+      {latest ? (
+        <button
+          type="button"
+          className="sb-profile-playlist-continue"
+          disabled={!exists}
+          onClick={() => {
+            state.playlists.play(
+              latest.playlistId,
+              complete ? 0 : latest.currentStep
+            );
+            state.ui.pane.value = "none";
+          }}
+        >
+          <span
+            className="sb-profile-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label={t("playlist-history-percent", {
+              percent,
+              defaultValue: "{{percent}}% complete",
+            })}
+          >
+            <span
+              className="sb-profile-progress-fill"
+              style={{ width: `${percent}%` }}
+            />
+          </span>
+          <span className="sb-profile-plans-foot sb-profile-playlist-continue-foot">
+            <span className="sb-profile-playlist-continue-label">
+              {complete
+                ? t("replay-latest-playlist", {
+                    defaultValue: "Replay latest playlist",
+                  })
+                : t("continue-latest-playlist", {
+                    defaultValue: "Continue latest playlist",
+                  })}
+            </span>
+            <span className="sb-profile-plans-name">{latest.title}</span>
+          </span>
+        </button>
+      ) : (
+        <span className="sb-profile-plans-foot">
+          <span className="sb-profile-plans-name">
+            {t("playlist-history-empty", {
+              defaultValue: "Playlists you listen to will show up here.",
+            })}
+          </span>
+        </span>
+      )}
+    </div>
+  );
+}
 
 export function ProfilePane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -169,11 +351,6 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           defaultValue: "Add friends and see what they're reading",
         });
   const pending = state.outbox.pending.value;
-  // The old Profile's Continue: the latest playlist left part-way that is still in the Library.
-  const latest = state.playlists.history.value.find(
-    (h) =>
-      h.currentStep + 1 < h.totalSteps && !!state.playlists.byId(h.playlistId)
-  );
 
   return (
     <section className="sb-pane sb-profile-screen">
@@ -240,28 +417,8 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           </p>
           <NeedsHomeHint error={state.outbox.lastError.value} />
         </div>
-        {latest && (
-          <Row
-            icon="play_circle"
-            title={t("continue-playlist", {
-              title: latest.title,
-              defaultValue: "Continue {{title}}",
-            })}
-            subtitle={t("playlist-history-step", {
-              step: latest.currentStep + 1,
-              total: latest.totalSteps,
-              percent: Math.round(
-                ((latest.currentStep + 1) / Math.max(1, latest.totalSteps)) *
-                  100
-              ),
-              defaultValue: "Step {{step}} of {{total}} ({{percent}}%)",
-            })}
-            onClick={() => {
-              state.playlists.play(latest.playlistId, latest.currentStep);
-              go("none");
-            }}
-          />
-        )}
+        <ReadingPlansCard state={state} />
+        <PlaylistHistoryCard state={state} />
         <Row
           icon="edit"
           title={t("your-content", { defaultValue: "Your content" })}

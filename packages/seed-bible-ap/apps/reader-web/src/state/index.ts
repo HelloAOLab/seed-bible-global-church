@@ -518,6 +518,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** A reading plan being edited and the day being worked on: the verse toolbar's Add to plan puts the chosen
      *  verses there (through `planAdd`, which the editor takes and clears). */
     planEditing: signal<{ planId: string; day: number } | null>(null),
+    /** Which of the Library's tabs is showing (the Profile's cards open the one they name). */
+    libraryTab: signal<"playlists" | "plans" | "customizations">("playlists"),
     /** "Sync device content?" at sign-in, while it waits for an answer. */
     adoptPrompt: signal<{
       kinds: ("highlights" | "notes")[];

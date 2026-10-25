@@ -49,3 +49,8 @@
 .sb-login-legal .sb-login-link:hover {
   text-decoration: underline;
 }
+
+/* "Your ID is:" — the whole address, wrapping rather than widening the pane. */
+.sb-account-id-value {
+  word-break: break-all;
+}

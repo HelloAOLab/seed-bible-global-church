@@ -601,6 +601,25 @@ export function AccountCard({ state }: { state: ReaderState }) {
               </span>
             </div>
           </div>
+          {/* The old reader's "Your ID is:" with Copy: the whole address, for a friend to add you by. */}
+          <p className="sb-small sb-account-id">
+            {t("your-id-is", { defaultValue: "Your ID is:" })}{" "}
+            <code className="sb-account-id-value">
+              {s.sub.replace(/^eip155:\d+:/, "")}
+            </code>{" "}
+            <button
+              type="button"
+              className="sb-note-button"
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(s.sub.replace(/^eip155:\d+:/, ""))
+                  .then(() => (state.ui.toast.value = { key: "copied" }))
+                  .catch(() => undefined)
+              }
+            >
+              {t("copy", { defaultValue: "Copy" })}
+            </button>
+          </p>
           <p className="sb-small">
             {s.wire
               ? t("account-wire-held", {

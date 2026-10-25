@@ -434,9 +434,8 @@ function PlayHistory({ state }: { state: ReaderState }) {
 export function LibraryPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { playlists, plans, reading } = state;
-  const [tab, setTab] = useState<"playlists" | "plans" | "customizations">(
-    "playlists"
-  );
+  const tab = state.ui.libraryTab.value;
+  const setTab = (next: typeof tab) => (state.ui.libraryTab.value = next);
   const [variantName, setVariantName] = useState("");
   const [variantScheme, setVariantScheme] = useState<"light" | "dark">("light");
   const [variableDrafts, setVariableDrafts] = useState<Record<string, string>>(

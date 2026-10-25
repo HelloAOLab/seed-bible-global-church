@@ -6963,13 +6963,14 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "CP1",
     section: "10. Playlists and reading plans",
-    title: "Continue a playlist from the Profile",
+    title: "The Profile's cards; your ID",
     rows: ["Playlist history"],
     checks:
-      "Signed in, a two-item playlist stopped on its first item: the Profile offers 'Continue <playlist>' with 'Step 1 of 2'; it plays from there",
+      "Signed in, the Profile shows the old reader's cards — My reading plans with All plans, and My playlist history with 'Continue latest playlist' for a two-item playlist stopped on its first item, which plays it from there; Account settings says 'Your ID is:' with the whole address and Copy",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 1280, height: 900 },
+        permissions: ["clipboard-read", "clipboard-write"],
       });
       const page = await ctx.newPage();
       c.watch(page);
@@ -6999,18 +7000,33 @@ export const MORE_FLOWS: Flow[] = [
           .click();
         await page.locator(".sb-sidebar-profile-button").click();
         const prof = page.locator(".sb-profile-screen");
-        const row = prof.locator(".sb-profile-row", {
-          hasText: `Continue ${title}`,
-        });
-        await c.waitText(row, /Step 1 of 2/, 10000);
-        await row.click();
+        // The old Profile's cards: My reading plans (with All plans) and My playlist history (Continue latest).
+        await c.waitText(
+          prof.locator(".sb-profile-plans"),
+          /My reading plans[\s\S]*All plans/i,
+          10000
+        );
+        const cont = prof.locator(".sb-profile-playlist-continue");
+        await c.waitText(
+          cont,
+          new RegExp(`Continue latest playlist[\\s\\S]*${title}`, "i"),
+          10000
+        );
+        await cont.click();
         await c.waitText(page.locator(".sb-playlist-note"), /1 of 2/, 10000);
         await page
           .locator(".sb-reader-toolbar-desk")
           .getByRole("button", { name: "Stop" })
           .click()
           .catch(() => undefined);
-        return `the Profile offered 'Continue ${title}' at step 1 of 2 and it played from there`;
+        // Account settings: "Your ID is:" with Copy.
+        await page.locator(".sb-sidebar-profile-button").click();
+        await prof.getByText("Account settings").click();
+        const id = page.locator(".sb-account-id");
+        await c.waitText(id, /Your ID is:\s*0x[0-9a-f]{40}/i, 10000);
+        await id.getByRole("button", { name: "Copy" }).click();
+        await c.waitText(page.locator(".sb-toast"), /copied/i, 5000);
+        return `the Profile's cards: My reading plans, and Continue latest playlist '${title}' which played from step 1; Your ID is: with Copy`;
       } finally {
         try {
           const lib = await c.openLibrary("Playlists", page);

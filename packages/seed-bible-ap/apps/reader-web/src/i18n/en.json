@@ -979,12 +979,21 @@
   "reading-plan-draft": "Draft",
   "playlist-invalid-url": "Enter a valid URL",
   "playlist-reference-not-found": "Couldn't find that reference",
-  "continue-playlist": "Continue {{title}}",
   "playlist-history-remove": "Remove from history",
   "reading-plan-mark-passage-complete": "Mark {{passage}} as read",
   "plan-add-link-to": "Add a link to {{day}}",
   "plan-add-text-to": "Add some text to {{day}}",
   "plan-reflect-for": "Reflect for {{day}}",
   "plan-reflect-placeholder": "Reflect (optional): a question or thought for the day",
-  "plan-text-placeholder": "A few words to read"
+  "plan-text-placeholder": "A few words to read",
+  "all-plans": "All plans",
+  "continue-latest-playlist": "Continue latest playlist",
+  "my-reading-plans": "My reading plans",
+  "no-active-reading-plan": "You haven't started a plan yet.",
+  "playlist-history-empty": "Playlists you listen to will show up here.",
+  "playlist-history-percent": "{{percent}}% complete",
+  "replay-latest-playlist": "Replay latest playlist",
+  "take-photo": "Take a photo",
+  "view-all": "View all",
+  "your-id-is": "Your ID is:"
 }
