@@ -1,15 +1,33 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 22:55 UTC",
+  "when": "2026-10-25 23:26 UTC",
   "results": [
     {
-      "id": "IN3",
-      "section": "8. Today, Discover and publishing",
-      "title": "Invited: sign in and add your friend in one window",
-      "checks": "Alice's emailed invitation, opened signed out: agree, Continue — ONE Home window signs in (Demo people → Seed Reader → Allow) and, in that same window, asks 'Add Alice Okoro as a friend?'; Yes, and it closes by itself; the reader says Alice was added. (The invitation's lookup is answered by the test; Seed Reader's request to Alice is taken back at the end.)",
+      "id": "EX1",
+      "section": "12. Extensions",
+      "title": "The Extensions page",
+      "checks": "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
       "mark": "✅",
-      "note": "one Home window: signed in, then 'Add Alice Okoro as a friend?' → Yes, closed by itself after 122s; the reader: 'Adding Alice Okoro…'",
-      "ms": 139037
+      "note": "tabs with counts; 40 → 36 cross-references at 1 per verse, reset; companion off and on; the set downloaded",
+      "ms": 5207
+    },
+    {
+      "id": "X3",
+      "section": "12. Extensions",
+      "title": "Cross-references",
+      "checks": "Select John 3:16 → Discover → Cross-references lists related passages; tapping one opens it",
+      "mark": "✅",
+      "note": "\"link Romans 5:8 from verse 16\" → /read/BSB/ROM/5",
+      "ms": 3134
+    },
+    {
+      "id": "G18",
+      "section": "12. Extensions",
+      "title": "People, places and events",
+      "checks": "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
+      "mark": "✅",
+      "note": "Abraham's card; Terah's card and Back; Genesis 11:29 opened at /read/BSB/GEN/11",
+      "ms": 2177
     }
   ]
 }

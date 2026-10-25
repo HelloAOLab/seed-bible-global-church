@@ -16,6 +16,8 @@ import {
   placesInChapter,
 } from "../../../apps/reader-web/src/extensions/locations";
 import { parseSse } from "../../../apps/reader-web/src/extensions/companion";
+import { crossReferenceItems } from "../../../apps/reader-a2a/src/routes/passage";
+import { parseLocus } from "../../../lib/locus";
 import type { ReaderState } from "../../../apps/reader-web/src/state";
 import type { TranslationBookChapter } from "../../../apps/reader-web/src/backend/bible";
 
@@ -152,10 +154,19 @@ describe("the ported extensions' pure parts", () => {
         ],
       },
     };
-    const fetchImpl = (async () => (
-      fetches++,
-      new Response(JSON.stringify(data), { status: 200 })
-    )) as typeof fetch;
+    // reader-a2a's passage answer, made from that dataset by the server's own mapping.
+    const chapter = parseLocus("JHN.3")!;
+    const answer = {
+      ok: true,
+      locus: chapter,
+      items: crossReferenceItems(chapter, 3, data),
+      sources: { scripture: { ok: true, count: 3 } },
+    };
+    const fetchImpl = (async (url: RequestInfo | URL) => {
+      fetches++;
+      expect(String(url)).toMatch(/\/api\/passage\/JHN\.3$/);
+      return new Response(JSON.stringify(answer), { status: 200 });
+    }) as typeof fetch;
     const cache = memoryStores().chapters;
     const refs = (await loadChapterReferences("JHN", 3, cache, fetchImpl))!;
     await loadChapterReferences("JHN", 3, cache, fetchImpl);
@@ -167,7 +178,7 @@ describe("the ported extensions' pure parts", () => {
       "Romans 5:8",
     ]);
     expect(itemsFor(refs, [], name).map((i) => i.fromVerse)).toEqual([
-      16, 16, 3,
+      3, 16, 16,
     ]);
   });
 

@@ -1,12 +1,10 @@
-// CROSS-REFERENCES — ported from packages/references-extension: the open cross-reference dataset the Bible API
-// hosts (`/api/d/open-cross-ref/<BOOK>/<ch>.json`), asked of the scripture agent through this reader's agent, read per chapter and kept on the device, offered in Discover
-// for the verses on screen (the selected ones first). Browser-local: the Bible API only.
+// CROSS-REFERENCES — ported from packages/references-extension: the open cross-reference dataset, now read from the
+// reader agent's one passage answer (`/api/passage/<chapter>`, the scripture agent's open-cross-ref anchored by canonical
+// locus) per chapter and kept on the device, offered in Discover for the verses on screen (the selected ones first).
 import type { DiscoverItem, ExtensionRegistration } from "../host";
-import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 import type { ReaderState } from "../../state";
+import { crossReferencesOf, loadPassage } from "../../state/passage";
 import "./references.css";
-
-export const REFERENCES_BASE_URL = `${BIBLE_API_ENDPOINT}api/d/open-cross-ref`;
 
 export interface CrossReference {
   book: string;
@@ -30,16 +28,10 @@ export async function loadChapterReferences(
   },
   fetchImpl: typeof fetch = fetch
 ): Promise<ChapterReferences | null> {
-  const key = `xref2:${bookId}/${chapter}`;
-  const hit = (await cache.get(key)) as ChapterReferences | undefined;
-  if (hit) return hit;
-  const res = await fetchImpl(
-    `${REFERENCES_BASE_URL}/${bookId}/${chapter}.json`
-  );
-  if (!res.ok) return null;
-  const data = normalizeReferences(await res.json(), bookId, chapter);
-  await cache.set(key, data);
-  return data;
+  const answer = await loadPassage(`${bookId}.${chapter}`, cache, fetchImpl);
+  return answer
+    ? normalizeReferences(crossReferencesOf(answer), bookId, chapter)
+    : null;
 }
 
 /**

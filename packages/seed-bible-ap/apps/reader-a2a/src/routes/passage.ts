@@ -31,7 +31,7 @@ export interface PassageItem {
   /** cross-reference · person · place · event · writing · witness · highlight · note · offering */
   kind: string;
   /** Where it is anchored. */
-  locus: Pick<Locus, "id" | "alias" | "type" | "span">;
+  locus: Pick<Locus, "id" | "alias" | "type" | "span"> & { ref: string };
   title: string;
   detail?: string;
   link?: string;
@@ -59,6 +59,7 @@ const anchor = (l: Locus): PassageItem["locus"] => ({
   alias: l.alias,
   type: l.type,
   span: l.span,
+  ref: seedRef(l),
 });
 
 /** The locus a set of verses in one chapter covers: one verse, or first to last. */
@@ -460,7 +461,7 @@ export function passageRoutes<E extends BibleEnv & PlatformEnv>(
     return c.json(
       {
         ok: true,
-        locus: { ...anchor(asked), ref: seedRef(asked) },
+        locus: anchor(asked),
         count: items.length,
         items,
         sources,

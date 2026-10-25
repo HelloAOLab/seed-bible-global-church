@@ -7659,6 +7659,15 @@ export const MORE_FLOWS: Flow[] = [
         const opened = c.context.waitForEvent("page", { timeout: 15000 });
         await start();
         const home = await opened;
+        // What the Home's window said, for a run that stalls there (the reader's own console does not show it).
+        const homeLog: string[] = [];
+        home.on("console", (m) => {
+          if (m.type() === "error" || m.type() === "warning")
+            homeLog.push(`${m.type()}: ${m.text().slice(0, 200)}`);
+        });
+        home.on("pageerror", (e) =>
+          homeLog.push(`pageerror: ${e.message.slice(0, 200)}`)
+        );
         await c.page.waitForTimeout(800);
         await shot(c.page, `${label}-asked`);
         const ask = home.locator('[data-testid="ask-authority"]');
@@ -7689,7 +7698,19 @@ export const MORE_FLOWS: Flow[] = [
             if (!home.isClosed()) await shot(home, `${label}-waiting-${i}`);
           }
         })();
-        await closed;
+        await closed.catch(async (e: unknown) => {
+          const words = (
+            await home
+              .locator("body")
+              .innerText()
+              .catch(() => "")
+          )
+            .replace(/\s+/g, " ")
+            .slice(0, 300);
+          throw new Error(
+            `the window did not close (${e instanceof Error ? e.message.slice(0, 60) : e}); it shows: ${words}; it said: ${homeLog.slice(-6).join(" | ") || "nothing"}`
+          );
+        });
         return { question, secs: Math.round((Date.now() - t0) / 1000) };
       };
       // A request left by an earlier run is taken back first, the same way, so the add starts clean.

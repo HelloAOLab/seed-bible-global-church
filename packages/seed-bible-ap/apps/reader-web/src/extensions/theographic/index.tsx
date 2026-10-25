@@ -6,9 +6,9 @@ import { useEffect, useState } from "preact/hooks";
 import type { ExtensionRegistration } from "../host";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { loadPassage, theographicOf } from "../../state/passage";
 import {
   chapterEntities,
-  chapterPath,
   entityOf,
   itemsForChapter,
   readTheographic,
@@ -180,12 +180,12 @@ const theographic: ExtensionRegistration = {
       id: "theographic",
       label: "People, places and events",
       discover: async (d) => {
-        const [book, ch] = d.chapterRef.split(".");
-        const raw = await readTheographic(
-          chapterPath(book!, Number(ch)),
+        const answer = await loadPassage(
+          d.chapterRef,
           state.stores.chapters
         ).catch(() => null);
-        if (!raw) return [];
+        if (!answer) return [];
+        const raw = theographicOf(answer);
         return itemsForChapter(chapterEntities(raw), d.selectedVerses).map(
           (it) => ({
             ...it,
