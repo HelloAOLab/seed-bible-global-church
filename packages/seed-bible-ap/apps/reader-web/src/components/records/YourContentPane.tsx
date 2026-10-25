@@ -22,6 +22,7 @@ import { colorIdOf } from "../../state/records/highlights";
 import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import type { PlanView } from "../../state/library/plans";
 import { sharedPathOf, sharedRefOf } from "../../state/social/sharedPage";
+import { openSavePicker } from "./SavePicker";
 
 /** How many of each section "All" shows before See all. */
 const PREVIEW_LIMIT = 3;
@@ -318,7 +319,6 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   const [words, setWords] = useState<Map<string, string>>(new Map());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
-  const [draftFolder, setDraftFolder] = useState("");
   const [viewing, setViewing] = useState<GalleryImage | null>(null);
   const [deleting, setDeleting] = useState<GalleryImage | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -406,7 +406,7 @@ export function YourContentPane({ state }: { state: ReaderState }) {
       );
     });
   const saveList = saves.all.value.filter((s) =>
-    matches(s.label, s.folder, ...refFields(s.chapter, s.start, s.end))
+    matches(s.label, ...s.folders, ...refFields(s.chapter, s.start, s.end))
   );
   const bookmarkList = bookmarks.all.value.filter((b) =>
     matches(b.name, ...refFields(b.chapter, null, null))
@@ -720,112 +720,61 @@ export function YourContentPane({ state }: { state: ReaderState }) {
               onSeeAll={seeAll("saves", saveList.length)}
             />
             <div className="sb-content-saves">
-              {limit(saveList).map((s) =>
-                editingId === s.id ? (
-                  <form
-                    key={s.id}
-                    className="sb-item-editor"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      void saves.update(s.id, {
-                        label: draftName,
-                        folder: draftFolder,
-                      });
-                      setEditingId(null);
-                    }}
+              {limit(saveList).map((s) => (
+                <div key={s.id} className="sb-content-save-row">
+                  <button
+                    type="button"
+                    className="sb-content-save"
+                    onClick={() => open(s.chapter, s.start, s.end, s.edition)}
                   >
-                    <input
-                      className="sb-note-editor"
-                      placeholder={t("save-label", {
-                        defaultValue: "Label (optional)",
-                      })}
-                      value={draftName}
-                      onInput={(e) =>
-                        setDraftName((e.target as HTMLInputElement).value)
-                      }
-                    />
-                    <input
-                      className="sb-note-editor"
-                      list="sb-save-folders"
-                      placeholder={t("save-folder", {
-                        defaultValue: "Folder (leave empty for none)",
-                      })}
-                      value={draftFolder}
-                      onInput={(e) =>
-                        setDraftFolder((e.target as HTMLInputElement).value)
-                      }
-                    />
-                    <datalist id="sb-save-folders">
-                      {saves.folders.value.map((f) => (
-                        <option key={f} value={f} />
-                      ))}
-                    </datalist>
-                    <div className="sb-note-card-actions">
-                      <button
-                        type="submit"
-                        className="sb-note-button sb-note-button-primary"
-                      >
-                        {t("save", { defaultValue: "Save" })}
-                      </button>
-                      <button
-                        type="button"
-                        className="sb-note-button"
-                        onClick={() => setEditingId(null)}
-                      >
-                        {t("cancel", { defaultValue: "Cancel" })}
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div key={s.id} className="sb-content-save-row">
-                    <button
-                      type="button"
-                      className="sb-content-save"
-                      onClick={() => open(s.chapter, s.start, s.end, s.edition)}
+                    <span className="sb-content-save-name">
+                      {s.label ?? refLabel(state, s.chapter, s.start, s.end)}
+                    </span>
+                    <span
+                      className={`sb-content-save-kind${s.start !== null ? " sb-content-save-kind-verse" : ""}`}
                     >
-                      <span className="sb-content-save-name">
-                        {s.label ?? refLabel(state, s.chapter, s.start, s.end)}
-                      </span>
-                      <span
-                        className={`sb-content-save-kind${s.start !== null ? " sb-content-save-kind-verse" : ""}`}
-                      >
-                        {s.start !== null
-                          ? t("verse", { defaultValue: "Verse" })
-                          : t("chapter", { defaultValue: "Chapter" })}
-                      </span>
-                      <span className="sb-content-save-date">
-                        {s.folder
-                          ? `${s.folder} · ${dateOf(s.createdAt, language, true)}`
-                          : dateOf(s.createdAt, language, true)}
-                      </span>
-                    </button>
-                    <MenuButton
-                      label={t("save-options", {
-                        defaultValue: "Save options",
-                      })}
-                      buttonClassName="sb-content-save-menu"
-                      menuClassName="sb-tab-menu"
+                      {s.start !== null
+                        ? t("verse", { defaultValue: "Verse" })
+                        : t("chapter", { defaultValue: "Chapter" })}
+                    </span>
+                    <span className="sb-content-save-date">
+                      {s.folders.length
+                        ? `${s.folders.join(", ")} · ${dateOf(s.createdAt, language, true)}`
+                        : dateOf(s.createdAt, language, true)}
+                    </span>
+                  </button>
+                  <MenuButton
+                    label={t("save-options", {
+                      defaultValue: "Save options",
+                    })}
+                    buttonClassName="sb-content-save-menu"
+                    menuClassName="sb-tab-menu"
+                  >
+                    <MenuItem
+                      icon="edit"
+                      onSelect={() =>
+                        openSavePicker(
+                          state,
+                          s.chapter,
+                          s.start !== null
+                            ? { start: s.start, end: s.end ?? s.start }
+                            : null,
+                          s.edition,
+                          s.id
+                        )
+                      }
                     >
-                      <MenuItem
-                        icon="edit"
-                        onSelect={() => {
-                          setEditingId(s.id);
-                          setDraftName(s.label ?? "");
-                          setDraftFolder(s.folder ?? "");
-                        }}
-                      >
-                        {t("edit-save", { defaultValue: "Edit save" })}
-                      </MenuItem>
-                      <MenuItem
-                        icon="delete"
-                        onSelect={() => void saves.remove(s.id)}
-                      >
-                        {t("remove-save", { defaultValue: "Remove save" })}
-                      </MenuItem>
-                    </MenuButton>
-                  </div>
-                )
-              )}
+                      {t("edit-save", { defaultValue: "Edit save" })}
+                    </MenuItem>
+                    <MenuItem
+                      icon="delete"
+                      onSelect={() => void saves.remove(s.id)}
+                    >
+                      {t("remove-save", { defaultValue: "Remove save" })}
+                    </MenuItem>
+                  </MenuButton>
+                </div>
+              ))}
             </div>
           </section>
         )}

@@ -85,7 +85,7 @@ describe("verse search", () => {
     const saves = createSaves(buckets, () => READER);
     const a = await saves.add("JHN.3.16", "BSB", "Gospel", "Memory verses");
     const b = await saves.add("ROM.8", "BSB");
-    expect(saves.folders.value).toEqual(["Memory verses"]);
+    expect(saves.folders.value).toEqual(["My Saves", "Memory verses"]);
     await saves.update(b, { folder: "Memory verses", label: "Romans 8" });
     expect(saves.all.value.map((s) => `${s.label}@${s.folder}`).sort()).toEqual(
       ["Gospel@Memory verses", "Romans 8@Memory verses"]
@@ -102,6 +102,52 @@ describe("verse search", () => {
       supersedes?: string;
     };
     expect(raw.supersedes).toBeTruthy();
+  });
+
+  it("a save sits in several folders; renaming moves its saves, deleting returns them to My Saves", async () => {
+    const backend = createDevBackend(READER);
+    const stores = memoryStores();
+    const outbox = createOutbox({
+      backend,
+      stores,
+      isOnline: () => true,
+      settleMs: 1,
+    });
+    const buckets = createBucketStore({
+      backend,
+      stores,
+      outbox,
+      isOnline: () => true,
+    });
+    const saves = createSaves(buckets, () => READER, stores.prefs);
+    const a = await saves.add("JHN.3", "BSB", undefined, [
+      "My Saves",
+      "Gospels",
+    ]);
+    const b = await saves.add("PSA.23", "BSB", undefined, ["My Saves"]);
+    const sv = (id: string) => saves.all.value.find((s) => s.id === id)!;
+    expect(sv(a).folders).toEqual(["My Saves", "Gospels"]);
+    // My Saves alone is the default and is stored as no folder.
+    expect(sv(b).folders).toEqual([]);
+    expect(saves.inFolder(sv(b), "My Saves")).toBe(true);
+    expect(saves.folders.value).toEqual(["My Saves", "Gospels"]);
+
+    await saves.renameFolder("Gospels", "John");
+    expect(sv(a).folders).toEqual(["My Saves", "John"]);
+    expect(saves.folders.value).toEqual(["My Saves", "John"]);
+    // A name already in use is refused.
+    await saves.renameFolder("John", "My Saves");
+    expect(sv(a).folders).toEqual(["My Saves", "John"]);
+
+    await saves.update(b, { folders: ["Psalms"] });
+    expect(saves.inFolder(sv(b), "My Saves")).toBe(false);
+    await saves.update(b, { folders: ["My Saves"] });
+    // The emptied folder stays until it is deleted.
+    expect(saves.folders.value).toEqual(["My Saves", "John", "Psalms"]);
+    await saves.deleteFolder("Psalms");
+    await saves.deleteFolder("John");
+    expect(sv(a).folders).toEqual([]);
+    expect(saves.folders.value).toEqual(["My Saves"]);
   });
 
   it("answers a typed reference locally", () => {

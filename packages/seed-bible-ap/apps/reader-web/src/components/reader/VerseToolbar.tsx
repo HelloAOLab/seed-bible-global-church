@@ -12,6 +12,7 @@ import { passageOf } from "../../state/records/marks";
 import { shareUrl } from "../../state/reading/route";
 import { getVersePlainText } from "./chapterContent";
 import { MAX_CUSTOM_COLORS } from "../../state/chrome/settings";
+import { openSavePicker } from "../records/SavePicker";
 
 export function VerseToolbar({ state }: { state: ReaderState }) {
   const { t } = useI18n();
@@ -173,7 +174,8 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       label={t("save-verses", { defaultValue: "Save" })}
       className={`sb-verse-toolbar-save-trigger${saved ? " sb-verse-toolbar-save-trigger-active" : ""}`}
       onClick={() => {
-        void state.saves.toggle(
+        openSavePicker(
+          state,
           chapterRef,
           { start, end },
           reading.translationId.value

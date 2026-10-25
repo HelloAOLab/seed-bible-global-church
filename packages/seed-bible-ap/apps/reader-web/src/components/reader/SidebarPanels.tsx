@@ -6,6 +6,8 @@ import { useI18n } from "../../i18n";
 import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import { useEffect, useState } from "preact/hooks";
 import { signal } from "@preact/signals";
+import { MY_SAVES } from "../../state/records/saves";
+import { openSavePicker } from "../records/SavePicker";
 
 /** The old reader's Tasks glyph: a page with a tick. */
 export function TasksIcon() {
@@ -164,8 +166,6 @@ export function BookmarksPanel({ state }: { state: ReaderState }) {
   );
 }
 
-const DEFAULT_FOLDER = "My Saves";
-
 export function SavesPanel({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const all = state.saves.all.value;
@@ -173,14 +173,17 @@ export function SavesPanel({ state }: { state: ReaderState }) {
     state,
     all.map((s) => s.edition ?? "")
   );
-  const mine = t("my-saves", { defaultValue: DEFAULT_FOLDER });
-  const names = [
-    mine,
-    ...[...new Set(all.map((s) => s.folder).filter((f): f is string => !!f))]
-      .filter((f) => f !== mine)
-      .sort((a, b) => a.localeCompare(b)),
-  ];
-  const [open, setOpen] = useState<Set<string>>(() => new Set([mine]));
+  const names = state.saves.folders.value;
+  const [open, setOpen] = useState<Set<string>>(() => new Set([MY_SAVES]));
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameTo, setRenameTo] = useState("");
+  const commitRename = (from: string) => {
+    setRenaming(null);
+    if (renameTo.trim() && renameTo.trim() !== from) {
+      void state.saves.renameFolder(from, renameTo);
+      setOpen((cur) => new Set([...cur, renameTo.trim()]));
+    }
+  };
   const toggle = (name: string) =>
     setOpen((cur) => {
       const next = new Set(cur);
@@ -191,7 +194,9 @@ export function SavesPanel({ state }: { state: ReaderState }) {
   return (
     <div className="sb-saves-section">
       {names.map((name) => {
-        const items = all.filter((s) => (s.folder || mine) === name);
+        const items = all.filter((s) => state.saves.inFolder(s, name));
+        const shownName =
+          name === MY_SAVES ? t("my-saves", { defaultValue: MY_SAVES }) : name;
         const expanded = open.has(name);
         return (
           <div key={name} className="sb-save-category">
@@ -202,14 +207,38 @@ export function SavesPanel({ state }: { state: ReaderState }) {
                 type="button"
                 className="sb-save-category-toggle"
                 aria-expanded={expanded}
-                onClick={() => toggle(name)}
+                aria-label={shownName}
+                onClick={() => renaming !== name && toggle(name)}
               >
                 <span className="sb-save-category-icon" aria-hidden="true">
                   <span className="material-symbols-outlined sb-icon-filled">
                     star
                   </span>
                 </span>
-                <span className="sb-save-category-name">{name}</span>
+                {renaming === name ? (
+                  <input
+                    className="sb-save-category-rename-input"
+                    autoFocus
+                    value={renameTo}
+                    onInput={(e) =>
+                      setRenameTo((e.target as HTMLInputElement).value)
+                    }
+                    onKeyDown={(e: KeyboardEvent) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitRename(name);
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setRenaming(null);
+                      }
+                    }}
+                    onBlur={() => commitRename(name)}
+                    onClick={(e: MouseEvent) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="sb-save-category-name">{shownName}</span>
+                )}
                 <span
                   className={`sb-save-category-chevron${expanded ? " sb-save-category-chevron-open" : ""}`}
                   aria-hidden="true"
@@ -217,6 +246,35 @@ export function SavesPanel({ state }: { state: ReaderState }) {
                   <span className="material-symbols-outlined">expand_more</span>
                 </span>
               </button>
+              {name !== MY_SAVES && (
+                <MenuButton
+                  label={t("category-options", {
+                    defaultValue: "Folder options",
+                  })}
+                  anchorClassName="sb-save-category-menu-anchor"
+                  buttonClassName="sb-save-category-menu-button"
+                  menuClassName="sb-tab-menu"
+                  iconClassName="sb-tab-more-icon"
+                >
+                  <MenuItem
+                    icon="edit"
+                    className="sb-tab-menu-item"
+                    onSelect={() => {
+                      setRenaming(name);
+                      setRenameTo(name);
+                    }}
+                  >
+                    {t("rename", { defaultValue: "Rename" })}
+                  </MenuItem>
+                  <MenuItem
+                    icon="delete"
+                    className="sb-tab-menu-item"
+                    onSelect={() => void state.saves.deleteFolder(name)}
+                  >
+                    {t("delete", { defaultValue: "Delete" })}
+                  </MenuItem>
+                </MenuButton>
+              )}
             </div>
             {expanded && (
               <div className="sb-save-category-items">
@@ -270,7 +328,17 @@ export function SavesPanel({ state }: { state: ReaderState }) {
                         <MenuItem
                           icon="edit"
                           className="sb-tab-menu-item"
-                          onSelect={() => (state.ui.pane.value = "content")}
+                          onSelect={() =>
+                            openSavePicker(
+                              state,
+                              s.chapter,
+                              s.start
+                                ? { start: s.start, end: s.end ?? s.start }
+                                : null,
+                              s.edition,
+                              s.id
+                            )
+                          }
                         >
                           {t("edit-save", { defaultValue: "Edit save" })}
                         </MenuItem>

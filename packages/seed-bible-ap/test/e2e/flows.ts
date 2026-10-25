@@ -374,7 +374,7 @@ const BASE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"
         )
         .click();
-      await c.page.waitForTimeout(500);
+      await c.savePicker();
       await c.pressToolbar("Your content");
       await c.pane().waitFor({ timeout: 5000 });
       await c.waitText(c.pane(), /John 3/);
@@ -431,6 +431,7 @@ const BASE_FLOWS: Flow[] = [
         .locator(".sb-verse-toolbar-action", { hasText: "Save" })
         .first()
         .click();
+      await c.savePicker();
       await c.pressToolbar("Your content");
       await c.waitText(c.pane(), /John 3:15[–-]16/);
       return "John 3:15–16 saved";

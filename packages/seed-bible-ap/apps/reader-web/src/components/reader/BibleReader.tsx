@@ -16,6 +16,7 @@ import { ChapterColumn } from "./ChapterColumn";
 import { attachReaderViewport } from "./readerViewport";
 import { routeOf } from "../../state/reading/route";
 import { defaultTranslationFor } from "../../state/reading/defaultTranslation";
+import { openSavePicker } from "../records/SavePicker";
 
 interface SelectedFootnote {
   noteId: number;
@@ -238,11 +239,7 @@ export function BibleReader({
         title={t("save-chapter", { defaultValue: "Save chapter" })}
         onClick={(e: MouseEvent) => {
           e.stopPropagation();
-          void state.saves.toggle(
-            chapterRef,
-            null,
-            reading.translationId.value
-          );
+          openSavePicker(state, chapterRef, null, reading.translationId.value);
         }}
       >
         <span

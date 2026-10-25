@@ -132,7 +132,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   const highlights = createHighlights(buckets, identity);
   const annotations = createAnnotations(buckets, identity);
   const bookmarks = createBookmarks(buckets, identity);
-  const saves = createSaves(buckets, identity);
+  const saves = createSaves(buckets, identity, stores.prefs);
   const playlists = createPlaylists(backend, stores, identity);
   const plans = createPlans(backend, stores, buckets, identity);
   const files = createFiles(backend, stores, identity);
@@ -459,6 +459,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     savesPanel: signal(false),
     /** The old reader's floating search above the toolbar. */
     searchOpen: signal(false),
+    /** The save window (the old SaveCategoryPicker): the passage to file, and the save when it is already saved. */
+    savePicker: signal<{
+      chapterRef: string;
+      verses: { start: number; end: number } | null;
+      edition?: string;
+      saveId?: string;
+    } | null>(null),
     /** The phone's Theme & text sheet (the old MobileSettingsSheet), from the sliders in the chapter's top bar. */
     textSheet: signal(false),
     /** A playlist or plan to open in the Library pane (Your content's Edit and Open hand it over). */

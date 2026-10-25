@@ -179,6 +179,32 @@ export class FlowContext {
     await page.locator(".sb-verse-toolbar-clear").click();
   }
 
+  /** The save window: tick the named folders (making any that are new), then Save — or Remove from all folders. */
+  async savePicker(
+    opts: { folders?: string[]; remove?: boolean } = {},
+    page: Page = this.page
+  ): Promise<void> {
+    const box = page.locator(".sb-save-picker");
+    await box.waitFor({ timeout: 5000 });
+    if (opts.remove) {
+      await box.locator(".sb-save-picker-remove").click();
+    } else {
+      for (const f of opts.folders ?? []) {
+        const row = box.locator(".sb-save-picker-category", { hasText: f });
+        if (await row.count()) {
+          if ((await row.first().getAttribute("aria-checked")) !== "true")
+            await row.first().click();
+          continue;
+        }
+        await box.locator(".sb-save-picker-add-new").click();
+        await box.locator(".sb-save-picker-new-input").last().fill(f);
+        await box.locator(".sb-save-picker-stage-folder").click();
+      }
+      await box.locator(".sb-save-picker-save").click();
+    }
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
   /** Wait until an element stops moving (the verse toolbar slides into place after it appears). */
   async settled(locator: Locator, timeout = 3000): Promise<void> {
     const t0 = Date.now();

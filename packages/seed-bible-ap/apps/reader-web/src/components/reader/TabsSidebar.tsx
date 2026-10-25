@@ -19,6 +19,7 @@ import {
   slotCountOf,
   type LayoutId,
 } from "../../state/reading/tabs";
+import { openSavePicker } from "../records/SavePicker";
 
 function LayoutPreview({ layout }: { layout: LayoutId }) {
   return (
@@ -266,11 +267,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               const chapterRef = `${r.bookId.value}.${r.chapterNumber.value}`;
               const saved = state.saves.forPassage(chapterRef).length > 0;
               const saveChapter = () =>
-                void state.saves.toggle(
-                  chapterRef,
-                  null,
-                  r.translationId.value
-                );
+                openSavePicker(state, chapterRef, null, r.translationId.value);
               return (
                 <div
                   key={tab.id}

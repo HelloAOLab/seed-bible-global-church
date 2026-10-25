@@ -163,8 +163,10 @@ export const Save = z.object({
   ...mark,
   "@type": z.literal("seed:Save"),
   label: z.string().optional(),
-  /** The reader's own grouping; absent means unfiled. */
-  folder: z.string().min(1).optional(),
+  /** The reader's own folders the save is in (one, or several); absent means unfiled (My Saves). */
+  folder: z
+    .union([z.string().min(1), z.array(z.string().min(1)).min(1)])
+    .optional(),
 });
 export type Save = z.infer<typeof Save>;
 

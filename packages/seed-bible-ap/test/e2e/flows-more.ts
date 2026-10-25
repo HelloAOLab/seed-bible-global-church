@@ -1251,6 +1251,7 @@ export const MORE_FLOWS: Flow[] = [
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-save-button"
         )
         .click();
+      await c.savePicker();
       await c.pressToolbar("Your content");
       const pane = c.pane();
       await pane
@@ -1275,13 +1276,166 @@ export const MORE_FLOWS: Flow[] = [
       await c.page
         .locator(".sb-context-menu [role=menuitem]", { hasText: "Edit save" })
         .click();
-      await pane.locator('input[placeholder^="Folder"]').fill("Study");
-      await pane
-        .getByRole("button", { name: /^save$/i })
-        .first()
-        .click();
+      await c.savePicker({ folders: ["Study"] });
       await c.waitText(pane, /Study/);
       return "bookmark named Nicodemus with a colour; save filed under Study";
+    },
+  },
+  {
+    id: "SV1",
+    section: "4. Marking the text",
+    title: "The save window: several folders, rename and delete a folder",
+    rows: ["Bookmark names and colours, save folders"],
+    checks:
+      "Select 3:16 → Save opens the save window with My Saves ticked → Add to new 'Memory' → Save: the sidebar's saves list it under My Saves and Memory; Save again opens it as Edit save; Memory's ⋮ → Rename 'Verses' moves it; Edit save → untick My Saves → it is only in Verses; Verses' ⋮ → Delete puts it back in My Saves; Remove from all folders unsaves it",
+    run: async (c) => {
+      let step = 0;
+      try {
+        step = 1;
+        await c.open(CH);
+        step = 2;
+        await c.selectVerse(16);
+        step = 3;
+        await c.settled(c.page.locator(".sb-verse-toolbar"));
+        step = 4;
+        await c.page
+          .locator(".sb-verse-toolbar-action", { hasText: "Save" })
+          .first()
+          .click();
+        const box = c.page.locator(".sb-save-picker");
+        step = 5;
+        await box.waitFor({ timeout: 5000 });
+        const ticked = await box
+          .locator('.sb-save-picker-category[aria-checked="true"]')
+          .allInnerTexts();
+        step = 6;
+        if (ticked.join() !== "My Saves")
+          throw new Error(`ticked at first: ${ticked.join(", ")}`);
+        step = 7;
+        await c.savePicker({ folders: ["Memory"] });
+        const side = c.page.locator(".sb-tabs-sidebar");
+        step = 8;
+        await side.getByRole("button", { name: "Saves" }).click();
+        const list = side.locator(".sb-saves-section");
+        const folder = (name: string) =>
+          list.locator(".sb-save-category", {
+            has: c.page.locator(".sb-save-category-name", { hasText: name }),
+          });
+        const openFolder = async (name: string) => {
+          const t = folder(name).locator(".sb-save-category-toggle");
+          if ((await t.getAttribute("aria-expanded")) !== "true")
+            await t.click();
+        };
+        step = 9;
+        await c.waitText(folder("My Saves"), /john 3:16/i, 5000);
+        step = 10;
+        await openFolder("Memory");
+        step = 11;
+        await c.waitText(folder("Memory"), /john 3:16/i, 5000);
+
+        step = 12;
+        await c.selectVerse(16);
+        step = 13;
+        await c.settled(c.page.locator(".sb-verse-toolbar"));
+        step = 14;
+        await c.page
+          .locator(".sb-verse-toolbar-action", { hasText: "Save" })
+          .first()
+          .click();
+        step = 15;
+        await c.waitText(
+          c.page.locator(".sb-footnote-modal-title"),
+          /edit save/i,
+          5000
+        );
+        step = 16;
+        await c.page
+          .locator(".sb-footnote-modal-close", {
+            has: c.page.locator("text=close"),
+          })
+          .first()
+          .click();
+        step = 17;
+        await box.waitFor({ state: "detached", timeout: 5000 });
+
+        step = 18;
+        await folder("Memory")
+          .getByRole("button", { name: "Folder options" })
+          .click();
+        step = 19;
+        await c.page.getByRole("menuitem", { name: /rename/i }).click();
+        const rename = list.locator(".sb-save-category-rename-input");
+        step = 20;
+        await rename.fill("Verses");
+        step = 21;
+        await rename.press("Enter");
+        step = 22;
+        await openFolder("Verses");
+        step = 23;
+        await c.waitText(folder("Verses"), /john 3:16/i, 5000);
+        step = 24;
+        if (await folder("Memory").count())
+          throw new Error("Memory is still listed after the rename");
+
+        step = 25;
+        await folder("Verses")
+          .getByRole("button", { name: "Save options" })
+          .first()
+          .click();
+        step = 26;
+        await c.page.getByRole("menuitem", { name: /edit save/i }).click();
+        step = 27;
+        await box.waitFor({ timeout: 5000 });
+        step = 28;
+        await box
+          .locator(".sb-save-picker-category", { hasText: "My Saves" })
+          .click();
+        step = 29;
+        await c.savePicker();
+        step = 30;
+        await openFolder("My Saves");
+        for (let i = 0; i < 20; i++) {
+          if (!/john 3:16/i.test(await folder("My Saves").innerText())) break;
+          await c.page.waitForTimeout(250);
+        }
+        step = 31;
+        if (/john 3:16/i.test(await folder("My Saves").innerText()))
+          throw new Error("still in My Saves after unticking it");
+
+        step = 32;
+        await folder("Verses")
+          .getByRole("button", { name: "Folder options" })
+          .click();
+        step = 33;
+        await c.page.getByRole("menuitem", { name: /delete/i }).click();
+        step = 34;
+        await c.waitText(folder("My Saves"), /john 3:16/i, 5000);
+        step = 35;
+        if (await folder("Verses").count())
+          throw new Error("Verses is still listed after Delete");
+
+        step = 36;
+        await c.selectVerse(16);
+        step = 37;
+        await c.settled(c.page.locator(".sb-verse-toolbar"));
+        step = 38;
+        await c.page
+          .locator(".sb-verse-toolbar-action", { hasText: "Save" })
+          .first()
+          .click();
+        step = 39;
+        await c.savePicker({ remove: true });
+        for (let i = 0; i < 20; i++) {
+          if (!/john 3:16/i.test(await list.innerText())) break;
+          await c.page.waitForTimeout(250);
+        }
+        step = 40;
+        if (/john 3:16/i.test(await list.innerText()))
+          throw new Error("Remove from all folders left the save");
+      } catch (e) {
+        throw new Error(`step ${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "saved to My Saves and a new folder; renamed, moved, deleted and removed";
     },
   },
   // ── 8. Today, Discover and publishing ──────────────────────────────────────────────────────────────────────
@@ -3251,10 +3405,12 @@ export const MORE_FLOWS: Flow[] = [
       if (order.join() !== want.join())
         throw new Error(`header: ${order.join(", ")}`);
       await head.getByRole("button", { name: "Save chapter" }).click();
+      await c.savePicker();
       await head
         .locator(".sb-bible-reader-save-button .sb-icon-filled")
         .waitFor({ timeout: 5000 });
       await head.getByRole("button", { name: "Save chapter" }).click();
+      await c.savePicker({ remove: true });
       await head.getByRole("button", { name: "Discover" }).click();
       await c.pane().waitFor({ timeout: 5000 });
       if (!/discover/i.test(await c.paneText()))
@@ -3350,6 +3506,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-tab-row-selected")
         .getByRole("button", { name: "Save chapter" })
         .click();
+      await c.savePicker();
       await c.page
         .locator(
           ".sb-bible-reader-active .sb-bible-reader-header .sb-bible-reader-bookmark-button"
@@ -3405,6 +3562,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-tab-row-selected")
         .getByRole("button", { name: "Save chapter" })
         .click();
+      await c.savePicker({ remove: true });
       await side.getByRole("button", { name: "New tab" }).first().click();
       // A new tab brings the one-time "Open more passages" tip, which the harness closes with Esc — and Esc closes
       // menus too: open the tab's menu once it has gone.

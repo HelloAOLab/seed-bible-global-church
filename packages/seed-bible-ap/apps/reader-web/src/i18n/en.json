@@ -193,7 +193,6 @@
   "note-link-hint": "A link that opens these verses with your published note",
   "select-verses-to-note": "Select a verse and tap Note to write one.",
   "save-label": "Label (optional)",
-  "save-folder": "Folder (leave empty for none)",
   "session-sign-in": "Sign in to read together.",
   "session-start-blurb": "Start a session on the chapter you have open: you lead, friends follow you, and everyone sees your marks for the session.",
   "session-start": "Start a session here",
@@ -719,5 +718,13 @@
   "add-color": "Add color",
   "add-custom-color": "Add custom color",
   "custom-color-remove-hint": "{{color}} — right-click to remove",
-  "highlight-custom": "Highlight {{color}}"
+  "highlight-custom": "Highlight {{color}}",
+  "add-save-modal": "Add save",
+  "add-to-new": "Add to new",
+  "category-options": "Folder options",
+  "create-folder": "Create folder",
+  "folder-name-taken": "A folder with that name already exists.",
+  "new-folder-placeholder": "New folder name",
+  "remove-save-from-all-folders": "Remove from all folders",
+  "rename": "Rename"
 }

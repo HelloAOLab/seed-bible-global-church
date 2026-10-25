@@ -26,6 +26,7 @@ import { SessionPane } from "./components/sessions/SessionPane";
 import { PhoneNav } from "./components/reader/PhoneNav";
 import { FloatingSearch } from "./components/reader/FloatingSearch";
 import { MobileSettingsSheet } from "./components/chrome/MobileSettingsSheet";
+import { SavePicker } from "./components/records/SavePicker";
 import { HuddleBar } from "./components/sessions/HuddleCall";
 import { LibraryPane } from "./components/library/LibraryPane";
 import { Onboarding } from "./components/chrome/Onboarding";
@@ -202,6 +203,7 @@ export function App({ state }: { state: ReaderState }) {
       <PhoneNav state={state} />
       <FloatingSearch state={state} />
       <MobileSettingsSheet state={state} />
+      <SavePicker state={state} />
       <BibleSelector state={state} />
       <ShareDialog state={state} />
       {state.ui.shared.value && <SharedPageView state={state} />}
