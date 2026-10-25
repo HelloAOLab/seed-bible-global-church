@@ -545,6 +545,58 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "SP1",
+    section: "9. Reading together",
+    title: "Start and share a session from Share",
+    rows: ["Start a session"],
+    checks:
+      "Signed in, the chapter's Share → Start and share session starts one and copies its link (with the session and its code); Share again offers Share current session and the session's QR card; tapping the code opens a large Scan to join view",
+    run: async (c) => {
+      let step = "";
+      try {
+        await c.open(CH);
+        await c.signInAsSample();
+        const head = c.page.locator(
+          ".sb-bible-reader-active .sb-bible-reader-header"
+        );
+        const dialog = c.page.locator(".sb-share-dialog");
+        step = "Start and share session";
+        await head.getByRole("button", { name: "Share" }).click();
+        await dialog
+          .getByRole("button", { name: /start and share session/i })
+          .click();
+        await dialog.waitFor({ state: "detached", timeout: 20000 });
+        await c.waitText(c.page.locator(".sb-toast"), /link to join/i, 10000);
+        const clip = await c.page
+          .evaluate(() => navigator.clipboard.readText())
+          .catch(() => "");
+        if (!/[?&]session=[^&]+&code=\w+/.test(clip))
+          throw new Error(`clipboard: ${clip}`);
+        step = "Share current session";
+        await head.getByRole("button", { name: "Share" }).click();
+        await dialog
+          .getByRole("button", { name: /share current session/i })
+          .waitFor({ timeout: 5000 });
+        await dialog
+          .getByRole("button", { name: /show a larger qr code/i })
+          .click();
+        const big = c.page.getByRole("dialog", { name: "Scan to join" });
+        await big.locator("img").waitFor({ timeout: 5000 });
+        await c.page.keyboard.press("Escape");
+        await big.waitFor({ state: "detached", timeout: 3000 });
+        await c.page.keyboard.press("Escape");
+        await c.pressToolbar("Live session");
+        await c
+          .pane()
+          .getByRole("button", { name: /end session/i })
+          .click();
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "Share started a session and copied its link; Share again offered Share current session and the QR, whose large view opened";
+    },
+  },
+  {
     id: "MS1",
     section: "3. Reading",
     title: "The phone's Theme & text sheet",
@@ -3260,7 +3312,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Session QR code",
     rows: ["Session QR code"],
     checks:
-      "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image",
+      "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image; tapping it opens a large Scan to join view, Esc closes it",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -3277,8 +3329,19 @@ export const MORE_FLOWS: Flow[] = [
       await c
         .pane()
         .getByRole("button", { name: /save image/i })
+        .first()
         .waitFor({ timeout: 5000 });
-      return `QR ${Math.round(src.length / 1024)} KB PNG with Save image`;
+      await c
+        .pane()
+        .getByRole("button", { name: /show a larger qr code/i })
+        .click();
+      const big = c.page.getByRole("dialog", { name: "Scan to join" });
+      await big.locator("img").waitFor({ timeout: 5000 });
+      const w = (await big.locator("img").boundingBox())?.width ?? 0;
+      if (w < 250) throw new Error(`the large code is ${w}px wide`);
+      await c.page.keyboard.press("Escape");
+      await big.waitFor({ state: "detached", timeout: 3000 });
+      return `QR ${Math.round(src.length / 1024)} KB PNG with Save image; tapped, a ${Math.round(w)}px Scan to join view`;
     },
   },
   {
@@ -3952,10 +4015,7 @@ export const MORE_FLOWS: Flow[] = [
       const dialog = c.page.getByRole("dialog");
       await dialog.waitFor({ timeout: 5000 });
       const shown = await dialog.innerText();
-      if (
-        !/\/read\/BSB\/JHN\/3/.test(shown) &&
-        !(await dialog.locator("input").count())
-      )
+      if (!/share a link[\s\S]*embed/i.test(shown))
         throw new Error(`Share: ${shown.slice(0, 120)}`);
       await c.page.keyboard.press("Escape");
       await head.getByRole("button", { name: "Listen" }).click();

@@ -1,42 +1,24 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 05:39 UTC",
+  "when": "2026-10-25 05:46 UTC",
   "results": [
     {
-      "id": "L1",
-      "section": "9. Reading together",
-      "title": "Start a session; a guest joins and follows",
-      "checks": "Signed in: Start a session → its Session ID and Code show; a second browser joins as a guest with id and code; the host moves to John 4 and the guest follows",
+      "id": "R5",
+      "section": "3. Reading",
+      "title": "Share link selects verses",
+      "checks": "?v=16-18 opens with John 3:16–18 selected and the verse toolbar's Highlight naming them",
       "mark": "✅",
-      "note": "code 84JNWM; the guest followed to John 4",
-      "ms": 42381
+      "note": "toolbar \"John 3:16–18\", 3 verses selected",
+      "ms": 1048
     },
     {
-      "id": "PS1",
-      "section": "9. Reading together",
-      "title": "Where everyone is in the text; connection notices",
-      "checks": "Signed in, the host starts a session and a guest joins. The guest reads further down John 3: on the host's screen a bar in the guest's colour runs beside the verses on the guest's screen, with the guest's initials at its top. When the host leaves the page, the guest is told 'The host disconnected'",
+      "id": "M4",
+      "section": "4. Marking the text",
+      "title": "Share a verse: link and embed code",
+      "checks": "Select 3:16 → Share opens the old reader's Share window; Share a link copies a link ending in ?v=16; Embed gives an iframe of the compact reader, dark when Dark is chosen",
       "mark": "✅",
-      "note": "the guest's bar ran beside John 3:16 with \"FG\" at its top; the guest was told the host disconnected",
-      "ms": 41289
-    },
-    {
-      "id": "SS1",
-      "section": "9. Reading together",
-      "title": "Session settings",
-      "checks": "The host starts a session and a guest joins. Session settings shows the session's link, Navigation and Sharing, and the participants with a Host badge. By default the guest's › moves the host too; with 'Only host can navigate' ticked the guest's › moves only the guest. A verse the host taps flares on the guest's screen. The host's End Session ends it for the guest",
-      "mark": "✅",
-      "note": "link, settings and participants shown; the guest moved the host by default and not after Only host can navigate; the host's tap flared on the guest's screen; End Session ended it",
-      "ms": 43963
-    },
-    {
-      "id": "CH1",
-      "section": "9. Reading together",
-      "title": "The chat panel",
-      "checks": "The host starts a session; the bar gains Chat, which opens the old reader's chat panel listing Session chat and Study companion. A guest joins: the host's chat says 'Flow guest joined'. The guest types @ and picks the host from the list, adds 'see John 3:16': the host sees 'Flow guest is typing...', then the line with their @name marked and John 3:16 as a link, which opens John 3 with verse 16 chosen. With the chat closed, '@everyone hello' puts @ on the host's Chat button; opening the chat clears it",
-      "mark": "✅",
-      "note": "Chat listed Session chat and Study companion; the join, typing, the @mention, the John 3:16 link and the @ badge all worked",
-      "ms": 44685
+      "note": "https://seed-reader.faithnet.io/read/BSB/JHN/3?v=16; embed <iframe src=\"https://seed-reader.faithnet.io/read/BSB/JHN/3?…",
+      "ms": 1125
     },
     {
       "id": "SH1",
@@ -45,34 +27,34 @@
       "checks": "The host starts a session in John 3 and a guest joins: that tab is marked Shared with the people on it (Host first); its ⋮ has Session settings, Share session and Open chat instead of Save. A new tab moved to Romans 8 does not move the session (the guest stays in John 3). Closing the Shared tab from its ⋮ ends the session for the guest",
       "mark": "✅",
       "note": "the session's tab showed Shared with its people and the session menu; another tab left the guest in John 3; closing the tab ended it",
-      "ms": 44087
+      "ms": 43466
     },
     {
-      "id": "HU1",
+      "id": "SP1",
       "section": "9. Reading together",
-      "title": "A call in the session: chips that light when someone talks, and video",
-      "checks": "Signed in, the host starts a session and its call (Start a call); a bar of chips shows over the reading with their own chip, microphone off. A second signed-in person opens the session's link, sees the call is running and joins it: each bar shows both people. The second person unmutes and talks (a test tone): their chip lights on the host's bar, and goes dark when they mute. The friend turns their camera on: the host sees their picture move in their chip and in a tile in the session pane, and it goes when they turn it off. The host ends the call for everyone and both bars go",
+      "title": "Start and share a session from Share",
+      "checks": "Signed in, the chapter's Share → Start and share session starts one and copies its link (with the session and its code); Share again offers Share current session and the session's QR card; tapping the code opens a large Scan to join view",
       "mark": "✅",
-      "note": "Seed Reader and Alice Okoro in the call; Alice Okoro's chip lit while talking and went dark on mute; their camera showed in their chip and a tile, and went when turned off; the host ended it",
-      "ms": 129882
+      "note": "Share started a session and copied its link; Share again offered Share current session and the QR, whose large view opened",
+      "ms": 36856
     },
     {
-      "id": "L2",
+      "id": "G7",
       "section": "9. Reading together",
-      "title": "Show everyone, the roster, chat, the record",
-      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
+      "title": "Session QR code",
+      "checks": "Signed in: start a session → QR code shows a scannable picture of the share link, with Save image; tapping it opens a large Scan to join view, Esc closes it",
       "mark": "✅",
-      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code NTWUD8)",
-      "ms": 42067
+      "note": "QR 13 KB PNG with Save image; tapped, a 296px Scan to join view",
+      "ms": 41626
     },
     {
-      "id": "SB1",
-      "section": "6. Tabs and panes",
-      "title": "The old reader's sidebar: Tasks, Bookmarks, Saves, the tab's star and menu",
-      "checks": "Beside Tabs: ☑ Tasks opens Today, 🔖 shows the bookmarks above the tabs, ☆ shows the saves in My Saves; the open tab's ☆ saves the chapter; a save made in BSB opens in BSB from the Saves panel and from Your content while the KJV is open; the tab's ⋮ → Open in new panel adds a pane; the top row has ⊞ Panels and ⋮ More",
+      "id": "H1",
+      "section": "3. Reading",
+      "title": "The chapter header's actions",
+      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
       "mark": "✅",
-      "note": "Tasks opened Today; the tab's ☆ saved John 3 and the bookmarks and saves panels listed it; the BSB save opened in BSB from the KJV (panel and Your content); Open in new panel added a pane; ⊞ and ⋮ at the top",
-      "ms": 3370
+      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
+      "ms": 941
     }
   ]
 }

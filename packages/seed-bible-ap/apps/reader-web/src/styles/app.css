@@ -1373,69 +1373,6 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   font-weight: 600;
 }
 
-/* The session's QR code: always dark on white, centred in the session card. */
-.sb-session-qr {
-  margin: 0.5rem 0;
-  text-align: center;
-}
-.sb-session-qr img,
-.sb-session-qr-placeholder {
-  width: 12rem;
-  height: 12rem;
-  border-radius: 0.5rem;
-  background: #fff;
-}
-
-/* The Share dialog: link, system share, embed code with a preview. */
-.sb-share-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 140;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-.sb-share-dialog {
-  width: min(32rem, 100%);
-  max-height: calc(100dvh - 2rem);
-  overflow: auto;
-  background: var(--sb-reader-background, #fff);
-  color: var(--sb-font-color);
-  border-radius: 1rem;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-.sb-share-section {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-.sb-share-section h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-.sb-share-row {
-  display: flex;
-  gap: 0.5rem;
-}
-.sb-share-row input {
-  flex: 1;
-  min-width: 0;
-}
-.sb-share-embed-code {
-  font-family: ui-monospace, monospace;
-  font-size: 0.75rem;
-}
-.sb-share-embed-preview {
-  width: 100%;
-  height: 16rem;
-  border: 1px solid var(--sb-divider-color, #00000024);
-  border-radius: 0.5rem;
-  margin-top: 0.5rem;
-}
-
 /* Account → Toolbar: one row per button, show/hide and move. */
 .sb-toolbar-list {
   list-style: none;

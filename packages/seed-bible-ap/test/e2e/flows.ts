@@ -391,7 +391,7 @@ const BASE_FLOWS: Flow[] = [
     section: "4. Marking the text",
     title: "Share a verse: link and embed code",
     checks:
-      "Select 3:16 → Share opens the Share dialog; Copy link copies a link ending in ?v=16; the embed code is an iframe of the compact reader, dark when Dark is chosen",
+      "Select 3:16 → Share opens the old reader's Share window; Share a link copies a link ending in ?v=16; Embed gives an iframe of the compact reader, dark when Dark is chosen",
     run: async (c) => {
       await c.open(CH);
       await c.selectVerse(16);
@@ -400,13 +400,23 @@ const BASE_FLOWS: Flow[] = [
         .click();
       const dialog = c.page.locator(".sb-share-dialog");
       await dialog.waitFor({ timeout: 5000 });
-      await dialog.getByRole("button", { name: /copy link/i }).click();
+      await dialog.getByRole("button", { name: /share a link/i }).click();
+      await dialog.waitFor({ state: "detached", timeout: 3000 });
       await c.page.waitForTimeout(300);
       const clip = await c.page
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
       if (!/\/read\/BSB\/JHN\/3\?v=16$/.test(clip))
         throw new Error(`clipboard: "${clip.slice(0, 80)}"`);
+      // Verse 16 is still chosen after the link was copied.
+      if (
+        !(await c.page.locator(".sb-verse-toolbar-action").first().isVisible())
+      )
+        await c.selectVerse(16);
+      await c.page
+        .locator(".sb-verse-toolbar-action", { hasText: /share/i })
+        .click();
+      await dialog.locator(".sb-share-action", { hasText: /embed/i }).click();
       await dialog.locator("select").selectOption("dark");
       const code = await dialog.locator(".sb-share-embed-code").inputValue();
       if (!/^<iframe src="[^"]*embed=minimal[^"]*theme=dark/.test(code))

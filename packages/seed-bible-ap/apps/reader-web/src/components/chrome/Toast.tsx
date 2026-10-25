@@ -37,6 +37,15 @@ function line(
       return t("session-host-reconnected", {
         defaultValue: "The host reconnected",
       });
+    case "link-copied":
+      return t("link-copied", { defaultValue: "Link copied" });
+    case "copied":
+      return t("copied", { defaultValue: "Copied" });
+    case "session-link-copied":
+      return t("link-to-join-shared-session-copied", {
+        defaultValue:
+          "A link to join the shared session was copied to your clipboard",
+      });
     case "copied-translation-share-link":
       return t("copied-translation-share-link", {
         defaultValue: "Copied translation share link",
