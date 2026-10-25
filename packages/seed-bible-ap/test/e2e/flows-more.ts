@@ -6726,4 +6726,60 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "AD1",
+    section: "2. Getting in",
+    title: "Sync device content? at sign-in",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "A fresh browser highlights John 3:35 signed out; signing in asks 'Sync device content?' — 'This device is storing highlights that are not associated with any account…' with Don't add and Add to account; Don't add takes the highlight off; in another fresh browser, Add to account keeps it as yours",
+    run: async (c) => {
+      const run = async (answer: "Don't add" | "Add to account") => {
+        const ctx = await c.browser.newContext({
+          viewport: { width: 1280, height: 900 },
+        });
+        const page = await ctx.newPage();
+        c.watch(page);
+        try {
+          await c.open(CH, page);
+          await c.settleTours(page);
+          await c.selectVerse(35, page);
+          await c.pickColor(3, page);
+          // Only verse 35's: the sample account may hold other highlights in John 3.
+          const fill = page.locator(
+            '.sb-bible-reader-active [data-highlight-fill]:has([data-verse-number="35"]), .sb-bible-reader-active [data-verse-number="35"] [data-highlight-fill], .sb-bible-reader-active [data-verse-number="35"][data-highlight-fill]'
+          );
+          await fill.first().waitFor({ timeout: 5000 });
+          await c.signInAsSample(/seed ?reader/i, page, { adopt: "none" });
+          const ask = page.getByRole("dialog", {
+            name: "Sync device content?",
+          });
+          await c.waitText(
+            ask,
+            /storing highlights that are not associated with any account[\s\S]*Don't add[\s\S]*Add to account/,
+            20000
+          );
+          await ask.getByRole("button", { name: answer }).click();
+          await page
+            .locator(".sb-sidebar-profile-button-in")
+            .waitFor({ timeout: 30000 });
+          await page.waitForTimeout(1500);
+          const kept = (await fill.count()) > 0;
+          if (answer === "Don't add" && kept)
+            throw new Error("Don't add left the highlight on the device");
+          if (answer === "Add to account" && !kept)
+            throw new Error("Add to account lost the highlight");
+          if (kept) {
+            await c.selectVerse(35, page);
+            await c.clearHighlight(page);
+          }
+        } finally {
+          await ctx.close();
+        }
+      };
+      await run("Don't add");
+      await run("Add to account");
+      return "asked 'Sync device content?' about highlights; Don't add took it off; Add to account kept it";
+    },
+  },
 ];

@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:48 UTC",
+  "when": "2026-10-25 10:52 UTC",
   "results": [
     {
-      "id": "HC2",
-      "section": "4. Marking the text",
-      "title": "Your own highlight colours",
-      "checks": "Settings → Display & Theme → Highlight colors lists the twelve; setting Yellow's background to #00ff00 turns a yellow highlight on John 3:5 green, kept after a reload; its reset (and Reset all custom colors) brings the theme's yellow back",
+      "id": "AD1",
+      "section": "2. Getting in",
+      "title": "Sync device content? at sign-in",
+      "checks": "A fresh browser highlights John 3:35 signed out; signing in asks 'Sync device content?' — 'This device is storing highlights that are not associated with any account…' with Don't add and Add to account; Don't add takes the highlight off; in another fresh browser, Add to account keeps it as yours",
       "mark": "✅",
-      "note": "twelve listed; yellow became rgb(0, 255, 0) and stayed after a reload; its reset brought back rgb(255, 245, 157)",
-      "ms": 10212
+      "note": "asked 'Sync device content?' about highlights; Don't add took it off; Add to account kept it",
+      "ms": 11703
     }
   ]
 }

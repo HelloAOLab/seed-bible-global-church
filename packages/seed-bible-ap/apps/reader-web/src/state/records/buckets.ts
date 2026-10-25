@@ -268,7 +268,63 @@ export function createBucketStore(deps: BucketStoreDeps) {
     open.clear();
   }
 
-  return { get, put, accept, resync, reset, pull, pullAll, changed, pulling };
+  /** What this device holds that was made signed out and not deleted, by kind (the old reader's "Sync device
+   *  content?" asks about highlights and notes). */
+  async function anonymousKinds(): Promise<Set<"highlights" | "notes">> {
+    const kinds = new Set<"highlights" | "notes">();
+    for (const k of await deps.stores.buckets.keys()) {
+      if (k.startsWith("parked:")) continue;
+      const [collection] = splitKey(k);
+      const kind =
+        collection === "highlights"
+          ? "highlights"
+          : collection === "annotations"
+            ? "notes"
+            : null;
+      if (!kind || kinds.has(kind)) continue;
+      const stored = await deps.stores.buckets.get(k);
+      if (
+        stored?.["@graph"].some(
+          (it) =>
+            agentAddress(it.heldBy) === LOCAL_AGENT &&
+            !(it as { deleted?: boolean }).deleted
+        )
+      )
+        kinds.add(kind);
+    }
+    return kinds;
+  }
+
+  /** "Don't add": the marks made signed out leave this device instead of joining the account. */
+  async function discardAnonymous() {
+    for (const k of await deps.stores.buckets.keys()) {
+      if (k.startsWith("parked:")) continue;
+      const stored = await deps.stores.buckets.get(k);
+      if (!stored) continue;
+      const kept = stored["@graph"].filter(
+        (it) => agentAddress(it.heldBy) !== LOCAL_AGENT
+      );
+      if (kept.length === stored["@graph"].length) continue;
+      const next = { ...stored, "@graph": kept };
+      await deps.stores.buckets.set(k, next);
+      const ob = open.get(k);
+      if (ob) ob.bucket.value = next;
+    }
+  }
+
+  return {
+    get,
+    put,
+    accept,
+    resync,
+    reset,
+    pull,
+    pullAll,
+    changed,
+    pulling,
+    anonymousKinds,
+    discardAnonymous,
+  };
 }
 
 export type BucketStore = ReturnType<typeof createBucketStore>;

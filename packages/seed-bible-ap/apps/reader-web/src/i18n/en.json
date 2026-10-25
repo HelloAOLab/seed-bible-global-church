@@ -962,5 +962,12 @@
   "reset-all-custom-colors": "Reset all custom colors",
   "reset-to-default": "Reset to default",
   "id_highlight-background-color": "{{id}} highlight background color",
-  "id_highlight-text-color": "{{id}} highlight text color"
+  "id_highlight-text-color": "{{id}} highlight text color",
+  "adopt-device-content-add": "Add to account",
+  "adopt-device-content-kind-both": "highlights and notes",
+  "adopt-device-content-kind-highlights": "highlights",
+  "adopt-device-content-kind-notes": "notes",
+  "adopt-device-content-message": "This device is storing {{content}} that are not associated with any account. Do you want to add them to your account?",
+  "adopt-device-content-skip": "Don't add",
+  "adopt-device-content-title": "Sync device content?"
 }

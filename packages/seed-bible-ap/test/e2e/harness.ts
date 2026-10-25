@@ -411,7 +411,8 @@ export class FlowContext {
   /** Sign in as one of the Home's sample people (Quick Connect): the account pane's list. */
   async signInAsSample(
     preferred = /seed ?reader/i,
-    page: Page = this.page
+    page: Page = this.page,
+    opts: { adopt?: "add" | "discard" | "none" } = {}
   ): Promise<string> {
     await this.pressToolbar("Sign in", page);
     await this.pane(page).waitFor({ timeout: 5000 });
@@ -428,9 +429,22 @@ export class FlowContext {
     let idx = names.findIndex((n) => preferred.test(n));
     if (idx < 0) idx = 0;
     await buttons.nth(idx).click();
-    await page
-      .locator(".sb-sidebar-profile-button-in")
-      .waitFor({ timeout: 30000 });
+    // The flow answers "Sync device content?" itself.
+    if (opts.adopt === "none") return names[idx]!.trim();
+    // Marks made here signed out: the reader asks whether they join the account; a flow's are added.
+    const signedIn = page.locator(".sb-sidebar-profile-button-in");
+    const adopt = page.getByRole("dialog", { name: "Sync device content?" });
+    await Promise.race([
+      signedIn.waitFor({ timeout: 30000 }),
+      adopt.waitFor({ timeout: 30000 }).then(async () => {
+        await adopt
+          .getByRole("button", {
+            name: opts.adopt === "discard" ? "Don't add" : "Add to account",
+          })
+          .click();
+      }),
+    ]).catch(() => undefined);
+    await signedIn.waitFor({ timeout: 30000 });
     await page
       .locator(".sb-pane-close")
       .first()

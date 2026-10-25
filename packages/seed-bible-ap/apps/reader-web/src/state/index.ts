@@ -518,6 +518,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** A reading plan being edited and the day being worked on: the verse toolbar's Add to plan puts the chosen
      *  verses there (through `planAdd`, which the editor takes and clears). */
     planEditing: signal<{ planId: string; day: number } | null>(null),
+    /** "Sync device content?" at sign-in, while it waits for an answer. */
+    adoptPrompt: signal<{
+      kinds: ("highlights" | "notes")[];
+      resolve: (choice: "add" | "discard") => void;
+    } | null>(null),
     planAdd: signal<PlaylistItem | null>(null),
     /** `?chatFirst=true`: Chat stays on the bar outside a live session, first after the chapter controls. */
     chatFirst: signal(false),
@@ -639,6 +644,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (await claimDevice(stores.prefs, person)) {
       if (typeof location !== "undefined") location.reload();
       return;
+    }
+    // Highlights or notes made here signed out: ask whether they join this account (the old reader's
+    // prompt) before the session is set, so nothing is sent as theirs before the answer.
+    const kinds = await buckets.anonymousKinds();
+    if (kinds.size) {
+      const choice = await new Promise<"add" | "discard">(
+        (resolve) => (ui.adoptPrompt.value = { kinds: [...kinds], resolve })
+      );
+      ui.adoptPrompt.value = null;
+      if (choice === "discard") await buckets.discardAnonymous();
     }
     session.value = s;
     // Signing in from the Account pane lands in the reader, not on the account settings that replace the sign-in.
