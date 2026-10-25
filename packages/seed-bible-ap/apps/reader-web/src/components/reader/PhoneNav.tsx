@@ -222,8 +222,30 @@ export function PhoneNav({ state }: { state: ReaderState }) {
     togglePane: (p) => show(p),
     dark,
     notes,
-  }).filter((a) => a.id !== "today" && a.id !== "content");
+  }).filter(
+    (a) =>
+      a.id !== "today" &&
+      a.id !== "content" &&
+      !(ui.chatFirst.value && a.id === "chat")
+  );
+  const openSearch = () => {
+    const opening = !ui.searchOpen.value;
+    clear();
+    ui.pane.value = "none";
+    ui.searchOpen.value = opening;
+  };
   const extras = [
+    // With Chat as the fourth tab (`?chatFirst=true`), Search moves under More.
+    ...(ui.chatFirst.value
+      ? [
+          {
+            id: "search",
+            icon: "search",
+            label: t("search", { defaultValue: "Search" }),
+            onClick: openSearch,
+          },
+        ]
+      : []),
     {
       id: "saves",
       icon: "star",
@@ -303,17 +325,26 @@ export function PhoneNav({ state }: { state: ReaderState }) {
             }
           }}
         />
-        <Tab
-          label={t("search", { defaultValue: "Search" })}
-          icon="search"
-          active={active === "search"}
-          onClick={() => {
-            const opening = !ui.searchOpen.value;
-            clear();
-            ui.pane.value = "none";
-            ui.searchOpen.value = opening;
-          }}
-        />
+        {ui.chatFirst.value ? (
+          <Tab
+            label={t("chat", { defaultValue: "Chat" })}
+            icon="chat_bubble_outline"
+            active={ui.chatOpen.value}
+            {...(chatBadge(state) ? { badge: chatBadge(state) } : {})}
+            onClick={() => {
+              const opening = !ui.chatOpen.value;
+              clear();
+              ui.chatOpen.value = opening;
+            }}
+          />
+        ) : (
+          <Tab
+            label={t("search", { defaultValue: "Search" })}
+            icon="search"
+            active={active === "search"}
+            onClick={openSearch}
+          />
+        )}
         <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor sb-phone-more-tab">
           <button
             type="button"

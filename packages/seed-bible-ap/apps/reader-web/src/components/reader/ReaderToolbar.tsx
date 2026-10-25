@@ -93,7 +93,7 @@ export function toolbarActions(
 ): ToolbarAction[] {
   const { ui, settings } = state;
   const { togglePane, dark, notes } = h;
-  return [
+  const all: ToolbarAction[] = [
     {
       id: "session",
       icon: state.live.active.value ? "groups" : "group_add",
@@ -105,7 +105,7 @@ export function toolbarActions(
       onClick: () => togglePane("session"),
     },
     // The old reader's Chat: while in a live session (its chat, and the study companion), with what came unread.
-    ...(state.live.active.value
+    ...(state.live.active.value || ui.chatFirst.value
       ? [
           {
             id: "chat",
@@ -184,6 +184,9 @@ export function toolbarActions(
       onClick: () => settings.toggleTheme(),
     },
   ];
+  if (!ui.chatFirst.value) return all;
+  const chat = all.filter((x) => x.id === "chat");
+  return [...chat, ...all.filter((x) => x.id !== "chat")];
 }
 
 export function ReaderToolbar({ state }: { state: ReaderState }) {
@@ -246,8 +249,19 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
     dark,
     notes,
   });
-  const shown = arrange(secondary, state.toolbar.layout.value);
-  const more = underMore(secondary, state.toolbar.layout.value);
+  // `?chatFirst=true` keeps Chat first and on show whatever the reader's arrangement says.
+  const chatFirst = ui.chatFirst.value
+    ? secondary.filter((a) => a.id === "chat")
+    : [];
+  const shown = [
+    ...chatFirst,
+    ...arrange(secondary, state.toolbar.layout.value).filter(
+      (a) => !chatFirst.includes(a)
+    ),
+  ];
+  const more = underMore(secondary, state.toolbar.layout.value).filter(
+    (a) => !chatFirst.includes(a)
+  );
   const openSearch = () => (ui.searchOpen.value = !ui.searchOpen.value);
 
   // Folded under More when the whole bar is wider than the reading area (the sidebar or a pane beside it leaves less

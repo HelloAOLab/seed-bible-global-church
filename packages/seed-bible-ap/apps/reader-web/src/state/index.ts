@@ -492,6 +492,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     editingPlaylist: signal<string | null>(null),
     /** The old reader's floating chat panel, above the reader bar. */
     chatOpen: signal(false),
+    /** `?chatFirst=true`: Chat stays on the bar outside a live session, first after the chapter controls. */
+    chatFirst: signal(false),
     /** What the chat panel shows: the list of chats, or the session's chat. */
     chatView: signal<"list" | "session">("list"),
     /** The live session's settings window, and the host's "end it or hand it over" question. */
@@ -699,6 +701,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   /** Open the chapter the URL names, else where the reader left off, else John 1; wire history and the outbox. */
   async function start(): Promise<() => void> {
+    // The old reader's About page (`/about`, `/{lang}/about`), read before the first navigation rewrites the address.
+    const about =
+      typeof location !== "undefined"
+        ? /^\/(?:([a-z]{2,3}(?:-[a-z0-9]+)?)\/)?about\/?$/i.exec(
+            location.pathname
+          )
+        : null;
     // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
     if (typeof location !== "undefined") {
       const legacy = legacyTarget(location.pathname, location.search);
@@ -844,6 +853,17 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
               : null;
       if (policy) {
         ui.policy.value = policy;
+        ui.pane.value = "about";
+      }
+      // The old reader's other links: `?today=open`, `?search=open`, `?chatFirst=true` (Chat always on the bar, first;
+      // a phone's fourth tab), and its About page at `/about` or `/{lang}/about`.
+      if (q.get("today") === "open") ui.pane.value = "today";
+      if (q.get("search") === "open") ui.searchOpen.value = true;
+      if (q.get("chatFirst")?.toLowerCase() === "true")
+        ui.chatFirst.value = true;
+      if (about) {
+        if (about[1] && AVAILABLE_LANGUAGES.includes(about[1]))
+          void setLanguage(about[1]);
         ui.pane.value = "about";
       }
       // `?tutorial=<id>&tutorialStep=<n>` starts a tour once the page has drawn.

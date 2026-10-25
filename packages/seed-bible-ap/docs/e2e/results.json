@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:33 UTC",
+  "when": "2026-10-25 09:38 UTC",
   "results": [
     {
       "id": "R6",
@@ -9,34 +9,34 @@
       "checks": "?embed=minimal hides the sidebar and toolbars; ?theme=dark applies the dark theme",
       "mark": "✅",
       "note": "embed hides the chrome; data-sb-theme=\"dark\"",
-      "ms": 4701
+      "ms": 4680
     },
     {
-      "id": "MS1",
+      "id": "CH1",
+      "section": "9. Reading together",
+      "title": "The chat panel",
+      "checks": "The host starts a session; the bar gains Chat, which opens the old reader's chat panel listing Session chat and Study companion. A guest joins: the host's chat says 'Flow guest joined'. The guest types @ and picks the host from the list, adds 'see John 3:16': the host sees 'Flow guest is typing...', then the line with their @name marked and John 3:16 as a link, which opens John 3 with verse 16 chosen. With the chat closed, '@everyone hello' puts @ on the host's Chat button; opening the chat clears it",
+      "mark": "✅",
+      "note": "Chat listed Session chat and Study companion; the join, typing, the @mention, the John 3:16 link and the @ badge all worked",
+      "ms": 43354
+    },
+    {
+      "id": "L2",
+      "section": "9. Reading together",
+      "title": "Show everyone, the roster, chat, the record",
+      "checks": "Host starts a session (a record is kept in the Library; its path on hover); a guest joins; the guest selects 3:16 and the host's roster says so; the host shows everyone 3:9 and the guest sees the ribbon; a chat line from the guest reaches the host",
+      "mark": "✅",
+      "note": "record kept; roster shows the guest at verse 16; the guest saw verse 9 shown; chat reached the host (code FH45HD)",
+      "ms": 43710
+    },
+    {
+      "id": "TB1",
       "section": "3. Reading",
-      "title": "The phone's Theme & text sheet",
-      "checks": "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
+      "title": "The old reader's bottom bar; every action within reach",
+      "checks": "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
       "mark": "✅",
-      "note": "text m → l → m; spacing normal → relaxed and back; UI size L then M; keep awake toggled; Go to all settings opened Settings",
-      "ms": 1949
-    },
-    {
-      "id": "VS1",
-      "section": "4. Marking the text",
-      "title": "The phone's verse sheet",
-      "checks": "On an iPhone 13, tapping John 3:3 brings up the old reader's sheet along the bottom in place of the tabs: a handle, ✕, 'John 3:3' and four cards Highlight · Save · Note · Copy, with 'Swipe up to see more'. A tap on the handle shows Share and Compare; a swipe down closes the sheet and the tabs come back. Highlight turns it into the colour strip with ← and the eraser; a colour highlights the verse and closes the sheet",
-      "mark": "✅",
-      "note": "cards Highlight · Save · Note · Copy in place of the tabs; the handle showed Share and Compare; a swipe down closed it; Highlight → the strip with ← and the eraser; a colour highlighted 3:3",
-      "ms": 2849
-    },
-    {
-      "id": "H1",
-      "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
-      "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 1142
+      "note": "desktop bar: Books · Search · Discover · Places map · Study companion · More; under More: login Sign in, group_add Live session, today Today, sticky_note_2 Notes, queue_music Library, library_books Your content, fullscreen Full screen, dark_mode Themes; Books and Search open; on a phone all 9 actions reachable",
+      "ms": 1367
     },
     {
       "id": "PH1",
@@ -45,25 +45,16 @@
       "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
       "mark": "✅",
       "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
-      "ms": 1524
+      "ms": 1471
     },
     {
-      "id": "SW1",
-      "section": "3. Reading",
-      "title": "The phone's swipe shows the next chapter",
-      "checks": "On an iPhone 13 at John 3, dragging the page to the left moves it with the finger and John 4 slides in beside it with its title and text; letting go part-way springs back to John 3, and a full swipe lands on John 4. Dragging right from John 4 shows John 3 coming in from the left",
-      "mark": "✅",
-      "note": "mid-drag John 4 at 248px; a short drag stayed; a full one landed on John 4; dragging right brought John 3 in at -248px",
-      "ms": 2029
-    },
-    {
-      "id": "EM1",
+      "id": "LK2",
       "section": "13. Links and embedding",
-      "title": "The embed's own controls",
-      "checks": "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+      "title": "The old reader's page links",
+      "checks": "/en/about opens About; ?today=open opens Today; ?search=open opens the floating search; ?chatFirst=true puts Chat first on the desktop bar outside a live session, and on a phone makes Chat the fourth tab with Search under More",
       "mark": "✅",
-      "note": "header: Open in New Tab · Text settings; the bar went to John 4; Open in New Tab opened /read/BSB/JHN/4; verse: Copy · Compare · Share · Cancel; the sheet without Go to all settings",
-      "ms": 4667
+      "note": "/en/about → About; ?today=open → Today; ?search=open → search; desktop: Books · Search · Chat · Discover; phone: Today · You · Bible · Chat · More, Search under More",
+      "ms": 13929
     }
   ]
 }

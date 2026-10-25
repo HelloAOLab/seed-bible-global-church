@@ -5805,4 +5805,88 @@ export const MORE_FLOWS: Flow[] = [
       return `header: ${actions.join(" · ")}; the bar went to John 4; Open in New Tab opened ${new URL(opened).pathname}; verse: ${joined}; the sheet without Go to all settings`;
     },
   },
+  {
+    id: "LK2",
+    section: "13. Links and embedding",
+    title: "The old reader's page links",
+    rows: ["Links from seedbible.org"],
+    checks:
+      "/en/about opens About; ?today=open opens Today; ?search=open opens the floating search; ?chatFirst=true puts Chat first on the desktop bar outside a live session, and on a phone makes Chat the fourth tab with Search under More",
+    run: async (c) => {
+      const page = c.page;
+      const seen: string[] = [];
+      await c.open("/en/about");
+      await page
+        .locator(".sb-about")
+        .waitFor({ timeout: 8000 })
+        .catch(() => {
+          throw new Error("/en/about did not open About");
+        });
+      seen.push("/en/about → About");
+      await c.open(`${CH}?today=open`);
+      await page
+        .locator(".sb-today-container")
+        .waitFor({ timeout: 8000 })
+        .catch(() => {
+          throw new Error("?today=open did not open Today");
+        });
+      seen.push("?today=open → Today");
+      await c.open(`${CH}?search=open`);
+      await page
+        .locator(".sb-floating-search-panel")
+        .waitFor({ timeout: 8000 })
+        .catch(() => {
+          throw new Error("?search=open did not open the search box");
+        });
+      seen.push("?search=open → search");
+      await c.open(`${CH}?chatFirst=true`);
+      const words = await page
+        .locator(".sb-reader-toolbar .sb-reader-toolbar-button-label:visible")
+        .allInnerTexts();
+      const books = words.indexOf("Books");
+      const chatAt = words.indexOf("Chat");
+      if (chatAt < 0)
+        throw new Error(`no Chat on the bar: ${words.join(", ")}`);
+      const before = words
+        .slice(0, chatAt)
+        .filter((w) => !["Books", "Search"].includes(w));
+      if (books < 0 || before.length)
+        throw new Error(
+          `Chat is not first after the chapter controls: ${words.join(", ")}`
+        );
+      seen.push(`desktop: ${words.slice(0, chatAt + 2).join(" · ")}`);
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      c.watch(phone);
+      try {
+        await c.open(`${CH}?chatFirst=true`, phone);
+        await c.settleTours(phone);
+        const tabs = await phone
+          .locator(".sb-phone-nav .sb-reader-toolbar-mobile-tab-button:visible")
+          .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
+        if (tabs.slice(0, 4).join() !== "Today,You,Bible,Chat")
+          throw new Error(`phone tabs: ${tabs.join(", ")}`);
+        await phone.locator(".sb-phone-more-tab > button").click();
+        await phone
+          .locator(".sb-mobile-more-menu")
+          .getByRole("menuitem", { name: "Search" })
+          .or(
+            phone.locator(".sb-mobile-more-menu button", { hasText: "Search" })
+          )
+          .first()
+          .waitFor({ timeout: 3000 })
+          .catch(() => {
+            throw new Error("Search is not under More");
+          });
+        seen.push(`phone: ${tabs.join(" · ")}, Search under More`);
+      } finally {
+        await ctx.close();
+      }
+      return seen.join("; ");
+    },
+  },
 ];
