@@ -1006,7 +1006,6 @@
   "friend-invite-unavailable": "This invitation can't be opened",
   "friend-invite-unavailable-why": "The Home says: {{error}}. Ask your friend to send you a new one.",
   "friend-joined-heading": "Joined from your invitation",
-  "friend-request-from-invite": "accepted your invitation to {{email}}",
   "resend": "Resend",
   "resend-invitation-to": "Send the invitation to {{email}} again",
   "send-friend-invitation": "Send invitation",
@@ -1040,5 +1039,7 @@
   "invite-welcome-lead": "Read the Bible together with {{name}}. Friends see what each other share, and when the other is reading.",
   "invite-welcome-title": "{{name}} invited you to Seed Bible",
   "invite-yours": "This is your own invitation",
-  "not-now": "Not now"
+  "not-now": "Not now",
+  "friend-finish-adding": "Finish adding",
+  "friend-joined-line": "accepted your invitation"
 }

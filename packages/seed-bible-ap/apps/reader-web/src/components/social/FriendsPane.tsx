@@ -240,7 +240,6 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     name: myName || t("a-friend", { defaultValue: "A friend" }),
     defaultValue: "{{name}} would like to be friends on Seed Bible:",
   });
-  const incoming = friendship.requests.value;
   const friends = today.friends.value;
   const sent = today.requested.value;
   const invitations = state.invites.sent.value;
@@ -251,12 +250,22 @@ export function FriendsPane({ state }: { state: ReaderState }) {
       .filter((i) => i.acceptedBy)
       .map((i) => [i.acceptedBy!.toLowerCase(), i.email])
   );
-  // They joined but haven't added you yet: your Add is the whole friendship's first half.
-  const joined = [...joinedFrom].filter(
-    ([agent]) => standingOf(today.friendsView.value, agent) === "none"
+  // They joined from your invitation and are not friends yet: inviting them was your yes, so this is one tap to
+  // finish, never a request to weigh with Decline — whether or not their side has landed.
+  const joined = [...joinedFrom].filter(([agent]) => {
+    const st = standingOf(today.friendsView.value, agent);
+    return st === "none" || st === "asked-you";
+  });
+  const incoming = friendship.requests.value.filter(
+    (r) => !joinedFrom.has(r.agent.toLowerCase())
   );
+  // A name, else the email they were invited at, before a bare address.
   const nameOf = (agent: string, name?: string | null) =>
-    today.profiles.value[agent.toLowerCase()]?.displayName ?? name ?? agent;
+    today.profiles.value[agent.toLowerCase()]?.displayName ??
+    (name && !/^0x[0-9a-f]{40}$/i.test(name) ? name : null) ??
+    joinedFrom.get(agent.toLowerCase()) ??
+    name ??
+    agent;
   const here = (agent: string) =>
     state.presence.friends.value.find(
       (f) => f.agent.toLowerCase() === agent.toLowerCase()
@@ -279,14 +288,20 @@ export function FriendsPane({ state }: { state: ReaderState }) {
               </Heading>
               <ul className="sb-friends-list">
                 {joined.map(([agent, email]) => {
-                  const name = nameOf(agent, email);
+                  const name = nameOf(agent);
                   return (
                     <li key={agent} className="sb-friends-row">
                       <Person
                         name={name}
                         onOpen={() => setViewing({ agent, name })}
                         picture={today.profiles.value[agent]?.picture}
-                        subtitle={email}
+                        subtitle={
+                          name === email
+                            ? t("friend-joined-line", {
+                                defaultValue: "accepted your invitation",
+                              })
+                            : email
+                        }
                       />
                       <span className="sb-friends-row-actions">
                         <button
@@ -298,8 +313,8 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                           })}
                           onClick={() => friendship.add(agent, name)}
                         >
-                          {t("add-friend-button", {
-                            defaultValue: "Add friend",
+                          {t("friend-finish-adding", {
+                            defaultValue: "Finish adding",
                           })}
                         </button>
                       </span>
@@ -326,17 +341,9 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                         picture={
                           today.profiles.value[r.agent.toLowerCase()]?.picture
                         }
-                        subtitle={
-                          joinedFrom.has(r.agent.toLowerCase())
-                            ? t("friend-request-from-invite", {
-                                email: joinedFrom.get(r.agent.toLowerCase()),
-                                defaultValue:
-                                  "accepted your invitation to {{email}}",
-                              })
-                            : t("friend-request-line", {
-                                defaultValue: "wants to be friends",
-                              })
-                        }
+                        subtitle={t("friend-request-line", {
+                          defaultValue: "wants to be friends",
+                        })}
                       />
                       <span className="sb-friends-row-actions">
                         <button
