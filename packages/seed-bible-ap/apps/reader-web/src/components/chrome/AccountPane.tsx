@@ -1174,38 +1174,282 @@ export function TutorialsCard({ state }: { state: ReaderState }) {
 /** Extensions: each one switched on or off. */
 export function ExtensionsCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
+  const ext = state.extensions;
+  const [tab, setTab] = useState<"installed" | "available">("installed");
+  const [configuring, setConfiguring] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const all = ext.registered.value;
+  const installed = all.filter((r) => ext.enabled.value.has(r.id));
+  const available = all.filter((r) => !ext.enabled.value.has(r.id));
+  const list = tab === "installed" ? installed : available;
+  const reg = configuring ? all.find((r) => r.id === configuring) : null;
+
+  if (reg?.settings)
+    return (
+      <section className="sb-settings-section sb-extension-settings">
+        <button
+          type="button"
+          className="sb-settings-back"
+          onClick={() => setConfiguring(null)}
+        >
+          <span className="material-symbols-outlined">arrow_back</span>{" "}
+          {t("extensions", { defaultValue: "Extensions" })}
+        </button>
+        <h3 className="sb-settings-subheading">{reg.label}</h3>
+        {Object.entries(reg.settings).map(([key, spec]) => {
+          const value = ext.settingOf(reg.id, key);
+          const id = `sb-ext-${reg.id}-${key}`;
+          const set = (v: string | number | boolean) =>
+            void ext.setSetting(reg.id, key, v);
+          return (
+            <div key={key} className="sb-settings-field-row">
+              <label className="sb-settings-field-label" htmlFor={id}>
+                {spec.label}
+              </label>
+              {spec.type === "switch" ? (
+                <input
+                  id={id}
+                  type="checkbox"
+                  checked={value === true}
+                  onChange={(e) => set((e.target as HTMLInputElement).checked)}
+                />
+              ) : spec.type === "choice" ? (
+                <select
+                  id={id}
+                  value={String(value)}
+                  onChange={(e) => set((e.target as HTMLSelectElement).value)}
+                >
+                  {(spec.options ?? []).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={id}
+                  className="sb-note-editor"
+                  type={spec.type === "number" ? "number" : "text"}
+                  min={spec.min}
+                  max={spec.max}
+                  value={String(value ?? "")}
+                  onChange={(e) => {
+                    const raw = (e.target as HTMLInputElement).value;
+                    if (spec.type !== "number") return set(raw);
+                    const n = Number(raw);
+                    if (!Number.isFinite(n)) return;
+                    set(
+                      Math.min(
+                        spec.max ?? Infinity,
+                        Math.max(spec.min ?? -Infinity, Math.round(n))
+                      )
+                    );
+                  }}
+                />
+              )}
+              {spec.description && (
+                <p className="sb-settings-field-description">
+                  {spec.description}
+                </p>
+              )}
+            </div>
+          );
+        })}
+        <div className="sb-extension-footer-actions">
+          <button
+            type="button"
+            className="sb-settings-action-button"
+            onClick={() => void ext.resetSettings(reg.id)}
+          >
+            {t("reset-to-defaults", { defaultValue: "Reset to defaults" })}
+          </button>
+        </div>
+      </section>
+    );
+
+  const download = () => {
+    const blob = new Blob([JSON.stringify(ext.exportSet(), null, 2)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "seed-bible-extensions.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const upload = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      void file
+        .text()
+        .then((text) => ext.importSet(JSON.parse(text)))
+        .then(() =>
+          setMessage(
+            t("extensions-uploaded", {
+              defaultValue: "Your extensions were put back from the file.",
+            })
+          )
+        )
+        .catch(() =>
+          setMessage(
+            t("extensions-upload-failed", {
+              defaultValue: "That file is not a set of extensions.",
+            })
+          )
+        );
+    };
+    input.click();
+  };
+
   return (
-    <>
-      <div className="sb-account-card">
-        <p className="sb-small">
-          <strong>{t("extensions", { defaultValue: "Extensions" })}</strong>
-        </p>
-        {state.extensions.registered.value.map((ext) => (
-          <label key={ext.id} className="sb-small sb-check">
-            <input
-              type="checkbox"
-              checked={state.extensions.enabled.value.has(ext.id)}
-              onChange={(e) =>
-                void state.extensions.setEnabled(
-                  ext.id,
-                  (e.target as HTMLInputElement).checked
-                )
-              }
-            />{" "}
-            {ext.label}
-            {ext.description ? (
-              <span className="sb-muted"> — {ext.description}</span>
-            ) : null}
-            {state.extensions.errors.value[ext.id] ? (
-              <span className="sb-pane-error">
-                {" "}
-                ({state.extensions.errors.value[ext.id]})
-              </span>
-            ) : null}
-          </label>
+    <section className="sb-settings-section">
+      <div
+        className="sb-extensions-tabs"
+        role="tablist"
+        aria-label={t("extensions", { defaultValue: "Extensions" })}
+      >
+        {(["installed", "available"] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={tab === k}
+            className={`sb-extensions-tab${tab === k ? " sb-extensions-tab-active" : ""}`}
+            onClick={() => setTab(k)}
+          >
+            {k === "installed"
+              ? t("installed-extensions", { defaultValue: "Installed" })
+              : t("available-extensions", { defaultValue: "Available" })}
+            <span className="sb-extensions-tab-count">
+              {(k === "installed" ? installed : available).length}
+            </span>
+          </button>
         ))}
       </div>
-    </>
+      <div role="tabpanel">
+        {list.length === 0 ? (
+          <div className="sb-settings-empty-state">
+            <p>
+              {tab === "installed"
+                ? t("no-installed-extensions", {
+                    defaultValue: "You haven't installed any extensions yet.",
+                  })
+                : t("no-available-extensions", {
+                    defaultValue:
+                      "There are no more extensions available to install.",
+                  })}
+            </p>
+          </div>
+        ) : (
+          <ul className="sb-extensions-list">
+            {list.map((r) => {
+              const on = ext.enabled.value.has(r.id);
+              const error = ext.errors.value[r.id];
+              return (
+                <li
+                  key={r.id}
+                  className="sb-extension-row"
+                  data-extension={r.id}
+                >
+                  <div className="sb-extension-row-body">
+                    <span
+                      className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${on ? "installed" : "none"}`}
+                      title={
+                        on
+                          ? t("extension-state-installed", {
+                              defaultValue: "Installed",
+                            })
+                          : t("extension-state-none", {
+                              defaultValue: "Not installed",
+                            })
+                      }
+                    >
+                      {on ? "check_circle" : "extension"}
+                    </span>
+                    <div className="sb-extension-row-content">
+                      <span className="sb-extension-name">{r.label}</span>
+                      {r.description && (
+                        <span className="sb-extension-description">
+                          {r.description}
+                        </span>
+                      )}
+                      {error && <span className="sb-pane-error">{error}</span>}
+                    </div>
+                    <div className="sb-extension-row-actions">
+                      {on && r.settings && (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          aria-label={t("configure-extension", {
+                            defaultValue: "Configure",
+                          })}
+                          title={t("configure-extension", {
+                            defaultValue: "Configure",
+                          })}
+                          onClick={() => setConfiguring(r.id)}
+                        >
+                          <span className="material-symbols-outlined">
+                            tune
+                          </span>
+                        </button>
+                      )}
+                      {on ? (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          aria-label={t("uninstall", {
+                            defaultValue: "Uninstall",
+                          })}
+                          title={t("uninstall", { defaultValue: "Uninstall" })}
+                          onClick={() => void ext.setEnabled(r.id, false)}
+                        >
+                          <span className="material-symbols-outlined">
+                            delete
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          aria-label={t("install", { defaultValue: "Install" })}
+                          title={t("install", { defaultValue: "Install" })}
+                          onClick={() => void ext.setEnabled(r.id, true)}
+                        >
+                          <span className="material-symbols-outlined">
+                            download
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      {message && <p className="sb-small sb-muted">{message}</p>}
+      <div className="sb-extension-footer-actions">
+        <button
+          type="button"
+          className="sb-settings-action-button"
+          onClick={download}
+        >
+          {t("download-extensions", { defaultValue: "Download Extensions" })}
+        </button>
+        <button
+          type="button"
+          className="sb-settings-action-button"
+          onClick={upload}
+        >
+          {t("upload-extensions", { defaultValue: "Upload Extensions" })}
+        </button>
+      </div>
+    </section>
   );
 }
 

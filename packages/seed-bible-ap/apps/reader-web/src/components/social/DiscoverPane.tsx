@@ -138,7 +138,13 @@ export function ProviderSection({
     return () => {
       live = false;
     };
-  }, [provider.id, chapterRef, chapter, selected]);
+  }, [
+    provider.id,
+    chapterRef,
+    chapter,
+    selected,
+    state.extensions.settings.value,
+  ]);
   return (
     <div className="sb-content-section">
       <div className="sb-content-section-head">

@@ -78,19 +78,35 @@ export interface ExtensionContext {
     open: (id: string) => void;
     close: (id: string) => void;
   };
+  /** This extension's own setting (its saved value, else the default it declared). */
+  setting: (key: string) => SettingValue | undefined;
 }
 
 export type Cleanup = () => void;
+export type SettingValue = string | number | boolean;
+/** One field of an extension's settings form (the old reader's text, number, switch and choice fields). */
+export interface SettingSpec {
+  type: "text" | "number" | "switch" | "choice";
+  label: string;
+  description?: string;
+  default: SettingValue;
+  options?: Array<[string, string]>;
+  min?: number;
+  max?: number;
+}
 export interface ExtensionRegistration {
   id: string;
   label: string;
   description?: string;
   /** On by default for a new reader. */
   defaultEnabled?: boolean;
+  /** The settings it offers under Configure, by key. */
+  settings?: Record<string, SettingSpec>;
   init: (context: ExtensionContext) => Iterable<Cleanup>;
 }
 
 const KEY = "extensions:enabled";
+const SETTINGS_KEY = "extensions:settings";
 
 function registry<T extends { id: string }>(): {
   items: Signal<T[]>;
@@ -117,9 +133,64 @@ export function createExtensionHost(stores: ReaderStores) {
   const errors = signal<Record<string, string>>({});
   let state: ReaderState | null = null;
   let saved: string[] | null = null;
-  const ready = stores.prefs.get(KEY).then((v) => {
-    if (Array.isArray(v)) saved = v as string[];
+  /** Each extension's changed settings (what is not here is its default). */
+  const settings = signal<Record<string, Record<string, SettingValue>>>({});
+  const ready = Promise.all([
+    stores.prefs.get(KEY).then((v) => {
+      if (Array.isArray(v)) saved = v as string[];
+    }),
+    stores.prefs.get(SETTINGS_KEY).then((v) => {
+      if (v && typeof v === "object")
+        settings.value = v as Record<string, Record<string, SettingValue>>;
+    }),
+  ]);
+  const settingOf = (id: string, key: string): SettingValue | undefined => {
+    const own = settings.value[id]?.[key];
+    if (own !== undefined) return own;
+    return registered.value.find((r) => r.id === id)?.settings?.[key]?.default;
+  };
+  async function setSetting(id: string, key: string, value: SettingValue) {
+    settings.value = {
+      ...settings.value,
+      [id]: { ...(settings.value[id] ?? {}), [key]: value },
+    };
+    await stores.prefs.set(SETTINGS_KEY, settings.value);
+  }
+  async function resetSettings(id: string) {
+    const { [id]: _gone, ...rest } = settings.value;
+    settings.value = rest;
+    await stores.prefs.set(SETTINGS_KEY, settings.value);
+  }
+  /** The installed set and settings as a file to keep (the old reader's Download extensions). */
+  const exportSet = () => ({
+    version: 1,
+    enabled: [...enabled.value],
+    settings: settings.value,
   });
+  /** A kept set put back: those extensions on, the rest off, their settings restored. */
+  async function importSet(raw: unknown) {
+    const v = raw as {
+      enabled?: unknown;
+      settings?: Record<string, Record<string, SettingValue>>;
+    };
+    if (!v || !Array.isArray(v.enabled))
+      throw new Error("not an extension set");
+    const known = new Set(registered.value.map((r) => r.id));
+    const want = new Set(
+      (v.enabled as unknown[]).filter(
+        (x): x is string => typeof x === "string" && known.has(x)
+      )
+    );
+    for (const r of registered.value)
+      if (want.has(r.id) !== enabled.value.has(r.id))
+        await setEnabled(r.id, want.has(r.id));
+    if (v.settings && typeof v.settings === "object") {
+      settings.value = Object.fromEntries(
+        Object.entries(v.settings).filter(([k]) => known.has(k))
+      );
+      await stores.prefs.set(SETTINGS_KEY, settings.value);
+    }
+  }
 
   function register(reg: ExtensionRegistration) {
     registered.value = [
@@ -129,7 +200,7 @@ export function createExtensionHost(stores: ReaderStores) {
     if (state && enabled.value.has(reg.id)) install(reg.id);
   }
 
-  function context(): ExtensionContext {
+  function context(id: string): ExtensionContext {
     if (!state)
       throw new Error("the extension host is not bound to the reader state");
     const s = state;
@@ -146,6 +217,7 @@ export function createExtensionHost(stores: ReaderStores) {
             s.ui.pane.value = "none";
         },
       },
+      setting: (key) => settingOf(id, key),
     };
   }
 
@@ -154,7 +226,7 @@ export function createExtensionHost(stores: ReaderStores) {
     if (!reg || cleanups.has(id) || !state) return;
     const done: Cleanup[] = [];
     try {
-      for (const c of reg.init(context())) done.push(c);
+      for (const c of reg.init(context(id))) done.push(c);
       cleanups.set(id, done);
       errors.value = Object.fromEntries(
         Object.entries(errors.value).filter(([k]) => k !== id)
@@ -214,6 +286,12 @@ export function createExtensionHost(stores: ReaderStores) {
     bind,
     setEnabled,
     isEnabled: (id: string) => enabled.value.has(id),
+    settings,
+    settingOf,
+    setSetting,
+    resetSettings,
+    exportSet,
+    importSet,
   };
 }
 

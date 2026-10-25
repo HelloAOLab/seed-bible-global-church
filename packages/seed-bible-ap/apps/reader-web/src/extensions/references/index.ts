@@ -103,7 +103,8 @@ export function itemsFor(
   refs: ChapterReferences,
   verses: number[],
   bookName: (id: string) => string,
-  max = 40
+  max = 40,
+  perVerse = 3
 ): Array<DiscoverItem & { ref: CrossReference; fromVerse: number }> {
   const wanted = verses.length
     ? refs.references.filter((r) => verses.includes(r.verse))
@@ -114,7 +115,7 @@ export function itemsFor(
     const sorted = [...v.references].sort(
       (a, b) => (b.score ?? 0) - (a.score ?? 0)
     );
-    for (const r of sorted.slice(0, verses.length ? 12 : 3)) {
+    for (const r of sorted.slice(0, verses.length ? 12 : perVerse)) {
       const to = `${bookName(r.book)} ${r.chapter}:${r.verse}${r.endVerse && r.endVerse !== r.verse ? `–${r.endVerse}` : ""}`;
       out.push({
         id: `${v.verse}→${r.book}.${r.chapter}.${r.verse}`,
@@ -135,6 +136,17 @@ const references: ExtensionRegistration = {
   id: "references",
   label: "Cross-references",
   description: "Passages related to the verses on screen, in Discover.",
+  settings: {
+    perVerse: {
+      type: "number",
+      label: "References per verse",
+      description:
+        "How many related passages to show for each verse when none is chosen (chosen verses show up to 12).",
+      default: 3,
+      min: 1,
+      max: 12,
+    },
+  },
   init: function* (ctx) {
     const state: ReaderState = ctx.state;
     yield ctx.discover.registerProvider({
@@ -150,23 +162,26 @@ const references: ExtensionRegistration = {
         if (!refs) return [];
         const name = (id: string) =>
           d.books.find((b) => b.id === id)?.name ?? id;
-        return itemsFor(refs, d.selectedVerses, name).map((it) => ({
-          ...it,
-          onOpen: () => {
-            void state.reading
-              .goTo(
-                state.reading.translationId.value,
-                it.ref.book,
-                it.ref.chapter
-              )
-              .then(() =>
-                state.selection.select(
-                  it.ref.verse,
-                  it.ref.endVerse ?? it.ref.verse
+        const perVerse = Number(ctx.setting("perVerse")) || 3;
+        return itemsFor(refs, d.selectedVerses, name, 40, perVerse).map(
+          (it) => ({
+            ...it,
+            onOpen: () => {
+              void state.reading
+                .goTo(
+                  state.reading.translationId.value,
+                  it.ref.book,
+                  it.ref.chapter
                 )
-              );
-          },
-        }));
+                .then(() =>
+                  state.selection.select(
+                    it.ref.verse,
+                    it.ref.endVerse ?? it.ref.verse
+                  )
+                );
+            },
+          })
+        );
       },
     });
   },

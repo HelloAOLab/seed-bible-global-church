@@ -179,6 +179,26 @@ export class FlowContext {
     await page.locator(".sb-verse-toolbar-clear").click();
   }
 
+  /** Extensions → Available → the named one's Install (nothing when it is already installed). */
+  async installExtension(scope: Locator, name: string): Promise<void> {
+    const installed = scope.locator(".sb-extensions-tab", {
+      hasText: /installed/i,
+    });
+    await installed.click();
+    const row = scope.locator(".sb-extension-row", {
+      has: scope.page().locator(".sb-extension-name", { hasText: name }),
+    });
+    if (await row.count()) return;
+    await scope
+      .locator(".sb-extensions-tab", { hasText: /available/i })
+      .click();
+    await row.getByRole("button", { name: "Install" }).click();
+    await scope
+      .locator(".sb-extensions-tab", { hasText: /installed/i })
+      .click();
+    await row.waitFor({ timeout: 5000 });
+  }
+
   /** Answer a "Delete …?" check when one comes up (playlists and plans ask first, as the old reader does). */
   async confirmDelete(page: Page = this.page): Promise<void> {
     const box = page.locator(".sb-confirm-delete").last();

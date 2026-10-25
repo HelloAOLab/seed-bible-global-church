@@ -1,42 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:05 UTC",
+  "when": "2026-10-25 09:10 UTC",
   "results": [
     {
-      "id": "S1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Discover for a chapter",
-      "checks": "The Discover pane opens for John 3 and lists what was published (or says nothing yet) without an error",
-      "mark": "✅",
-      "note": "Discover · John 3 refresh close Nothing released for this chapter yet. Publish one of your notes to ",
-      "ms": 3110
-    },
-    {
-      "id": "G17",
+      "id": "X7",
       "section": "12. Extensions",
-      "title": "Videos and articles in Discover",
-      "checks": "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
+      "title": "Transcript (read-only)",
+      "checks": "Signed in: Account → Extensions → Available → Transcript → Install; Transcript → choose a one-second recording; it is decoded on the device and marked done with an empty transcript — silence is never sent to the speech model, which would invent words for it",
       "mark": "✅",
-      "note": "picture cards by author; the Upper Room video played in place and its page opened (https://www.youtube.com/watch?v=1e5paRyG)",
-      "ms": 1371
-    },
-    {
-      "id": "G18",
-      "section": "12. Extensions",
-      "title": "People, places and events",
-      "checks": "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
-      "mark": "✅",
-      "note": "Abraham's card; Terah's card and Back; Genesis 11:29 opened at /read/BSB/GEN/11",
-      "ms": 1624
-    },
-    {
-      "id": "H1",
-      "section": "3. Reading",
-      "title": "The chapter header's actions",
-      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
-      "mark": "✅",
-      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
-      "ms": 958
+      "note": "silence.wav decoded on the device; done, with an empty transcript (silence is not sent)",
+      "ms": 34495
     }
   ]
 }

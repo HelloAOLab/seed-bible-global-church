@@ -37,7 +37,13 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
     return () => {
       live = false;
     };
-  }, [chapterRef, chapter, selected, providers.map((p) => p.id).join()]);
+  }, [
+    chapterRef,
+    chapter,
+    selected,
+    providers.map((p) => p.id).join(),
+    state.extensions.settings.value,
+  ]);
 
   if (ui.pane.value === "discover" || ui.embed.value) return null;
   const notes = state.annotations.forChapter(chapterRef).value;

@@ -3171,6 +3171,94 @@ export const MORE_FLOWS: Flow[] = [
       return `made, Watch recommended, published, picked (colours changed, Watch on), opened by link in a fresh browser; withdrawn and deleted`;
     },
   },
+  {
+    id: "EX1",
+    section: "12. Extensions",
+    title: "The Extensions page",
+    rows: ["Extensions"],
+    checks:
+      "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "the page";
+        await c.open(CH);
+        const discoverRefs = async () => {
+          // The source's own chip lists all of it (All shows the first few).
+          await c.page
+            .locator(".sb-discover-content-panel .sb-dcp-chip", {
+              hasText: /cross-references/i,
+            })
+            .click();
+          const sec = c.page
+            .locator(".sb-discover-content-panel .sb-discover-section", {
+              hasText: /cross-references/i,
+            })
+            .first();
+          await sec
+            .locator(".sb-discover-item")
+            .first()
+            .waitFor({ timeout: 20000 });
+          await c.page.waitForTimeout(500);
+          return sec.locator(".sb-discover-item").count();
+        };
+        const before = await discoverRefs();
+        const side = c.page.locator(".sb-tabs-sidebar");
+        await side.getByRole("button", { name: "Open settings" }).click();
+        await side.getByText("Extensions", { exact: true }).click();
+        await c.waitText(
+          side.locator(".sb-extensions-tabs"),
+          /installed\s*\d+[\s\S]*available\s*\d+/i,
+          5000
+        );
+        step = "Configure";
+        const refs = side.locator(
+          '.sb-extension-row[data-extension="references"]'
+        );
+        await refs.getByRole("button", { name: "Configure" }).click();
+        await side.getByLabel("References per verse").fill("1");
+        await side.getByLabel("References per verse").press("Tab");
+        const after = await discoverRefs();
+        if (!(after < before))
+          throw new Error(`cross-references ${before} → ${after}`);
+        await side.getByRole("button", { name: /reset to defaults/i }).click();
+        if (
+          (await side.getByLabel("References per verse").inputValue()) !== "3"
+        )
+          throw new Error("Reset did not put 3 back");
+        await side.locator(".sb-settings-back").first().click();
+        step = "Uninstall and Install";
+        const companion = side.locator(
+          '.sb-extension-row[data-extension="companion"]'
+        );
+        await companion.getByRole("button", { name: "Uninstall" }).click();
+        await c.page
+          .locator(
+            '.sb-reader-toolbar-desk button[aria-label="Study companion"]'
+          )
+          .waitFor({ state: "detached", timeout: 5000 });
+        await side
+          .locator(".sb-extensions-tab", { hasText: /available/i })
+          .click();
+        await companion.getByRole("button", { name: "Install" }).click();
+        await c.page
+          .locator(
+            '.sb-reader-toolbar-desk button[aria-label="Study companion"]'
+          )
+          .waitFor({ timeout: 5000 });
+        step = "Download Extensions";
+        const [dl] = await Promise.all([
+          c.page.waitForEvent("download", { timeout: 5000 }),
+          side.getByRole("button", { name: /download extensions/i }).click(),
+        ]);
+        if (dl.suggestedFilename() !== "seed-bible-extensions.json")
+          throw new Error(`file ${dl.suggestedFilename()}`);
+        return `tabs with counts; ${before} → ${after} cross-references at 1 per verse, reset; companion off and on; the set downloaded`;
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+    },
+  },
   // ── 12. Extensions ─────────────────────────────────────────────────────────────────────────────────────────
   {
     id: "X3",
@@ -3239,11 +3327,11 @@ export const MORE_FLOWS: Flow[] = [
     title: "Watch a Twitch stream",
     rows: ["Watch a Twitch stream"],
     checks:
-      "Account → Extensions → Twitch (watch) on; Watch → a channel name → Twitch's own player sits beside the text (read-only; nothing is sent to Twitch but the page load)",
+      "Account → Extensions → Available → Twitch (watch) → Install; Watch → a channel name → Twitch's own player sits beside the text (read-only; nothing is sent to Twitch but the page load)",
     run: async (c) => {
       await c.open(CH);
       const acct = await c.openAccount();
-      await c.check(acct, "Twitch (watch)").check();
+      await c.installExtension(acct, "Twitch (watch)");
       await c.pressToolbar("Watch");
       await c.page.getByPlaceholder(/twitch channel/i).fill("twitchdev");
       await c
@@ -3292,12 +3380,12 @@ export const MORE_FLOWS: Flow[] = [
     title: "Transcript (read-only)",
     rows: ["Transcript (read-only)"],
     checks:
-      "Signed in: Account → Extensions → Transcript on; Transcript → choose a one-second recording; it is decoded on the device and marked done with an empty transcript — silence is never sent to the speech model, which would invent words for it",
+      "Signed in: Account → Extensions → Available → Transcript → Install; Transcript → choose a one-second recording; it is decoded on the device and marked done with an empty transcript — silence is never sent to the speech model, which would invent words for it",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
       const acct = await c.openAccount();
-      await c.check(acct, "Transcript").check();
+      await c.installExtension(acct, "Transcript");
       await c.pressToolbar("Transcript");
       await c.pane().locator('input[type="file"]').first().setInputFiles({
         name: "silence.wav",

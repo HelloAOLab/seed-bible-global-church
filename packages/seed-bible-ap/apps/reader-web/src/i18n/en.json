@@ -905,5 +905,19 @@
   "play-video": "Play {{title}}",
   "powered-by-seed-bible-api": "Powered by Seed Bible API",
   "read-less": "Read less",
-  "read-more": "Read more"
+  "read-more": "Read more",
+  "available-extensions": "Available",
+  "configure-extension": "Configure",
+  "download-extensions": "Download Extensions",
+  "extension-state-installed": "Installed",
+  "extension-state-none": "Not installed",
+  "extensions-upload-failed": "That file is not a set of extensions.",
+  "extensions-uploaded": "Your extensions were put back from the file.",
+  "install": "Install",
+  "installed-extensions": "Installed",
+  "no-available-extensions": "There are no more extensions available to install.",
+  "no-installed-extensions": "You haven't installed any extensions yet.",
+  "reset-to-defaults": "Reset to defaults",
+  "uninstall": "Uninstall",
+  "upload-extensions": "Upload Extensions"
 }
