@@ -1,15 +1,33 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 10:26 UTC",
+  "when": "2026-10-25 10:29 UTC",
   "results": [
     {
-      "id": "BK1",
+      "id": "TL1",
       "section": "3. Reading",
-      "title": "The book picker: type and Enter, hold for a new tab",
-      "checks": "From Romans 8, Books → type 'John 3' and Enter opens John 3 (the book named, not 1 John); '1 John 2' and Enter opens 1 John 2. On an iPhone 13, holding a finger on John's chapter 5 opens John 5 in a new tab, the old one kept",
+      "title": "The translation window, grouped by language",
+      "checks": "The translation code opens the old reader's window (Esc on its download tip closes only the tip): English first and open with BSB ticked; the filter offers Complete / All / Popular translations and Popular keeps only the popular languages; searching 'Español' shows the Spanish section; ⓘ on a row shows its licence; share copies the translation's link; a download can be cancelled part way and its button comes back; Esc closes",
       "mark": "✅",
-      "note": "John 3 and 1 John 2 by typing; a held finger opened John 5 in a new tab beside John 3, John 5",
-      "ms": 10187
+      "note": "grouped by language with English first; filter, search, licence, share and a cancelled download all worked",
+      "ms": 7635
+    },
+    {
+      "id": "G5",
+      "section": "3. Reading",
+      "title": "Download a whole translation for offline",
+      "checks": "Translation picker → the download button on BSB; when done it shows as on the device; offline, a chapter never opened (Obadiah 1) reads; Remove takes it off",
+      "mark": "✅",
+      "note": "BSB downloaded; offline, Obadiah 1 reads (\"1This is the vision of Obadiah:\n\nThis is\")",
+      "ms": 2664
+    },
+    {
+      "id": "ER1",
+      "section": "3. Reading",
+      "title": "When a chapter can't be shown",
+      "checks": "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it and a card offers 'Save BSB for offline reading?' (Not now closes it). /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+      "mark": "✅",
+      "note": "Chapter unavailable with Reload and Choose a translation, Reload brought John 4 and the save-for-offline card; Tobit: Book not found, Go to Genesis 1 went there",
+      "ms": 5749
     }
   ]
 }

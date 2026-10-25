@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import { offerLanguageFor, useI18n } from "../../i18n";
+import { downloadWithToast } from "./OfflineRecovery";
 import { bibleLanguageToBcp47 } from "../../state/media/languages";
 import type { Translation } from "../../backend/bible";
 import {
@@ -294,14 +295,7 @@ function OfflineButtons(props: {
   const offline = state.offline;
   const going = offline.progress.value;
   const busy = !!going && going.id !== tr.id;
-  const start = () =>
-    void offline.download(tr).catch((e: unknown) => {
-      if ((e as Error)?.message !== CANCELLED)
-        state.ui.toast.value = {
-          key: "translation-download-failed",
-          values: { name: tr.shortName },
-        };
-    });
+  const start = () => void downloadWithToast(state, tr);
   if (going?.id === tr.id) {
     const percent =
       going.phase === "downloading" && going.fraction === 0.45

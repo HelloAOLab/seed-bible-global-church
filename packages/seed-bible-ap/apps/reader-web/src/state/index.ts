@@ -270,6 +270,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     tts.speak(verses, { lang: speechLang() });
   }
 
+  // A kept translation with a newer file in the list is fetched again as it is read (the old reader's update).
+  effect(() => {
+    offline.refreshIfNewer(readingOf().translation.value);
+  });
   const presence = createPresence({
     backend,
     stores,

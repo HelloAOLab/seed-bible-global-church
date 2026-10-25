@@ -17,6 +17,11 @@ function line(
         defaultValue: "Signed in as {{name}}",
         name: values["name"] ?? "",
       });
+    case "translation-downloaded":
+      return t("translation-downloaded", {
+        defaultValue: "{{name}} is now available offline",
+        name: values["name"] ?? "",
+      });
     case "added-to-reading-plan-session":
       return t("added-to-reading-plan-session", {
         defaultValue: "Added to session {{session}}",

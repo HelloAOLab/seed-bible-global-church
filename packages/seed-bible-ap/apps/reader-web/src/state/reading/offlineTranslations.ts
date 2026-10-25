@@ -238,9 +238,37 @@ export function createOfflineTranslations(deps: OfflineDeps) {
     return out;
   }
 
+  /** The old reader's recovery card: a chapter that failed came back on Reload, so offer to keep its translation
+   *  on the device — once a session for each, and not for one already offered or kept. */
+  const recoveryOffer = signal<Translation | null>(null);
+  const offeredRecovery = new Set<string>();
+  function offerRecovery(tr: Translation | null) {
+    if (!tr || has(tr.id) || offeredRecovery.has(tr.id)) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    offeredRecovery.add(tr.id);
+    recoveryOffer.value = tr;
+  }
+  /** A kept translation the list now names a newer file for is fetched again on its own (the old reader's
+   *  checkAndApplyUpdate), once per newer file; a device saving data keeps the Update button instead. */
+  const updatedTo = new Set<string>();
+  function refreshIfNewer(tr: Translation | null) {
+    if (!tr || !updateAvailable(tr) || progress.value) return;
+    const conn = (
+      navigator as Navigator & { connection?: { saveData?: boolean } }
+    ).connection;
+    if (conn?.saveData || navigator.onLine === false) return;
+    const mark = `${tr.id}:${tr.sha256}`;
+    if (updatedTo.has(mark)) return;
+    updatedTo.add(mark);
+    void download(tr).catch(() => undefined);
+  }
+
   return {
     downloaded,
     holding,
+    recoveryOffer,
+    offerRecovery,
+    refreshIfNewer,
     progress,
     error,
     errors,

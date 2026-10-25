@@ -3801,6 +3801,11 @@ export const MORE_FLOWS: Flow[] = [
       await item
         .locator(".sb-offline-btn.downloaded")
         .waitFor({ timeout: 180000 });
+      await c.waitText(
+        c.page.locator(".sb-toast"),
+        /BSB is now available offline/,
+        5000
+      );
       await c.page.keyboard.press("Escape");
       await c.page
         .locator(".sb-translation-picker")
@@ -6036,7 +6041,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "When a chapter can't be shown",
     rows: ["Offline reading"],
     checks:
-      "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it. /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+      "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it and a card offers 'Save BSB for offline reading?' (Not now closes it). /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 1280, height: 900 },
@@ -6067,6 +6072,11 @@ export const MORE_FLOWS: Flow[] = [
         await page.unroute("**/harness/ask");
         await err.getByRole("button", { name: "Reload" }).click();
         await c.verse(1, page).waitFor({ timeout: 20000 });
+        // Back on a retry: the old reader's card offers to keep BSB for offline.
+        const card = page.locator(".sb-offline-recovery");
+        await c.waitText(card, /save BSB for offline reading\?/i, 5000);
+        await card.getByRole("button", { name: "Not now" }).click();
+        await card.waitFor({ state: "detached", timeout: 3000 });
         await c.open("/read/BSB/TOB/1", page);
         const nf = page.locator(".sb-bible-reader-active .sb-reader-not-found");
         await c.waitText(
@@ -6076,7 +6086,7 @@ export const MORE_FLOWS: Flow[] = [
         );
         await nf.getByRole("button", { name: "Go to Genesis 1" }).click();
         await page.waitForURL(/\/read\/BSB\/GEN\/1/, { timeout: 8000 });
-        return "Chapter unavailable with Reload and Choose a translation, Reload brought John 4; Tobit: Book not found, Go to Genesis 1 went there";
+        return "Chapter unavailable with Reload and Choose a translation, Reload brought John 4 and the save-for-offline card; Tobit: Book not found, Go to Genesis 1 went there";
       } finally {
         await ctx.close();
       }

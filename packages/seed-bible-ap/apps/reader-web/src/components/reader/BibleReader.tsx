@@ -292,7 +292,13 @@ export function BibleReader({
             ) : (
               <button
                 className="sb-reader-error-retry"
-                onClick={() => void reading.retry()}
+                onClick={() =>
+                  void reading.retry().then(() => {
+                    // Back on a retry: offer to keep it for offline (the old reader's recovery card).
+                    if (!reading.error.value)
+                      state.offline.offerRecovery(reading.translation.value);
+                  })
+                }
               >
                 {t("reload", { defaultValue: "Reload" })}
               </button>
