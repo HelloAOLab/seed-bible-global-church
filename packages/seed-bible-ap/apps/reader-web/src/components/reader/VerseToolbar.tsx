@@ -27,6 +27,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   }, [copied]);
   const verses = state.selection.verses.value;
   const [picker, setPicker] = useState(false);
+  const [toolMenu, setToolMenu] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const key = verses.join();
   // The phone sheet: how much of its second row shows (px), how far a downward swipe has pulled it, and the drag.
@@ -53,6 +54,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
     setReveal(0);
     setDismiss(0);
     setOffset({ dx: 0, dy: 0 });
+    setToolMenu(null);
   }, [key]);
   useLayoutEffect(() => {
     if (row.current) setFull(row.current.scrollHeight);
@@ -277,17 +279,54 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       }}
     />
   ) : null;
-  const toolsA = tools.map((tool) => (
-    <Action
-      key={tool.id}
-      icon={tool.icon}
-      label={tool.label}
-      onClick={() => {
-        tool.onSelect({ chapterRef, start, end, verses });
-        state.selection.clear();
-      }}
-    />
-  ));
+  const toolCtx = { chapterRef, start, end, verses };
+  const toolsA = tools.map((tool) => {
+    const items = tool.items?.(toolCtx) ?? [];
+    return (
+      <div key={tool.id} className="sb-verse-toolbar-tool-anchor">
+        <Action
+          icon={tool.icon}
+          label={tool.label}
+          pressed={items.length > 1 ? toolMenu === tool.id : undefined}
+          onClick={() => {
+            if (items.length > 1) {
+              setToolMenu(toolMenu === tool.id ? null : tool.id);
+              return;
+            }
+            tool.onSelect(toolCtx);
+            state.selection.clear();
+          }}
+        />
+        {items.length > 1 && toolMenu === tool.id && (
+          <div className="sb-tool-context-menu" role="menu">
+            {items.map((it) => (
+              <button
+                key={it.id}
+                type="button"
+                role="menuitem"
+                className="sb-tool-context-menu-item"
+                onClick={() => {
+                  setToolMenu(null);
+                  it.onSelect(toolCtx);
+                  state.selection.clear();
+                }}
+              >
+                {it.icon && (
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
+                    {it.icon}
+                  </span>
+                )}
+                <span>{it.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  });
   const shareA = (
     <Action
       key="share"

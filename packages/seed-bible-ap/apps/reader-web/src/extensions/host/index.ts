@@ -25,6 +25,15 @@ export interface VerseTool {
   priority?: number;
   isVisible?: (ctx: VerseToolContext) => boolean;
   onSelect: (ctx: VerseToolContext) => void;
+  /** A short list to choose from instead (the old reader's tool sub-menus, e.g. Ask AI with several providers): when
+   *  it gives two or more, the tool opens them as a menu; fewer, and onSelect runs. */
+  items?: (ctx: VerseToolContext) => VerseToolItem[];
+}
+export interface VerseToolItem {
+  id: string;
+  label: string;
+  icon?: string;
+  onSelect: (ctx: VerseToolContext) => void;
 }
 
 export interface DiscoverItem {

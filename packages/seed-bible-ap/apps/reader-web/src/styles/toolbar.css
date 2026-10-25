@@ -1719,3 +1719,9 @@
     display: none;
   }
 }
+
+/* A verse tool with a short list opens it above itself (the old reader's tool sub-menus). */
+.sb-verse-toolbar-tool-anchor {
+  position: relative;
+  display: flex;
+}
