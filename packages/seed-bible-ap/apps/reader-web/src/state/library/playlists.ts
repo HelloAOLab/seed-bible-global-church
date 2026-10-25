@@ -28,6 +28,10 @@ export function createPlaylists(
     (raw) => Playlist.parse(raw)
   );
   const playing = signal<Playing | null>(null);
+  /** The playlist just played to its end (the old reader's "You've reached the end of …"); null otherwise. */
+  const finished = signal<string | null>(null);
+  /** The playing item's note folded away (Hide note); it comes back with Show note or the next item. */
+  const noteHidden = signal(false);
   /** One row per playlist played on this device (playHistory.ts). */
   const history = signal<PlayHistoryEntry[]>([]);
   void stores.prefs
@@ -71,7 +75,11 @@ export function createPlaylists(
   ) {
     const pl = works.byId(id);
     if (!pl) throw new Error("no such playlist");
-    await works.save({ ...pl, ...patch });
+    const next: Playlist = { ...pl, ...patch };
+    // A field set to nothing (a removed cover, a cleared description) leaves the record.
+    if (!next.heroImage) delete next.heroImage;
+    if (!next.description) delete next.description;
+    await works.save(next);
   }
 
   const addItem = (id: string, item: PlaylistItem) =>
@@ -137,19 +145,29 @@ export function createPlaylists(
   }
 
   function play(id: string, index = 0) {
+    finished.value = null;
+    noteHidden.value = false;
     playing.value = works.byId(id) ? { playlistId: id, index } : null;
     if (playing.value) record(id, index, { start: true });
   }
+  /** On to the next item; past the last one the playlist is finished. */
   function next() {
     const c = current.value;
-    if (c && c.index + 1 < c.count) {
+    if (!c) return;
+    noteHidden.value = false;
+    if (c.index + 1 < c.count) {
       playing.value = { playlistId: c.playlist["@id"], index: c.index + 1 };
       record(c.playlist["@id"], c.index + 1);
+      return;
     }
+    record(c.playlist["@id"], c.index, { end: true });
+    playing.value = null;
+    finished.value = c.playlist["@id"];
   }
   function prev() {
     const c = current.value;
     if (c && c.index > 0) {
+      noteHidden.value = false;
       playing.value = { playlistId: c.playlist["@id"], index: c.index - 1 };
       record(c.playlist["@id"], c.index - 1);
     }
@@ -169,6 +187,8 @@ export function createPlaylists(
     ...works,
     playing,
     current,
+    finished,
+    noteHidden,
     history,
     clearHistory,
     create,

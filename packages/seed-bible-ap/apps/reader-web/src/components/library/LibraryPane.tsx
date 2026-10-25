@@ -239,6 +239,47 @@ function LinkCard({
   );
 }
 
+/** What a playing item shows: a passage's own note, a note, or a link (embedded where it can be). */
+export function PlayingItem({
+  state,
+  item: it,
+}: {
+  state: ReaderState;
+  item: PlaylistItem;
+}) {
+  return (
+    <>
+      {it["@type"] === "seed:ScriptureItem" && (
+        <>
+          <p className="sb-small">
+            <strong>{itemLabel(state, it)}</strong>
+          </p>
+          {it.note && <p className="sb-small">{it.note}</p>}
+        </>
+      )}
+      {it["@type"] === "seed:HtmlItem" && (
+        <div
+          className="sb-note-card-body"
+          dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(it.html) }}
+        />
+      )}
+      {it["@type"] === "seed:LinkItem" &&
+        (it.embed && embedUrlOf(it.url) ? (
+          <iframe
+            className="sb-link-embed"
+            src={embedUrlOf(it.url)!}
+            title={it.label ?? it.url}
+            allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            allowFullScreen
+          />
+        ) : (
+          <LinkCard state={state} url={it.url} label={it.label} />
+        ))}
+    </>
+  );
+}
+
 function Player({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const c = state.playlists.current.value;
@@ -254,33 +295,7 @@ function Player({ state }: { state: ReaderState }) {
         </span>
       </div>
       <div className="sb-play-playlist-body">
-        {it["@type"] === "seed:ScriptureItem" && (
-          <>
-            <p className="sb-small">
-              <strong>{itemLabel(state, it)}</strong>
-            </p>
-            {it.note && <p className="sb-small">{it.note}</p>}
-          </>
-        )}
-        {it["@type"] === "seed:HtmlItem" && (
-          <div
-            className="sb-note-card-body"
-            dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(it.html) }}
-          />
-        )}
-        {it["@type"] === "seed:LinkItem" &&
-          (it.embed && embedUrlOf(it.url) ? (
-            <iframe
-              className="sb-link-embed"
-              src={embedUrlOf(it.url)!}
-              title={it.label ?? it.url}
-              allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
-              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-              allowFullScreen
-            />
-          ) : (
-            <LinkCard state={state} url={it.url} label={it.label} />
-          ))}
+        <PlayingItem state={state} item={it} />
       </div>
       <div className="sb-play-controls sb-note-card-actions">
         <button
@@ -405,6 +420,17 @@ export function LibraryPane({ state }: { state: ReaderState }) {
     {}
   );
   const [open, setOpen] = useState<string | null>(null);
+  /** The playlist whose title and description are being edited. */
+  const [renaming, setRenaming] = useState<{
+    id: string;
+    label: string;
+    description: string;
+  } | null>(null);
+  /** The playlist asked about before it is deleted. */
+  const [deleting, setDeleting] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
   const [title, setTitle] = useState("");
   const [planTo, setPlanTo] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
@@ -412,6 +438,11 @@ export function LibraryPane({ state }: { state: ReaderState }) {
   /** `${playlistId}:${index}` of the item being edited, "note:${playlistId}" for a new note. */
   const [editing, setEditing] = useState<string | null>(null);
   const [refText, setRefText] = useState("");
+  // The open playlist is the one the verse toolbar's Add to Playlist adds to, while this pane shows it.
+  useEffect(() => {
+    state.ui.editingPlaylist.value = tab === "playlists" ? open : null;
+    return () => (state.ui.editingPlaylist.value = null);
+  }, [tab, open]);
   /** The plan open in the editor, or null. */
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   // A playlist or plan handed over to open here (Your content's Edit and Open).
@@ -571,6 +602,77 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                 </header>
                 {isOpen && (
                   <>
+                    {renaming?.id === pl["@id"] ? (
+                      <form
+                        className="sb-item-editor"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!renaming.label.trim()) return;
+                          void playlists.update(pl["@id"], {
+                            label: renaming.label.trim(),
+                            description: renaming.description.trim(),
+                          });
+                          setRenaming(null);
+                        }}
+                      >
+                        <input
+                          className="sb-note-editor"
+                          aria-label={t("playlist-title", {
+                            defaultValue: "Title",
+                          })}
+                          placeholder={t("playlist-title", {
+                            defaultValue: "Title",
+                          })}
+                          value={renaming.label}
+                          onInput={(e) =>
+                            setRenaming({
+                              ...renaming,
+                              label: (e.target as HTMLInputElement).value,
+                            })
+                          }
+                        />
+                        <textarea
+                          className="sb-note-editor"
+                          rows={3}
+                          aria-label={t("playlist-description", {
+                            defaultValue: "Description",
+                          })}
+                          placeholder={t("playlist-description", {
+                            defaultValue: "Description",
+                          })}
+                          value={renaming.description}
+                          onInput={(e) =>
+                            setRenaming({
+                              ...renaming,
+                              description: (e.target as HTMLTextAreaElement)
+                                .value,
+                            })
+                          }
+                        />
+                        <div className="sb-note-card-actions">
+                          <button
+                            type="submit"
+                            className="sb-note-button sb-note-button-primary"
+                            disabled={!renaming.label.trim()}
+                          >
+                            {t("save", { defaultValue: "Save" })}
+                          </button>
+                          <button
+                            type="button"
+                            className="sb-note-button"
+                            onClick={() => setRenaming(null)}
+                          >
+                            {t("cancel", { defaultValue: "Cancel" })}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      pl.description && (
+                        <p className="sb-small sb-playlist-description">
+                          {pl.description}
+                        </p>
+                      )
+                    )}
                     <ol className="sb-library-items">
                       {pl.hasItem.map((it, i) => (
                         <li key={i} className="sb-library-item">
@@ -632,6 +734,20 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                             </button>
                             <button
                               className="sb-content-kebab"
+                              aria-label={t("move-down", {
+                                defaultValue: "Move down",
+                              })}
+                              disabled={i === pl.hasItem.length - 1}
+                              onClick={() =>
+                                void playlists.moveItem(pl["@id"], i, i + 1)
+                              }
+                            >
+                              <span className="material-symbols-outlined">
+                                arrow_downward
+                              </span>
+                            </button>
+                            <button
+                              className="sb-content-kebab"
                               aria-label={t("remove-playlist-item", {
                                 defaultValue: "Remove item",
                               })}
@@ -648,11 +764,24 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                       ))}
                     </ol>
                     {pl.heroImage && (
-                      <img
-                        className="sb-hero-thumb sb-playlist-hero"
-                        src={pl.heroImage}
-                        alt=""
-                      />
+                      <div className="sb-playlist-hero-row">
+                        <img
+                          className="sb-hero-thumb sb-playlist-hero"
+                          src={pl.heroImage}
+                          alt=""
+                        />
+                        <button
+                          type="button"
+                          className="sb-note-button"
+                          onClick={() =>
+                            void playlists.update(pl["@id"], {
+                              heroImage: undefined,
+                            })
+                          }
+                        >
+                          {t("remove-cover", { defaultValue: "Remove cover" })}
+                        </button>
+                      </div>
                     )}
                     <div className="sb-note-card-actions">
                       <PictureField
@@ -808,8 +937,22 @@ export function LibraryPane({ state }: { state: ReaderState }) {
                         </button>
                       )}
                       <button
+                        className="sb-note-button"
+                        onClick={() =>
+                          setRenaming({
+                            id: pl["@id"],
+                            label: pl.label,
+                            description: pl.description ?? "",
+                          })
+                        }
+                      >
+                        {t("edit-playlist", { defaultValue: "Edit playlist" })}
+                      </button>
+                      <button
                         className="sb-note-button sb-note-button-danger"
-                        onClick={() => void playlists.remove(pl["@id"])}
+                        onClick={() =>
+                          setDeleting({ id: pl["@id"], label: pl.label })
+                        }
                       >
                         {t("delete-playlist", { defaultValue: "Delete" })}
                       </button>
@@ -1434,6 +1577,58 @@ export function LibraryPane({ state }: { state: ReaderState }) {
             );
           })}
         </>
+      )}
+      {deleting && (
+        <div
+          className="sb-footnote-modal-overlay"
+          onClick={() => setDeleting(null)}
+        >
+          <div
+            className="sb-footnote-modal sb-content-dialog"
+            role="dialog"
+            aria-label={t("delete-playlist-confirm-title", {
+              defaultValue: "Delete playlist?",
+            })}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
+            <div className="sb-footnote-modal-header">
+              <h3 className="sb-footnote-modal-title">
+                {t("delete-playlist-confirm-title", {
+                  defaultValue: "Delete playlist?",
+                })}
+              </h3>
+            </div>
+            <div className="sb-confirm-delete">
+              <p className="sb-confirm-delete-message">
+                {t("delete-playlist-confirm-message", {
+                  title: deleting.label,
+                  defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+                })}
+              </p>
+              <div className="sb-confirm-delete-actions">
+                <button
+                  type="button"
+                  className="sb-note-button"
+                  onClick={() => setDeleting(null)}
+                >
+                  {t("cancel", { defaultValue: "Cancel" })}
+                </button>
+                <button
+                  type="button"
+                  className="sb-note-button sb-note-button-danger"
+                  onClick={() => {
+                    const id = deleting.id;
+                    setDeleting(null);
+                    if (open === id) setOpen(null);
+                    void playlists.remove(id);
+                  }}
+                >
+                  {t("delete", { defaultValue: "Delete" })}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

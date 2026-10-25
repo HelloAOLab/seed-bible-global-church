@@ -847,5 +847,21 @@
   "verse-selection-effects": "Verse selection effects",
   "verse-selection-effects-default": "Default",
   "verse-selection-effects-disabled": "Disabled",
-  "verse-selection-effects-enabled": "Enabled"
+  "verse-selection-effects-enabled": "Enabled",
+  "add-to-playlist": "Add to Playlist",
+  "delete-playlist-confirm-title": "Delete playlist?",
+  "edit-playlist": "Edit playlist",
+  "finish": "Finish",
+  "playlist-description": "Description",
+  "playlist-finished-message": "You've reached the end of {{title}}.",
+  "playlist-finished-publish-to-share": "Publish it from the Library to share it with a link.",
+  "playlist-finished-title": "Playlist finished",
+  "playlist-scripture-note-aria": "Note on {{passage}}",
+  "playlist-scripture-note-hide": "Hide note",
+  "playlist-scripture-note-progress": "{{current}} of {{total}}",
+  "playlist-scripture-note-show": "Show note",
+  "playlist-title": "Title",
+  "playlist-url-copy-failed": "Couldn't copy the playlist link",
+  "remove-cover": "Remove cover",
+  "delete-playlist-confirm-message": "Delete \"{{title}}\"? This can't be undone."
 }

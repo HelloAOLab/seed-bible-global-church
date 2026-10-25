@@ -156,3 +156,30 @@ export function sharedSummary(page: SharedPage): string {
       : first.text;
   return text.length > 200 ? `${text.slice(0, 197)}…` : text;
 }
+
+/**
+ * The shared page's address for a published playlist or plan, read back from Discover under its first passage; null
+ * when it is not published (or Discover does not list it yet).
+ */
+export async function sharedLinkOf(
+  publishing: {
+    recordOf: (id: string) => { passage: string; descriptorId: string } | null;
+  },
+  discover: {
+    refresh: (passage: string) => Promise<unknown>;
+    forChapter: (passage: string) => {
+      value: { offerings: Offering[] } | null | undefined;
+    };
+  },
+  workId: string,
+  origin: string
+): Promise<string | null> {
+  const rec = publishing.recordOf(workId);
+  if (!rec) return null;
+  await discover.refresh(rec.passage);
+  const o = discover
+    .forChapter(rec.passage)
+    .value?.offerings.find((x) => x.descriptorId === rec.descriptorId);
+  const ref = o ? sharedRefOf(o) : null;
+  return ref ? `${origin}${sharedPathOf(ref)}` : null;
+}

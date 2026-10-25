@@ -207,6 +207,27 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
       onClick={() => void copyText()}
     />
   );
+  const editingPlaylist = state.ui.editingPlaylist.value
+    ? state.playlists.byId(state.ui.editingPlaylist.value)
+    : null;
+  const addToPlaylistA = editingPlaylist ? (
+    <Action
+      key="add-to-playlist"
+      icon="playlist_add"
+      label={t("add-to-playlist", { defaultValue: "Add to Playlist" })}
+      onClick={() => {
+        void state.playlists.addItem(editingPlaylist["@id"], {
+          "@type": "seed:ScriptureItem",
+          aboutPassage:
+            start === end
+              ? `${chapterRef}.${start}`
+              : `${chapterRef}.${start}-${chapterRef}.${end}`,
+          ofEdition: reading.translationId.value,
+        });
+        state.selection.clear();
+      }}
+    />
+  ) : null;
   const toolsA = tools.map((tool) => (
     <Action
       key={tool.id}
@@ -400,7 +421,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
   );
 
   if (phone && !menuAt) {
-    const more = [shareA, ...toolsA, everyoneA].filter(Boolean);
+    const more = [addToPlaylistA, shareA, ...toolsA, everyoneA].filter(Boolean);
     const open = reveal > 0;
     const end_ = () => {
       const d = drag.current;
@@ -585,6 +606,7 @@ export function VerseToolbar({ state }: { state: ReaderState }) {
           {saveA}
           {noteA}
           {copyA}
+          {addToPlaylistA}
           {toolsA}
           {shareA}
           {everyoneA}

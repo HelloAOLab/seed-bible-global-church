@@ -30,6 +30,10 @@ import { SavePicker } from "./components/records/SavePicker";
 import { BookmarkPicker } from "./components/records/Bookmarks";
 import { ChatPanel } from "./components/sessions/ChatPanel";
 import {
+  PlaylistFinished,
+  PlaylistNote,
+} from "./components/library/PlaylistNote";
+import {
   SessionCloseConfirm,
   SessionSettingsWindow,
 } from "./components/sessions/SessionSettings";
@@ -212,6 +216,8 @@ export function App({ state }: { state: ReaderState }) {
       <SavePicker state={state} />
       <BookmarkPicker state={state} />
       <ChatPanel state={state} />
+      <PlaylistNote state={state} />
+      <PlaylistFinished state={state} />
       <SessionSettingsWindow state={state} />
       <SessionCloseConfirm state={state} />
       <BibleSelector state={state} />

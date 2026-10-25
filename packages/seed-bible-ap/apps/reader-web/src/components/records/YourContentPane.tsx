@@ -22,7 +22,7 @@ import type {
 import { colorIdOf } from "../../state/records/highlights";
 import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import type { PlanView } from "../../state/library/plans";
-import { sharedPathOf, sharedRefOf } from "../../state/social/sharedPage";
+import { sharedLinkOf } from "../../state/social/sharedPage";
 import { openSavePicker } from "./SavePicker";
 import { BookmarkForm, BookmarkGlyph } from "./Bookmarks";
 import { DEFAULT_BOOKMARK_COLOR_ID } from "../../state/records/bookmarks";
@@ -538,24 +538,22 @@ export function YourContentPane({ state }: { state: ReaderState }) {
   };
   /** A published work's page: its offering read back from Discover under its first passage, the link copied. */
   const share = async (work: Playlist | ReadingPlan) => {
-    const rec = state.publishing.recordOf(work["@id"]);
-    if (!rec) {
+    if (!state.publishing.recordOf(work["@id"])) {
       toLibrary(
         work["@type"] === "seed:Playlist" ? "playlists" : "plans",
         work["@id"]
       );
       return;
     }
-    await state.discover.refresh(rec.passage);
-    const o = state.discover
-      .forChapter(rec.passage)
-      .value?.offerings.find((x) => x.descriptorId === rec.descriptorId);
-    const ref = o ? sharedRefOf(o) : null;
-    if (!ref) return;
+    const link = await sharedLinkOf(
+      state.publishing,
+      state.discover,
+      work["@id"],
+      location.origin
+    );
+    if (!link) return;
     try {
-      await navigator.clipboard.writeText(
-        `${location.origin}${sharedPathOf(ref)}`
-      );
+      await navigator.clipboard.writeText(link);
       ui.toast.value = {
         key:
           work["@type"] === "seed:Playlist"

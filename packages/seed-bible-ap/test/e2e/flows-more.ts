@@ -2582,8 +2582,93 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(`items ${before} → ${after} after remove`);
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       await card.waitFor({ state: "detached", timeout: 10000 });
       return "created, Romans 8:28 added and moved first, played Romans 8 → John 3, John 3:16–4:2 kept both ends, an item removed, deleted";
+    },
+  },
+  {
+    id: "PL2",
+    section: "10. Playlists and reading plans",
+    title: "A playlist as the old reader has it",
+    rows: [
+      "Make a playlist",
+      "Add, reorder, remove, edit items",
+      "Play a playlist",
+    ],
+    checks:
+      "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
+    run: async (c) => {
+      let step = "";
+      try {
+        step = "make it";
+        await c.open(CH);
+        const pane = await c.openLibrary("Playlists");
+        const title = `Flow list ${stamp()}`;
+        await pane.locator('input[placeholder^="New playlist"]').fill(title);
+        await pane.getByRole("button", { name: /^create$/i }).click();
+        let card = pane.locator(".sb-note-card", { hasText: title }).first();
+        await card.waitFor({ timeout: 10000 });
+        await ensureOpen(card);
+        step = "Edit playlist";
+        await card.getByRole("button", { name: /edit playlist/i }).click();
+        const renamed = `${title} renamed`;
+        await card.getByLabel("Title").fill(renamed);
+        await card.getByLabel("Description").fill("for the flow");
+        await card
+          .getByRole("button", { name: /^save$/i })
+          .first()
+          .click();
+        card = pane.locator(".sb-note-card", { hasText: renamed }).first();
+        await c.waitText(card, /for the flow/, 10000);
+        step = "Add to Playlist";
+        await c.selectVerse(16);
+        await c.page
+          .locator(".sb-verse-toolbar-action", { hasText: /add to playlist/i })
+          .first()
+          .click();
+        await c.waitText(card, /John 3:16/, 10000);
+        step = "Move down";
+        await card.locator('button[aria-label="Move down"]').first().click();
+        await c.page.waitForTimeout(500);
+        const items = await card.locator(".sb-library-item").allInnerTexts();
+        if (!/John 3:16/.test(items[0] ?? ""))
+          throw new Error(`order: ${items.join(" | ")}`);
+        step = "play in the reader";
+        await card.getByRole("button", { name: /play playlist/i }).click();
+        await c.page
+          .locator(".sb-library-pane .sb-pane-close[aria-label='Close']")
+          .click();
+        const note = c.page.locator(".sb-playlist-note");
+        await note.waitFor({ timeout: 10000 });
+        await c.waitText(note, /1 of 2/, 5000);
+        await note.getByRole("button", { name: /hide note/i }).click();
+        await c.page.getByRole("button", { name: /show note/i }).click();
+        await note.getByRole("button", { name: /next/i }).click();
+        await c.waitText(note, /2 of 2/, 5000);
+        await note.getByRole("button", { name: /finish/i }).click();
+        const done = c.page.getByRole("dialog", { name: "Playlist finished" });
+        await c.waitText(done, /reached the end of/i, 5000);
+        await done
+          .getByRole("button", { name: /^close$/i })
+          .last()
+          .click();
+        step = "delete";
+        const pane2 = await c.openLibrary("Playlists");
+        card = pane2.locator(".sb-note-card", { hasText: renamed }).first();
+        await ensureOpen(card);
+        await card.getByRole("button", { name: /^delete$/i }).click();
+        await c.waitText(
+          c.page.getByRole("dialog", { name: "Delete playlist?" }),
+          /can't be undone/,
+          5000
+        );
+        await c.confirmDelete();
+        await card.waitFor({ state: "detached", timeout: 10000 });
+      } catch (e) {
+        throw new Error(`${step}: ${(e as Error).message.split("\n")[0]}`);
+      }
+      return "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 → 2 of 2 → finished, deleted after the check";
     },
   },
   {
@@ -2620,6 +2705,7 @@ export const MORE_FLOWS: Flow[] = [
       if (p0 === p1) throw new Error(`progress unchanged "${p0}"`);
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       return `plan of 5 chapters; progress "${p0}" → "${p1}"`;
     },
   },
@@ -2689,6 +2775,7 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 5000 });
       c.page.once("dialog", (d) => void d.accept());
       await kept.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       return `${shown.slice(0, 110)}; kept after a reload, Start · Weekly offered`;
     },
   },
@@ -2832,6 +2919,7 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 120000 });
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       return `cover ${src.slice(0, 60)}…; seen on a second browser; published and withdrawn; deleted`;
     },
   },
@@ -2896,6 +2984,7 @@ export const MORE_FLOWS: Flow[] = [
         { timeout: 10000 }
       );
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       return `two previews; a colour redrew it (${before} → ${after}); Sepia added, renamed, removed`;
     },
   },
@@ -2994,6 +3083,7 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 120000 });
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       if (!watch)
         throw new Error(
           "picking the theme did not turn its recommended Watch on"
@@ -3586,6 +3676,7 @@ export const MORE_FLOWS: Flow[] = [
       c.page.once("dialog", (d) => void d.accept());
       await ensureOpen(card);
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       return "history row Finished today; Play again started it at John 3";
     },
   },
@@ -4040,6 +4131,7 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 120000 });
       c.page.once("dialog", (d) => void d.accept());
       await card.getByRole("button", { name: /^delete$/i }).click();
+      await c.confirmDelete();
       const gone = await fresh.request.get(link, {
         headers: { accept: "text/html" },
       });

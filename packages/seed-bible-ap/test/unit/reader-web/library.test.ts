@@ -73,7 +73,12 @@ describe("playlists", () => {
     a.playlists.next();
     a.playlists.next();
     expect(a.playlists.current.value?.item["@type"]).toBe("seed:HtmlItem");
+    // Next past the last item finishes the playlist ("You've reached the end of …").
     a.playlists.next();
+    expect(a.playlists.current.value).toBeNull();
+    expect(a.playlists.finished.value).toBe(pl["@id"]);
+    a.playlists.play(pl["@id"], 2);
+    expect(a.playlists.finished.value).toBeNull();
     expect(a.playlists.current.value?.index).toBe(2);
     a.playlists.stop();
     expect(a.playlists.playing.value).toBeNull();

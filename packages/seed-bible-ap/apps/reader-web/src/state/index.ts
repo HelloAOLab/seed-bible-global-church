@@ -478,6 +478,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     bookmarkPicker: signal<{ chapterRef: string; edition?: string } | null>(
       null
     ),
+    /** The playlist open in the Library: the verse toolbar's Add to Playlist adds to it (the old reader's). */
+    editingPlaylist: signal<string | null>(null),
     /** The old reader's floating chat panel, above the reader bar. */
     chatOpen: signal(false),
     /** What the chat panel shows: the list of chats, or the session's chat. */

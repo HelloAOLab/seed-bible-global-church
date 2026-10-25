@@ -179,6 +179,20 @@ export class FlowContext {
     await page.locator(".sb-verse-toolbar-clear").click();
   }
 
+  /** Answer a "Delete …?" check when one comes up (playlists and plans ask first, as the old reader does). */
+  async confirmDelete(page: Page = this.page): Promise<void> {
+    const box = page.locator(".sb-confirm-delete").last();
+    if (
+      !(await box.waitFor({ timeout: 2500 }).then(
+        () => true,
+        () => false
+      ))
+    )
+      return;
+    await box.locator(".sb-note-button-danger").click();
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
   /** A note's ⋮ → an item (Delete answers its confirmation too). */
   async noteAction(
     card: Locator,

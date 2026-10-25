@@ -1,51 +1,60 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 08:38 UTC",
+  "when": "2026-10-25 08:50 UTC",
   "results": [
     {
-      "id": "SS1",
-      "section": "9. Reading together",
-      "title": "Session settings",
-      "checks": "The host starts a session and a guest joins. Session settings shows the session's link, Navigation and Sharing, and the participants with a Host badge. By default the guest's › moves the host too; with 'Only host can navigate' ticked the guest's › moves only the guest. A verse the host taps flares on the guest's screen. The host's End Session ends it for the guest",
+      "id": "YC1",
+      "section": "5. Your Content and search",
+      "title": "Your content as the old reader's: chips, your own search, quotes and menus",
+      "checks": "With a note on John 3:16 and a highlight on 3:14, Your content shows + Create (Playlist, Reading plan) and the chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; the note's card quotes its verse ('For God so loved…') above the note; the highlight quotes its verse. Searching a word of the note finds only the note; a word of the highlighted verse finds the highlight; the Highlights chip shows only highlights; each item's ⋯ deletes it (Delete, Clear highlight)",
       "mark": "✅",
-      "note": "link, settings and participants shown; the guest moved the host by default and not after Only host can navigate; the host's tap flared on the guest's screen; End Session ended it",
-      "ms": 48100
+      "note": "chips All · Annotations · Highlights · Saves · Bookmarks · Playlists · Reading plans · Images; + Create: Playlist, Reading plan; the note quoted 3:16 and the highlight 3:14; each search found only its own; the Highlights chip; ⋯ cleared the highlight and deleted the note",
+      "ms": 2254
     },
     {
-      "id": "DS1",
-      "section": "3. Reading",
-      "title": "The old reader's display choices",
-      "checks": "Settings → Display & Theme: text size XXL, line height Loose (2.5), interface Extra large (125%); Book order Tanakh puts Isaiah right after 2 Kings in the book picker; Show discovered content off takes the Discover card away; Verse selection effects offers Default, Enabled, Disabled",
+      "id": "P1",
+      "section": "10. Playlists and reading plans",
+      "title": "Make, edit and play a playlist",
+      "checks": "Library → Playlists → a title → Create (starts with John 3); add Romans 8:28 by reference; move it up; Play playlist opens Romans 8 then Next opens John 3; a passage typed across chapters (John 3:16-4:2) keeps both ends; remove an item; delete the playlist",
       "mark": "✅",
-      "note": "XXL, Loose and Extra large applied; Tanakh order put Isaiah after 2 Kings; the Discover card hid and came back; the effects choice is there",
-      "ms": 7404707
+      "note": "created, Romans 8:28 added and moved first, played Romans 8 → John 3, John 3:16–4:2 kept both ends, an item removed, deleted",
+      "ms": 1889
     },
     {
-      "id": "MS1",
-      "section": "3. Reading",
-      "title": "The phone's Theme & text sheet",
-      "checks": "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
+      "id": "PL2",
+      "section": "10. Playlists and reading plans",
+      "title": "A playlist as the old reader has it",
+      "checks": "Make a playlist; Edit playlist gives it a new title and a description; with it open, choosing John 3:16 offers Add to Playlist in the verse toolbar; Move down; Play, then close the Library: a note beside the reading says '1 of 2' with Next →, ✕ folds it to Show note; Next to the last item and Finish says 'You've reached the end of …'; Delete asks 'Delete playlist?'",
       "mark": "✅",
-      "note": "text m → l → m; spacing normal → relaxed and back; UI size L then M; keep awake toggled; Go to all settings opened Settings",
-      "ms": 2848
+      "note": "renamed with a description, John 3:16 added from the verse toolbar and moved, played in the reader 1 of 2 → 2 of 2 → finished, deleted after the check",
+      "ms": 4877
     },
     {
-      "id": "SEL1",
-      "section": "3. Reading",
-      "title": "The book picker is laid out as the old reader's",
-      "checks": "At 1495 px: one row of the translation (BSB ▾), the search box and All books; Old Testament in three columns filled down each column (Genesis, Exodus… then 2 Chronicles), New Testament in two; the book on screen open with its chapters as a full-width row of square buttons and the current chapter filled; Song Of Solomon by its full name. At 390 px: a header of ×, Books and the tabs, one column, and the current chapter in view",
+      "id": "P3",
+      "section": "10. Playlists and reading plans",
+      "title": "Publish a playlist, keep it in the Library, give it a cover",
+      "checks": "Signed in: create a playlist; a second browser signed in as the same person sees it after Refresh; a cover picture shows from the serving plane; Publish → Published, then withdrawn; deleted",
       "mark": "✅",
-      "note": "desktop: one header row, OT 3 columns, NT 2, full-width chapter row, chapter 3 filled; phone: × Books ☰, current chapter in view",
-      "ms": 1268114
+      "note": "cover https://seed-bible-a2a.faithnet.io/files/0xdbb41f779194d605e…; seen on a second browser; published and withdrawn; deleted",
+      "ms": 114291
     },
     {
-      "id": "ST1",
-      "section": "3. Reading",
-      "title": "Settings in the sidebar",
-      "checks": "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — Account settings, Display & Theme, Toolbar, Extensions, Install App, Launch tutorial, Customize, About Seed Bible, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
+      "id": "G6",
+      "section": "10. Playlists and reading plans",
+      "title": "Playlist history",
+      "checks": "Play a two-item playlist to the end and stop: My playlist history lists it today as Finished with Play again; Play again starts it over",
       "mark": "✅",
-      "note": "⚙ → Settings: Account settings · Display & Theme · Toolbar · Extensions · Install App · Launch tutorial · Customize · About Seed Bible; Display & Theme's line height reached the chapter; ← back to the list; ✕ brought the tabs back",
-      "ms": 1165
+      "note": "history row Finished today; Play again started it at John 3",
+      "ms": 1130
+    },
+    {
+      "id": "G12",
+      "section": "8. Today, Discover and publishing",
+      "title": "Shared page for a published playlist",
+      "checks": "Signed in: publish a playlist; Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
+      "mark": "✅",
+      "note": "/shared/seedreader.me/playlist/playlist-4318f01d-ae3: drawn on the edge, opened signed out, back to the reader; after withdrawing the link answers 404",
+      "ms": 79344
     }
   ]
 }
