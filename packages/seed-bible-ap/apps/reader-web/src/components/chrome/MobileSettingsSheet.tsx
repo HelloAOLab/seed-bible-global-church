@@ -4,6 +4,8 @@
 import { useEffect } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { ScriptureWidthField } from "./ScriptureWidthField";
+import { pageScrolls } from "../reader/readerViewport";
 import type {
   FontSize,
   LineHeight,
@@ -138,6 +140,7 @@ export function MobileSettingsSheet({ state }: { state: ReaderState }) {
               <LineHeightIcon index={line} />
             </button>
           </div>
+          {!pageScrolls() && <ScriptureWidthField state={state} />}
           <div className="sb-mobile-settings-sheet-section-label">
             {t("ui-size", { defaultValue: "UI size" })}
           </div>

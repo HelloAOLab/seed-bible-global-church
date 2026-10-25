@@ -42,6 +42,7 @@
 }
 
 .sb-dcp-header-title {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -74,6 +75,30 @@
 
 .sb-dcp-create-btn:hover {
   opacity: 0.88;
+}
+
+/* Hide the card (Settings → Show discovered content off), beside + Create. */
+.sb-dcp-hide-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.sb-dcp-hide-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+.sb-dcp-hide-btn .material-symbols-outlined {
+  font-size: 1.25rem;
 }
 
 /* ── Filter chips ── */

@@ -1072,11 +1072,12 @@ html[data-sb-line="relaxed"] .sb-bible-reader {
 html[data-sb-line="loose"] .sb-bible-reader {
   line-height: 2.5;
 }
-html[data-sb-margins="narrow"] .sb-chapter-content {
-  max-width: 34rem;
-}
-html[data-sb-margins="wide"] .sb-chapter-content {
-  max-width: none;
+/* The old reader's Scripture Width control (ScriptureWidthField). */
+.sb-scripture-width {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
 }
 .sb-customization-text {
   grid-template-columns: 1fr;
@@ -2254,4 +2255,8 @@ html[data-sb-margins="wide"] .sb-chapter-content {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+.sb-scripture-margins-step:disabled {
+  opacity: 0.4;
+  cursor: default;
 }

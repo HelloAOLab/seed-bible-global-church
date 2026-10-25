@@ -69,6 +69,11 @@ function line(
       return t("link-copied", { defaultValue: "Link copied" });
     case "copied":
       return t("copied", { defaultValue: "Copied" });
+    case "discover-hidden":
+      return t("discover-panel-hidden", {
+        defaultValue:
+          "Discover is hidden. Show it again in Settings → Show discovered content, or open it from Discover in the bar.",
+      });
     case "session-link-copied":
       return t("link-to-join-shared-session-copied", {
         defaultValue:

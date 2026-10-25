@@ -28,6 +28,20 @@ export type ThemeChoice = "light" | "dark" | "system";
 export type FontSize = "xs" | "s" | "m" | "l" | "xl" | "xxl";
 export type LineHeight = "compact" | "normal" | "relaxed" | "loose";
 export type Margins = "narrow" | "normal" | "wide";
+/** The old reader's Scripture Width: the longest line in characters (24–192), or the whole window. */
+export type ScriptureWidth = number | "fit";
+export const DEFAULT_SCRIPTURE_WIDTH = 68;
+export const MIN_SCRIPTURE_WIDTH = 24;
+export const MAX_SCRIPTURE_WIDTH = 192;
+
+/** A width as typed or saved, held to the old reader's range; "fit" is the whole window. */
+export function cleanScriptureWidth(v: unknown): ScriptureWidth {
+  if (v === "fit") return "fit";
+  const n = Math.round(Number(v));
+  return Number.isFinite(n)
+    ? Math.min(MAX_SCRIPTURE_WIDTH, Math.max(MIN_SCRIPTURE_WIDTH, n))
+    : DEFAULT_SCRIPTURE_WIDTH;
+}
 export type UiScale = "s" | "m" | "l" | "xl";
 /** The Old Testament in the Christian order, or the Tanakh's (Torah, Prophets, Writings). */
 export type BookOrder = "traditional" | "tanakh";
@@ -58,7 +72,9 @@ interface Persisted {
   theme?: ThemeChoice;
   fontSize?: FontSize;
   lineHeight?: LineHeight;
+  /** Retired: the old Narrow / Normal / Wide, read once into `scriptureWidth`. */
   margins?: Margins;
+  scriptureWidth?: ScriptureWidth;
   uiScale?: UiScale;
   scripture?: Partial<ScriptureElementsBehavior>;
   keepScreenAwake?: boolean;
@@ -115,7 +131,15 @@ export function createSettings(deps: SettingsDeps = {}) {
   const theme = signal<ThemeChoice>(saved.theme ?? "system");
   const fontSize = signal<FontSize>(saved.fontSize ?? "m");
   const lineHeight = signal<LineHeight>(saved.lineHeight ?? "normal");
-  const margins = signal<Margins>(saved.margins ?? "normal");
+  const scriptureWidth = signal<ScriptureWidth>(
+    saved.scriptureWidth !== undefined
+      ? cleanScriptureWidth(saved.scriptureWidth)
+      : saved.margins === "wide"
+        ? "fit"
+        : saved.margins === "narrow"
+          ? 50
+          : DEFAULT_SCRIPTURE_WIDTH
+  );
   const uiScale = signal<UiScale>(saved.uiScale ?? "m");
   /** Keep the screen on while the reader is open (state/chrome/wakeLock.ts). */
   const keepScreenAwake = signal(saved.keepScreenAwake === true);
@@ -188,7 +212,13 @@ export function createSettings(deps: SettingsDeps = {}) {
     // The reader's own typography choices beat the theme's defaults; "normal" leaves the theme's value in force.
     const root = document.documentElement;
     root.dataset["sbLine"] = lineHeight.value;
-    root.dataset["sbMargins"] = margins.value;
+    const w = scriptureWidth.value;
+    root.style.setProperty(
+      "--sb-scripture-width",
+      w === "fit" ? "100%" : `${w}ch`
+    );
+    if (w === "fit") root.dataset["sbScriptureFit"] = "";
+    else delete root.dataset["sbScriptureFit"];
     root.dataset["sbScale"] = uiScale.value;
     for (const [prop, value] of Object.entries(
       textStyleProperties(textStyle.value)
@@ -233,7 +263,7 @@ export function createSettings(deps: SettingsDeps = {}) {
         theme: theme.value,
         fontSize: fontSize.value,
         lineHeight: lineHeight.value,
-        margins: margins.value,
+        scriptureWidth: scriptureWidth.value,
         uiScale: uiScale.value,
         scripture: scripture.value,
         keepScreenAwake: keepScreenAwake.value,
@@ -258,7 +288,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     theme,
     fontSize,
     lineHeight,
-    margins,
+    scriptureWidth,
     uiScale,
     scripture,
     keepScreenAwake,

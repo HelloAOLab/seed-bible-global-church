@@ -1,3 +1,4 @@
+import { ScriptureWidthField } from "./ScriptureWidthField";
 import { Avatar } from "./ConnectedChip";
 import { ThemeThumbnail } from "./ThemePreview";
 import { DARK_THEME, LIGHT_THEME } from "../../state/chrome/theme";
@@ -987,7 +988,7 @@ export function LanguageField({ state }: { state: ReaderState }) {
   );
 }
 
-/** Display: text size, line height, margins, interface size, and what the chapter shows. */
+/** Display: text size, line height, scripture width, interface size, and what the chapter shows. */
 export function ReadingFields({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   return (
@@ -1022,15 +1023,6 @@ export function ReadingFields({ state }: { state: ReaderState }) {
             ],
           ],
           [
-            "margins",
-            "Margins",
-            [
-              ["narrow", "Narrow"],
-              ["normal", "Normal"],
-              ["wide", "Wide"],
-            ],
-          ],
-          [
             "uiScale",
             "Interface size",
             [
@@ -1060,6 +1052,7 @@ export function ReadingFields({ state }: { state: ReaderState }) {
           </select>
         </label>
       ))}
+      <ScriptureWidthField state={state} />
       {(
         [
           ["showVerseNumbers", "Verse numbers"],

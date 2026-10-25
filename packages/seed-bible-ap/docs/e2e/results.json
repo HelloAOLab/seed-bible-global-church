@@ -1,51 +1,33 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 15:09 UTC",
+  "when": "2026-10-25 17:04 UTC",
   "results": [
     {
-      "id": "FA1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Add a friend answers at once",
-      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
+      "id": "DS1",
+      "section": "3. Reading",
+      "title": "The old reader's display choices",
+      "checks": "Settings → Display & Theme: text size XXL, line height Loose (2.5), interface Extra large (125%); Book order Tanakh puts Isaiah right after 2 Kings in the book picker; Show discovered content off takes the Discover card away; Verse selection effects offers Default, Enabled, Disabled",
       "mark": "✅",
-      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
-      "ms": 36818
+      "note": "XXL, Loose and Extra large applied; Tanakh order put Isaiah after 2 Kings; the Discover card hid and came back; the effects choice is there",
+      "ms": 1938
     },
     {
-      "id": "PC1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Tap a friend: their profile",
-      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
+      "id": "R17",
+      "section": "3. Reading",
+      "title": "Line height, scripture width, interface size",
+      "checks": "Account pane → Line height Relaxed, Scripture Width 80 ch (+ from 79), Interface size Large: the page carries each choice, and keeps it after a reload",
       "mark": "✅",
-      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
-      "ms": 35473
+      "note": "line relaxed, scripture width 80ch, scale l — kept after reload",
+      "ms": 1000
     },
     {
-      "id": "IN1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Invite a friend by email",
-      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+      "id": "DW1",
+      "section": "3. Reading",
+      "title": "Hide Discover; the chapter fills the window",
+      "checks": "On a 1580px-wide desktop at Ephesians 5: the Discover card's ✕ hides it and says how to bring it back; Account → Scripture Width → Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
       "mark": "✅",
-      "note": "'flow-150611@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
-      "ms": 35834
-    },
-    {
-      "id": "IN2",
-      "section": "8. Today, Discover and publishing",
-      "title": "An emailed invitation opens in the reader",
-      "checks": "The link /invite/<token> opens the reader with 'Ruth wants to be friends' and Ruth's note, and, signed out, Sign in to accept; a dead link says 'This invitation can't be opened'; signed in, Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for the signature. (The invitation calls are answered by the test)",
-      "mark": "✅",
-      "note": "a dead link: can't be opened; Ruth's invitation with her note and Sign in to accept; signed in, Add took it and opened the Home to add Ruth",
-      "ms": 102028
-    },
-    {
-      "id": "FE1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Be found by email (switch)",
-      "checks": "Signed in: Account → 'Let people who have my email find me' is on by default; turning it off is kept at the Home (still off after a reload); turned back on",
-      "mark": "✅",
-      "note": "on by default; off was still off after a reload; turned back on",
-      "ms": 39387
+      "note": "hidden with its note; fit the window: 1217px of 1217px; kept after reload; card back",
+      "ms": 1860
     }
   ]
 }

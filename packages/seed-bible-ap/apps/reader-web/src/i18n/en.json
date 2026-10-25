@@ -1032,5 +1032,12 @@
   "friend-adding-here": "Adding {{name}}…",
   "friend-open-home": "Open your Home",
   "friend-remove-here-failed": "Couldn't remove {{name}} here ({{problem}}). Your Home can do it.",
-  "friend-removing-here": "Removing {{name}}…"
+  "friend-removing-here": "Removing {{name}}…",
+  "decrease-scripture-width": "Decrease scripture width",
+  "discover-panel-hidden": "Discover is hidden. Show it again in Settings → Show discovered content, or open it from Discover in the bar.",
+  "discover-panel-hide": "Hide Discover",
+  "increase-scripture-width": "Increase scripture width",
+  "scripture-width": "Scripture Width",
+  "scripture-width-fit": "Fit the window",
+  "scripture-width-unit": "ch"
 }

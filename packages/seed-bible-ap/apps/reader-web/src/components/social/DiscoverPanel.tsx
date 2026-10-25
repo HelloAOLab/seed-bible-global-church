@@ -96,6 +96,20 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
           >
             + {t("create-playlist", { defaultValue: "Create" })}
           </button>
+          <button
+            type="button"
+            className="sb-dcp-hide-btn"
+            aria-label={t("discover-panel-hide", {
+              defaultValue: "Hide Discover",
+            })}
+            title={t("discover-panel-hide", { defaultValue: "Hide Discover" })}
+            onClick={() => {
+              state.settings.showDiscovered.value = false;
+              ui.toast.value = { key: "discover-hidden" };
+            }}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
         {chips.length > 2 && (
           <div className="sb-dcp-filters-wrapper">

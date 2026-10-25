@@ -1618,10 +1618,10 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "R17",
     section: "3. Reading",
-    title: "Line height, margins, interface size",
+    title: "Line height, scripture width, interface size",
     rows: ["Margins, line height, UI scale, custom fonts"],
     checks:
-      "Account pane → Line height Relaxed, Margins Wide, Interface size Large: the page carries each choice, and keeps it after a reload",
+      "Account pane → Line height Relaxed, Scripture Width 80 ch (+ from 79), Interface size Large: the page carries each choice, and keeps it after a reload",
     run: async (c) => {
       await c.open(CH);
       const pane = await c.openAccount();
@@ -1629,20 +1629,26 @@ export const MORE_FLOWS: Flow[] = [
         .locator("label", { hasText: "Line height" })
         .locator("select")
         .selectOption("relaxed");
+      await pane.getByLabel("Scripture Width", { exact: true }).fill("79");
+      await pane.getByLabel("Scripture Width", { exact: true }).press("Tab");
       await pane
-        .locator("label", { hasText: "Margins" })
-        .locator("select")
-        .selectOption("wide");
+        .getByRole("button", { name: "Increase scripture width" })
+        .click();
       await pane
         .locator("label", { hasText: "Interface size" })
         .locator("select")
         .selectOption("l");
       const read = () =>
-        c.page.evaluate(() => ({ ...document.documentElement.dataset }));
+        c.page.evaluate(() => ({
+          ...document.documentElement.dataset,
+          width: document.documentElement.style.getPropertyValue(
+            "--sb-scripture-width"
+          ),
+        }));
       const now = await read();
       if (
         now["sbLine"] !== "relaxed" ||
-        now["sbMargins"] !== "wide" ||
+        now.width !== "80ch" ||
         now["sbScale"] !== "l"
       )
         throw new Error(JSON.stringify(now));
@@ -1651,9 +1657,13 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       const after = await read();
-      if (after["sbLine"] !== "relaxed" || after["sbScale"] !== "l")
+      if (
+        after["sbLine"] !== "relaxed" ||
+        after["sbScale"] !== "l" ||
+        after.width !== "80ch"
+      )
         throw new Error(`after reload ${JSON.stringify(after)}`);
-      return "line relaxed, margins wide, scale l — kept after reload";
+      return "line relaxed, scripture width 80ch, scale l — kept after reload";
     },
   },
   // ── 4. Marking the text ────────────────────────────────────────────────────────────────────────────────────
@@ -7491,6 +7501,56 @@ export const MORE_FLOWS: Flow[] = [
       await box().check();
       await c.page.waitForTimeout(1500);
       return "on by default; off was still off after a reload; turned back on";
+    },
+  },
+  {
+    id: "DW1",
+    section: "3. Reading",
+    title: "Hide Discover; the chapter fills the window",
+    rows: ["Margins, line height, UI scale, custom fonts"],
+    checks:
+      "On a 1580px-wide desktop at Ephesians 5: the Discover card's ✕ hides it and says how to bring it back; Account → Scripture Width → Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
+    run: async (c) => {
+      await c.page.setViewportSize({ width: 1580, height: 850 });
+      await c.open("/read/BSB/EPH/5");
+      await c.settleTours();
+      const card = c.page.locator(".sb-discover-content-panel");
+      await card.waitFor({ timeout: 20000 });
+      await card.getByRole("button", { name: "Hide Discover" }).click();
+      await card.waitFor({ state: "detached", timeout: 3000 });
+      await c.waitText(c.page.locator("body"), /Discover is hidden/, 3000);
+      let pane = await c.openAccount();
+      await c.check(pane, /fit the window/i).check();
+      await c.page.keyboard.press("Escape");
+      const widths = () =>
+        c.page.evaluate(() => {
+          const main = document
+            .querySelector(".sb-bible-reader-main-content")!
+            .getBoundingClientRect().width;
+          const row = document
+            .querySelector(".sb-bible-reader-content")!
+            .getBoundingClientRect().width;
+          return { main, row };
+        });
+      await c.page.reload();
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      await c.page
+        .locator(".sb-bible-reader-main-content")
+        .waitFor({ timeout: 20000 });
+      const w = await widths();
+      if (w.main < w.row * 0.95)
+        throw new Error(
+          `the chapter is ${Math.round(w.main)}px of ${Math.round(w.row)}px`
+        );
+      if (await card.count())
+        throw new Error("the Discover card came back after a reload");
+      pane = await c.openAccount();
+      await c.check(pane, /fit the window/i).uncheck();
+      await c.check(pane, /show discovered content/i).check();
+      await card.waitFor({ timeout: 10000 });
+      return `hidden with its note; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
     },
   },
 ];
