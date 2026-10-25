@@ -997,5 +997,9 @@
   "view-all": "View all",
   "your-id-is": "Your ID is:",
   "characters-of": "{{count}}/{{max}}",
-  "profile-description": "Description"
+  "profile-description": "Description",
+  "friend-already-friends": "You're already friends.",
+  "friend-request-accepted-theirs": "They'd already asked you, so you're now friends.",
+  "friend-request-already-sent": "You've already sent them a request.",
+  "friend-request-self": "That's your own account."
 }

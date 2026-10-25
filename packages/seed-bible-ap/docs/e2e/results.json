@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 14:23 UTC",
+  "when": "2026-10-25 14:28 UTC",
   "results": [
     {
-      "id": "S4",
+      "id": "FA1",
       "section": "8. Today, Discover and publishing",
-      "title": "Your profile",
-      "checks": "Account → Your profile: a display name and a long description (up to 300 characters) → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished; the Profile shows the description folded with Read more",
+      "title": "Add a friend answers at once",
+      "checks": "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
       "mark": "✅",
-      "note": "\"Saved to your Library\" after 4.8s; the description kept across a reload and folded under Read more on the Profile; published, then withdrawn",
-      "ms": 82877
+      "note": "own name: That's your own account; 'ruth.me': You're already friends; no Home window",
+      "ms": 36048
     }
   ]
 }

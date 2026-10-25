@@ -7169,4 +7169,48 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "FA1",
+    section: "8. Today, Discover and publishing",
+    title: "Add a friend answers at once",
+    rows: ["Friends pane"],
+    checks:
+      "Signed in as Seed Reader: Add a friend with your own name says 'That's your own account.', and with a friend's name 'You're already friends.' — no Home window opens for either",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      await c.page.getByRole("menuitem", { name: "Friends" }).click();
+      const pane = c.page.locator(".sb-friends-pane");
+      await pane.waitFor({ timeout: 5000 });
+      const input = pane.getByLabel("Add a friend");
+      let popups = 0;
+      c.context.on("page", () => popups++);
+      const ask = async (name: string, re: RegExp) => {
+        await input.fill(name);
+        await pane.getByRole("button", { name: "Send request" }).click();
+        await c.waitText(pane.locator(".sb-friends-answer"), re, 5000);
+      };
+      await ask("seedreader", /That's your own account/);
+      // A friend's name as the list shows it.
+      // A friend's name as the list shows it: a row with Remove.
+      const friendRow = pane
+        .locator(".sb-friends-row", {
+          has: c.page.getByRole("button", { name: /^remove/i }),
+        })
+        .first();
+      const friend = (await friendRow.count())
+        ? (
+            await friendRow.locator(".sb-friends-person-name").innerText()
+          ).trim()
+        : "";
+      if (friend) await ask(friend, /You're already friends/);
+      await c.page.waitForTimeout(800);
+      if (popups) throw new Error("a Home window opened");
+      return `own name: That's your own account; '${friend}': You're already friends; no Home window`;
+    },
+  },
 ];

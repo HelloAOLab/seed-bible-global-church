@@ -7,7 +7,7 @@ import { useEffect, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
-import { friendLink } from "../../state/social/friendship";
+import { friendLink, standingOf } from "../../state/social/friendship";
 import {
   DEFAULT_ESTATE,
   HOME_SIGNIN_AVAILABLE,
@@ -143,6 +143,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
   const { today, friendship } = state;
   const s = state.session.value;
   const [who, setWho] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<{
     agent: string;
     name: string;
@@ -316,6 +317,42 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 e.preventDefault();
                 const name = who.trim();
                 if (!name) return;
+                // The old reader's instant answers, before any Home window opens.
+                const me = state.session.value;
+                const own =
+                  !!me &&
+                  [me.sub.replace(/^eip155:\d+:/, ""), me.name ?? ""]
+                    .filter(Boolean)
+                    .map((x) => x.toLowerCase().replace(/\s+/g, ""))
+                    .some((x) => {
+                      const n = name.toLowerCase().replace(/\s+/g, "");
+                      return x === n || x.split(".")[0] === n.split(".")[0];
+                    });
+                const standing = standingOf(today.friendsView.value, name);
+                if (own || standing === "friend" || standing === "you-asked") {
+                  setAnswer(
+                    own
+                      ? t("friend-request-self", {
+                          defaultValue: "That's your own account.",
+                        })
+                      : standing === "friend"
+                        ? t("friend-already-friends", {
+                            defaultValue: "You're already friends.",
+                          })
+                        : t("friend-request-already-sent", {
+                            defaultValue: "You've already sent them a request.",
+                          })
+                  );
+                  return;
+                }
+                setAnswer(
+                  standing === "asked-you"
+                    ? t("friend-request-accepted-theirs", {
+                        defaultValue:
+                          "They'd already asked you, so you're now friends.",
+                      })
+                    : null
+                );
                 friendship.add(name);
                 setWho("");
               }}
@@ -340,6 +377,11 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                 {t("send-friend-request", { defaultValue: "Send request" })}
               </button>
             </form>
+            {answer && (
+              <p className="sb-small sb-friends-answer" role="status">
+                {answer}
+              </p>
+            )}
             {link && (
               <div className="sb-friends-share">
                 <div className="sb-friends-share-row sb-friends-my-link">
