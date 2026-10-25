@@ -5966,4 +5966,45 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "DS2",
+    section: "4. Marking the text",
+    title: "Drag over the text to choose verses",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "On John 3, dragging the mouse from the words of verse 3 to the words of verse 5 chooses 3, 4 and 5 and brings up the verse toolbar; the click that ends the drag does not undo it",
+    run: async (c) => {
+      const page = c.page;
+      await c.open(CH);
+      await c.verse(5).waitFor({ timeout: 20000 });
+      await c.settleTours();
+      const box = async (n: number) =>
+        (await c
+          .verse(n)
+          .locator(".sb-verse-text, span")
+          .last()
+          .boundingBox())!;
+      const a = await box(3);
+      const b = await box(5);
+      await page.mouse.move(a.x + 8, a.y + a.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, {
+        steps: 12,
+      });
+      await page.mouse.up();
+      await page.locator(".sb-verse-toolbar").waitFor({ timeout: 5000 });
+      await page.waitForTimeout(300);
+      const chosen = await page
+        .locator(
+          ".sb-bible-reader-active .sb-verse-selected[data-verse-number]"
+        )
+        .evaluateAll((els) => [
+          ...new Set(els.map((e) => (e as HTMLElement).dataset["verseNumber"])),
+        ]);
+      if (chosen.join() !== "3,4,5")
+        throw new Error(`chosen: ${chosen.join(", ")}`);
+      await page.keyboard.press("Escape");
+      return `the drag chose ${chosen.join(", ")} and the verse toolbar came up`;
+    },
+  },
 ];

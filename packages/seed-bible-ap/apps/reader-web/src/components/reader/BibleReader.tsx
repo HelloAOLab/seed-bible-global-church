@@ -119,8 +119,32 @@ export function BibleReader({
   }, [failed, reading.translationId.value]);
   const fallbackTranslation = defaultTranslationFor(language);
 
+  // A drag over the text (or a phone's text selection) chooses every verse it touches, as the old reader does; the
+  // click that trails the drag must not toggle a verse back off, nor clear the choice.
+  const justDragged = useRef(false);
+  const chooseDraggedVerses = () => {
+    const sel = window.getSelection();
+    if (!active || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const content = root.current?.querySelector(".sb-chapter-content");
+    if (!content || !content.contains(range.commonAncestorContainer)) return;
+    const touched = new Set<number>();
+    for (const el of content.querySelectorAll<HTMLElement>(
+      "[data-verse-number]"
+    ))
+      if (range.intersectsNode(el))
+        touched.add(Number(el.dataset["verseNumber"]));
+    if (!touched.size) return;
+    sel.removeAllRanges();
+    justDragged.current = true;
+    selection.select(Math.min(...touched), Math.max(...touched));
+  };
   const onVerseClick = (verseNumber: number, event: MouseEvent) => {
     event.stopPropagation();
+    if (justDragged.current) {
+      justDragged.current = false;
+      return;
+    }
     selection.toggle(verseNumber, event.shiftKey);
   };
 
@@ -390,7 +414,15 @@ export function BibleReader({
         className={`sb-bible-reader sb-font-size-${settings.fontSize.value}${active ? " sb-bible-reader-active" : ""}`}
         // The translation's own direction (Hebrew, Arabic run right to left), as the old reader sets it.
         dir={reading.translation.value?.textDirection}
-        onClick={() => selection.clear()}
+        onPointerDown={() => (justDragged.current = false)}
+        onPointerUp={chooseDraggedVerses}
+        onClick={() => {
+          if (justDragged.current) {
+            justDragged.current = false;
+            return;
+          }
+          selection.clear();
+        }}
       >
         <div className="sb-bible-reader-mobile-header">
           <div className="sb-bible-reader-mobile-header-text">
