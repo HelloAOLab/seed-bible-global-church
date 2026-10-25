@@ -6122,4 +6122,71 @@ export const MORE_FLOWS: Flow[] = [
       return `ribbons ${before} → ${during} (fading in) → ${before} after fading out`;
     },
   },
+  {
+    id: "PT1",
+    section: "4. Marking the text",
+    title: "Tap beside a short poetry line",
+    rows: ["Highlight (6 colours)"],
+    checks:
+      "On an iPhone 13 at Psalm 23, a tap in the blank space after the short first line of verse 1 chooses verse 1 (the verse sheet says Psalms 23:1); on a desktop a mouse click in that space chooses nothing",
+    run: async (c) => {
+      // The blank space past the end of verse 1's first poetry line, on the same line.
+      const spot = (page: Page) =>
+        page
+          .locator(
+            '.sb-bible-reader-active .sb-verse-poetry[data-verse-number="1"] .sb-verse-decorator'
+          )
+          .first()
+          .evaluate((deco) => {
+            const r = deco.getClientRects()[0]!;
+            const line = (
+              deco.closest(".sb-verse-line, .sb-verse-poetry") as HTMLElement
+            ).getBoundingClientRect();
+            const x = Math.min(line.right - 12, r.right + 40);
+            return { x, y: r.top + r.height / 2, room: line.right - r.right };
+          });
+      const ctx = await c.browser.newContext({
+        viewport: { width: 390, height: 664 },
+        isMobile: true,
+        hasTouch: true,
+      });
+      const phone = await ctx.newPage();
+      c.watch(phone);
+      let room = 0;
+      try {
+        await c.open("/read/BSB/PSA/23", phone);
+        await c.settleTours(phone);
+        await c.verse(1, phone).waitFor({ timeout: 20000 });
+        const p = await spot(phone);
+        room = Math.round(p.room);
+        if (p.room < 30)
+          throw new Error(`no blank space after the line (${room}px)`);
+        await phone.touchscreen.tap(p.x, p.y);
+        const sheet = phone.locator(".sb-verse-toolbar-mobile");
+        await sheet.waitFor({ timeout: 5000 }).catch(() => {
+          throw new Error("a tap beside the line did not choose the verse");
+        });
+        await c.waitText(
+          sheet.locator(".sb-verse-toolbar-ref-text"),
+          /Psalms? 23:1$/,
+          3000
+        );
+      } finally {
+        await ctx.close();
+      }
+      await c.open("/read/BSB/PSA/23");
+      await c.verse(1).waitFor({ timeout: 20000 });
+      await c.settleTours();
+      const d = await spot(c.page);
+      await c.page.mouse.click(d.x, d.y);
+      await c.page.waitForTimeout(500);
+      if (
+        await c.page
+          .locator(".sb-bible-reader-active .sb-verse-selected")
+          .count()
+      )
+        throw new Error("a mouse click in the blank space chose the verse");
+      return `phone: a tap ${room}px of blank space after the line chose Psalms 23:1; desktop: a click there chose nothing`;
+    },
+  },
 ];

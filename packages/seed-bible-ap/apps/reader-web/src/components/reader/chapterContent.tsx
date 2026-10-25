@@ -350,8 +350,10 @@ export function renderChapterContent(
       .filter(Boolean)
       .join(" ");
     const onClick = (event: MouseEvent) => {
-      // Poetry lines are `display: block`; a click in the blank margin past a short line must not select.
-      if (hasPoetry) {
+      // Poetry lines are `display: block`; a mouse click in the blank margin past a short line must not select. A
+      // finger is less precise, so a tap anywhere on the verse's lines counts (the old reader's rule).
+      const touch = (event as PointerEvent).pointerType === "touch";
+      if (hasPoetry && !touch) {
         const target = event.target as HTMLElement | null;
         if (!target?.closest(".sb-verse-decorator")) return;
       }
