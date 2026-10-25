@@ -995,5 +995,7 @@
   "replay-latest-playlist": "Replay latest playlist",
   "take-photo": "Take a photo",
   "view-all": "View all",
-  "your-id-is": "Your ID is:"
+  "your-id-is": "Your ID is:",
+  "characters-of": "{{count}}/{{max}}",
+  "profile-description": "Description"
 }

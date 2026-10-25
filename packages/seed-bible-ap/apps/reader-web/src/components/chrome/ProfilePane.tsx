@@ -3,6 +3,7 @@
 // your name at your Home where the old one shows the email, the display name, your line — with a ✎ to Edit profile;
 // then Your content, Friends (with the count) and Account settings (the old reader is moving them into its profile),
 // and Sign out. Signed out, the card asks you to sign in. Edit profile is its own pane with ← back to Profile.
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import {
@@ -73,6 +74,39 @@ function Header({
         <span className="material-symbols-outlined">close</span>
       </button>
     </header>
+  );
+}
+
+/** The description, one line until Read more (the old reader's ExpandableText). */
+function Description({ text }: { text: string }) {
+  const { t } = useI18n();
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = useState(false);
+  const [clipped, setClipped] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setClipped(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+  return (
+    <>
+      <p
+        ref={ref}
+        className={`sb-profile-description${open ? "" : " sb-profile-description-clamped"}`}
+      >
+        {text}
+      </p>
+      {(clipped || open) && (
+        <button
+          type="button"
+          className="sb-profile-read-more"
+          onClick={() => setOpen(!open)}
+        >
+          {open
+            ? t("read-less", { defaultValue: "Read less" })
+            : t("read-more", { defaultValue: "Read more" })}
+        </button>
+      )}
+    </>
   );
 }
 
@@ -400,9 +434,7 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           >
             <span className="sb-profile-name">{name}</span>
           </button>
-          {mine?.about ? (
-            <p className="sb-profile-description">{mine.about}</p>
-          ) : null}
+          {mine?.about ? <Description text={mine.about} /> : null}
           <p className="sb-profile-sync sb-muted sb-small">
             {state.outbox.flushing.value
               ? t("sync-flushing", { defaultValue: "Sending your changes…" })

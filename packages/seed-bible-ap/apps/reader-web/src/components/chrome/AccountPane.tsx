@@ -134,15 +134,26 @@ export function ProfileCard({ state }: { state: ReaderState }) {
             setDirty(true);
           }}
         />
-        <input
+        {/* The old reader's Description: up to 300 characters, counted. */}
+        <textarea
           className="sb-note-editor"
+          rows={3}
+          maxLength={300}
+          aria-label={t("profile-description", { defaultValue: "Description" })}
           placeholder={t("profile-about", { defaultValue: "A line about you" })}
           value={about}
           onInput={(e) => {
-            setAbout((e.target as HTMLInputElement).value);
+            setAbout((e.target as HTMLTextAreaElement).value);
             setDirty(true);
           }}
         />
+        <span className="sb-small sb-muted sb-profile-about-count">
+          {t("characters-of", {
+            count: about.length,
+            max: 300,
+            defaultValue: "{{count}}/{{max}}",
+          })}
+        </span>
         <div className="sb-note-card-actions">
           <button
             type="submit"

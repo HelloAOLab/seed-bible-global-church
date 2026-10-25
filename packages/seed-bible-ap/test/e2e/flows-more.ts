@@ -2373,16 +2373,18 @@ export const MORE_FLOWS: Flow[] = [
     title: "Your profile",
     rows: ["Your profile"],
     checks:
-      "Account → Your profile: a display name and a line → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished",
+      "Account → Your profile: a display name and a long description (up to 300 characters) → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished; the Profile shows the description folded with Read more",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
       let pane = await c.openAccount();
-      const line = `flow ${stamp()}`;
+      // Long enough to fold under Read more on the Profile (the old reader's 300-character description).
+      const line =
+        `flow ${stamp()} ${"of the reading of the word ".repeat(9)}`.trim();
       await pane
         .locator('input[placeholder="Profile name"]')
         .fill("Seed Reader");
-      await pane.locator('input[placeholder="A line about you"]').fill(line);
+      await pane.locator('textarea[placeholder="A line about you"]').fill(line);
       await pane
         .getByRole("button", { name: /^save$/i })
         .first()
@@ -2398,7 +2400,7 @@ export const MORE_FLOWS: Flow[] = [
       pane = await c.openAccount();
       await c.page.waitForFunction(
         (l) =>
-          [...document.querySelectorAll("input")].some(
+          [...document.querySelectorAll("input, textarea")].some(
             (i) => (i as HTMLInputElement).value === l
           ),
         line,
@@ -2420,7 +2422,13 @@ export const MORE_FLOWS: Flow[] = [
         .locator("button", { hasText: /(^|\s)Publish\s*$/ })
         .first()
         .waitFor({ timeout: 90000 });
-      return `"Saved to your Library" after ${took}s; profile line "${line}" kept across a reload; published, then withdrawn`;
+      // The Profile shows it folded to one line, with Read more.
+      await c.page.locator(".sb-sidebar-profile-button").click();
+      const more = c.page.locator(".sb-profile-screen .sb-profile-read-more");
+      await more.waitFor({ timeout: 10000 });
+      await more.click();
+      await c.waitText(more, /read less/i, 3000);
+      return `"Saved to your Library" after ${took}s; the description kept across a reload and folded under Read more on the Profile; published, then withdrawn`;
     },
   },
   {

@@ -521,3 +521,23 @@ button.sb-profile-plans-link {
   cursor: default;
   opacity: 0.6;
 }
+
+/* The description held to one line until Read more (the old Profile's). */
+.sb-profile-description-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sb-profile-read-more {
+  border: none;
+  background: none;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0;
+}
+.sb-profile-about-count {
+  align-self: flex-end;
+}
