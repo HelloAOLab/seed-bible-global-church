@@ -1712,6 +1712,48 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "NO2",
+    section: "4. Marking the text",
+    title: "A note when the editor cannot load",
+    rows: ["Write a note"],
+    checks:
+      "With the rich editor's file blocked, Note opens a plain text box that says so; the note saved from it is listed",
+    run: async (c) => {
+      // The offline worker would serve the editor's file from its cache, past the block: none here.
+      const ctx = await c.browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        serviceWorkers: "block",
+      });
+      const page = await ctx.newPage();
+      c.watch(page);
+      try {
+        await page.route(/TipTapEditor[^/]*\.(js|tsx)/, (r) => r.abort());
+        await c.open(CH, page);
+        await c.selectVerse(16, page);
+        await page.locator(".sb-verse-toolbar-note").click();
+        const box = page.locator(".sb-note-card-draft .sb-note-editor-plain");
+        await box.waitFor({ timeout: 30000 });
+        await c.waitText(
+          page.locator(".sb-note-card-draft"),
+          /could not be loaded/i,
+          3000
+        );
+        await box.fill("typed in the plain box");
+        await page
+          .locator(".sb-note-card-draft")
+          .getByRole("button", { name: /^save$/i })
+          .click();
+        await page
+          .locator(".sb-note-card", { hasText: "typed in the plain box" })
+          .first()
+          .waitFor({ timeout: 10000 });
+      } finally {
+        await ctx.close();
+      }
+      return "the plain box took the note and it was listed";
+    },
+  },
+  {
     id: "M9",
     section: "4. Marking the text",
     title: "Bookmark names and colours, save folders",

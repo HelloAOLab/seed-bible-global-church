@@ -838,5 +838,6 @@
   "edit-annotation": "Edit",
   "publish-note-menu": "Publish to your public shelf",
   "save-shortcut": "Save (Ctrl+Enter)",
-  "save-shortcut-mac": "Save (⌘+Enter)"
+  "save-shortcut-mac": "Save (⌘+Enter)",
+  "plain-editor-note": "The full editor could not be loaded, so this is plain text."
 }

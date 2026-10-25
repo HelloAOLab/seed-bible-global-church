@@ -5,6 +5,7 @@
 // A note that came back twice from a merge (edited on two devices) shows as a conflict the reader settles. A verse
 // reference typed into a note is a link that opens the chapter.
 import { lazy, Suspense } from "preact/compat";
+import { Component, type ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { MenuButton, MenuItem } from "../chrome/ContextMenu";
 import type { Editor } from "@tiptap/core";
@@ -29,6 +30,29 @@ const bodyHtml = (note: string) =>
     ? sanitizeNoteHtml(note)
     : `<p>${escapeHtml(note).replace(/\n/g, "<br>")}</p>`;
 
+/** Falls back when the rich editor cannot be loaded (offline, a failed download): `onFail` takes over. */
+class EditorBoundary extends Component<
+  { onFail: () => void; children: ComponentChildren },
+  { failed: boolean }
+> {
+  override state = { failed: false };
+  override componentDidCatch() {
+    // Its own state change is what tells Preact the error was handled here.
+    this.setState({ failed: true });
+    this.props.onFail();
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+/** Plain text as the note's HTML: paragraphs, line breaks kept. */
+const plainToHtml = (text: string) =>
+  text
+    .split(/\n{2,}/)
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+
 const MAC =
   typeof navigator !== "undefined" &&
   /Mac|iPhone|iPad/.test(navigator.platform);
@@ -43,25 +67,67 @@ export function NoteEditor(props: {
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   const [empty, setEmpty] = useState(!props.initial);
+  // The old reader's PlainTextAnnotationEditor: a text box when the rich editor could not be loaded.
+  const [plain, setPlain] = useState<string | null>(null);
   const save = () => {
+    if (plain !== null) {
+      if (plain.trim()) props.onSave(plainToHtml(plain.trim()));
+      return;
+    }
     const html = editorRef.current?.getHTML() ?? "";
     if (!html || editorRef.current?.isEmpty) return;
     props.onSave(html);
   };
+  const toPlain = () => {
+    const div = document.createElement("div");
+    div.innerHTML = sanitizeNoteHtml(props.initial ?? "");
+    setPlain(div.innerText ?? "");
+  };
   return (
     <>
-      <Suspense
-        fallback={<div className="sb-note-editor sb-note-editor-loading" />}
-      >
-        <TipTapEditor
-          className="sb-note-editor-tiptap"
-          initialContent={props.initial}
-          onEditor={(e) => (editorRef.current = e)}
-          onEmptyChange={setEmpty}
-          onModEnter={save}
-          autofocus="end"
-        />
-      </Suspense>
+      {plain !== null ? (
+        <>
+          <textarea
+            className="sb-note-editor sb-note-editor-plain"
+            rows={5}
+            value={plain}
+            autoFocus
+            aria-label={t("note", { defaultValue: "Note" })}
+            onInput={(e) => {
+              const v = (e.target as HTMLTextAreaElement).value;
+              setPlain(v);
+              setEmpty(!v.trim());
+            }}
+            onKeyDown={(e: KeyboardEvent) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                save();
+              }
+            }}
+          />
+          <p className="sb-small sb-muted">
+            {t("plain-editor-note", {
+              defaultValue:
+                "The full editor could not be loaded, so this is plain text.",
+            })}
+          </p>
+        </>
+      ) : (
+        <EditorBoundary onFail={toPlain}>
+          <Suspense
+            fallback={<div className="sb-note-editor sb-note-editor-loading" />}
+          >
+            <TipTapEditor
+              className="sb-note-editor-tiptap"
+              initialContent={props.initial}
+              onEditor={(e) => (editorRef.current = e)}
+              onEmptyChange={setEmpty}
+              onModEnter={save}
+              autofocus="end"
+            />
+          </Suspense>
+        </EditorBoundary>
+      )}
       <div className="sb-note-card-actions">
         <button
           type="button"

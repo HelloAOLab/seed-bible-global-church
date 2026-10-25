@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 06:05 UTC",
+  "when": "2026-10-25 06:09 UTC",
   "results": [
     {
-      "id": "M6",
+      "id": "NO2",
       "section": "4. Marking the text",
-      "title": "Verse references in notes become links",
-      "checks": "A note saying 'see Romans 8:28' shows a link; tapping it opens Romans 8 with verse 28 selected",
+      "title": "A note when the editor cannot load",
+      "checks": "With the rich editor's file blocked, Note opens a plain text box that says so; the note saved from it is listed",
       "mark": "✅",
-      "note": "link → /read/BSB/JHN/3, verse 28 selected",
-      "ms": 7286
+      "note": "the plain box took the note and it was listed",
+      "ms": 919
     }
   ]
 }
