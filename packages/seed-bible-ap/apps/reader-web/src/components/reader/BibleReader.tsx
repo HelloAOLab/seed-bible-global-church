@@ -509,6 +509,30 @@ export function BibleReader({
     </>
   );
 
+  // Buttons extensions add to the chapter header (the old reader's quick tools); an embed keeps only those that ask.
+  const extensionButtons = [...state.extensions.headerButtons.value]
+    .filter(
+      (b) =>
+        (!embed || b.showInEmbedded) &&
+        (!b.isVisible || b.isVisible(chapterRef))
+    )
+    .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+    .map((b) => (
+      <button
+        key={b.id}
+        type="button"
+        className="sb-bible-reader-action-button sb-bible-reader-extension-button"
+        aria-label={b.label}
+        title={b.label}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          b.onSelect(chapterRef);
+        }}
+      >
+        <span className="material-symbols-outlined">{b.icon}</span>
+      </button>
+    ));
+
   // The chapter's own actions, the same on the desktop header and the phone's; Save and Bookmark step aside while a
   // playlist plays (the old reader's rule: the playlist's own card is what is being read).
   const saveButtons = state.playlists.playing.value ? null : (
@@ -645,10 +669,14 @@ export function BibleReader({
           )}
           <div className="sb-bible-reader-mobile-header-actions">
             {embed ? (
-              embedActions
+              <>
+                {extensionButtons}
+                {embedActions}
+              </>
             ) : (
               <>
                 {saveButtons}
+                {extensionButtons}
                 {shareButton}
                 {inSession && <SessionPeopleStack state={state} />}
                 <button
@@ -740,6 +768,7 @@ export function BibleReader({
                 <span className="material-symbols-outlined">explore</span>
               </button>
             )}
+            {extensionButtons}
             {!embed && shareButton}
             {!embed && active && canPlay && (
               <button

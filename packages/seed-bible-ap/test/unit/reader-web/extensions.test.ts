@@ -54,6 +54,12 @@ describe("the extension host", () => {
           title: "X pane",
           render: () => null,
         });
+        yield ctx.header.add({
+          id: "x-head",
+          label: "X",
+          icon: "star",
+          onSelect: (ref) => log.push(`header ${ref}`),
+        });
         yield () => log.push("cleanup");
       },
     };
@@ -76,12 +82,17 @@ describe("the extension host", () => {
     expect(host.panes.value.map((p) => p.id)).toEqual(["x"]);
     host.toolbarItems.value[0]!.onSelect();
     expect(state.ui.pane.value).toBe("ext:x");
+    expect(host.headerButtons.value.map((b) => b.id)).toEqual(["x-head"]);
+    host.headerButtons.value[0]!.onSelect("JHN.3");
+    expect(log).toEqual(["init", "header JHN.3"]);
+    log.splice(1);
 
     await host.setEnabled("x", false);
     expect(log).toEqual(["init", "cleanup"]);
     expect(host.verseTools.value).toHaveLength(0);
     expect(host.providers.value).toHaveLength(0);
     expect(host.panes.value).toHaveLength(0);
+    expect(host.headerButtons.value).toHaveLength(0);
     expect(await stores.prefs.get("extensions:enabled")).toEqual([]);
 
     await host.setEnabled("off", true);

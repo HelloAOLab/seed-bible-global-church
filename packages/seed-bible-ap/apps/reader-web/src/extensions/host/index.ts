@@ -1,8 +1,8 @@
 // THE EXTENSION HOST — ported in shape from packages/seed-bible ExtensionManager (docs/porting/ExtensionManager.md):
 // an extension registers `{ id, init }`; `init(context)` yields cleanups; installing runs it, uninstalling runs the
-// cleanups. What an extension may add: a verse-toolbar tool, a Discover provider, a toolbar item, a side pane. It
-// emits intents through the app's state; it never fetches a third party with a key (the Bible API and the
-// serving plane through the workspace are the only lanes).
+// cleanups. What an extension may add: a verse-toolbar tool, a Discover provider, a toolbar item, a chapter-header
+// button, a side pane. It emits intents through the app's state; it never fetches a third party with a key (the Bible
+// API and the serving plane through the workspace are the only lanes).
 import { signal, type Signal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import type { ReaderStores } from "../../backend/offline/db";
@@ -62,6 +62,19 @@ export interface ToolbarItem {
   onSelect: () => void;
 }
 
+/** A button in the chapter header beside Save and Share (the old reader's quick tools). */
+export interface HeaderButton {
+  id: string;
+  label: string;
+  icon: string;
+  /** Lower comes first. */
+  priority?: number;
+  /** Also shown in an embed, where the header is otherwise just Open in New Tab and Text settings. */
+  showInEmbedded?: boolean;
+  isVisible?: (chapterRef: string) => boolean;
+  onSelect: (chapterRef: string) => void;
+}
+
 export interface ExtensionPane {
   id: string;
   title: string;
@@ -73,6 +86,7 @@ export interface ExtensionContext {
   tools: { registerVerseTool: (tool: VerseTool) => () => void };
   discover: { registerProvider: (p: DiscoverProvider) => () => void };
   toolbar: { add: (item: ToolbarItem) => () => void };
+  header: { add: (button: HeaderButton) => () => void };
   panes: {
     register: (pane: ExtensionPane) => () => void;
     open: (id: string) => void;
@@ -128,6 +142,7 @@ export function createExtensionHost(stores: ReaderStores) {
   const verseTools = registry<VerseTool>();
   const providers = registry<DiscoverProvider>();
   const toolbarItems = registry<ToolbarItem>();
+  const headerButtons = registry<HeaderButton>();
   const panes = registry<ExtensionPane>();
   const cleanups = new Map<string, Cleanup[]>();
   const errors = signal<Record<string, string>>({});
@@ -209,6 +224,7 @@ export function createExtensionHost(stores: ReaderStores) {
       tools: { registerVerseTool: verseTools.add },
       discover: { registerProvider: providers.add },
       toolbar: { add: toolbarItems.add },
+      header: { add: headerButtons.add },
       panes: {
         register: panes.add,
         open: (id) => (s.ui.pane.value = `ext:${id}` as never),
@@ -281,6 +297,7 @@ export function createExtensionHost(stores: ReaderStores) {
     verseTools: verseTools.items,
     providers: providers.items,
     toolbarItems: toolbarItems.items,
+    headerButtons: headerButtons.items,
     panes: panes.items,
     register,
     bind,

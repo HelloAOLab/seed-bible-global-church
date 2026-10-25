@@ -1,24 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-25 09:59 UTC",
+  "when": "2026-10-25 10:00 UTC",
   "results": [
     {
-      "id": "MS1",
-      "section": "3. Reading",
-      "title": "The phone's Theme & text sheet",
-      "checks": "On an iPhone 13 the sliders in the chapter's top bar open the old reader's Theme & text sheet: the larger A makes the verses larger and the smaller A smaller; the line-spacing button cycles the spacing; UI size L, then M; Keep screen awake toggles; Go to all settings opens the Settings list in the drawer",
+      "id": "EX1",
+      "section": "12. Extensions",
+      "title": "The Extensions page",
+      "checks": "Settings → Extensions shows Installed and Available with counts; Cross-references' Configure sets References per verse to 1 and Discover lists fewer, Reset to defaults puts it back; Uninstall takes Study companion off the bar and Available → Install brings it back; Download Extensions saves the set as a file",
       "mark": "✅",
-      "note": "text m → l → m; spacing normal → relaxed and back; UI size L then M; keep awake toggled; Go to all settings opened Settings",
-      "ms": 2038
+      "note": "tabs with counts; 40 → 36 cross-references at 1 per verse, reset; companion off and on; the set downloaded",
+      "ms": 2197
     },
     {
-      "id": "RD2",
+      "id": "H1",
       "section": "3. Reading",
-      "title": "Footnote links, an embed's marks, the phone's note count",
-      "checks": "John 1:23's footnote 'Isaiah 40:3' is a link that opens Isaiah 40 with verse 3 chosen; a highlight on John 3:3 is not drawn when John 3 is embedded; with a note on John 3:16, a phone shows a note marker in the margin level with verse 16 and the note count in its header; each opens the note",
+      "title": "The chapter header's actions",
+      "checks": "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
       "mark": "✅",
-      "note": "John 1:23's footnote opened Isaiah 40:3; the embed left out the highlight; the phone's margin marker and header ('1 note for this chapter') each opened it",
-      "ms": 28337
+      "note": "header: Save chapter · Bookmark this chapter · Discover · Share · Listen; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused",
+      "ms": 1126
+    },
+    {
+      "id": "PH1",
+      "section": "13. Links and embedding",
+      "title": "A phone: the old reader's phone shell",
+      "checks": "On an iPhone 13: a thin bar at the top (the translation, then ☆, bookmark, share and text settings), the chapter's title centred and large (John over a big 3), and along the bottom play and the chapter pill ‹ John 3 › above the five tabs Today · You · Bible · Search · More, with Bible lit. The pill's › goes to John 4 and its label opens the book picker; Bible on the text opens it too. More → Tabs opens the Tabs drawer, which closes with its ✕ and with a tap beside it; reading down scrolls the page itself; signed out, You carries the count of changes waiting and opens the sign-in pane",
+      "mark": "✅",
+      "note": "top bar: 5 buttons; title \"John 3\"; tabs Today · You · Bible · Search · More; › and the pill and Bible worked; the Tabs drawer closed by ✕ and by a tap beside it; the page scrolled; You carried the waiting count and opened sign-in",
+      "ms": 1346
+    },
+    {
+      "id": "EM1",
+      "section": "13. Links and embedding",
+      "title": "The embed's own controls",
+      "checks": "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+      "mark": "✅",
+      "note": "header: Open in New Tab · Text settings; the bar went to John 4; Open in New Tab opened /read/BSB/JHN/4; verse: Copy · Compare · Share · Cancel; the sheet without Go to all settings",
+      "ms": 4709
     }
   ]
 }
