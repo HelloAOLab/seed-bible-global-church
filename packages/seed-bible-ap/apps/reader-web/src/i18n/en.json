@@ -235,6 +235,7 @@
   "read-this-translation": "Read this translation",
   "comparison-load-failed": "Could not load this translation.",
   "places-none": "This chapter names no place the map knows.",
+  "places-site-uncertain": "site uncertain",
   "places-loading": "Finding the places…",
   "places-no-geometry": "The map has no geometry for these places yet.",
   "places-map": "Places map",

@@ -1,10 +1,11 @@
-// The Places map's data path and the readable theme link: geometry comes through the workspace (null when the
-// serving plane has none); a customization is found by its title slug, its descriptor id or its work id.
+// The Places map's data path and the readable theme link: a chapter's places come from the publishers through the
+// workspace, with how sure each site is (an uncertain site is marked, never dropped); a customization is found by its
+// title slug, its descriptor id or its work id.
 import { describe, expect, it } from "vitest";
 import {
-  loadPlaceGeometry,
-  normalizeGeometry,
-} from "../../../apps/reader-web/src/extensions/locations/PlacesMapPane";
+  loadChapterPlaces,
+  siteUncertain,
+} from "../../../apps/reader-web/src/extensions/locations";
 import {
   createCustomizations,
   slugify,
@@ -17,56 +18,58 @@ import type { Customization } from "@seed/seed-schema";
 const RUTH = { agent: "0x" + "11".repeat(20), name: "Ruth", wire: true };
 
 describe("the places map", () => {
-  it("reads a place's geometry through the workspace and says null when there is none", async () => {
+  const bethany = {
+    id: "openbible:a6e060d",
+    name: "Bethany (Beyond the Jordan)",
+    site: "Al Maghtas",
+    geometry: { type: "Point", coordinates: [35.550301, 31.837109] },
+    verses: [28],
+    identification: {
+      confidence: 0.32,
+      method: "scholar-identification",
+      basis: "OpenBible.info scores Al Maghtas 320",
+    },
+    source: "scripture",
+    publisher: "scripture-resolver.svc",
+    work: "scripture-resolver.svc/bible-places",
+    license: "CC-BY-4.0",
+    attribution: "OpenBible.info (CC BY 4.0)",
+  };
+
+  it("reads a chapter's places through the workspace, once per chapter, and marks an uncertain site", async () => {
     const seen: string[] = [];
     const fetchImpl = (async (input: string | URL | Request) => {
       const url = String(input instanceof Request ? input.url : input);
       seen.push(url);
-      return url.endsWith("/api/places/Bethlehem")
-        ? new Response(
-            JSON.stringify({
-              type: "Feature",
-              geometry: { type: "Point", coordinates: ["31.704", "35.206"] },
-            }),
-            { status: 200 }
-          )
-        : new Response("nope", { status: 404 });
+      return Response.json({
+        ok: true,
+        chapter: "John.1",
+        places: [bethany],
+        sources: [],
+      });
     }) as typeof fetch;
-    const geo = await loadPlaceGeometry(
-      { place: "Bethlehem", geojson: "Bethlehem" },
-      fetchImpl
-    );
-    // OpenBible's export: strings in [lat, lon]; the map gets numbers in [lon, lat].
-    expect(geo).toMatchObject({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [35.206, 31.704] },
-    });
+    const first = await loadChapterPlaces("JHN.1", fetchImpl);
+    await loadChapterPlaces("JHN.1", fetchImpl);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatch(/\/api\/places\/chapter\/JHN\.1$/);
+    expect(first.map((p) => p.name)).toEqual(["Bethany (Beyond the Jordan)"]);
+    expect(siteUncertain(first[0]!)).toBe(true);
     expect(
-      normalizeGeometry({
-        type: "Polygon",
-        coordinates: [
-          [
-            ["1", "2"],
-            [3, 4],
-          ],
-        ],
+      siteUncertain({
+        identification: { confidence: 1, method: "scholar-identification" },
       })
-    ).toEqual({
-      type: "Polygon",
-      coordinates: [
-        [
-          [2, 1],
-          [3, 4],
-        ],
-      ],
-    });
-    expect(
-      await loadPlaceGeometry(
-        { place: "Nowhere", geojson: "Nowhere" },
-        fetchImpl
-      )
-    ).toBeNull();
-    expect(seen[0]).toMatch(/\/api\/places\/Bethlehem$/);
+    ).toBe(false);
+  });
+
+  it("answers nothing when the workspace cannot, and asks again next time", async () => {
+    let calls = 0;
+    const down = (async () => {
+      calls++;
+      return new Response("down", { status: 502 });
+    }) as typeof fetch;
+    expect(await loadChapterPlaces("GEN.12", down)).toEqual([]);
+    expect(await loadChapterPlaces("GEN.12", down)).toEqual([]);
+    expect(calls).toBe(2);
   });
 });
 

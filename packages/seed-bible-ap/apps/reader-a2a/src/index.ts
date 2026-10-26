@@ -21,6 +21,7 @@ import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
 import { huddleRoutes, type HuddleEnv } from "./routes/huddle";
 import { baseMapRoutes } from "./routes/basemap";
+import { chapterPlacesRoutes } from "./routes/chapter-places";
 import { passageRoutes, type PublishingEnv } from "./routes/passage";
 import { agentFor, readBucket } from "./skills/vault";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
@@ -61,6 +62,7 @@ app.route("/", bibleRoutes);
 app.route("/", publicRoutes);
 app.route("/", huddleRoutes);
 app.route("/", baseMapRoutes);
+app.route("/", chapterPlacesRoutes);
 // The passage's own marks come from the signed-in reader's agent (their Library), never from the registry.
 app.route(
   "/",

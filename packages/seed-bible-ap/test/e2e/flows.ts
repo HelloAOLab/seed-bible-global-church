@@ -552,7 +552,7 @@ const BASE_FLOWS: Flow[] = [
     section: "12. Extensions",
     title: "Places map follows a chapter that arrives late",
     checks:
-      "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places (Jerusalem, Galilee, Bethsaida, Nazareth), not Deuteronomy's and not 'names no place'",
+      "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places from the publishers (Jerusalem, Bethany beyond the Jordan, Galilee, Beth-Saida, Nazareth), not Deuteronomy's, and marks Bethany beyond the Jordan's site as uncertain",
     run: async (c) => {
       await c.page.route(/\/bible\/api\/rbs\/JHN\/1\.json/, async (route) => {
         await new Promise((r) => setTimeout(r, 3000));
@@ -575,7 +575,13 @@ const BASE_FLOWS: Flow[] = [
         history.pushState({}, "", "/read/rbs/JHN/1");
         dispatchEvent(new PopStateEvent("popstate"));
       });
-      const want = ["Jerusalem", "Galilee", "Bethsaida", "Nazareth"];
+      const want = [
+        "Jerusalem",
+        "Bethany (Beyond the Jordan)",
+        "Galilee",
+        "Beth-Saida",
+        "Nazareth",
+      ];
       await c.page
         .waitForFunction(
           (names) => {
@@ -592,7 +598,11 @@ const BASE_FLOWS: Flow[] = [
             `John 1's map drew "${await canvas.getAttribute("data-drawn")}" (Deuteronomy 32 had "${before}")`
           );
         });
-      return `Deuteronomy 32 drew ${before}; John 1 drew ${await canvas.getAttribute("data-drawn")}`;
+      const uncertain = c.page.locator(".sb-places-list li", {
+        hasText: "Bethany (Beyond the Jordan)",
+      });
+      await c.waitText(uncertain, /site uncertain/, 10000);
+      return `Deuteronomy 32 drew ${before}; John 1 drew ${await canvas.getAttribute("data-drawn")}; Bethany beyond the Jordan: site uncertain`;
     },
   },
   {

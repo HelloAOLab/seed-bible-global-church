@@ -1,48 +1,51 @@
-// LOCATIONS — ported from packages/locations-extension: the places named in the chapter (a bundled gazetteer),
-// offered in Discover; opening one selects the verse that names it. The map is a plain web map (PlacesMapPane):
-// a toolbar item opens it when the chapter names a place.
+// LOCATIONS — the places a chapter names, from the publishers through the workspace (`/api/places/chapter/<JHN.1>`: the
+// scripture publisher's Bible places and any map features people or ministries published for the chapter), offered in
+// Discover and drawn on the Places map (PlacesMapPane). Each place carries the verses of the chapter that name it and
+// how sure its site is; a disputed site is shown with its doubt, never dropped and never shown as certain.
 import { h } from "preact";
-import locations from "./locations.json";
 import { PlacesMapPane } from "./PlacesMapPane";
 import type { ExtensionRegistration } from "../host";
-import type { TranslationBookChapter } from "../../backend/bible";
-import { getVersePlainText } from "../../components/reader/chapterContent";
+import { A2A_BASE } from "../../api";
 
-export interface PlaceData {
-  place: string;
-  geojson: string;
+export interface ChapterPlace {
+  id: string;
+  name: string;
+  site?: string;
+  geometry: { type: string; coordinates: unknown };
+  verses: number[];
+  identification: { confidence: number; method: string; basis?: string };
+  source: "scripture" | "publishing";
+  publisher: string;
+  work: string;
+  license: string;
+  attribution: string;
 }
 
-const GAZETTEER = locations as Record<string, PlaceData>;
+/** Below this, the map and the list say the site is uncertain. */
+export const SITE_CERTAIN = 0.7;
+export const siteUncertain = (p: Pick<ChapterPlace, "identification">) =>
+  p.identification.confidence < SITE_CERTAIN;
 
-export function findPlacesInText(text: string): PlaceData[] {
-  const found: PlaceData[] = [];
-  const seen = new Set<string>();
-  for (const word of text.toLowerCase().split(/[^\p{L}\p{N}-]+/u)) {
-    const place = GAZETTEER[word];
-    if (place && !seen.has(place.place)) {
-      seen.add(place.place);
-      found.push(place);
-    }
-  }
-  return found;
-}
+// One answer per chapter per page load: the Discover list and the map ask for the same chapter.
+const asked = new Map<string, Promise<ChapterPlace[]>>();
 
-/** Each place with the first verse of the chapter that names it. */
-export function placesInChapter(
-  chapter: TranslationBookChapter
-): Array<{ place: PlaceData; verse: number }> {
-  const out: Array<{ place: PlaceData; verse: number }> = [];
-  const seen = new Set<string>();
-  for (const e of chapter.chapter.content) {
-    if (!e || typeof e !== "object" || e.type !== "verse") continue;
-    for (const p of findPlacesInText(getVersePlainText(e.content))) {
-      if (seen.has(p.place)) continue;
-      seen.add(p.place);
-      out.push({ place: p, verse: e.number });
-    }
+/** The places of a chapter (`JHN.1`); empty when the workspace cannot answer (the next ask tries again). */
+export function loadChapterPlaces(
+  ref: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<ChapterPlace[]> {
+  let p = asked.get(ref);
+  if (!p) {
+    p = fetchImpl(`${A2A_BASE}/api/places/chapter/${encodeURIComponent(ref)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b: { places?: ChapterPlace[] } | null) => b?.places ?? [])
+      .catch(() => []);
+    p.then((list) => {
+      if (!list.length) asked.delete(ref);
+    });
+    asked.set(ref, p);
   }
-  return out;
+  return p;
 }
 
 const locationsExtension: ExtensionRegistration = {
@@ -67,12 +70,13 @@ const locationsExtension: ExtensionRegistration = {
       label: "Places",
       discover: async (d) => {
         if (!d.chapter) return [];
-        return placesInChapter(d.chapter).map(({ place, verse }) => ({
-          id: `place:${place.place}`,
-          title: place.place,
-          description: `verse ${verse}`,
+        const ref = `${d.chapter.book.id}.${d.chapter.chapter.number}`;
+        return (await loadChapterPlaces(ref)).map((p) => ({
+          id: `place:${p.id}`,
+          title: p.name,
+          description: `verse ${p.verses.join(", ")}${siteUncertain(p) ? " · site uncertain" : ""}`,
           icon: "location_on",
-          onOpen: () => state.selection.select(verse, verse),
+          onOpen: () => state.selection.select(p.verses[0]!, p.verses[0]!),
         }));
       },
     });

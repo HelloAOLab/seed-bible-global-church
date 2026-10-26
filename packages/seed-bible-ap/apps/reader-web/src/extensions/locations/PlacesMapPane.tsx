@@ -1,13 +1,14 @@
 // THE PLACES MAP — the old locations map (a CasualOS portal) as a plain web map: Leaflet over the Bible lands base map
-// (a signed map work on the publishing gateway, vector tiles drawn here in the reader's light or dark) and place
-// geometry from the scripture agent, both relayed by the workspace (the page talks to its origin only). The places the
-// chapter on screen names are drawn; tapping one selects the verse that names it.
+// (a signed map work on the publishing gateway, vector tiles drawn here in the reader's light or dark) and the chapter's
+// places from the publishers (the scripture publisher's Bible places and any published map features), all through the
+// workspace (the page talks to its origin only). A place whose site is uncertain is drawn hollow and dashed and says so;
+// tapping a place selects the first verse of the chapter that names it.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { retryChunkImport } from "../../sw/retryChunkImport";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { A2A_BASE } from "../../api";
-import { placesInChapter, type PlaceData } from "./index";
+import { loadChapterPlaces, siteUncertain, type ChapterPlace } from "./index";
 
 type Leaflet = typeof import("leaflet");
 
@@ -19,8 +20,7 @@ interface TilesInfo {
 
 const OSM_CREDIT =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-const PLACES_CREDIT =
-  "places: OpenBible.info (CC BY 4.0), Theographic (CC BY-SA 4.0)";
+const PLACES_CREDIT = "places: OpenBible.info (CC BY 4.0)";
 
 /** The base map layer: the published map's vector tiles, drawn in the page. */
 async function baseMapLayer(
@@ -43,44 +43,6 @@ async function baseMapLayer(
   }) as unknown as import("leaflet").Layer;
 }
 
-/**
- * OpenBible's geometry export writes coordinates as strings in [lat, lon] order; GeoJSON is numbers in [lon, lat].
- * A pair that arrives as strings is that export and is turned round; numbers are taken as standard.
- */
-export function normalizeGeometry<T>(value: T): T {
-  if (Array.isArray(value)) {
-    if (
-      value.length >= 2 &&
-      typeof value[0] === "string" &&
-      typeof value[1] === "string"
-    )
-      return [Number(value[1]), Number(value[0])] as unknown as T;
-    return value.map((v) => normalizeGeometry(v)) as unknown as T;
-  }
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>))
-      out[k] = normalizeGeometry(v);
-    return out as T;
-  }
-  return value;
-}
-
-/** The geometry of a place, from the scripture agent through this reader's agent (null when it has none). */
-export async function loadPlaceGeometry(
-  place: PlaceData,
-  fetchImpl: typeof fetch = fetch
-): Promise<GeoJSON.GeoJsonObject | null> {
-  const res = await fetchImpl(
-    `${A2A_BASE}/api/places/${encodeURIComponent(place.geojson)}`
-  );
-  if (!res.ok) return null;
-  const raw = (await res
-    .json()
-    .catch(() => null)) as GeoJSON.GeoJsonObject | null;
-  return raw ? normalizeGeometry(raw) : null;
-}
-
 export function PlacesMapPane({ state }: { state: ReaderState }) {
   const { t, language } = useI18n();
   const host = useRef<HTMLDivElement>(null);
@@ -90,11 +52,23 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
   const infoRef = useRef<TilesInfo | null>(null);
   const dark = state.settings.resolvedTheme().id === "dark";
   const [status, setStatus] = useState<string | null>(null);
-  const chapter = state.reading.chapterData.value;
   const chapterRef = state.reading.chapterRef.value;
-  const places = chapter ? placesInChapter(chapter) : [];
-  // The chapter's data can arrive after its ref changes (a fetch), so the map redraws on the places, not the ref alone.
-  const placesKey = places.map((p) => `${p.place}:${p.verse}`).join("|");
+  // The places are asked for by the chapter's ref, so they always belong to the chapter on screen; null while asking.
+  const [loaded, setLoaded] = useState<{
+    ref: string;
+    places: ChapterPlace[];
+  } | null>(null);
+  useEffect(() => {
+    let dead = false;
+    setLoaded(null);
+    void loadChapterPlaces(chapterRef).then((places) => {
+      if (!dead) setLoaded({ ref: chapterRef, places });
+    });
+    return () => {
+      dead = true;
+    };
+  }, [chapterRef]);
+  const places = loaded?.ref === chapterRef ? loaded.places : null;
 
   useEffect(() => {
     let dead = false;
@@ -124,6 +98,10 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       layer.clearLayers();
       // What is drawn, for anyone checking the map against the chapter (flow X8).
       host.current.dataset["drawn"] = "";
+      if (!places) {
+        setStatus(t("places-loading", { defaultValue: "Finding the places…" }));
+        return;
+      }
       if (!places.length) {
         setStatus(
           t("places-none", {
@@ -132,31 +110,44 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
         );
         return;
       }
-      setStatus(t("places-loading", { defaultValue: "Finding the places…" }));
       const bounds = L.latLngBounds([]);
       const drawn: string[] = [];
-      for (const { place, verse } of places) {
-        const geo = await loadPlaceGeometry(place);
-        if (dead) return;
-        if (!geo) continue;
-        const g = L.geoJSON(geo, {
-          pointToLayer: (_f, latlng) =>
-            L.circleMarker(latlng, {
-              radius: 7,
+      for (const p of places) {
+        const uncertain = siteUncertain(p);
+        const g = L.geoJSON(
+          {
+            type: "Feature",
+            geometry: p.geometry,
+            properties: {},
+          } as GeoJSON.Feature,
+          {
+            pointToLayer: (_f, latlng) =>
+              L.circleMarker(latlng, {
+                radius: 7,
+                color: "#b45309",
+                fillColor: "#f59e0b",
+                fillOpacity: uncertain ? 0.15 : 0.9,
+                weight: 2,
+                dashArray: uncertain ? "3 3" : undefined,
+              }),
+            style: () => ({
               color: "#b45309",
-              fillColor: "#f59e0b",
-              fillOpacity: 0.9,
               weight: 2,
+              fillOpacity: 0.15,
+              dashArray: uncertain ? "4 4" : undefined,
             }),
-          style: () => ({ color: "#b45309", weight: 2, fillOpacity: 0.15 }),
-        });
-        g.bindTooltip(
-          `${place.place} · ${t("verse", { defaultValue: "verse" })} ${verse}`
+          }
         );
-        g.on("click", () => state.selection.select(verse, verse));
+        const where = `${t("verse", { defaultValue: "verse" })} ${p.verses.join(", ")}`;
+        g.bindTooltip(
+          uncertain
+            ? `${p.name} · ${where} · ${t("places-site-uncertain", { defaultValue: "site uncertain" })}`
+            : `${p.name} · ${where}`
+        );
+        g.on("click", () => state.selection.select(p.verses[0]!, p.verses[0]!));
         g.addTo(layer);
         bounds.extend(g.getBounds());
-        drawn.push(place.place);
+        drawn.push(p.name);
       }
       if (host.current) host.current.dataset["drawn"] = drawn.join(",");
       if (drawn.length) {
@@ -172,7 +163,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     return () => {
       dead = true;
     };
-  }, [chapterRef, placesKey]);
+  }, [chapterRef, places]);
 
   // A theme change redraws the base map in the other flavour; the places on it stay.
   useEffect(() => {
@@ -209,18 +200,32 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     >
       <div className="sb-places-map-canvas" ref={host} />
       {status && <p className="sb-small sb-muted">{status}</p>}
-      {places.length > 0 && (
+      {places && places.length > 0 && (
         <ul className="sb-places-list">
-          {places.map(({ place, verse }) => (
-            <li key={place.place}>
+          {places.map((p) => (
+            <li key={p.id}>
               <button
                 type="button"
                 className="sb-presence-where"
-                onClick={() => state.selection.select(verse, verse)}
+                onClick={() =>
+                  state.selection.select(p.verses[0]!, p.verses[0]!)
+                }
               >
-                {place.place}
+                {p.name}
               </button>{" "}
-              <span className="sb-small sb-muted">· {verse}</span>
+              <span className="sb-small sb-muted">· {p.verses.join(", ")}</span>
+              {siteUncertain(p) && (
+                <span
+                  className="sb-small sb-muted"
+                  title={p.identification.basis ?? ""}
+                >
+                  {" "}
+                  ·{" "}
+                  {t("places-site-uncertain", {
+                    defaultValue: "site uncertain",
+                  })}
+                </span>
+              )}
             </li>
           ))}
         </ul>

@@ -11,10 +11,7 @@ import {
   itemsFor,
   loadChapterReferences,
 } from "../../../apps/reader-web/src/extensions/references";
-import {
-  findPlacesInText,
-  placesInChapter,
-} from "../../../apps/reader-web/src/extensions/locations";
+import {} from "../../../apps/reader-web/src/extensions/locations";
 import { parseSse } from "../../../apps/reader-web/src/extensions/companion";
 import { crossReferenceItems } from "../../../apps/reader-a2a/src/routes/passage";
 import { parseLocus } from "../../../lib/locus";
@@ -180,29 +177,6 @@ describe("the ported extensions' pure parts", () => {
     expect(itemsFor(refs, [], name).map((i) => i.fromVerse)).toEqual([
       3, 16, 16,
     ]);
-  });
-
-  it("places: the gazetteer finds places in text and the first verse naming each", () => {
-    expect(
-      findPlacesInText("They went down from Capernaum to Jerusalem").map(
-        (p) => p.place
-      )
-    ).toEqual(["Capernaum", "Jerusalem"]);
-    const chapter = {
-      chapter: {
-        content: [
-          { type: "verse", number: 1, content: ["In Bethlehem of Galilee"] },
-          {
-            type: "verse",
-            number: 2,
-            content: ["again Bethlehem, then Nazareth"],
-          },
-        ],
-      },
-    } as unknown as TranslationBookChapter;
-    expect(
-      placesInChapter(chapter).map((p) => `${p.place.place}@${p.verse}`)
-    ).toEqual(["Bethlehem@1", "Galilee@1", "Nazareth@2"]);
   });
 
   it("companion: the stream parser yields text and the answerer, across chunk boundaries", () => {
