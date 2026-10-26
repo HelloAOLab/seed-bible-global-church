@@ -98,4 +98,16 @@ if (search.get("ac_relay") === "1" && search.get("code") && then) {
 } else {
   void boot();
 }
-registerSW({ immediate: true });
+// A tab left open keeps the version it loaded until the browser looks for a new one, which it does rarely: look every
+// quarter hour and whenever the tab comes back, so a fix reaches someone without them knowing to reload.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, registration) {
+    if (!registration) return;
+    const check = () => void registration.update().catch(() => undefined);
+    setInterval(check, 15 * 60_000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") check();
+    });
+  },
+});

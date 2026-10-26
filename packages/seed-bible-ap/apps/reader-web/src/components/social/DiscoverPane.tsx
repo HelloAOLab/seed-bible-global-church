@@ -111,53 +111,73 @@ export function OfferingItem({
   );
 }
 
-const OPEN_KEY = "sb.discover.open";
-/** The sources this person opened, remembered on this device (a convenience: any can be lost, all start folded). */
-function openSources(): string[] {
-  try {
-    const v = JSON.parse(localStorage.getItem(OPEN_KEY) ?? "[]") as unknown;
-    return Array.isArray(v) ? v.map(String) : [];
-  } catch {
-    return [];
-  }
-}
-function rememberOpen(id: string, open: boolean) {
-  try {
-    const now = new Set(openSources());
-    if (open) now.add(id);
-    else now.delete(id);
-    localStorage.setItem(OPEN_KEY, JSON.stringify([...now]));
-  } catch {
-    /* storage blocked: it folds again next time */
-  }
-}
+/** How many of a source's rows show before "Show all" (a source split into sections folds by section instead). */
+const FIRST = 5;
 
-/** A source in Discover: one line — its name, how many it has, an arrow — folded until tapped, so the pane stays short. */
+/** Each source's chip, short as the old reader's (All · Content · People · Events · References). */
+const CHIP: Record<string, string> = {
+  scrolls: "Scrolls",
+  references: "References",
+  locations: "Places",
+  "default-content": "Content",
+  theographic: "People & events",
+  interpretations: "Interpretations",
+  writings: "Writings",
+};
+
+/** A source in Discover. Under All it is one line — its name and how many it has — and tapping it shows that source
+ *  alone (`full`), as its chip does; while another source is shown it stays loaded, out of sight, so its chip keeps
+ *  its count. */
 export function ProviderSection({
   state,
   provider,
+  mode,
+  onPick,
+  onCount,
 }: {
   state: ReaderState;
   provider: DiscoverProvider;
+  mode: "line" | "full" | "hidden";
+  onPick: () => void;
+  onCount: (n: number | null) => void;
 }) {
   const { t } = useI18n();
   const [items, setItems] = useState<DiscoverItem[] | null>(null);
-  const [open, setOpen] = useState(() => openSources().includes(provider.id));
+  /** The selected verses had nothing from this source, so these are the whole chapter's. */
+  const [widened, setWidened] = useState(false);
+  const [all, setAll] = useState(false);
   const chapterRef = state.reading.chapterRef.value;
   const chapter = state.reading.chapterData.value;
   const selected = state.selection.verses.value.join(",");
   useEffect(() => {
     let live = true;
     setItems(null);
-    provider
-      .discover({
+    onCount(null);
+    setWidened(false);
+    setAll(false);
+    const ask = (selectedVerses: number[]) =>
+      provider.discover({
         chapterRef,
         chapter,
         books: state.reading.books.value,
-        selectedVerses: state.selection.verses.value,
+        selectedVerses,
+      });
+    const verses = state.selection.verses.value;
+    // Nothing at the selected verses is not nothing at all: the chapter's are shown, and said to be the chapter's,
+    // so a source never vanishes just because the wrong verse was tapped.
+    ask(verses)
+      .then(async (r) => {
+        if (r.length || !verses.length) {
+          if (live) (setItems(r), onCount(r.length));
+          return;
+        }
+        const wide = await ask([]);
+        if (!live) return;
+        setWidened(wide.length > 0);
+        setItems(wide);
+        onCount(wide.length);
       })
-      .then((r) => live && setItems(r))
-      .catch(() => live && setItems([]));
+      .catch(() => live && (setItems([]), onCount(0)));
     return () => {
       live = false;
     };
@@ -169,41 +189,71 @@ export function ProviderSection({
     state.extensions.settings.value,
   ]);
   // A source with nothing for this chapter takes no room, as in the old reader.
-  if (items && !items.length) return null;
+  if (mode === "hidden" || (items && !items.length)) return null;
+  const rest = items ? byAuthor(items).rest : [];
+  // A source split into sections (People, Places, Events) folds by section instead of being cut at five.
+  const sectioned = rest.some((it) => it.section);
+  if (mode === "line")
+    return (
+      <div className="sb-content-section sb-discover-source">
+        <button
+          type="button"
+          className="sb-discover-source-head"
+          onClick={onPick}
+        >
+          <span className="sb-discover-source-title">{provider.label}</span>
+          <span className="sb-discover-fold-count">
+            {items === null ? "…" : items.length}
+          </span>
+          <span
+            className="material-symbols-outlined sb-discover-source-arrow"
+            aria-hidden="true"
+          >
+            chevron_right
+          </span>
+        </button>
+      </div>
+    );
   return (
-    <div
-      className={`sb-content-section sb-discover-source${open ? " sb-discover-source--open" : ""}`}
-    >
-      <button
-        type="button"
-        className="sb-discover-source-head"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen(!open);
-          rememberOpen(provider.id, !open);
-        }}
-      >
-        <span className="sb-discover-source-title">{provider.label}</span>
+    <div className="sb-content-section sb-discover-source sb-discover-source--open">
+      <h3 className="sb-discover-source-title sb-discover-source-heading">
+        {provider.label}{" "}
         <span className="sb-discover-fold-count">
           {items === null ? "…" : items.length}
         </span>
-        <span
-          className={`material-symbols-outlined sb-discover-source-arrow${open ? "" : " sb-discover-source-arrow--closed"}`}
-          aria-hidden="true"
-        >
-          expand_more
-        </span>
-      </button>
-      {open && items === null && (
+      </h3>
+      {items === null && (
         <p className="sb-muted sb-small">
           {t("loading", { defaultValue: "Loading…" })}
         </p>
       )}
-      {open && items && byAuthor(items).groups.length > 0 && (
+      {widened && (
+        <p className="sb-small sb-muted sb-discover-widened">
+          {t("discover-widened", {
+            defaultValue:
+              "Nothing at the verse you selected. Here is what this chapter has.",
+          })}
+        </p>
+      )}
+      {items && byAuthor(items).groups.length > 0 && (
         <ContentCards groups={byAuthor(items).groups} />
       )}
-      {open && items && byAuthor(items).rest.length > 0 && (
-        <SectionedRows items={byAuthor(items).rest} />
+      {items && rest.length > 0 && (
+        <SectionedRows items={all || sectioned ? rest : rest.slice(0, FIRST)} />
+      )}
+      {items && !sectioned && rest.length > FIRST && (
+        <button
+          type="button"
+          className="sb-content-see-all sb-discover-show-all"
+          onClick={() => setAll(!all)}
+        >
+          {all
+            ? t("show-fewer", { defaultValue: "Show fewer" })
+            : t("show-all-count", {
+                count: rest.length,
+                defaultValue: "Show all {{count}}",
+              })}
+        </button>
       )}
     </div>
   );
@@ -212,19 +262,36 @@ export function ProviderSection({
 export function DiscoverPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [creating, setCreating] = useState(false);
+  /** All, or the one source shown alone. */
+  const [picked, setPicked] = useState<string>("all");
+  const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const body = useRef<HTMLElement>(null);
   const chapterRef = state.reading.chapterRef.value;
   // Opening Discover reads what was shared afresh: there is no Refresh to find.
   useEffect(() => {
     void state.discover.refresh(chapterRef);
   }, [chapterRef]);
+  const providers = state.extensions.providers.value;
+  const pick = (id: string) => {
+    setPicked(id);
+    body.current?.scrollTo({ top: 0 });
+  };
+  // A source that turns out empty for this chapter has no chip; if it was the one shown, All is shown.
+  useEffect(() => {
+    if (picked !== "all" && counts[picked] === 0) setPicked("all");
+  }, [counts, picked]);
   return (
     <section
+      ref={body}
       className="sb-pane sb-discover-pane"
       aria-label={t("discover", { defaultValue: "Discover" })}
     >
       <header className="sb-pane-header">
         <h2 className="sb-discover-title">
-          {t("discover", { defaultValue: "Discover" })}
+          {t("discover-book", {
+            book: state.reading.bookName.value,
+            defaultValue: "Discover {{book}}",
+          })}
         </h2>
         <div className="sb-discover-header-actions">
           <div className="sb-discover-create">
@@ -276,9 +343,39 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
           </button>
         </div>
       </header>
-      <ChapterNotes state={state} empty />
-      {state.extensions.providers.value.map((p) => (
-        <ProviderSection key={p.id} state={state} provider={p} />
+      <nav
+        className="sb-discover-chips"
+        aria-label={t("discover-sources", { defaultValue: "What to show" })}
+      >
+        {[
+          { id: "all", label: t("all", { defaultValue: "All" }) },
+          ...providers
+            .filter((p) => (counts[p.id] ?? 0) > 0)
+            .map((p) => ({ id: p.id, label: CHIP[p.id] ?? p.label })),
+        ].map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            className={`sb-discover-chip${picked === c.id ? " sb-discover-chip--on" : ""}`}
+            aria-pressed={picked === c.id}
+            onClick={() => pick(c.id)}
+          >
+            {c.label}
+          </button>
+        ))}
+      </nav>
+      {picked === "all" && <ChapterNotes state={state} empty />}
+      {providers.map((p) => (
+        <ProviderSection
+          key={p.id}
+          state={state}
+          provider={p}
+          mode={picked === "all" ? "line" : picked === p.id ? "full" : "hidden"}
+          onPick={() => pick(p.id)}
+          onCount={(n) =>
+            setCounts((m) => (m[p.id] === n ? m : { ...m, [p.id]: n }))
+          }
+        />
       ))}
     </section>
   );

@@ -1053,5 +1053,10 @@
   "scrolls-see-publisher": "See it at the publisher",
   "scrolls-study-only": "For study only, not for commercial use.",
   "scrolls-uncertain": "partly restored and uncertain",
-  "interpretations-other-edition": "{{mine}} has no interpretation records here, so these are the {{theirs}} translation's."
+  "interpretations-other-edition": "{{mine}} has no interpretation records here, so these are the {{theirs}} translation's.",
+  "discover-widened": "Nothing at the verse you selected. Here is what this chapter has.",
+  "show-all-count": "Show all {{count}}",
+  "show-fewer": "Show fewer",
+  "discover-book": "Discover {{book}}",
+  "discover-sources": "What to show"
 }

@@ -7866,7 +7866,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Discover as the old reader's: notes first, Create a note",
     rows: ["Discover"],
     checks:
-      "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first, every source folded to one line with its count (tapping one opens it) — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
+      "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first, chips across the top (All, then one per source), every source one line with its count under All; tapping one shows it alone with its chip on, All goes back — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
     run: async (c) => {
       await c.open("/read/BSB/OBA/1");
       await c.settleTours();
@@ -7885,19 +7885,28 @@ export const MORE_FLOWS: Flow[] = [
         .allInnerTexts();
       if (!/notes/i.test(sections[0] ?? ""))
         throw new Error(`first section is ${sections[0]}`);
-      // Every source starts folded to one line (name and count), so the pane stays short; tapping one opens it.
+      // Chips across the top as the old reader's (All, then one per source); under All each source is one line with
+      // its count; tapping a line shows that source alone, its chip on; All goes back.
+      const chips = pane.locator(".sb-discover-chip");
+      await chips.nth(1).waitFor({ timeout: 20000 });
+      const chipNames = (await chips.allInnerTexts()).map((x) => x.trim());
+      if (chipNames[0] !== "All")
+        throw new Error(`chips: ${chipNames.join(", ")}`);
       const heads = pane.locator(".sb-discover-source-head");
-      await heads.first().waitFor({ timeout: 15000 });
-      const expanded = await heads.evaluateAll((els) =>
-        els.map((e) => e.getAttribute("aria-expanded"))
-      );
-      if (expanded.some((x) => x !== "false"))
-        throw new Error(`sources not folded: ${expanded.join(",")}`);
+      const firstLine = (await heads.first().innerText()).replace(/\s+/g, " ");
       await heads.first().click();
       await pane
         .locator(".sb-discover-source--open .sb-discover-item")
         .first()
         .waitFor({ timeout: 15000 });
+      const on = (
+        await pane.locator(".sb-discover-chip--on").innerText()
+      ).trim();
+      if (on === "All") throw new Error("the picked source's chip is not on");
+      if (await pane.locator(".sb-discover-source-head").count())
+        throw new Error("other sources still listed beside the picked one");
+      await chips.first().click();
+      await heads.first().waitFor({ timeout: 5000 });
       if (await pane.getByText("Nothing for this chapter.").count())
         throw new Error("an empty source still shows");
       await pane.getByRole("button", { name: "+ Create" }).click();
@@ -7914,7 +7923,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-note-editor, [contenteditable=true]")
         .first()
         .waitFor({ timeout: 8000 });
-      return `Discover: ${sections.slice(0, 4).join(" · ")}; Create a note opened the editor; + Create offers Note and Playlist`;
+      return `Discover: chips ${chipNames.join(" · ")}; ${firstLine} shown alone and All back; Create a note opened the editor; + Create offers Note and Playlist`;
     },
   },
   {
