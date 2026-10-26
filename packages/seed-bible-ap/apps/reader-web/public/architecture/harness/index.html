@@ -331,7 +331,7 @@
             units that cite it
           </text>
           <text class="sub" x="258" y="400" text-anchor="middle">
-            3,088 links
+            145,179 links
           </text>
 
           <rect
@@ -355,10 +355,10 @@
             a person or place
           </text>
           <text class="sub" x="382" y="400" text-anchor="middle">
-            13,675 hits
+            52,574 hits
           </text>
           <text class="sub" x="382" y="416" text-anchor="middle">
-            891 names
+            1,516 names
           </text>
 
           <rect
@@ -409,7 +409,7 @@
             Vectorize, bge-m3
           </text>
           <text class="sub" x="630" y="400" text-anchor="middle">
-            10,297 vectors
+            142,277 vectors
           </text>
           <text class="sub" x="630" y="416" text-anchor="middle">
             fixed floor 0.5
@@ -1047,7 +1047,10 @@
                 atlas).
               </td>
               <td>the works' block labels and notes</td>
-              <td>3,088 links over 10,297 units</td>
+              <td>
+                145,179 links over 142,277 units: 4,214 citations, the rest the
+                works' own verse structure
+              </td>
             </tr>
             <tr>
               <td>By name</td>
@@ -1056,7 +1059,7 @@
                 holds. Ambiguity is kept: four Johns stay four identities.
               </td>
               <td>the units' text against the knowledge base's names</td>
-              <td>13,675 hits, 891 names</td>
+              <td>52,574 hits, 1,516 names</td>
             </tr>
             <tr>
               <td>By source word</td>
@@ -1079,7 +1082,7 @@
                 each unit embedded by Workers AI (bge-m3, 1,024 dimensions) into
                 a Vectorize index
               </td>
-              <td>10,297 vectors, floor 0.5, at most 20 hits</td>
+              <td>142,277 vectors, floor 0.5, at most 20 hits</td>
             </tr>
             <tr>
               <td>Chapter record</td>
@@ -1324,12 +1327,14 @@
           on the Scripture agent and answers the dev set in 60 to 140 seconds a
           case; the latest run answered six of eight, and two failed in gather
           with a bare server error from the data worker that is being chased.
-          The meaning index was built from the first eight works; the Apostolic
-          Fathers, 2 Esdras, Josephus' Against Apion, the Sefaria commentaries
-          and the study notes publish today and enter the indexes at the next
-          rebuild. The translation workbench asks the harness today; the
-          reader's Companion still asks the Seed registry's model about the
-          chapter on screen, and wiring it to this record is next.
+          The indexes were rebuilt today over 21 works and 142,277 units: the
+          Apostolic Fathers, 2 Esdras, Josephus' Against Apion and the Sefaria
+          commentaries (Rashi, Ibn Ezra, Radak, Ramban, Rashbam, Sforno, the
+          Targums) are in by verse, by name and by meaning. The study notes are
+          published as their own works and are not yet in the writings indexes.
+          The translation workbench asks the harness today; the reader's
+          Companion still asks the Seed registry's model about the chapter on
+          screen, and wiring it to this record is next.
         </p>
       </div>
 
