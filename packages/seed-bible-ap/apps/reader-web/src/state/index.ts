@@ -31,7 +31,11 @@ import {
 
 const INVITE_KEY = "sbr.invite";
 import { A2A_BASE } from "../api";
-import { createInvites, parseInviteLink } from "./social/invites";
+import {
+  createInvites,
+  invitationsDone,
+  parseInviteLink,
+} from "./social/invites";
 import { createHomeProfile } from "./social/homeProfile";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
@@ -187,10 +191,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       (today.friendsView.value?.friends ?? []).map((f) => f.agent.toLowerCase())
     );
     const removed = friendship.removing.value;
-    if (removed?.done) friends.add(removed.who.toLowerCase());
-    for (const i of invites.sent.value)
-      if (i.acceptedBy && friends.has(i.acceptedBy.toLowerCase()))
-        void invites.clearAccepted(i.acceptedBy);
+    for (const i of invitationsDone(
+      invites.sent.value,
+      friends,
+      removed?.done ? removed : null
+    ))
+      void invites.cancel(i.token);
   });
   // Your Home profile (name and photo) is yours in the reader: read at sign-in, and whenever the reader comes back.
   const homeProfile = createHomeProfile({

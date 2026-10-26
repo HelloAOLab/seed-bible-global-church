@@ -308,6 +308,17 @@ function friendKit(c: FlowContext) {
         details.push(await words(home));
         await shot(home, `${label}-try-again-${details.length}`);
         await again.click().catch(() => {});
+        // trying again starts the act over: the same question, answered the same way
+        const yesAgain = home
+          .locator('[data-testid="ask-authority"]')
+          .getByRole("button", { name: yes });
+        if (
+          await yesAgain
+            .waitFor({ timeout: 15000 })
+            .then(() => true)
+            .catch(() => false)
+        )
+          await yesAgain.click().catch(() => {});
       }
     }
     if (details.length)
@@ -326,7 +337,7 @@ function friendKit(c: FlowContext) {
   const removeAll = async (page: Pg, ctx: Ctx, who: RegExp, label: string) => {
     let pane = await openFriends(page);
     let removed = 0;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 10; i++) {
       const row = pane
         .locator(".sb-friends-row", { hasText: who })
         .filter({
@@ -455,6 +466,7 @@ function friendKit(c: FlowContext) {
     ms = 90000
   ) => {
     const t0 = Date.now();
+    let reloaded = false;
     for (;;) {
       const pane = await openFriends(page);
       if (await rowIn(pane, heading, who).count()) {
@@ -467,9 +479,14 @@ function friendKit(c: FlowContext) {
           `${label}: no ${who} under "${heading}" — the Friends page: ${(await pane.innerText()).replace(/\s+/g, " ").slice(0, 400)}`
         );
       }
-      await page.waitForTimeout(8000);
-      await page.reload();
-      await page.waitForTimeout(2000);
+      // The page shows the list it kept, then the agent's fresh read (often 10–30 s): reload only now and then, so a
+      // fresh read gets to land.
+      await page.waitForTimeout(5000);
+      if (Date.now() - t0 > ms / 2 && !reloaded) {
+        reloaded = true;
+        await page.reload();
+        await page.waitForTimeout(2000);
+      }
     }
   };
   const expectNoRow = async (page: Pg, heading: string, who: RegExp) => {
@@ -8916,7 +8933,7 @@ export const MORE_FLOWS: Flow[] = [
       await k.removeAll(
         c.page,
         c.context,
-        /ruth|elena|in4-.*@example\.invalid/i,
+        /ruth|elena|@example\.invalid/i,
         "sender-pre"
       );
       const email = `in4-${Date.now().toString(36)}@example.invalid`;
@@ -8932,7 +8949,8 @@ export const MORE_FLOWS: Flow[] = [
       const ctxE = await c.browser.newContext();
       try {
         const ruth = await k.acceptLink(ctxR, token, /ruth bankole/i, "ruth");
-        if (!/seed ?reader/i.test(ruth.question))
+        // the question names the inviter as their Home profile does (Seed Reader's may read "Reader")
+        if (!/reader/i.test(ruth.question))
           throw new Error(`Ruth's window asked: ${ruth.question}`);
         await k.expectRow(ruth.page, "Friends", SR, "ruth-friends");
         await k.expectRow(c.page, "Friends", /ruth/i, "sender-friends");
@@ -8988,7 +9006,7 @@ export const MORE_FLOWS: Flow[] = [
       await k.removeAll(
         c.page,
         c.context,
-        /ruth|in5-.*@example\.invalid/i,
+        /ruth|@example\.invalid/i,
         "sender-pre"
       );
       const email = `in5-${Date.now().toString(36)}@example.invalid`;

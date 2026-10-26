@@ -27,6 +27,25 @@ export interface OpenedInvite {
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 export const isEmail = (s: string) => EMAIL_RE.test(s.trim());
 
+/** The accepted invitations whose work is done: accepted by someone who is now a friend, or by someone you removed —
+ *  accepted BEFORE that removal. An invitation they accept after it is a new one, and stays to be finished. */
+export function invitationsDone(
+  sent: SentInvite[],
+  friends: ReadonlySet<string>,
+  removed: { who: string; doneAt?: number } | null
+): SentInvite[] {
+  return sent.filter((i) => {
+    const by = i.acceptedBy?.toLowerCase();
+    if (!by) return false;
+    if (friends.has(by)) return true;
+    return (
+      !!removed?.doneAt &&
+      removed.who.toLowerCase() === by &&
+      (i.acceptedAt ?? 0) <= removed.doneAt
+    );
+  });
+}
+
 /** `/invite/<token>` — an emailed invitation; null for any other path. */
 export function parseInviteLink(pathname: string): string | null {
   return /^\/invite\/([a-f0-9]{40,80})\/?$/.exec(pathname)?.[1] ?? null;

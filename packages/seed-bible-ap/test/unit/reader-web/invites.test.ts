@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createInvites,
+  invitationsDone,
   isEmail,
   parseInviteLink,
 } from "../../../apps/reader-web/src/state/social/invites";
@@ -285,5 +286,30 @@ describe("clearing a person's accepted invitations", () => {
     expect(cancels.map((c) => (c.body as { token: string }).token)).toEqual([
       "t1".padEnd(40, "0"),
     ]);
+  });
+});
+
+describe("which accepted invitations are done", () => {
+  const inv = (acceptedBy: string, acceptedAt: number) => ({
+    token: acceptedBy + acceptedAt,
+    email: `${acceptedBy}@example.org`,
+    createdAt: 0,
+    expiresAt: 9e12,
+    acceptedBy,
+    acceptedAt,
+  });
+  it("one accepted by a friend is done; one accepted by someone not yet a friend is not", () => {
+    const sent = [inv("0xruth", 10), inv("0xboaz", 20)];
+    expect(
+      invitationsDone(sent, new Set(["0xruth"]), null).map((i) => i.acceptedBy)
+    ).toEqual(["0xruth"]);
+  });
+  it("removing someone finishes the invitation they had accepted — not a new one they accept afterwards", () => {
+    const sent = [inv("0xruth", 10), inv("0xruth", 50)];
+    const done = invitationsDone(sent, new Set(), {
+      who: "0xRUTH",
+      doneAt: 30,
+    });
+    expect(done.map((i) => i.acceptedAt)).toEqual([10]);
   });
 });

@@ -181,9 +181,13 @@ export function createFriendship(deps: {
   }
 
   /** Someone the reader is removing at their Home (a friend, or a request they sent), until they are gone. */
-  const removing = signal<{ who: string; label: string; done: boolean } | null>(
-    null
-  );
+  const removing = signal<{
+    who: string;
+    label: string;
+    done: boolean;
+    /** When the removal was seen done — what came after it (a new invitation they accepted) is not part of it. */
+    doneAt?: number;
+  } | null>(null);
   let removeWatch: ReturnType<typeof setInterval> | undefined;
   /** Remove a friend, or take back a request: the Home revokes the grant (its own flyout asks first). */
   function remove(who: string, label?: string | null): void {
@@ -200,7 +204,12 @@ export function createFriendship(deps: {
         const r = removing.value;
         if (!r) return clearInterval(removeWatch);
         const gone = standingOf(deps.friendsView(), r.who) === "none";
-        if (gone) removing.value = { ...r, done: true };
+        if (gone)
+          removing.value = {
+            ...r,
+            done: true,
+            doneAt: (deps.now ?? Date.now)(),
+          };
         if (gone || (deps.now ?? Date.now)() - start > WATCH_MS) {
           if (!gone) removing.value = null;
           clearInterval(removeWatch);
