@@ -11,6 +11,7 @@ import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import { InterpretationsPane } from "./InterpretationsPane";
 import { WritingsPane } from "./WritingsPane";
+import { verseSummary } from "./plain";
 import "./interpretations.css";
 
 export const INTERPRETATIONS_BASE_URL = `${BIBLE_API_ENDPOINT}api`;
@@ -293,44 +294,23 @@ export const statusWords = (s: string) =>
 /** The verse a question sits at, as a number, so the selection can pick it out. */
 const verseOf = (osis: string) => Number(osis.split(".")[2]);
 
-/** Discover items for the interpretation records: one per question, the selected verses first. */
+/** Discover items for the interpretation records: one card per verse — never questions of several verses mixed — with
+ *  the verse's words and what became of its questions; the selected verses' only, when they carry a record. */
 export function interpretationItems(
   data: ChapterInterpretations,
   selectedVerses: number[],
-  max = 40
-): Array<DiscoverItem & { verse: number; questionId: string }> {
+  bookName: string = data.book
+): Array<DiscoverItem & { verse: number }> {
   const wanted = selectedVerses.length
     ? data.verses.filter((v) => selectedVerses.includes(v.verse))
     : data.verses;
-  const out: Array<DiscoverItem & { verse: number; questionId: string }> = [];
-  for (const v of wanted) {
-    for (const q of v.interpretation.questions) {
-      const reading = q.decided?.reading;
-      out.push({
-        id: `${v.osis}:${q.id}`,
-        title: q.text,
-        description: `verse ${v.verse} · ${reading ? `reads: ${reading}` : statusWords(q.status)}${q.candidates.length > 1 ? ` · ${q.candidates.length} readings` : ""}`,
-        icon: q.decided ? "fact_check" : "help",
-        section: q.decided ? "Decided for this edition" : "Open questions",
-        verse: v.verse,
-        questionId: q.id,
-      });
-      if (out.length >= max) return out;
-    }
-    for (const p of v.interpretation.paths) {
-      out.push({
-        id: `${v.osis}:${p.id}`,
-        title: `Story path: ${p.id.replace(/^path[-:]/, "").replace(/-/g, " ")}`,
-        description: `verse ${v.verse} · ${p.origin.replace(/-/g, " ")}${p.attributedTo ? ` · ${p.attributedTo}` : ""} · ${p.materialEffect === "none" ? "changes no rendering" : `effect: ${p.materialEffect.replace(/-/g, " ")}`}`,
-        icon: "alt_route",
-        section: "Story paths",
-        verse: v.verse,
-        questionId: p.id,
-      });
-      if (out.length >= max) return out;
-    }
-  }
-  return out;
+  return wanted.map((v) => ({
+    id: v.osis,
+    title: `${bookName} ${v.chapter}:${v.verse}`,
+    description: `“${v.text}” · ${verseSummary(v)}`,
+    icon: "forum",
+    verse: v.verse,
+  }));
 }
 
 /** Discover items for the writings: the book's period first, its copies, the commentary and the reception — the selected verses narrow. */
@@ -474,18 +454,22 @@ const interpretations: ExtensionRegistration = {
         const other =
           found.edition.toLowerCase() !==
           state.reading.translationId.value.toLowerCase();
-        return interpretationItems(found.data, d.selectedVerses).map((it) => ({
-          ...it,
-          ...(other
-            ? {
-                description: `${found.edition.toUpperCase()} · ${it.description ?? ""}`,
-              }
-            : {}),
-          onOpen: () => {
-            state.selection.select(it.verse, it.verse);
-            ctx.panes.open("interpretations");
-          },
-        }));
+        const bookName =
+          d.books.find((b) => b.id === bookId)?.name ?? found.data.book;
+        return interpretationItems(found.data, d.selectedVerses, bookName).map(
+          (it) => ({
+            ...it,
+            ...(other
+              ? {
+                  description: `${found.edition.toUpperCase()} · ${it.description ?? ""}`,
+                }
+              : {}),
+            onOpen: () => {
+              state.selection.select(it.verse, it.verse);
+              ctx.panes.open("interpretations");
+            },
+          })
+        );
       },
     });
     yield ctx.discover.registerProvider({

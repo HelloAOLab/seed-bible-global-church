@@ -4292,10 +4292,9 @@ export const MORE_FLOWS: Flow[] = [
     title: "Interpretations at a verse, from any translation",
     rows: ["Interpretations at a verse"],
     checks:
-      "Reading BSB (which carries no interpretation records), tap Genesis 1:1 → Discover → Interpretations (folded, with its count) lists the RBS translation's questions for that verse, marked RBS; tapping one opens the Interpretations pane, which says these are the RBS translation's and shows the question with what was decided",
+      "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
-      await c.selectVerse(1);
+      await c.open("/read/BSB/GEN/6");
       await c.pressToolbar("Discover");
       await c.openSource(/^\s*Interpretations/);
       const section = c.pane().locator(".sb-discover-source--open", {
@@ -4304,15 +4303,28 @@ export const MORE_FLOWS: Flow[] = [
       const row = section.locator(".sb-discover-item").first();
       await row.waitFor({ timeout: 30000 });
       const said = (await row.innerText()).replace(/\s+/g, " ").trim();
-      if (!/RBS/.test(said)) throw new Error(`not marked RBS: ${said}`);
+      if (!/Genesis 6:2/.test(said) || !/question/.test(said))
+        throw new Error(`card: ${said}`);
       await row.locator("button").click();
       const pane = c.page.locator(".sb-interp-pane");
-      await c.waitText(pane, /these are the RBS translation's/, 20000);
-      const question = (
-        await pane.locator(".sb-interp-question-text").first().innerText()
-      ).trim();
-      if (!question) throw new Error("no question shown");
-      return `Discover → Interpretations: "${said.slice(0, 70)}…"; the pane: "${question.slice(0, 60)}…"`;
+      await c.waitText(pane, /How Genesis 6:2 is read/, 20000);
+      await c.waitText(pane, /Who is meant here\?/, 5000);
+      await c.waitText(pane, /divine beings/, 5000);
+      await c.waitText(pane, /Left open/, 5000);
+      await c.waitText(pane, /What the translators say/, 5000);
+      const plain = await pane.locator(".sb-interp-plain").evaluate((el) => {
+        const d = el.querySelector("details");
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.querySelector("details")?.remove();
+        return { text: clone.innerText, folded: !!d && !d.open };
+      });
+      if (/register D\d|bx:|=|editorial synthesis/.test(plain.text))
+        throw new Error(`codes on show: ${plain.text.slice(0, 200)}`);
+      if (!plain.folded)
+        throw new Error("the scholars' details are not folded");
+      if (await c.page.locator(".sb-discover-content-panel:visible").count())
+        throw new Error("the chapter's Discover card is open beside the pane");
+      return `card "${said.slice(0, 60)}…" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded`;
     },
   },
   {

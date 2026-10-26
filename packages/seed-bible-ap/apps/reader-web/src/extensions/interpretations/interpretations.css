@@ -240,3 +240,88 @@
     flex-direction: column;
   }
 }
+
+/* ── One verse in plain words ── */
+.sb-interp-verse-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sb-interp-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sb-interp-plain-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.sb-interp-plain-verse {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--sb-primary-color, #e07b4c);
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e07b4c),
+    transparent 92%
+  );
+  border-radius: 0 8px 8px 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.sb-interp-plain-edition {
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+.sb-interp-plain-q {
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.1));
+  border-left-width: 4px;
+  border-radius: 8px;
+}
+.sb-interp-plain-q--decided {
+  border-left-color: #3f8f5a;
+}
+.sb-interp-plain-q--open {
+  border-left-color: #c58a1b;
+}
+.sb-interp-plain-q--belief {
+  border-left-color: #7a7a8a;
+}
+.sb-interp-plain-ask {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.sb-interp-plain-term {
+  font-size: 1.1rem;
+}
+.sb-interp-plain-label {
+  margin: 6px 0 2px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.sb-interp-plain-readings {
+  margin: 0 0 6px;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+.sb-interp-plain-outcome,
+.sb-interp-plain-other {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.sb-interp-plain-note p {
+  margin: 0;
+  line-height: 1.55;
+}
+.sb-interp-plain-readers {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.sb-interp-plain-details > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  padding: 6px 0;
+}

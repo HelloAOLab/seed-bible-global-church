@@ -14,6 +14,7 @@ import {
   type InterpretationPath,
   type InterpretedVerse,
 } from "./index";
+import { isDraft, namedReaders, plainQuestion, translatorsNote } from "./plain";
 
 const words = (s: string | null | undefined) => (s ?? "").replace(/-/g, " ");
 
@@ -246,6 +247,131 @@ function Verse({
   );
 }
 
+/** One verse in plain words: the verse, each question as a reader would ask it with the readings on the table and
+ *  what this translation did, what the translators say, who read it which way — the full record folded under it. */
+function PlainVerse({
+  v,
+  edition,
+  label,
+}: {
+  v: InterpretedVerse;
+  edition: string;
+  label: string;
+}) {
+  const { t } = useI18n();
+  const ed = edition.toUpperCase();
+  const note = translatorsNote(v);
+  const readers = namedReaders(v.interpretation.paths);
+  return (
+    <article className="sb-interp-plain">
+      <h3 className="sb-interp-plain-title">
+        {t("interp-how-read", {
+          ref: label,
+          defaultValue: "How {{ref}} is read",
+        })}
+      </h3>
+      <blockquote className="sb-interp-plain-verse">
+        “{v.text}”<span className="sb-interp-plain-edition"> — {ed}</span>
+      </blockquote>
+      {isDraft(v) && (
+        <p className="sb-small sb-muted">
+          {t("interp-draft", {
+            defaultValue: "A draft — not yet checked by a person.",
+          })}
+        </p>
+      )}
+      {v.interpretation.questions.map((q) => {
+        const pq = plainQuestion(q);
+        return (
+          <section
+            key={q.id}
+            className={`sb-interp-plain-q sb-interp-plain-q--${pq.state}`}
+          >
+            <h4 className="sb-interp-plain-ask">{pq.ask}</h4>
+            {pq.term && (
+              <p className="sb-small sb-muted">
+                {t("interp-words", { defaultValue: "The words:" })}{" "}
+                <span lang="he" dir="rtl" className="sb-interp-plain-term">
+                  {pq.term}
+                </span>
+              </p>
+            )}
+            {pq.readings.length > 0 && (
+              <>
+                <p className="sb-interp-plain-label">
+                  {pq.state === "belief"
+                    ? t("interp-the-belief", { defaultValue: "The belief:" })
+                    : t("interp-readings", {
+                        defaultValue: "Ways to read it:",
+                      })}
+                </p>
+                <ul className="sb-interp-plain-readings">
+                  {pq.readings.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <p className="sb-interp-plain-outcome">
+              {pq.state === "decided" &&
+                t("interp-decided", {
+                  edition: ed,
+                  defaultValue:
+                    "{{edition}} chose one reading — it is the one in its text above.",
+                })}
+              {pq.state === "open" &&
+                t("interp-open", {
+                  edition: ed,
+                  defaultValue:
+                    "Left open: the evidence does not settle it, so {{edition}} does not choose.",
+                })}
+              {pq.state === "belief" &&
+                t("interp-belief", {
+                  defaultValue:
+                    "Not part of the translation: a later belief about the verse, shown so you know it exists.",
+                })}
+            </p>
+            {pq.other && (
+              <p className="sb-interp-plain-other">
+                {t("interp-other", {
+                  defaultValue: "The other reading, kept in a note:",
+                })}{" "}
+                <em>{pq.other}</em>
+              </p>
+            )}
+          </section>
+        );
+      })}
+      {note && (
+        <section className="sb-interp-plain-note">
+          <h4 className="sb-interp-plain-ask">
+            {t("interp-translators-say", {
+              defaultValue: "What the translators say",
+            })}
+          </h4>
+          <p>{note}</p>
+        </section>
+      )}
+      {readers.length > 0 && (
+        <p className="sb-interp-plain-readers">
+          {t("interp-readers", {
+            defaultValue: "Readers on record for this verse:",
+          })}{" "}
+          {readers.join(", ")}
+        </p>
+      )}
+      <details className="sb-interp-plain-details">
+        <summary>
+          {t("interp-details", {
+            defaultValue: "Details for scholars — the full record",
+          })}
+        </summary>
+        <Verse v={v} edition={edition} selected={false} />
+      </details>
+    </article>
+  );
+}
+
 export function InterpretationsPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { reading } = state;
@@ -257,6 +383,8 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
   );
   /** Whose records these are: the translation being read, or RBS's when it carries none. */
   const [edition, setEdition] = useState(translationId);
+  /** The one verse shown. */
+  const [shown, setShown] = useState<number | null>(null);
   useEffect(() => {
     let live = true;
     setData(undefined);
@@ -278,20 +406,19 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
     };
   }, [chapterRef, translationId]);
 
+  // A verse chosen in the text or in Discover is the one shown.
+  useEffect(() => setShown(null), [selected.join(",")]);
   const verses = data?.verses ?? [];
-  const ordered = [...verses].sort(
-    (a, b) =>
-      Number(selected.includes(b.verse)) - Number(selected.includes(a.verse)) ||
-      a.verse - b.verse
-  );
+  // The verse picked here; else the selected verse when it carries a record; else the first that does.
+  const current =
+    verses.find((v) => v.verse === shown) ??
+    verses.find((v) => selected.includes(v.verse)) ??
+    verses[0];
+  const chapterLabel = `${reading.bookName.value} ${reading.chapterNumber.value}`;
+  const label = (v: InterpretedVerse) =>
+    `${reading.bookName.value} ${v.chapter}:${v.verse}`;
   return (
     <div className="sb-interp-pane">
-      <p className="sb-interp-intro">
-        {t("interpretations-intro", {
-          defaultValue:
-            "Where this translation had to decide how to read a verse, the record says which questions it faced, what it chose or kept open, the alternatives, and the writings behind each. Documented interpretations within a declared corpus — never all possible ones, never a score.",
-        })}
-      </p>
       {data && edition.toLowerCase() !== translationId.toLowerCase() && (
         <p className="sb-interp-meta sb-interp-other-edition">
           {t("interpretations-other-edition", {
@@ -305,23 +432,49 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
       {data === undefined && <p className="sb-interp-meta">Loading…</p>}
       {data === null && (
         <p className="sb-interp-meta">
-          The interpretation records could not be read just now.
+          {t("interp-unreadable", {
+            defaultValue:
+              "The interpretation records could not be read just now.",
+          })}
         </p>
       )}
       {data && verses.length === 0 && (
         <p className="sb-interp-meta">
-          No verse of {reading.bookName.value} {reading.chapterNumber.value}{" "}
-          carries an interpretation record in {translationId} yet.
+          {t("interp-none", {
+            ref: chapterLabel,
+            defaultValue:
+              "No verse of {{ref}} has an interpretation record yet.",
+          })}
         </p>
       )}
-      {ordered.map((v) => (
-        <Verse
-          key={v.osis}
-          v={v}
+      {verses.length > 1 && (
+        <nav
+          className="sb-interp-verse-picker"
+          aria-label={t("interp-verses", {
+            defaultValue: "Verses with interpretations",
+          })}
+        >
+          {verses.map((v) => (
+            <button
+              key={v.osis}
+              type="button"
+              className={`sb-discover-chip${v === current ? " sb-discover-chip--on" : ""}`}
+              aria-pressed={v === current}
+              onClick={() => setShown(v.verse)}
+            >
+              {label(v)}
+            </button>
+          ))}
+        </nav>
+      )}
+      {current && (
+        <PlainVerse
+          key={current.osis}
+          v={current}
           edition={data?.edition ?? edition}
-          selected={selected.includes(v.verse)}
+          label={label(current)}
         />
-      ))}
+      )}
       {data?.note && (
         <p className="sb-interp-meta sb-interp-note">{data.note}</p>
       )}

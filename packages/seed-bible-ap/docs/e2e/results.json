@@ -1,7 +1,43 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 00:52 UTC",
+  "when": "2026-10-26 01:07 UTC",
   "results": [
+    {
+      "id": "S1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Discover for a chapter",
+      "checks": "The Discover pane opens for John 3 and lists what was published (or says nothing yet) without an error",
+      "mark": "✅",
+      "note": "Discover John + Create close All Places Content Writings NOTES You don't have any notes for this cha",
+      "ms": 4777
+    },
+    {
+      "id": "DS1",
+      "section": "3. Reading",
+      "title": "The old reader's display choices",
+      "checks": "Settings → Display & Theme: text size XXL, line height Loose (2.5), interface Extra large (125%); Book order Tanakh puts Isaiah right after 2 Kings in the book picker; Show discovered content off takes the Discover card away; Verse selection effects offers Default, Enabled, Disabled",
+      "mark": "✅",
+      "note": "XXL, Loose and Extra large applied; Tanakh order put Isaiah after 2 Kings; the Discover card hid and came back; the effects choice is there",
+      "ms": 1157
+    },
+    {
+      "id": "DSS1",
+      "section": "12. Extensions",
+      "title": "Dead Sea Scrolls at a verse",
+      "checks": "On Genesis 1, tap verse 2 → Discover → Dead Sea Scrolls lists the 4Q7 (4Q Genesis) lines that hold verse 2; tap one → its card shows the line in Hebrew (right to left), the English first draft, its state in plain words, the publisher's credit (for study only) and a link to it at the publisher",
+      "mark": "✅",
+      "note": "4 line(s) at Genesis 1:2 (history_edu 4Q Genesis (4Q2) · f1i:1 Genesis 1:1–2…); card: ב ראשית ברא אלהי[ ם את ה… / \"In the beginning, he created gods, the h…\" → publishing.faithnet.io/@demo-admin-1/dead-sea-scrolls-genesis/4#b3",
+      "ms": 2606
+    },
+    {
+      "id": "INT1",
+      "section": "12. Extensions",
+      "title": "Interpretations at a verse, from any translation",
+      "checks": "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
+      "mark": "✅",
+      "note": "card \"forum Genesis 6:2 RBS · “the sons of God saw that the daught…\" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded",
+      "ms": 2792
+    },
     {
       "id": "DP1",
       "section": "8. Today, Discover and publishing",
@@ -9,7 +45,7 @@
       "checks": "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first, chips across the top (All, then one per source), every source one line with its count under All; tapping one shows it alone with its chip on, All goes back — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
       "mark": "✅",
       "note": "Discover: chips All · References · Places · Content · People & events · Writings; Cross-references 40 chevron_right shown alone and All back; Create a note opened the editor; + Create offers Note and Playlist",
-      "ms": 1840
+      "ms": 1694
     }
   ]
 }

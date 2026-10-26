@@ -868,9 +868,11 @@ export function BibleReader({
             </h2>
             {body()}
           </div>
-          {active && settings.showDiscovered.value && (
-            <DiscoverPanel state={state} />
-          )}
+          {/* The old reader's Discover card in the chapter — not while a side pane is open: it would repeat the pane
+              and squeeze the text. */}
+          {active &&
+            settings.showDiscovered.value &&
+            ui.pane.value === "none" && <DiscoverPanel state={state} />}
         </div>
 
         {footnote && (
