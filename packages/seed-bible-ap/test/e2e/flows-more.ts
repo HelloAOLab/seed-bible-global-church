@@ -7758,7 +7758,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Invite a friend by email",
     rows: ["Invite a friend by email"],
     checks:
-      "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+      "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending opens ONE small Home window, pointed at 'Be friends when they accept?' for that invitation (closed unanswered here; IN4 says yes), and says 'Invitation sent to …'; Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
     run: async (c) => {
       const email = `flow-${stamp()}@example.org`;
       const sent: Array<{
@@ -7819,10 +7819,21 @@ export const MORE_FLOWS: Flow[] = [
       await c.page.getByRole("menuitem", { name: "Friends" }).click();
       const pane = c.page.locator(".sb-friends-pane");
       await pane.waitFor({ timeout: 5000 });
-      let popups = 0;
-      c.context.on("page", () => popups++);
+      const popups: import("playwright").Page[] = [];
+      c.context.on("page", (p) => popups.push(p));
       await pane.getByLabel("Add a friend").fill(email);
       await pane.getByRole("button", { name: "Send invitation" }).click();
+      await c.page.waitForTimeout(1500);
+      const half = popups[0];
+      if (!half) throw new Error("no Home window opened for the sender's half");
+      await half
+        .waitForURL(/\/friend-invitation\?t=f{40}&from=seed-reader/, {
+          timeout: 15000,
+        })
+        .catch(() => {
+          throw new Error(`the Home window went to ${half.url()}`);
+        });
+      await half.close();
       await c.waitText(
         pane.locator(".sb-friends-answer"),
         /Invitation sent to/,
@@ -7838,10 +7849,11 @@ export const MORE_FLOWS: Flow[] = [
         .getByRole("button", { name: /cancel your invitation/i })
         .click();
       await row.waitFor({ state: "detached", timeout: 5000 });
-      if (popups) throw new Error("a Home window opened");
+      if (popups.length !== 1)
+        throw new Error(`${popups.length} Home windows opened`);
       if ([...bearers].some((b) => !/^Bearer \S+/.test(b)))
         throw new Error("a call went without the reader's sign-in");
-      return `'${email}': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window`;
+      return `'${email}': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; one Home window, at the sender's half`;
     },
   },
   {
@@ -8562,6 +8574,270 @@ export const MORE_FLOWS: Flow[] = [
         await rm.waitForEvent("close", { timeout: 90000 }).catch(() => {});
       }
       return `one Home window: signed in, then '${question}' → Yes, closed by itself after ${Math.round((Date.now() - tapped) / 1000)}s; the reader: '${said}'`;
+    },
+  },
+  {
+    id: "IN4",
+    timeoutMs: 900_000,
+    section: "8. Today, Discover and publishing",
+    title: "Invite by email: friends the moment they accept",
+    rows: ["An emailed invitation"],
+    checks:
+      "Seed Reader types an email in Friends and taps Send invitation; their Home's small window asks 'Be friends when they accept?' — Yes, and it closes by itself. Ruth Bankole opens that real invitation link signed out, agrees, Continue — one Home window signs her in and asks 'Add Seed Reader as a friend?'; Yes. Ruth's Friends then lists Seed Reader as a friend, and Seed Reader's Friends lists Ruth as a friend — not an invitation, not a request. (The email goes to an .invalid address: nothing is delivered. Both remove each other at the end.)",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      let n = 0;
+      const shot = async (pg: import("playwright").Page, name: string) => {
+        if (dir)
+          await pg
+            .screenshot({
+              path: `${dir}/${String(++n).padStart(2, "0")}-${name}.png`,
+            })
+            .catch(() => {});
+      };
+      const words = async (pg: import("playwright").Page) =>
+        (
+          await pg
+            .locator("body")
+            .innerText()
+            .catch(() => "")
+        )
+          .replace(/\s+/g, " ")
+          .slice(0, 300);
+      /** Sign in through the Home's window as one of its demo people, allowing the reader when asked. */
+      const signIn = async (
+        page: import("playwright").Page,
+        ctx: import("playwright").BrowserContext,
+        person: RegExp,
+        label: string
+      ) => {
+        await page
+          .locator(".sb-app-pane, .sb-login-pane")
+          .first()
+          .waitFor({ timeout: 5000 })
+          .catch(() => {});
+        const terms = page.locator("#sb-login-terms");
+        if (await terms.count()) await terms.check();
+        const w = ctx.waitForEvent("page", { timeout: 15000 });
+        await page
+          .getByRole("button", { name: /home|sign in with|continue/i })
+          .first()
+          .click();
+        const login = await w;
+        await login.waitForLoadState();
+        await login.getByText(/demo people/i).click({ timeout: 20000 });
+        await login.getByRole("button", { name: person }).first().click();
+        for (let i = 0; i < 8 && !login.isClosed(); i++) {
+          await login.waitForTimeout(2500).catch(() => {});
+          if (login.isClosed()) break;
+          await shot(login, `${label}-login-${i}`);
+          const go = login
+            .getByRole("button", { name: /^(allow|authorize|approve)/i })
+            .first();
+          if (await go.isVisible().catch(() => false))
+            await go.click().catch(() => {});
+        }
+        await page.waitForTimeout(3000);
+      };
+      const openFriends = async (page: import("playwright").Page) => {
+        await page
+          .locator(".sb-sidebar-top-row")
+          .getByRole("button", { name: "More" })
+          .click();
+        await page.getByRole("menuitem", { name: "Friends" }).click();
+        const pane = page.locator(".sb-friends-pane");
+        await pane.waitFor({ timeout: 5000 });
+        await page.waitForFunction(
+          () =>
+            !/Loading…/.test(
+              document.querySelector(".sb-friends-pane")?.textContent ??
+                "Loading…"
+            ),
+          undefined,
+          { timeout: 60000 }
+        );
+        return pane;
+      };
+      /** Remove (or cancel) a row the same way a person does: the reader asks, then the Home's window. */
+      const removeRow = async (
+        page: import("playwright").Page,
+        ctx: import("playwright").BrowserContext,
+        pane: import("playwright").Locator,
+        who: RegExp,
+        label: string
+      ) => {
+        const row = pane
+          .locator(".sb-friends-row", { hasText: who })
+          .filter({
+            has: page.getByRole("button", { name: /^(remove|cancel)/i }),
+          })
+          .first();
+        if (!(await row.count())) return false;
+        const w = ctx.waitForEvent("page", { timeout: 15000 });
+        w.catch(() => undefined);
+        await row.getByRole("button", { name: /^(remove|cancel)/i }).click();
+        const confirm = page
+          .locator(".sb-confirm-delete-actions")
+          .getByRole("button", { name: /^remove$/i });
+        if (
+          await confirm
+            .waitFor({ timeout: 3000 })
+            .then(() => true)
+            .catch(() => false)
+        )
+          await confirm.click();
+        const rm = await w;
+        await rm
+          .locator('[data-testid="ask-authority"]')
+          .getByRole("button", { name: /yes, remove them/i })
+          .click({ timeout: 60000 });
+        await shot(rm, `${label}-remove`);
+        await rm.waitForEvent("close", { timeout: 180000 }).catch(() => {});
+        await row
+          .waitFor({ state: "detached", timeout: 60000 })
+          .catch(() => {});
+        return true;
+      };
+
+      // 1. Seed Reader, signed in the real way, with Ruth not already a friend.
+      await c.open(CH);
+      await c.settleTours();
+      await c.pressToolbar("Sign in");
+      await c.pane().waitFor({ timeout: 5000 });
+      await signIn(c.page, c.context, /seed ?reader/i, "sender");
+      let pane = await openFriends(c.page);
+      while (await removeRow(c.page, c.context, pane, /ruth/i, "leftover")) {
+        await c.page.waitForTimeout(1500);
+      }
+      // …and no test invitation left waiting by an earlier run (cancelled here; nothing was ever delivered).
+      for (let i = 0; i < 10; i++) {
+        const left = pane
+          .locator(".sb-friends-row", { hasText: /in4-.*@example\.invalid/ })
+          .getByRole("button", { name: /^cancel/i })
+          .first();
+        if (!(await left.count())) break;
+        await left.click();
+        await c.page.waitForTimeout(1500);
+      }
+      await shot(c.page, "sender-friends");
+
+      // 2. The invitation, and Seed Reader's half signed in the Home's window.
+      const email = `in4-${Date.now().toString(36)}@example.invalid`;
+      await pane.getByLabel("Add a friend").fill(email);
+      const sent = c.page.waitForResponse(
+        (r) =>
+          r.url().includes("/api/friends/invites") &&
+          r.request().method() === "POST",
+        { timeout: 30000 }
+      );
+      const homeWin = c.context.waitForEvent("page", { timeout: 15000 });
+      await pane.getByRole("button", { name: /send invitation/i }).click();
+      const token = String(
+        ((await (await sent).json()) as { token?: string }).token ?? ""
+      );
+      if (!/^[a-f0-9]{40,80}$/.test(token))
+        throw new Error("the invitation was not made");
+      const half = await homeWin;
+      const yes = half.locator('[data-testid="friend-invitation-yes"]');
+      await yes.waitFor({ timeout: 60000 }).catch(async () => {
+        await shot(half, "half-no-question");
+        throw new Error(`the Home's window did not ask: ${await words(half)}`);
+      });
+      await shot(half, "half-question");
+      const asked = (await half.locator("h1").innerText()).trim();
+      await yes.click();
+      await half.waitForEvent("close", { timeout: 120000 }).catch(async () => {
+        await shot(half, "half-stuck");
+        throw new Error(`the window stayed open: ${await words(half)}`);
+      });
+      await shot(c.page, "sender-sent");
+
+      // 3. Ruth opens the real link on another browser, signed out, and accepts.
+      const ctx2 = await c.browser.newContext();
+      try {
+        const page2 = await ctx2.newPage();
+        c.watch(page2);
+        await c.open(`/invite/${token}`, page2);
+        const dialog = page2.locator(".sb-friend-invite-dialog");
+        await c.waitText(dialog, /invited you/i, 20000);
+        await dialog.locator("#sb-invite-terms").check();
+        await shot(page2, "invitee-invite");
+        const w = ctx2.waitForEvent("page", { timeout: 15000 });
+        await dialog.getByRole("button", { name: "Continue" }).click();
+        const home = await w;
+        await home.waitForLoadState();
+        await home.getByText(/demo people/i).click({ timeout: 20000 });
+        await home
+          .getByRole("button", { name: /ruth bankole/i })
+          .first()
+          .click();
+        const ask = home.locator('[data-testid="ask-authority"]');
+        for (let i = 0; i < 24 && !(await ask.count()); i++) {
+          await home.waitForTimeout(1500);
+          const allow = home.getByRole("button", { name: /^allow/i }).first();
+          if (await allow.isVisible().catch(() => false)) {
+            await shot(home, "invitee-allow");
+            await allow.click().catch(() => {});
+          }
+        }
+        await ask.waitFor({ timeout: 45000 });
+        await shot(home, "invitee-question");
+        await ask.getByRole("button", { name: /yes, add them/i }).click();
+        await home
+          .waitForEvent("close", { timeout: 240000 })
+          .catch(async () => {
+            await shot(home, "invitee-stuck");
+            throw new Error(`the window stayed open: ${await words(home)}`);
+          });
+        await shot(page2, "invitee-done");
+        await dialog
+          .getByRole("button", { name: /start reading|close/i })
+          .first()
+          .click()
+          .catch(() => {});
+
+        // 4. Both list each other as FRIENDS (a Remove button — not Cancel, not an invitation).
+        const friendRow = (p: import("playwright").Locator, who: RegExp) =>
+          p
+            .locator(".sb-friends-row", { hasText: who })
+            .filter({ has: p.page().getByRole("button", { name: /^remove/i }) })
+            .first();
+        const pane2 = await openFriends(page2);
+        await friendRow(pane2, /seed ?reader/i)
+          .waitFor({ timeout: 90000 })
+          .catch(async () => {
+            await shot(page2, "invitee-not-friends");
+            throw new Error(
+              `Ruth's Friends: ${(await pane2.innerText()).replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          });
+        await shot(page2, "invitee-friends");
+        await c.page.reload();
+        pane = await openFriends(c.page);
+        await friendRow(pane, /ruth/i)
+          .waitFor({ timeout: 90000 })
+          .catch(async () => {
+            await shot(c.page, "sender-not-friends");
+            throw new Error(
+              `Seed Reader's Friends: ${(await pane.innerText()).replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          });
+        await shot(c.page, "sender-friends-after");
+
+        // 5. Leave both as they were.
+        await removeRow(c.page, c.context, pane, /ruth/i, "sender-cleanup");
+        const pane2b = await openFriends(page2).catch(() => pane2);
+        await removeRow(
+          page2,
+          ctx2,
+          pane2b,
+          /seed ?reader/i,
+          "invitee-cleanup"
+        ).catch(() => false);
+      } finally {
+        await ctx2.close().catch(() => {});
+      }
+      return `the Home's window asked '${asked}' → Yes; Ruth accepted the real link in one window; each lists the other as a friend`;
     },
   },
 ];

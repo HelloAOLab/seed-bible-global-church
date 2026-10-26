@@ -173,6 +173,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       const s = session.value;
       return s && s.via !== "dev-stub" ? s.token : null;
     },
+    homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
   });
   effect(() => {
     if (!session.value) return;

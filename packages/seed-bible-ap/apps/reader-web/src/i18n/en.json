@@ -995,7 +995,7 @@
   "friend-invite-failed": "Couldn't send the invitation: {{error}}",
   "friend-invite-pending": "Invited by email · waiting for them to join",
   "friend-invite-resend-failed": "Couldn't send it again. Try in a moment.",
-  "friend-invite-sent": "Invitation sent to {{email}}. When they join, you'll be friends.",
+  "friend-invite-sent": "Invitation sent to {{email}}. Say yes in your Home's window and you'll be friends as soon as they accept.",
   "friend-invite-sent-again": "Sent your invitation to {{email}} again.",
   "friend-invite-unavailable": "This invitation can't be opened",
   "friend-invite-unavailable-why": "The Home says: {{error}}. Ask your friend to send you a new one.",
@@ -1120,5 +1120,6 @@
   "profile-home-waiting": "A small window opened from your Home. Tap “Save to my profile” there.",
   "remove-photo": "Remove photo",
   "profile-take-down": "Take down the public copy of your profile you published earlier",
-  "friend-joined-dismiss-user": "Remove {{name}} from this list"
+  "friend-joined-dismiss-user": "Remove {{name}} from this list",
+  "friend-invite-sent-window-blocked": "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends."
 }

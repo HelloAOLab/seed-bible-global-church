@@ -114,8 +114,10 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
     try {
       // One Home window: it signs them in, then asks "Add <inviter> as a friend?" before it closes.
       const addPath = /^0x[0-9a-f]{40}$/.test(inv.agent)
-        ? new URL(friendship.homeUrl("add", inv.agent, inv.name)).pathname +
-          new URL(friendship.homeUrl("add", inv.agent, inv.name)).search
+        ? new URL(friendship.homeUrl("add", inv.agent, inv.name, inv.token))
+            .pathname +
+          new URL(friendship.homeUrl("add", inv.agent, inv.name, inv.token))
+            .search
         : undefined;
       stop.current?.abort();
       stop.current = new AbortController();
@@ -140,7 +142,9 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
 
   const add = () => {
     if (inv.token) void state.invites.claim(inv.token);
-    friendship.add(inv.agent, inv.name);
+    friendship.add(inv.agent, inv.name, {
+      ...(inv.token ? { invitation: inv.token } : {}),
+    });
     setAdded(true);
   };
 

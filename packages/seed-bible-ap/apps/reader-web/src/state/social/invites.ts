@@ -38,6 +38,12 @@ export function createInvites(deps: {
   /** The reader's sign-in (the Home's id_token for this reader), or null when signed out. */
   bearer: () => string | null;
   fetchImpl?: typeof fetch;
+  /** The Home that signs the sender's half of the friendship (`/friend-invitation`); without it, no window opens. */
+  homeOrigin?: string;
+  /** Opens the Home's window (blank at first, on the tap) and returns it; null when the browser blocked it. */
+  openWindow?: (
+    url: string
+  ) => { location: { href: string }; close: () => void } | null;
 }) {
   const f = deps.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const sent = signal<SentInvite[]>([]);
@@ -83,13 +89,27 @@ export function createInvites(deps: {
     if (r?.sent) sent.value = r.sent;
   }
 
-  /** Invite an address; the same address still waiting is sent its invitation again. */
+  /** Invite an address; the same address still waiting is sent its invitation again. The Home's window opens with
+   *  it (before anything is awaited — a window opened later is blocked) so the sender signs their half of the
+   *  friendship now, and the invitee is a friend the moment they accept. */
   async function send(
     email: string,
     fromName?: string | null,
     note?: string | null
-  ): Promise<{ ok: boolean; again?: boolean; error?: string }> {
-    const r = await post<{ again?: boolean }>({
+  ): Promise<{
+    ok: boolean;
+    again?: boolean;
+    error?: string;
+    window?: "opened" | "blocked";
+  }> {
+    const win = deps.homeOrigin
+      ? (
+          deps.openWindow ??
+          ((u: string) =>
+            window.open(u, "_blank", "popup,width=520,height=640"))
+        )("about:blank")
+      : undefined;
+    const r = await post<{ again?: boolean; token?: string }>({
       email: email.trim(),
       ...(fromName ? { fromName } : {}),
       ...(note ? { note } : {}),
@@ -98,11 +118,18 @@ export function createInvites(deps: {
       error: e instanceof Error ? e.message : String(e),
       again: false,
     }));
+    const token = "token" in r ? r.token : undefined;
+    if (win && r.ok && token)
+      win.location.href = `${deps.homeOrigin}/friend-invitation?${new URLSearchParams({ t: token, from: "seed-reader" })}`;
+    else win?.close();
     if (r.ok) await refresh();
     return {
       ok: !!r.ok,
       ...(r.again ? { again: true } : {}),
       ...(r.error ? { error: r.error } : {}),
+      ...(win !== undefined && r.ok
+        ? { window: win ? ("opened" as const) : ("blocked" as const) }
+        : {}),
     };
   }
 

@@ -836,12 +836,14 @@ function NameForInvite({
         e.preventDefault();
         if (!ok || busy) return;
         setBusy(true);
+        // The invitation first: it opens the Home's window, which must happen on this tap, before anything is awaited.
+        const sending = addFriendOrInvite(state, email, t, name.trim());
         void (async () => {
           if (keep)
             await state.profile
               .save({ displayName: name.trim() })
               .catch(() => undefined);
-          onSent(await addFriendOrInvite(state, email, t, name.trim()));
+          onSent(await sending);
         })().finally(() => setBusy(false));
       }}
     >

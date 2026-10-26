@@ -102,6 +102,70 @@ describe("createInvites", () => {
     });
   });
 
+  it("sending opens the Home's window on the tap, then points it at signing the sender's half for that invitation", async () => {
+    const home = fakeHome();
+    const order: string[] = [];
+    const win = {
+      location: { href: "" },
+      closed: false,
+      close() {
+        this.closed = true;
+      },
+    };
+    const fetchImpl = (async (...a: Parameters<typeof fetch>) => {
+      order.push("network");
+      return home.fetchImpl(...a);
+    }) as typeof fetch;
+    const inv = createInvites({
+      base: HOME,
+      bearer: () => "id-token",
+      fetchImpl,
+      homeOrigin: "https://home.test",
+      openWindow: (u) => {
+        order.push(`window ${u}`);
+        return win;
+      },
+    });
+    expect(await inv.send("boaz@example.org", "Ruth")).toEqual({
+      ok: true,
+      window: "opened",
+    });
+    expect(order[0]).toBe("window about:blank");
+    expect(win.location.href).toBe(
+      `https://home.test/friend-invitation?t=${"0".repeat(40)}&from=seed-reader`
+    );
+  });
+
+  it("a blocked window is said; a refused send closes the window it opened", async () => {
+    const blocked = createInvites({
+      base: HOME,
+      bearer: () => "id-token",
+      fetchImpl: fakeHome().fetchImpl,
+      homeOrigin: "https://home.test",
+      openWindow: () => null,
+    });
+    expect(await blocked.send("boaz@example.org")).toEqual({
+      ok: true,
+      window: "blocked",
+    });
+    const win = {
+      location: { href: "" },
+      closed: false,
+      close() {
+        this.closed = true;
+      },
+    };
+    const refused = createInvites({
+      base: HOME,
+      bearer: () => "id-token",
+      fetchImpl: fakeHome({ failSend: "rail down" }).fetchImpl,
+      homeOrigin: "https://home.test",
+      openWindow: () => win,
+    });
+    expect((await refused.send("boaz@example.org")).ok).toBe(false);
+    expect(win.closed).toBe(true);
+  });
+
   it("a send the Home refuses says why and adds nothing", async () => {
     const inv = createInvites({
       base: HOME,

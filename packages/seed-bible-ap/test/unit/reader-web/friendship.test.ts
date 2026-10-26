@@ -84,6 +84,14 @@ describe("adding a friend", () => {
     expect(f.waiting.value).toMatchObject({ was: "you-asked", landed: true });
   });
 
+  it("accepting an emailed invitation carries its token to the Home, so the inviter's half is completed too", () => {
+    const { f, opened } = setup(view({}));
+    f.add(RUTH, "Ruth", { invitation: "b".repeat(40) });
+    expect(opened).toEqual([
+      `https://www.faithnet.me/contacts?add=${RUTH}&from=seed-reader&name=Ruth&invitation=${"b".repeat(40)}`,
+    ]);
+  });
+
   it("asking someone already asked is not reported as done", async () => {
     vi.useFakeTimers();
     const ruth = { agent: RUTH, name: "ruth.me", since: "2026-10-22" };

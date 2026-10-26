@@ -46,6 +46,12 @@ export async function addFriendOrInvite(
         error: r.error ?? "",
         defaultValue: "Couldn't send the invitation: {{error}}",
       });
+    if (r.window === "blocked")
+      return t("friend-invite-sent-window-blocked", {
+        email: name,
+        defaultValue:
+          "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends.",
+      });
     return r.again
       ? t("friend-invite-sent-again", {
           email: name,
@@ -54,7 +60,7 @@ export async function addFriendOrInvite(
       : t("friend-invite-sent", {
           email: name,
           defaultValue:
-            "Invitation sent to {{email}}. When they join, you'll be friends.",
+            "Invitation sent to {{email}}. Say yes in your Home's window and you'll be friends as soon as they accept.",
         });
   }
   const own =

@@ -114,10 +114,13 @@ export function createFriendship(deps: {
   const homeUrl = (
     act: "add" | "remove",
     who: string,
-    label?: string | null
+    label?: string | null,
+    /** An emailed invitation being accepted: the inviter's half is completed with it, in the same act. */
+    invitation?: string
   ) => {
     const q = new URLSearchParams({ [act]: who, from: "seed-reader" });
     if (label && label !== who) q.set("name", label);
+    if (invitation) q.set("invitation", invitation);
     return `${deps.homeOrigin}/contacts?${q}`;
   };
 
@@ -127,10 +130,10 @@ export function createFriendship(deps: {
   function add(
     who: string,
     label?: string | null,
-    opts: { alreadyAsked?: boolean } = {}
+    opts: { alreadyAsked?: boolean; invitation?: string } = {}
   ): void {
     const was = standingOf(deps.friendsView(), who);
-    const url = homeUrl("add", who, label);
+    const url = homeUrl("add", who, label, opts.invitation);
     if (!opts.alreadyAsked)
       (
         deps.openWindow ??
