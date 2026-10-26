@@ -1125,5 +1125,7 @@
   "remove-photo": "Remove photo",
   "profile-take-down": "Take down the public copy of your profile you published earlier",
   "friend-joined-dismiss-user": "Remove {{name}} from this list",
-  "friend-invite-sent-window-blocked": "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends."
+  "friend-invite-sent-window-blocked": "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends.",
+  "friend-ended-line": "removed you — remove them too to stop sharing your profile",
+  "friends-ended-heading": "Removed you as a friend"
 }

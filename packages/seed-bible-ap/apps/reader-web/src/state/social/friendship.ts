@@ -53,16 +53,18 @@ export function isWho(f: Friend, who: string): boolean {
   );
 }
 
-/** Where someone's standing is: a friend, waiting on you, waiting on them, or none of these. */
+/** Where someone's standing is: a friend, waiting on you, waiting on them, gone (they removed you; your half still
+ *  stands), or none of these. */
 export function standingOf(
   view: FriendsView | null,
   who: string
-): "friend" | "asked-you" | "you-asked" | "none" {
+): "friend" | "asked-you" | "you-asked" | "ended" | "none" {
   const is = (f: Friend) => isWho(f, who);
   if (!view) return "none";
   if (view.friends.some(is)) return "friend";
   if (view.requests.some(is)) return "asked-you";
   if (view.requested.some(is)) return "you-asked";
+  if ((view.ended ?? []).some(is)) return "ended";
   return "none";
 }
 

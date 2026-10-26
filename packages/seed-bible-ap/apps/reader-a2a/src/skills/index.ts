@@ -266,7 +266,7 @@ export const CONTACTS: ToolSpec = {
 export const FRIENDS: ToolSpec = {
   id: "seed.workspace.friends",
   description:
-    "The signed-in reader's friends — the people among their Home contacts who added them back — and who is waiting on whom (requests: they added the reader; requested: the reader added them), read from their own agent (person.friend.list) over the ask-as-me wire. The Today feed follows the friends. No args.",
+    "The signed-in reader's friends — the people among their Home contacts who added them back — and who is waiting on whom (requests: they added the reader; requested: the reader added them; ended: they removed the reader, whose own half still stands), read from their own agent (person.friend.list) over the ask-as-me wire. The Today feed follows the friends. No args.",
   inputSchema: { type: "object", properties: {} },
   answers: ["who are my friends", "friend requests"],
   establishes: "lookup",
@@ -689,16 +689,21 @@ export function invokers(
         friends?: Row[];
         requests?: Row[];
         requested?: Row[];
+        ended?: Array<Row & { endedAt?: string | null }>;
         refused?: string;
       }>([{ toolId: "person.friend.list", args: {} }], "who are my friends");
       if (out.result.refused) throw new WireRefusal(403, out.result.refused);
       const friends = out.result.friends ?? [];
       const requests = out.result.requests ?? [];
       const requested = out.result.requested ?? [];
+      // Friends who removed the reader: the reader's own half still stands (their profile is still shared) until
+      // they remove it too.
+      const ended = out.result.ended ?? [];
       return {
         friends,
         requests,
         requested,
+        ended,
         count: friends.length,
         runRef: out.runRef,
         text: friends.length

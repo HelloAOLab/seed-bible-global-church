@@ -258,6 +258,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     const st = standingOf(today.friendsView.value, agent);
     return st === "none" || st === "asked-you";
   });
+  const ended = today.friendsView.value?.ended ?? [];
   const incoming = friendship.requests.value.filter(
     (r) => !joinedFrom.has(r.agent.toLowerCase())
   );
@@ -290,7 +291,11 @@ export function FriendsPane({ state }: { state: ReaderState }) {
               </Heading>
               <ul className="sb-friends-list">
                 {joined.map(([agent, email]) => {
-                  const name = nameOf(agent);
+                  // the name their Home gives them once their side has landed; the email they were invited at till then
+                  const known = today.friendsView.value?.requests.find(
+                    (r) => r.agent.toLowerCase() === agent
+                  )?.name;
+                  const name = nameOf(agent, known);
                   return (
                     <li key={agent} className="sb-friends-row">
                       <Person
@@ -447,6 +452,49 @@ export function FriendsPane({ state }: { state: ReaderState }) {
               <p className="sb-small sb-muted">{today.contactsError.value}</p>
             )}
           </section>
+
+          {ended.length > 0 && (
+            <section className="sb-friends-section">
+              <Heading icon="person_remove">
+                {t("friends-ended-heading", {
+                  defaultValue: "Removed you as a friend",
+                })}
+              </Heading>
+              <ul className="sb-friends-list">
+                {ended.map((r) => {
+                  const name = nameOf(r.agent, r.name);
+                  return (
+                    <li key={r.agent} className="sb-friends-row">
+                      <Person
+                        name={name}
+                        onOpen={() => setViewing({ agent: r.agent, name })}
+                        picture={
+                          today.profiles.value[r.agent.toLowerCase()]?.picture
+                        }
+                        subtitle={t("friend-ended-line", {
+                          defaultValue:
+                            "removed you — remove them too to stop sharing your profile",
+                        })}
+                      />
+                      <span className="sb-friends-row-actions">
+                        <button
+                          type="button"
+                          className="sb-friends-button"
+                          aria-label={t("remove-friend-user", {
+                            name,
+                            defaultValue: "Remove {{name}} as a friend",
+                          })}
+                          onClick={() => friendship.remove(r.agent, name)}
+                        >
+                          {t("remove", { defaultValue: "Remove" })}
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           <section className="sb-friends-card">
             <Heading icon="person_add">

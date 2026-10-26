@@ -94,6 +94,8 @@ export interface FriendsView {
   requests: Friend[];
   /** The reader added them; they have not added the reader back. */
   requested: Friend[];
+  /** They removed the reader; the reader's own half still stands (their profile is still shared) until removed too. */
+  ended?: Array<Friend & { endedAt?: string | null }>;
 }
 
 export interface PresenceEntry {

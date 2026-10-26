@@ -160,6 +160,19 @@ describe("removing a friend, or taking back a request", () => {
     expect(f.removing.value).toMatchObject({ done: true });
   });
 
+  it("someone who removed you is still yours to remove: done only once your half is gone too", async () => {
+    vi.useFakeTimers();
+    const ruth = { agent: RUTH, name: "ruth.me" };
+    const { f, set } = setup(view({ ended: [ruth] }));
+    expect(standingOf(view({ ended: [ruth] }), "ruth.me")).toBe("ended");
+    f.remove(RUTH, "ruth.me");
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.removing.value).toMatchObject({ done: false });
+    set(view({}));
+    await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
+    expect(f.removing.value).toMatchObject({ done: true });
+  });
+
   it("gives up when they never go", async () => {
     vi.useFakeTimers();
     const ezra = { agent: EZRA, name: null, since: "2026-10-22" };

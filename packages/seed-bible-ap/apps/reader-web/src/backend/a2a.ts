@@ -274,6 +274,7 @@ export function createA2aBackend(
         friends: (r.friends as FriendsView["friends"] | undefined) ?? [],
         requests: (r.requests as FriendsView["requests"] | undefined) ?? [],
         requested: (r.requested as FriendsView["requested"] | undefined) ?? [],
+        ended: (r.ended as FriendsView["ended"] | undefined) ?? [],
       };
     },
     async sessionStart(passage: SessionPassageArgs): Promise<SessionTicket> {
