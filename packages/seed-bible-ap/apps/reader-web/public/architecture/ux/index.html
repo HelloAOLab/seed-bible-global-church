@@ -31,12 +31,23 @@
       <p class="lede">
         The new reader looks and reads like seedbible.org: the same screens, the
         same words, the same places for every button. What changed is
-        underneath. Your marks go to your own Library, and everything works on
-        the device first.
+        underneath. Your marks go to your own Library, everything works on the
+        device first, and every call the app makes, whether a tap, a question in
+        words or another agent's request, goes to one workspace service that
+        behaves one way.
       </p>
 
-      <h2>Four principles</h2>
+      <h2>Five principles</h2>
       <div class="cards">
+        <div class="card">
+          <h3>One backend for every call</h3>
+          <p>
+            A tap in the app, a question in words and another agent's request
+            all reach the same workspace service and are handled the same way:
+            one identity check, one named skill, one run record. There are not
+            three backends.
+          </p>
+        </div>
         <div class="card">
           <h3>Same as seedbible.org</h3>
           <p>
@@ -66,6 +77,440 @@
             publish it to your public shelf. Nothing is public by default.
           </p>
         </div>
+      </div>
+
+      <h2 id="one-backend">One backend for every call</h2>
+      <p>
+        The app's UI is a thin skin. Whatever happens on screen becomes a
+        message to the reader's workspace agent, and the workspace behaves the
+        same whoever is asking: the app after a tap, a person typing a question,
+        or another agent over A2A. The workspace checks who is asking, plans one
+        named skill with its arguments, runs it as that person through their own
+        agent and the sources, and keeps a run reference. The UI never has a
+        private path of its own.
+      </p>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 960 400"
+          role="img"
+          aria-labelledby="ob-t"
+        >
+          <title id="ob-t">
+            Three ways in: a tap in the app, an ask in words, another agent. One
+            way through: the workspace agent, with one door, one identity check,
+            one plan, one behaviour and one record. Behind it, your own agent
+            and Library, the Scripture agent, the Seed registry, the publishing
+            gateway and the reader tools.
+          </title>
+          <defs>
+            <marker
+              id="ob"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+            <marker
+              id="ob-hot"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow hot" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="20" y="28">
+            Three ways in, one way through
+          </text>
+
+          <!-- the three ways in -->
+          <rect
+            class="box seed"
+            x="20"
+            y="60"
+            width="210"
+            height="76"
+            rx="10"
+          />
+          <text
+            x="125"
+            y="84"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            A tap in the app
+          </text>
+          <text class="sub" x="125" y="104" text-anchor="middle">
+            a highlight, a note, Discover,
+          </text>
+          <text class="sub" x="125" y="120" text-anchor="middle">
+            a session, a friend
+          </text>
+
+          <rect
+            class="box seed"
+            x="20"
+            y="170"
+            width="210"
+            height="76"
+            rx="10"
+          />
+          <text
+            x="125"
+            y="194"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            An ask in words
+          </text>
+          <text class="sub" x="125" y="214" text-anchor="middle">
+            a question about the chapter
+          </text>
+          <text class="sub" x="125" y="230" text-anchor="middle">
+            on screen
+          </text>
+
+          <rect
+            class="box seed"
+            x="20"
+            y="280"
+            width="210"
+            height="76"
+            rx="10"
+          />
+          <text
+            x="125"
+            y="304"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Another agent
+          </text>
+          <text class="sub" x="125" y="324" text-anchor="middle">
+            a Home, a church's agent,
+          </text>
+          <text class="sub" x="125" y="340" text-anchor="middle">
+            any A2A client
+          </text>
+
+          <path
+            class="edge hot"
+            d="M230 98H272V200H300"
+            marker-end="url(#ob-hot)"
+          />
+          <path class="edge hot" d="M230 208H300" marker-end="url(#ob-hot)" />
+          <path
+            class="edge hot"
+            d="M230 318H272V216H300"
+            marker-end="url(#ob-hot)"
+          />
+
+          <!-- the one way through -->
+          <rect
+            class="box agent"
+            x="300"
+            y="60"
+            width="380"
+            height="296"
+            rx="12"
+            style="stroke: var(--accent); stroke-width: 2"
+          />
+          <text
+            x="490"
+            y="86"
+            text-anchor="middle"
+            font-size="15"
+            font-weight="700"
+          >
+            Workspace agent
+          </text>
+          <text class="sub" x="490" y="104" text-anchor="middle">
+            seed-reader.workspace · seed-reader-a2a.faithnet.io
+          </text>
+
+          <rect
+            class="box plain"
+            x="316"
+            y="118"
+            width="348"
+            height="40"
+            rx="8"
+          />
+          <text x="326" y="135" font-size="12" font-weight="700">One door</text>
+          <text class="sub" x="326" y="150">
+            the agent card, A2A messages, the harness
+          </text>
+
+          <rect
+            class="box plain"
+            x="316"
+            y="164"
+            width="348"
+            height="40"
+            rx="8"
+          />
+          <text x="326" y="181" font-size="12" font-weight="700">
+            One identity check
+          </text>
+          <text class="sub" x="326" y="196">
+            your Home's token, or the public lane for public reads
+          </text>
+
+          <rect
+            class="box plain"
+            x="316"
+            y="210"
+            width="348"
+            height="40"
+            rx="8"
+          />
+          <text x="326" y="227" font-size="12" font-weight="700">One plan</text>
+          <text class="sub" x="326" y="242">
+            a named skill with its arguments, one list for all
+          </text>
+
+          <rect
+            class="box plain"
+            x="316"
+            y="256"
+            width="348"
+            height="40"
+            rx="8"
+          />
+          <text x="326" y="273" font-size="12" font-weight="700">
+            One behaviour
+          </text>
+          <text class="sub" x="326" y="288">
+            runs as you, through your agent and the sources
+          </text>
+
+          <rect
+            class="box plain"
+            x="316"
+            y="302"
+            width="348"
+            height="40"
+            rx="8"
+          />
+          <text x="326" y="319" font-size="12" font-weight="700">
+            One record
+          </text>
+          <text class="sub" x="326" y="334">
+            a run reference for every call, whoever made it
+          </text>
+
+          <!-- behind it -->
+          <path class="edge" d="M680 100H740" marker-end="url(#ob)" />
+          <path class="edge" d="M680 160H740" marker-end="url(#ob)" />
+          <path class="edge" d="M680 220H740" marker-end="url(#ob)" />
+          <path class="edge" d="M680 280H740" marker-end="url(#ob)" />
+          <path class="edge" d="M680 340H740" marker-end="url(#ob)" />
+
+          <rect
+            class="box home"
+            x="740"
+            y="78"
+            width="200"
+            height="44"
+            rx="8"
+          />
+          <text
+            x="840"
+            y="96"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Your agent · Library
+          </text>
+          <text class="sub" x="840" y="112" text-anchor="middle">
+            writes your marks, as you
+          </text>
+
+          <rect
+            class="box domain"
+            x="740"
+            y="138"
+            width="200"
+            height="44"
+            rx="8"
+          />
+          <text
+            x="840"
+            y="156"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Scripture agent
+          </text>
+          <text class="sub" x="840" y="172" text-anchor="middle">
+            the text, the writings, the ask
+          </text>
+
+          <rect
+            class="box domain"
+            x="740"
+            y="198"
+            width="200"
+            height="44"
+            rx="8"
+          />
+          <text
+            x="840"
+            y="216"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Seed registry
+          </text>
+          <text class="sub" x="840" y="232" text-anchor="middle">
+            what others published
+          </text>
+
+          <rect
+            class="box found"
+            x="740"
+            y="258"
+            width="200"
+            height="44"
+            rx="8"
+          />
+          <text
+            x="840"
+            y="276"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Publishing gateway
+          </text>
+          <text class="sub" x="840" y="292" text-anchor="middle">
+            signed works at a verse
+          </text>
+
+          <rect
+            class="box plain"
+            x="740"
+            y="318"
+            width="200"
+            height="44"
+            rx="8"
+          />
+          <text
+            x="840"
+            y="336"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Reader tools
+          </text>
+          <text class="sub" x="840" y="352" text-anchor="middle">
+            pure functions, no state
+          </text>
+
+          <text class="lbl" x="20" y="388">
+            Solid orange: the three ways in. Whichever one a call takes, the
+            five rows in the middle are the same.
+          </text>
+        </svg>
+        <figcaption>
+          Figure 1. The same workspace, the same five steps, for a tap, an ask
+          and another agent. The app has no backend of its own and no path the
+          other two cannot take.
+        </figcaption>
+      </figure>
+
+      <h3>Where each kind of call stands today</h3>
+      <p>
+        The acts already take this shape. Two kinds of call still enter by a
+        side door on the same service, and the card does not yet tell another
+        agent everything the workspace can do. The rule for every new call is
+        the last column.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Call</th>
+              <th>Today</th>
+              <th>The rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Acts</strong>: a highlight, a note, a work, a publish, a
+                session, a friend, a picture
+              </td>
+              <td>
+                The app sends a one-step plan naming the skill and its
+                arguments; the workspace runs it on its harness as you and
+                answers with a run reference. Seventeen skills, one list.
+              </td>
+              <td>This is the shape.</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Reads</strong>: a chapter, a verse's content, places,
+                search, presence, a public shelf
+              </td>
+              <td>
+                Plain routes on the same service with the same identity check,
+                but not skills: not on the card, not recorded as runs, not
+                reachable by another agent.
+              </td>
+              <td>
+                Each read becomes a skill; its route stays only as an alias of
+                that skill.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>An ask in words</strong>: the study companion</td>
+              <td>
+                A route that relays the question to the Seed registry's model, a
+                different behaviour from every other call.
+              </td>
+              <td>
+                A workspace skill that asks the Scripture agent's harness,
+                planned and recorded like any act.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Another agent</strong></td>
+              <td>
+                The door is open (the card, A2A messages, the harness), but the
+                card advertises one skill and the planner knows only that one,
+                so a message in words cannot yet reach the other sixteen.
+              </td>
+              <td>
+                The card lists every skill; a message in words is planned over
+                the same list the app uses.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p>
+          <strong>Why it matters.</strong> With one backend, a feature is built
+          once and is at once a button, a sentence and a skill another agent can
+          call. A test of the skill is a test of all three. And a reader can see
+          every call in one run record, whoever made it.
+        </p>
       </div>
 
       <h2>The screen</h2>
