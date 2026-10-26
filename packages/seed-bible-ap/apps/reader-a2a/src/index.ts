@@ -341,7 +341,7 @@ app.get("/api/public-name", async (c) => {
 /**
  * THE READER'S HOME PROFILE — the person's first and last name and photo as their Home holds them (the vault's
  * `impact-profile`), read under the reader's own read grant (minted at sign-in; the interactions DO checks it is for
- * this app and covers that record) and handed to the browser as those three fields only — the record also holds
+ * this app and covers that record) and handed to the browser as those four fields only (names, the line about them, photo) — the record also holds
  * contact details the reader has no use for. A change is never written from here (an app may not write a vault
  * record): it is proposed to the Home (`/connect/profile-proposal`), which saves it on the person's yes.
  */
@@ -397,6 +397,7 @@ app.get("/api/home-profile", async (c) => {
       ok: true,
       firstName: text(contact["firstName"]),
       lastName: text(contact["lastName"]),
+      about: text(contact["about"]),
       photo,
     },
     200,

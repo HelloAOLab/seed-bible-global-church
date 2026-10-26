@@ -7,11 +7,13 @@ import { signal } from "@preact/signals";
 export interface HomeProfile {
   firstName: string;
   lastName: string;
+  /** A line about them, in their words. */
+  about: string;
   photo: string | null;
 }
 
 export type HomeProfileChange = Partial<
-  Pick<HomeProfile, "firstName" | "lastName">
+  Pick<HomeProfile, "firstName" | "lastName" | "about">
 > & {
   photo?: string | null;
 };
@@ -38,16 +40,24 @@ export function landed(
     return false;
   if (change.lastName !== undefined && p.lastName !== change.lastName.trim())
     return false;
+  if (change.about !== undefined && p.about !== change.about.trim())
+    return false;
   if (change.photo !== undefined && p.photo !== change.photo) return false;
   return true;
 }
+
+const openBlank = (url: string) =>
+  window.open(url, "_blank", "popup,width=520,height=640");
 
 export function createHomeProfile(deps: {
   base: string;
   bearer: () => string | null;
   homeOrigin: string;
   fetchImpl?: typeof fetch;
-  openWindow?: (url: string) => void;
+  /** Opens the Home's window (blank at first) and returns it; null when the browser blocked it. */
+  openWindow?: (
+    url: string
+  ) => { location: { href: string }; close: () => void } | null;
   now?: () => number;
 }) {
   const f = deps.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
@@ -84,18 +94,22 @@ export function createHomeProfile(deps: {
     value.value = {
       firstName: out.firstName ?? "",
       lastName: out.lastName ?? "",
+      about: out.about ?? "",
       photo: out.photo ?? null,
     };
     status.value = "ok";
     return value.value;
   }
 
-  /** Propose a change; the Home's window opens to save it; resolves once sent (the watch runs on). */
+  /** Propose a change; the Home's window opens to save it; resolves once sent (the watch runs on). Call it straight
+   *  from the person's tap: the window is opened at once — a browser lets a page open one only from a tap, not after
+   *  waiting on the network — and is sent to the change when the Home has it. */
   async function propose(
     next: HomeProfileChange
   ): Promise<{ ok: boolean; error?: string }> {
     const token = deps.bearer();
     if (!token) return { ok: false, error: "sign in first" };
+    const win = (deps.openWindow ?? openBlank)("about:blank");
     const res = await f(`${deps.base}/api/home-profile/propose`, {
       method: "POST",
       headers: {
@@ -109,16 +123,20 @@ export function createHomeProfile(deps: {
       token?: string;
       error?: string;
     } | null;
-    if (!res?.ok || !out?.token)
+    if (!res?.ok || !out?.token) {
+      win?.close();
       return {
         ok: false,
         error: out?.error ?? "your Home could not be reached",
       };
-    const url = `${deps.homeOrigin}/profile-update?p=${encodeURIComponent(out.token)}&from=seed-reader`;
-    (
-      deps.openWindow ??
-      ((u) => window.open(u, "_blank", "popup,width=520,height=640"))
-    )(url);
+    }
+    if (!win)
+      return {
+        ok: false,
+        error:
+          "Your browser blocked your Home's window. Allow pop-ups for this site, then Save again.",
+      };
+    win.location.href = `${deps.homeOrigin}/profile-update?p=${encodeURIComponent(out.token)}&from=seed-reader`;
     change.value = { state: "waiting" };
     clearInterval(watch);
     const start = (deps.now ?? Date.now)();

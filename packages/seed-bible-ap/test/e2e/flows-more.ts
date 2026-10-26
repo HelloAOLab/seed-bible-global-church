@@ -4516,7 +4516,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Your profile is your Home profile",
     rows: ["Your Home profile"],
     checks:
-      "Signed in as Seed Reader: Edit profile shows the first and last name from the Home (and says they are the Home profile); changing the last name and Save opens the Home's window — 'Update your Home profile?' with the old and new name — Save to my profile; the window closes and the reader says 'Saved to your Home profile' and shows the new name, read back from the Home",
+      "Signed in as Seed Reader: Edit profile shows the name, line about you and photo from the Home (and says they are the Home profile); changing the last name, the line and the photo and Save opens the Home's window — 'Update your Home profile?' with old beside new for each — Save to my profile; the window closes and the reader says 'Saved to your Home profile' and shows them, read back from the Home, the avatar included",
     run: async (c) => {
       const dir = process.env["E2E_SHOTS"];
       const shot = async (pg: import("playwright").Page, name: string) => {
@@ -4533,11 +4533,7 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click();
       const card = c.page.locator(".sb-profile-card");
-      await c.waitText(
-        card,
-        /Your name and photo are your Home profile/,
-        30000
-      );
+      await c.waitText(card, /are your Home profile/, 30000);
       const first = card.getByLabel("First name");
       const last = card.getByLabel("Last name");
       // (the Home profile has loaded once its note shows; a person with no name saved has empty fields)
@@ -4550,6 +4546,25 @@ export const MORE_FLOWS: Flow[] = [
       // Alternate between two names, so each run changes something and the demo person stays sensible.
       const next = was.last === "Reader" ? "Reader-Test" : "Reader";
       await last.fill(next);
+      // …and the line about you, and a new photo (cropped, kept as the image itself for the Home)
+      const line = `Reads the Bible with friends (${next})`;
+      await card.getByLabel("Description").fill(line);
+      await card.locator('input[type="file"]').first().setInputFiles({
+        name: "me.png",
+        mimeType: "image/png",
+        buffer: PNG,
+      });
+      await c.page.locator(".sb-crop-confirm").click();
+      await c.page.waitForFunction(
+        () =>
+          (
+            document.querySelector(
+              ".sb-profile-card img.sb-profile-picture"
+            ) as HTMLImageElement | null
+          )?.src.startsWith("data:image/jpeg"),
+        undefined,
+        { timeout: 20000 }
+      );
       const opened = c.context.waitForEvent("page", { timeout: 15000 });
       await card.getByRole("button", { name: "Save", exact: true }).click();
       const home = await opened;
@@ -4568,11 +4583,23 @@ export const MORE_FLOWS: Flow[] = [
       }
       await ask.waitFor({ timeout: 60000 });
       await c.waitText(ask, new RegExp(next), 30000);
+      await c.waitText(
+        ask,
+        /About you[\s\S]*Reads the Bible with friends/,
+        5000
+      );
+      await c.waitText(ask, /Photo/, 5000);
       await shot(home, "home-window");
       const closed = home.waitForEvent("close", { timeout: 60000 });
       await home.getByTestId("profile-update-save").click();
       await closed;
       await c.waitText(card, /Saved to your Home profile/, 60000);
+      if ((await card.getByLabel("Description").inputValue()) !== line)
+        throw new Error("the line about you was not read back from the Home");
+      const avatar =
+        (await c.page.locator(".sb-avatar").first().getAttribute("src")) ?? "";
+      if (!avatar.startsWith("data:image/jpeg"))
+        throw new Error(`the avatar is ${avatar.slice(0, 30)}`);
       if ((await last.inputValue()) !== next)
         throw new Error(`the field shows ${await last.inputValue()}`);
       await shot(c.page, "saved");

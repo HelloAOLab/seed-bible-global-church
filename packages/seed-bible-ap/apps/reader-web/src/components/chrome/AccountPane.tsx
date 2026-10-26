@@ -99,29 +99,41 @@ export function ProfileCard({ state }: { state: ReaderState }) {
   const [first, setFirst] = useState(home?.firstName ?? "");
   const [last, setLast] = useState(home?.lastName ?? "");
   const [photo, setPhoto] = useState<string | null | undefined>(undefined);
-  const [about, setAbout] = useState(p?.about ?? "");
+  const [about, setAbout] = useState(
+    (fromHome ? home?.about : undefined) ?? p?.about ?? ""
+  );
   const [dirty, setDirty] = useState(false);
   useEffect(() => {
     if (!dirty) {
       setName(p?.displayName ?? "");
-      setAbout(p?.about ?? "");
+      setAbout((fromHome ? home?.about : undefined) ?? p?.about ?? "");
       setFirst(home?.firstName ?? "");
       setLast(home?.lastName ?? "");
       setPhoto(undefined);
     }
-  }, [p?.displayName, p?.about, home?.firstName, home?.lastName, home?.photo]);
+  }, [
+    p?.displayName,
+    p?.about,
+    home?.firstName,
+    home?.lastName,
+    home?.about,
+    home?.photo,
+  ]);
   const shownPhoto = fromHome
     ? photo !== undefined
       ? photo
       : (home?.photo ?? null)
     : (p?.picture ?? null);
   const homeChange = state.homeProfile.change.value;
+  /** Why a change could not go to the Home (its window blocked, the Home unreachable), in plain words. */
+  const [homeError, setHomeError] = useState<string | null>(null);
   /** What of the name and photo differs from what the Home holds — the change to propose. */
   const homeDiff = (): HomeProfileChange | null => {
     if (!fromHome) return null;
     const d: HomeProfileChange = {};
     if (first.trim() !== (home?.firstName ?? "")) d.firstName = first.trim();
     if (last.trim() !== (home?.lastName ?? "")) d.lastName = last.trim();
+    if (about.trim() !== (home?.about ?? "")) d.about = about.trim();
     if (photo !== undefined && photo !== (home?.photo ?? null)) d.photo = photo;
     return Object.keys(d).length ? d : null;
   };
@@ -154,7 +166,7 @@ export function ProfileCard({ state }: { state: ReaderState }) {
               })
             : t("profile-home-note", {
                 defaultValue:
-                  "Your name and photo are your Home profile: the same in every app you let read it. Changes are saved at your Home.",
+                  "Your name, photo and line about you are your Home profile: the same in every app you let read it. Save opens a small window from your Home to save the change there.",
               })}
         </p>
       )}
@@ -201,9 +213,10 @@ export function ProfileCard({ state }: { state: ReaderState }) {
           void (async () => {
             const change = homeDiff();
             if (change) {
+              setHomeError(null);
               const r = await state.homeProfile.propose(change);
               if (!r.ok) {
-                setStatus("failed");
+                setHomeError(r.error ?? null);
                 return;
               }
             }
@@ -324,6 +337,7 @@ export function ProfileCard({ state }: { state: ReaderState }) {
                 defaultValue:
                   "✓ Saved on this device — sign in to keep it in your Library",
               }))}
+        {homeError && <span className="sb-pane-error">{homeError} </span>}
         {homeChange?.state === "waiting" &&
           t("profile-home-waiting", {
             defaultValue:
@@ -366,7 +380,7 @@ export function ProfileCard({ state }: { state: ReaderState }) {
       <p className="sb-small sb-muted">
         {t("profile-note", {
           defaultValue:
-            "Private until you publish it; published, your friends see the name, line and picture in their Today.",
+            "Publish puts a public copy of your profile (name, line and picture) on your shelf in Seed Bible: your friends see it in their Today, and anyone can look it up. Your Home profile is not changed by publishing; publish again after a change to update the copy.",
         })}
       </p>
     </div>

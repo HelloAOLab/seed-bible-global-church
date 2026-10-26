@@ -11,24 +11,43 @@ import {
 
 const PHOTO = "data:image/jpeg;base64,AAAA";
 
-function home(
-  initial:
-    | { firstName: string; lastName: string; photo: string | null }
-    | "no_grant"
-) {
+type Held = {
+  firstName: string;
+  lastName: string;
+  about?: string;
+  photo: string | null;
+};
+function home(initial: Held | "no_grant", opts: { blocked?: boolean } = {}) {
   let held = initial;
   const posted: unknown[] = [];
   const opened: string[] = [];
+  /** What happened, in order — the window must open before the reader waits on the network. */
+  const order: string[] = [];
+  const win = {
+    location: {
+      set href(u: string) {
+        opened.push(u);
+      },
+      get href() {
+        return opened[opened.length - 1] ?? "";
+      },
+    },
+    closed: false,
+    close() {
+      this.closed = true;
+    },
+  };
   const fetchImpl = (async (url: RequestInfo | URL, init?: RequestInit) => {
     const u = String(url);
     if (u.endsWith("/api/home-profile/propose")) {
+      order.push("propose");
       posted.push(JSON.parse(String(init?.body)));
       return Response.json({ ok: true, token: "t".repeat(40) });
     }
     if (u.endsWith("/api/home-profile"))
       return held === "no_grant"
         ? Response.json({ ok: false, code: "no_grant" }, { status: 409 })
-        : Response.json({ ok: true, ...held });
+        : Response.json({ ok: true, about: "", ...held });
     throw new Error(`unexpected ${u}`);
   }) as typeof fetch;
   const hp = createHomeProfile({
@@ -36,9 +55,19 @@ function home(
     bearer: () => "id-token",
     homeOrigin: "https://home.test",
     fetchImpl,
-    openWindow: (u) => opened.push(u),
+    openWindow: () => {
+      order.push("window");
+      return opts.blocked ? null : win;
+    },
   });
-  return { hp, posted, opened, set: (v: typeof held) => (held = v) };
+  return {
+    hp,
+    posted,
+    opened,
+    order,
+    win,
+    set: (v: typeof held) => (held = v),
+  };
 }
 
 afterEach(() => vi.useRealTimers());
@@ -55,6 +84,7 @@ describe("your Home profile in the reader", () => {
     expect(hp.value.value).toEqual({
       firstName: "Ruth",
       lastName: "Miller",
+      about: "",
       photo: PHOTO,
     });
     expect(fullName(hp.value.value)).toBe("Ruth Miller");
@@ -82,7 +112,12 @@ describe("your Home profile in the reader", () => {
     expect(hp.change.value).toEqual({ state: "waiting" });
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
     expect(hp.change.value).toEqual({ state: "waiting" }); // not saved at the Home yet
-    set({ firstName: "Ruth", lastName: "Miller", photo: PHOTO }); // the person tapped Save there
+    set({
+      firstName: "Ruth",
+      lastName: "Miller",
+      about: "A line",
+      photo: PHOTO,
+    }); // the person tapped Save there
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
     expect(hp.change.value).toEqual({ state: "saved" });
     expect(fullName(hp.value.value)).toBe("Ruth Miller");
@@ -97,5 +132,18 @@ describe("your Home profile in the reader", () => {
     vi.setSystemTime(now);
     await vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
     expect(hp.change.value).toEqual({ state: "not-saved" });
+  });
+});
+
+describe("when the browser blocks the Home's window", () => {
+  it("says so, plainly, and proposes nothing that waits", async () => {
+    const { hp } = home(
+      { firstName: "Ruth", lastName: "", photo: null },
+      { blocked: true }
+    );
+    const r = await hp.propose({ lastName: "Miller" });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/blocked your Home's window/);
+    expect(hp.change.value).toBeNull();
   });
 });

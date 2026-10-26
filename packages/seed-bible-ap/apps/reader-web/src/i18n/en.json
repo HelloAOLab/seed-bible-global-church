@@ -120,7 +120,7 @@
   "profile-about": "A line about you",
   "published": "Published",
   "publish": "Publish",
-  "profile-note": "Private until you publish it; published, your friends see the name, line and picture in their Today.",
+  "profile-note": "Publish puts a public copy of your profile (name, line and picture) on your shelf in Seed Bible: your friends see it in their Today, and anyone can look it up. Your Home profile is not changed by publishing; publish again after a change to update the copy.",
   "connected-sources": "Connected sources",
   "connectors-none": "No MCP servers are connected to your agent.",
   "connectors-no-reads": "no reads",
@@ -1117,7 +1117,7 @@
   "last-name": "Last name",
   "profile-home-no-grant": "Sign in again to show your Home profile here — your name and photo come from your Home.",
   "profile-home-not-saved": "Your name and photo were not changed — your Home's window was closed without saving.",
-  "profile-home-note": "Your name and photo are your Home profile: the same in every app you let read it. Changes are saved at your Home.",
+  "profile-home-note": "Your name, photo and line about you are your Home profile: the same in every app you let read it. Save opens a small window from your Home to save the change there.",
   "profile-home-saved": "✓ Saved to your Home profile",
   "profile-home-waiting": "A small window opened from your Home. Tap “Save to my profile” there.",
   "remove-photo": "Remove photo"
