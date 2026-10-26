@@ -993,7 +993,13 @@
             </tr>
             <tr>
               <td>Seed registry crawling <code>publisher.changes</code></td>
-              <td>Being built</td>
+              <td>
+                Live: every quarter-hour the registry reads each followed
+                publisher's changes from where it last stopped and keeps the
+                catalog of works (never their content) at
+                <code>/registry/works</code>; the content publisher is followed
+                by default
+              </td>
             </tr>
           </tbody>
         </table>
