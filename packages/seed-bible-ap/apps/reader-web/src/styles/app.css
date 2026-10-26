@@ -1001,6 +1001,15 @@ body {
   overflow: hidden;
   background: var(--sb-divider-color, #eee);
 }
+/* Leaflet paints its controls white; in the reader's theme they follow light and dark like the map under them. */
+.sb-places-map .sb-places-map-canvas .leaflet-control-attribution,
+.sb-places-map .sb-places-map-canvas .leaflet-bar a {
+  background: color-mix(in srgb, var(--sb-background, #fff) 85%, transparent);
+  color: var(--sb-font-color, #333);
+}
+.sb-places-map .sb-places-map-canvas .leaflet-control-attribution a {
+  color: var(--sb-link-color, var(--sb-primary-color, #0078a8));
+}
 .sb-places-list {
   list-style: none;
   padding: 0;
