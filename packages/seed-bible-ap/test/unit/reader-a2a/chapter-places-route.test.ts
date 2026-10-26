@@ -118,7 +118,10 @@ describe("the places of a chapter", () => {
       sources: unknown[];
     };
     expect(a.asked).toEqual([
-      { to: "scripture publisher.at-verse", args: { span: "John.1" } },
+      {
+        to: "scripture publisher.at-verse",
+        args: { span: "John.1", relation: "locates", kind: "feature" },
+      },
       {
         to: "publishing /publisher/at-verse",
         args: { span: "John.1", relation: "locates", kind: "feature" },

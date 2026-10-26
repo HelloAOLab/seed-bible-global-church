@@ -21,6 +21,7 @@ import {
 import { askScripture, type BibleEnv } from "./bible";
 import { platformGet, type PlatformEnv } from "../clients/platform";
 import { publishingFetch, type PublishingEnv } from "../clients/publishing";
+import type { ContractItem } from "./chapter-places";
 
 export type { PublishingEnv };
 
@@ -569,6 +570,81 @@ export function scrollItems(
   return out;
 }
 
+/** The map features published at the chapter's verses (the publisher contract's `at-verse`, relation `locates`),
+ *  anchored at the verses of the asked span that name them; a feature none of them names is not "at" the passage. */
+export function featureItems(
+  asked: Locus,
+  chapter: number,
+  items: ContractItem[]
+): PassageItem[] {
+  const out: PassageItem[] = [];
+  // The contract names verses as OSIS (John.1.28); the locus keeps the USFM book (JHN) for the reader.
+  const prefix = `${asked.osis}.${chapter}.`;
+  for (const it of items) {
+    if (!it.location?.geometry) continue;
+    const verses = it.references
+      .filter((r) => r.relation === "locates" && r.to.startsWith(prefix))
+      .map((r) => Number(r.to.slice(prefix.length)))
+      .filter(
+        (v) =>
+          Number.isInteger(v) &&
+          v > 0 &&
+          touches(asked.book, chapter, [v], asked)
+      );
+    if (!verses.length) continue;
+    const at = versesLocus(asked.book, chapter, verses);
+    if (!at) continue;
+    out.push({
+      source: "publishing",
+      kind: "feature",
+      locus: anchor(at),
+      title: it.item.name,
+      ...(it.item.site && it.item.site !== it.item.name
+        ? { detail: it.item.site }
+        : {}),
+      ...(it.item.url ? { link: it.item.url } : {}),
+      from: "publishing-gateway",
+      data: {
+        id: it.item.id,
+        geometry: it.location.geometry,
+        identification: it.location.identification ?? null,
+        work: it.release.work,
+        publisher: it.publisher.handle ?? it.publisher.name ?? null,
+        licence: it.license,
+        attribution: it.attribution,
+      },
+    });
+  }
+  return out;
+}
+
+/** The features the gateway holds for a chapter, over the publisher contract. */
+async function gatewayFeatures(
+  env: PublishingEnv,
+  book: string,
+  chapter: number
+): Promise<ContractItem[]> {
+  const res = await publishingFetch(env, "/publisher/at-verse", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      span: `${book}.${chapter}`,
+      relation: "locates",
+      kind: "feature",
+    }),
+  });
+  const out = (await res.json().catch(() => null)) as {
+    ok?: boolean;
+    items?: ContractItem[];
+    error?: string;
+  } | null;
+  if (!res.ok || !out?.ok)
+    throw new Error(
+      out?.error ?? `the publishing gateway answered ${res.status}`
+    );
+  return out.items ?? [];
+}
+
 interface Offering {
   owner: string;
   shelf: string;
@@ -753,24 +829,34 @@ export async function composePassage(
           )
         )
       : null,
-    // The publishing gateway: the published scroll lines at the verses that have them, read by canonical verse id and
-    // carried with their licence — never copied into any store here.
+    // The publishing gateway: the map features published at the passage's verses (the publisher contract), and the
+    // published scroll lines at the verses that have them, read by canonical verse id and carried with their licence —
+    // never copied into any store here.
     gather(async () => {
+      const features = Promise.all(
+        chapters.map(async (c) =>
+          featureItems(asked, c, await gatewayFeatures(env, asked.osis, c))
+        )
+      ).then((f) => f.flat());
+      features.catch(() => undefined);
       if (asked.span[1] - asked.span[0] + 1 > TEXT_SPAN || chapters.length > 1)
-        return (
-          await Promise.all(
-            chapters.map(async (c) =>
-              scrollNameItems(
-                asked,
-                c,
-                await writings.get(c)!.catch(() => ({}) as WritingsAnswer),
-                await associations
-                  .get(c)!
-                  .catch(() => ({}) as VerseAssociations)
+        return [
+          ...(await features),
+          ...(
+            await Promise.all(
+              chapters.map(async (c) =>
+                scrollNameItems(
+                  asked,
+                  c,
+                  await writings.get(c)!.catch(() => ({}) as WritingsAnswer),
+                  await associations
+                    .get(c)!
+                    .catch(() => ({}) as VerseAssociations)
+                )
               )
             )
-          )
-        ).flat();
+          ).flat(),
+        ];
       const verses = (
         await Promise.all(
           chapters.map(async (c) =>
@@ -817,6 +903,7 @@ export async function composePassage(
         })
       );
       return [
+        ...(await features),
         ...scrollItems(asked, readings.flat()),
         ...quotes.filter((q): q is PassageItem => q !== null),
       ];

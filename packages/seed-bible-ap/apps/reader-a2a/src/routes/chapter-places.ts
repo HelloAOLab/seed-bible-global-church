@@ -10,8 +10,8 @@ import { askScripture, type BibleEnv } from "./bible";
 import { publishingFetch, type PublishingEnv } from "../clients/publishing";
 
 /** One item of the publisher contract's envelope, as far as a map reads it. */
-interface ContractItem {
-  item: { id: string; name: string; site?: string };
+export interface ContractItem {
+  item: { id: string; name: string; site?: string; url?: string };
   references: Array<{
     to: string;
     relation: string;
@@ -121,8 +121,11 @@ export async function chapterPlaces(
     ask(
       "scripture",
       async () =>
+        // Places only: unnarrowed, a chapter span also carries the chapter's verses in every served edition.
         (await askScripture(env, "publisher.at-verse", {
           span: chapter,
+          relation: "locates",
+          kind: "feature",
         })) as { items?: ContractItem[] }
     ),
     ask("publishing", async () => {

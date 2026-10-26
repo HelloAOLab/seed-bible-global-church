@@ -90,6 +90,13 @@ function env(
         });
       },
     },
+    // The gateway holds nothing for John here: no features at the chapter, no scroll lines.
+    PUBLISHING: {
+      fetch: async (input: RequestInfo | URL) =>
+        new URL(String(input)).pathname === "/publisher/at-verse"
+          ? Response.json({ ok: true, items: [] })
+          : Response.json({ ok: true, readings: [] }),
+    },
     PLATFORM: {
       fetch: async (input: RequestInfo | URL) => {
         expect(String(input)).toContain("/registry/offerings?passage=JHN.3");
@@ -339,14 +346,104 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
         fetch: async () => Response.json({ ok: true, offerings: [] }),
       },
       PUBLISHING: {
-        fetch: async (input: RequestInfo | URL) => {
-          asked.push(new URL(String(input)).searchParams.get("verseId")!);
+        fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = new URL(String(input));
           if (gatewayDown) return new Response("down", { status: 503 });
+          // The contract's at-verse (the chapter's features) and the scroll-line reads are told apart by path.
+          if (url.pathname === "/publisher/at-verse") {
+            const args = JSON.parse(String(init?.body)) as { span: string };
+            return Response.json({
+              ok: true,
+              span: args.span,
+              items: features.filter((f) =>
+                f.references.some((r) => r.to.startsWith(`${args.span}.`))
+              ),
+            });
+          }
+          asked.push(url.searchParams.get("verseId")!);
           return Response.json({ ok: true, readings: [reading] });
         },
       },
     } as BibleEnv & PlatformEnv;
   }
+  /** A ministry's map feature published at Genesis 1:2 (and one at another chapter, never at this passage). */
+  const features = [
+    {
+      item: {
+        kind: "feature",
+        id: "demo/creation-map#deep",
+        name: "The deep",
+        site: "a map of the creation account",
+        url: "https://publishing.faithnet.io/@demo/creation-map#deep",
+      },
+      references: [
+        {
+          to: "Gen.1.2",
+          relation: "locates",
+          confidence: 1,
+          method: "publisher-label",
+        },
+      ],
+      location: { geometry: { type: "Point", coordinates: [35.5, 31.8] } },
+      publisher: { handle: "demo" },
+      release: { work: "demo/creation-map", signatureStatus: "signed" },
+      license: "CC-BY-4.0",
+      attribution: "A ministry",
+    },
+    {
+      item: { kind: "feature", id: "demo/creation-map#eden", name: "Eden" },
+      references: [
+        {
+          to: "Gen.2.8",
+          relation: "locates",
+          confidence: 1,
+          method: "publisher-label",
+        },
+      ],
+      location: { geometry: { type: "Point", coordinates: [44.4, 33.3] } },
+      publisher: { handle: "demo" },
+      release: { work: "demo/creation-map", signatureStatus: "signed" },
+      license: "CC-BY-4.0",
+      attribution: "A ministry",
+    },
+  ];
+
+  it("a map feature a publisher released at the verse comes with the passage, anchored at that verse", async () => {
+    const out = (await (
+      await app(gen1Env([])).get("Genesis 1:2")
+    ).json()) as Answer & {
+      items: Array<{
+        detail?: string;
+        link?: string;
+        data?: Record<string, unknown>;
+      }>;
+    };
+    const features = out.items.filter((i) => i.kind === "feature");
+    expect(features).toHaveLength(1);
+    expect(features[0]).toMatchObject({
+      source: "publishing",
+      title: "The deep",
+      detail: "a map of the creation account",
+      link: "https://publishing.faithnet.io/@demo/creation-map#deep",
+      locus: { alias: "Gen.1.2" },
+      data: {
+        publisher: "demo",
+        work: "demo/creation-map",
+        licence: "CC-BY-4.0",
+      },
+    });
+    // Verse 5 is not where the feature is; Eden is in another chapter.
+    const quiet = (await (
+      await app(gen1Env([])).get("Gen.1.5")
+    ).json()) as Answer;
+    expect(quiet.items.filter((i) => i.kind === "feature")).toEqual([]);
+    const chapter = (await (
+      await app(gen1Env([])).get("GEN.1")
+    ).json()) as Answer;
+    expect(
+      chapter.items.filter((i) => i.kind === "feature").map((i) => i.title)
+    ).toEqual(["The deep"]);
+  });
 
   it("a verse with a published line: the gateway is asked by its canonical id and the line comes with text, licence and citation", async () => {
     const asked: string[] = [];
@@ -381,7 +478,8 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
         },
       },
     });
-    expect(out.sources.publishing).toEqual({ ok: true, count: 1 });
+    // The line, and the map feature a publisher released at the verse.
+    expect(out.sources.publishing).toEqual({ ok: true, count: 2 });
   });
 
   it("a chapter names its scroll lines without reading their text (the verse is asked for that), and names an unpublished line too", async () => {
@@ -499,7 +597,10 @@ describe("/api/passage/<locus> — elsewhere at a verse", () => {
       },
       PUBLISHING: {
         fetch: async (input: RequestInfo | URL) => {
-          asked.push(new URL(String(input)).search);
+          const url = new URL(String(input));
+          if (url.pathname === "/publisher/at-verse")
+            return Response.json({ ok: true, items: [] });
+          asked.push(url.search);
           return Response.json({ ok: true, readings: [quote] });
         },
       },
