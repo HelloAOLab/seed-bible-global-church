@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seed Bible Ontology</title>
+    <meta
+      name="description"
+      content="The layered ontology behind Seed Bible's records: PROV-O, P-Plan, DOLCE+DnS, agentic-primitives, agentic-trust, faith, scripture and seed."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"
+          >Seed Bible <span>Architecture</span></a
+        >
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/ontology/" aria-current="page">Ontology</a>
+          <a href="/architecture/agentic/">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> / Ontology
+      </div>
+      <h1>Ontology: what the records mean</h1>
+      <p class="lede">
+        Every highlight, note, bookmark and reading plan is saved as a small
+        typed document. The type says what it is in words both people and
+        machines agree on. Seed Bible does not invent those words from scratch:
+        it builds on layers of shared vocabulary, each one resting on the layer
+        below.
+      </p>
+      <p class="toc">
+        <a href="#stack">The stack</a>
+        <a href="#prov">PROV-O</a>
+        <a href="#pplan">P-Plan</a>
+        <a href="#dul">DOLCE+DnS</a>
+        <a href="#ap">agentic-primitives</a>
+        <a href="#at">agentic-trust</a>
+        <a href="#faith">Faith</a>
+        <a href="#scripture">Scripture</a>
+        <a href="#seed">Seed</a>
+        <a href="#example">Worked example</a>
+      </p>
+
+      <div class="note">
+        <p>
+          <strong>Short version.</strong> A Seed highlight is a
+          <code>seed:Highlight</code>. That is a kind of
+          <em>knowledge record</em> (agentic-trust), which is a kind of
+          <em>entity with a provenance</em> (PROV-O). It points at a
+          <em>passage</em> (scripture) and is <em>held by a person</em>, which
+          is just PROV-O's "was attributed to". So a tool that has never heard
+          of Seed Bible can still tell who made it, from what, and when.
+        </p>
+      </div>
+
+      <h2 id="stack">The stack</h2>
+      <p>
+        Read the picture from top to bottom. Each arrow means "builds on". A
+        layer may reach <em>down</em> into any layer below it, never up: the
+        scripture ontology knows nothing about Seed Bible, and the faith
+        ontology knows nothing about scripture's verses. A check in the skills
+        repository (<code>check_domain_firewall</code>) enforces this.
+      </p>
+
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 900 540"
+          role="img"
+          aria-labelledby="stack-t"
+        >
+          <title id="stack-t">
+            Ontology layers: seed builds on scripture; scripture on publishing,
+            faith and commerce; those on agentic-trust, which is grounded in
+            agentic-primitives; both rest on PROV-O, P-Plan and DOLCE+DnS.
+          </title>
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+
+          <text class="lbl" x="20" y="54">APP</text>
+          <text class="lbl" x="20" y="154">VERTICAL</text>
+          <text class="lbl" x="20" y="254">DOMAINS</text>
+          <text class="lbl" x="20" y="354">AGENTIC</text>
+          <text class="lbl" x="20" y="466">FOUNDATIONS</text>
+
+          <rect
+            class="box seed"
+            x="300"
+            y="20"
+            width="300"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="450" y="46" text-anchor="middle">
+            Seed · seed:
+          </text>
+          <text class="sub" x="450" y="66" text-anchor="middle">
+            highlights, notes, plans, sessions
+          </text>
+
+          <rect
+            class="box domain"
+            x="300"
+            y="120"
+            width="300"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="450" y="146" text-anchor="middle">
+            Scripture · scr:
+          </text>
+          <text class="sub" x="450" y="166" text-anchor="middle">
+            verses, passages, editions, events
+          </text>
+
+          <rect
+            class="box domain"
+            x="90"
+            y="220"
+            width="220"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="200" y="246" text-anchor="middle">
+            Publishing · pub:
+          </text>
+          <text class="sub" x="200" y="266" text-anchor="middle">
+            works, revisions, releases
+          </text>
+          <rect
+            class="box domain"
+            x="340"
+            y="220"
+            width="220"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="450" y="246" text-anchor="middle">
+            Faith · gc: fci:
+          </text>
+          <text class="sub" x="450" y="266" text-anchor="middle">
+            churches, ekklesia, people groups
+          </text>
+          <rect
+            class="box domain"
+            x="590"
+            y="220"
+            width="220"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="700" y="246" text-anchor="middle">
+            Commerce · cc:
+          </text>
+          <text class="sub" x="700" y="266" text-anchor="middle">
+            offers, licences
+          </text>
+
+          <rect
+            class="box agent"
+            x="90"
+            y="320"
+            width="400"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="290" y="346" text-anchor="middle">
+            agentic-trust · at:
+          </text>
+          <text class="sub" x="290" y="366" text-anchor="middle">
+            agents, records, skills, plans, delegations
+          </text>
+          <rect
+            class="box agent"
+            x="560"
+            y="320"
+            width="250"
+            height="60"
+            rx="10"
+          />
+          <text class="title" x="685" y="346" text-anchor="middle">
+            agentic-primitives · ap*:
+          </text>
+          <text class="sub" x="685" y="366" text-anchor="middle">
+            the substrate's own vocabulary
+          </text>
+
+          <rect
+            class="box found"
+            x="120"
+            y="440"
+            width="230"
+            height="68"
+            rx="10"
+          />
+          <text class="title" x="235" y="468" text-anchor="middle">
+            PROV-O · prov:
+          </text>
+          <text class="sub" x="235" y="488" text-anchor="middle">
+            who made what, from what, when
+          </text>
+          <rect
+            class="box found"
+            x="375"
+            y="440"
+            width="230"
+            height="68"
+            rx="10"
+          />
+          <text class="title" x="490" y="468" text-anchor="middle">
+            P-Plan / EP-Plan
+          </text>
+          <text class="sub" x="490" y="488" text-anchor="middle">
+            plans, steps, and the runs of them
+          </text>
+          <rect
+            class="box found"
+            x="630"
+            y="440"
+            width="230"
+            height="68"
+            rx="10"
+          />
+          <text class="title" x="745" y="468" text-anchor="middle">
+            DOLCE+DnS · dul:
+          </text>
+          <text class="sub" x="745" y="488" text-anchor="middle">
+            descriptions, situations, roles
+          </text>
+
+          <path class="edge" d="M450,80 V116" marker-end="url(#ah)" />
+          <path class="edge" d="M400,180 L210,216" marker-end="url(#ah)" />
+          <path class="edge" d="M450,180 V216" marker-end="url(#ah)" />
+          <path class="edge" d="M500,180 L690,216" marker-end="url(#ah)" />
+          <path class="edge" d="M200,280 V316" marker-end="url(#ah)" />
+          <path class="edge" d="M450,280 L380,316" marker-end="url(#ah)" />
+          <path class="edge" d="M700,280 L470,316" marker-end="url(#ah)" />
+          <path class="edge" d="M490,350 H556" marker-end="url(#ah)" />
+          <text class="lbl" x="523" y="342" text-anchor="middle">
+            grounded in
+          </text>
+
+          <path class="edge" d="M290,380 V410" />
+          <path class="edge" d="M685,380 V410" />
+          <path class="edge" d="M235,410 H745" />
+          <path class="edge" d="M235,410 V436" marker-end="url(#ah)" />
+          <path class="edge" d="M490,410 V436" marker-end="url(#ah)" />
+          <path class="edge" d="M745,410 V436" marker-end="url(#ah)" />
+
+          <text class="lbl" x="450" y="530" text-anchor="middle">
+            plus SKOS for controlled lists and W3C Web Annotation (oa:) as a
+            cross-reference for highlights and notes
+          </text>
+        </svg>
+        <figcaption>
+          Each arrow reads "builds on". Colour shows the band:
+          <span class="chip seed">app</span>
+          <span class="chip domain">domain</span>
+          <span class="chip agent">agentic</span>
+          <span class="chip found">foundation</span>
+        </figcaption>
+      </figure>
+
+      <h2>The foundations</h2>
+      <p>
+        Three public, long-standing ontologies sit at the bottom. Every class
+        above them must eventually connect to one of these. The skills
+        repository keeps a trimmed copy of each (only the terms actually used,
+        with the upstream definitions word for word) in
+        <code>ontology/upper/</code>.
+      </p>
+
+      <div class="layer" id="prov">
+        <h3><span class="chip found">foundation</span> PROV-O — provenance</h3>
+        <p>
+          The W3C standard for saying where something came from. It has three
+          core ideas: an <strong>Entity</strong> (a thing, such as a document),
+          an <strong>Activity</strong> (something that happened over time), and
+          an <strong>Agent</strong> (someone responsible). It then links them:
+          this entity <em>was generated by</em> that activity,
+          <em>was attributed to</em> that agent, and so on.
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>prov:Entity</code>, <code>prov:Activity</code>,
+            <code>prov:Agent</code> (Person, Organization, SoftwareAgent),
+            <code>prov:wasAttributedTo</code>, <code>prov:wasGeneratedBy</code>,
+            <code>prov:actedOnBehalfOf</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            Every record has to say whose it is. <code>seed:heldBy</code> and
+            <code>seed:publishedBy</code> are declared as narrower forms of
+            <code>prov:wasAttributedTo</code>. "The workspace acted on behalf of
+            the reader" is exactly <code>prov:actedOnBehalfOf</code>.
+          </dd>
+          <dt>Upstream</dt>
+          <dd><a href="https://www.w3.org/TR/prov-o/">w3.org/TR/prov-o</a></dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="pplan">
+        <h3>
+          <span class="chip found">foundation</span> P-Plan and EP-Plan — plans
+          and their runs
+        </h3>
+        <p>
+          P-Plan extends PROV-O with <strong>plans</strong>: a Plan is made of
+          Steps, and each Step takes and produces Variables. EP-Plan adds the
+          other half: an <strong>execution trace</strong> that records which
+          step a real activity carried out. Together they let us say both "this
+          is what was supposed to happen" and "this is what did happen".
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>p-plan:Plan</code>, <code>p-plan:Step</code>,
+            <code>p-plan:Variable</code>, <code>p-plan:correspondsToStep</code>,
+            <code>ep-plan:ExecutionTraceBundle</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            Every write is a <em>harness run</em> on an agent: a small plan (for
+            example "save this file to the Library, then mark it private") that
+            the agent checks and carries out. <code>at:Playbook</code> and
+            <code>at:CoordinationPlan</code> are P-Plan plans;
+            <code>at:ExecutionTrace</code> is an EP-Plan trace bundle.
+          </dd>
+          <dt>Upstream</dt>
+          <dd>
+            <a href="http://purl.org/net/p-plan">purl.org/net/p-plan</a> ·
+            <a href="https://w3id.org/ep-plan">w3id.org/ep-plan</a>
+          </dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="dul">
+        <h3>
+          <span class="chip found">foundation</span> DOLCE+DnS Ultralite —
+          descriptions and situations
+        </h3>
+        <p>
+          DUL is a general-purpose ontology of what kinds of things exist. The
+          part we use most is
+          <strong>Descriptions and Situations</strong> (DnS): a
+          <em>Description</em> defines roles and rules (a plan, a design, a set
+          of norms), and a <em>Situation</em> is a real state of affairs that
+          satisfies it. It also gives us <em>Roles</em>
+          (something an agent plays rather than is) and
+          <em>Information Objects</em> (content that needs a carrier).
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>dul:Description</code>, <code>dul:Situation</code>,
+            <code>dul:Role</code>, <code>dul:Concept</code>,
+            <code>dul:InformationObject</code>, <code>dul:Collection</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            A live reading session is a Situation: its options (who may
+            navigate, who may highlight) are the Description it satisfies, and
+            "host" is a Role a person plays. <code>seed:ReadingSession</code> ⊑
+            <code>at:Situation</code> ⊑ <code>dul:Situation</code>. A passage is
+            a <code>dul:Collection</code> of verses.
+          </dd>
+          <dt>Upstream</dt>
+          <dd>
+            <a href="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl"
+              >ontologydesignpatterns.org/ont/dul</a
+            >
+          </dd>
+        </dl>
+      </div>
+
+      <h2>The agentic layer</h2>
+      <p>
+        These two layers describe agents, what they may do, and the evidence
+        they leave. They are domain-neutral: the same terms describe a family
+        office, a heart-coaching app, or a Bible reader.
+      </p>
+
+      <div class="layer" id="ap">
+        <h3>
+          <span class="chip agent">agentic</span> agentic-primitives — the
+          substrate's vocabulary
+        </h3>
+        <p>
+          <code>@agenticprimitives/ontology</code> is the formal vocabulary of
+          the substrate Seed runs on: identity, credentials, custody,
+          delegation, naming, registries, discovery, skills, situations, runs
+          and audit. It is load-bearing: the same terms exist on chain
+          (faithchain's <code>OntologyTermRegistry</code>) and as TypeScript
+          constants, and a check fails if they drift apart. It names and
+          constrains; it never grants anything.
+        </p>
+        <dl>
+          <dt>Modules</dt>
+          <dd>
+            <code>ap:</code> core, <code>apid:</code> identity,
+            <code>apdel:</code> delegation, <code>apnam:</code> naming,
+            <code>aps:</code> skills, <code>apsit:</code> situations,
+            <code>apexec:</code> execution, <code>apcnt:</code> content,
+            <code>apreg:</code> registry, <code>apdisc:</code> discovery,
+            <code>aptrust:</code> trust
+          </dd>
+          <dt>Grounded in</dt>
+          <dd>
+            PROV-O and DOLCE+DnS (for example <code>apsit:Situation</code>,
+            <code>apexec:SkillExecution</code> ⊑ <code>prov:Activity</code>)
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            The wire that lets the workspace ask as you is an
+            <code>apdel:</code> delegation; the names
+            <code>seed-reader.workspace</code> and
+            <code>seedreader.me</code> are <code>apnam:</code> names; the town's
+            index of published works is <code>apcnt:PublishedWork</code>. Seed
+            never adds its own words here (rule ADR-0021).
+          </dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="at">
+        <h3>
+          <span class="chip agent">agentic</span> agentic-trust — the base every
+          domain inherits
+        </h3>
+        <p>
+          <code>at:</code> is the cleaner, smaller re-cut of agentic-primitives
+          that every domain ontology in the skills repository subclasses. It
+          points at the substrate terms with <code>rdfs:subClassOf</code> where
+          one really is a kind of the other, and <code>rdfs:seeAlso</code> where
+          they merely correspond. Its one rule, carried over word for word:
+          <strong>evidence is never authority</strong>. A record, a plan step or
+          a signed card grants nothing; permission is checked when it is used.
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>at:KnowledgeRecord</code> (any domain record),
+            <code>at:Activity</code>, <code>at:Situation</code>,
+            <code>at:Delegation</code>, <code>at:Category</code>,
+            <code>at:Container</code>, <code>at:Person</code>,
+            <code>at:Organization</code>, <code>at:ChurchAgent</code>,
+            <code>at:WorkspaceAgent</code>, <code>at:ServiceAgent</code>,
+            <code>at:Skill</code>, <code>at:Capability</code>,
+            <code>at:Playbook</code>
+          </dd>
+          <dt>Grounded in</dt>
+          <dd>
+            <code>at:Agent</code> ⊑ <code>prov:Agent</code> ·
+            <code>at:Activity</code> ⊑ <code>prov:Activity</code> ·
+            <code>at:Situation</code> ⊑ <code>dul:Situation</code> ·
+            <code>at:Category</code> ⊑ <code>skos:Concept</code>,
+            <code>dul:Concept</code> · <code>at:Plan</code> ⊑
+            <code>p-plan:Plan</code> · <code>at:ExecutionTrace</code> ⊑
+            <code>ep-plan:ExecutionTraceBundle</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            Most Seed classes subclass one of five <code>at:</code> classes (see
+            the table below), and every act the reader asks for is an
+            <code>at:Skill</code> on a person, org or workspace agent.
+          </dd>
+        </dl>
+      </div>
+
+      <h2>The faith and scripture domains</h2>
+
+      <div class="layer" id="faith">
+        <h3>
+          <span class="chip domain">domain</span> Faith — the church today
+        </h3>
+        <p>
+          The faith ontology is the
+          <strong>Global.Church Core Ontology</strong> (<code>gc:</code>, with
+          incubator terms under <code>fci:</code>), re-cut onto the
+          agentic-trust base. Everything domain-neutral it used to carry
+          (organizations, persons, membership, offerings, attestation) moved up
+          into <code>at:</code>. What remains is genuinely about the church:
+          ekklesia bodies and gatherings, people groups, ministry activity, and
+          mission engagement.
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>gc:EkklesiaCommunity</code> (the persistent gathered body),
+            <code>gc:AgentiveEkklesia</code> (the body when it acts, also an
+            <code>at:Organization</code>),
+            <code>fci:CongregationMembership</code>
+          </dd>
+          <dt>Grounded in</dt>
+          <dd>
+            <code>gc:EkklesiaCommunity</code> ⊑ <code>at:Community</code> ⊑
+            <code>prov:Entity</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            When a church publishes a reading plan or a branded reader theme, it
+            does so as a <code>.church</code> org agent. The body behind that
+            agent is a <code>gc:AgentiveEkklesia</code>, so a congregation's
+            work can be tied to the congregation, not just to an account.
+          </dd>
+          <dt>Upstream</dt>
+          <dd>
+            <a href="https://ontology.global.church/core"
+              >ontology.global.church/core</a
+            >
+          </dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="scripture">
+        <h3>
+          <span class="chip domain">domain</span> Scripture — the text the
+          church reads
+        </h3>
+        <p>
+          Scripture describes the Bible as a verifiable graph. A
+          <strong>Verse</strong> is a place in the Bible (John 3:16) that never
+          changes. Its <strong>wording</strong> in one translation is a separate
+          thing, a <em>VerseText</em>, and each translation's published state is
+          an <strong>Edition</strong> with a Merkle root, so one verse can be
+          proven to belong to the edition without sending the rest. It also
+          models the narrative: events, people, places and speech acts.
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>scr:Verse</code>, <code>scr:Passage</code>,
+            <code>scr:VerseText</code>, <code>scr:ScriptureEdition</code>,
+            <code>scr:ScriptureCorpus</code>, <code>scr:BiblicalEvent</code>
+          </dd>
+          <dt>Grounded in</dt>
+          <dd>
+            <code>scr:Verse</code> ⊑ <code>pub:ContentWork</code> ·
+            <code>scr:VerseText</code> ⊑ <code>pub:ContentRevision</code> ·
+            <code>scr:ScriptureEdition</code> ⊑ <code>pub:CorpusRelease</code> ·
+            <code>scr:Passage</code> ⊑ <code>at:Container</code> ⊑
+            <code>dul:Collection</code> · reaches into faith for
+            <code>scr:ApostolicBody</code>
+          </dd>
+          <dt>Why Seed needs it</dt>
+          <dd>
+            Seed never models a verse itself (there is no second verse model).
+            Every mark points at a <code>scr:Passage</code> in a named
+            <code>scr:ScriptureEdition</code>. Rule:
+            <em>the text is not here</em> — no Seed class carries Bible wording;
+            the Scripture agent serves it.
+          </dd>
+        </dl>
+      </div>
+
+      <h2 id="seed">Seed — the reader's own words</h2>
+      <p>
+        <code>seed:</code> is the small vertical ontology for reading Scripture
+        together. It lives in the skills repository
+        (<code>ontology/seed.ttl</code>) with SHACL shapes that say which fields
+        each record must have. Almost every class is a narrower form of a class
+        from a layer below:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Seed class</th>
+              <th>Is a kind of</th>
+              <th>Which climbs to</th>
+              <th>In plain words</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <code>seed:Highlight</code>, <code>Annotation</code>,
+                <code>Bookmark</code>, <code>Save</code>,
+                <code>ReadingPosition</code>, <code>ReaderSettings</code>,
+                <code>Profile</code>, <code>PlanProgress</code>
+              </td>
+              <td><code>at:KnowledgeRecord</code></td>
+              <td><code>prov:Entity</code></td>
+              <td>Your private records. Each is held by exactly one person.</td>
+            </tr>
+            <tr>
+              <td><code>seed:ReadingEvent</code>, <code>PlaylistPlay</code></td>
+              <td><code>at:Activity</code></td>
+              <td><code>prov:Activity</code></td>
+              <td>Something you did, with a start and an end.</td>
+            </tr>
+            <tr>
+              <td>
+                <code>seed:Playlist</code>, <code>ReadingPlan</code>,
+                <code>Offering</code>, <code>Customization</code>
+              </td>
+              <td><code>pub:ContentWork</code></td>
+              <td>
+                <code>at:ContentArtifact</code> → <code>prov:Entity</code>
+              </td>
+              <td>
+                Works you or a church can publish, with revisions and releases.
+              </td>
+            </tr>
+            <tr>
+              <td><code>seed:ReadingSession</code></td>
+              <td><code>at:Situation</code></td>
+              <td><code>dul:Situation</code>, <code>prov:Entity</code></td>
+              <td>A live shared reading and its rules.</td>
+            </tr>
+            <tr>
+              <td><code>seed:ShareGrant</code></td>
+              <td><code>at:Delegation</code></td>
+              <td><code>dul:InformationObject</code></td>
+              <td>
+                Evidence that someone may read a private slice. Never a gate by
+                itself.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>seed:HighlightColor</code>, <code>Visibility</code>,
+                <code>SessionRole</code>, <code>OfferingKind</code>
+              </td>
+              <td><code>at:Category</code></td>
+              <td><code>skos:Concept</code>, <code>dul:Concept</code></td>
+              <td>Controlled lists (world / friends / private, and so on).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The properties tie Seed to the other layers in the same way:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Points to</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>seed:aboutPassage</code></td>
+              <td><code>scr:Passage</code></td>
+              <td>What a mark, event or offering is about</td>
+            </tr>
+            <tr>
+              <td><code>seed:ofEdition</code></td>
+              <td><code>scr:ScriptureEdition</code></td>
+              <td>Which translation</td>
+            </tr>
+            <tr>
+              <td><code>seed:heldBy</code></td>
+              <td><code>at:Person</code></td>
+              <td>
+                Narrower form of <code>prov:wasAttributedTo</code>; never the
+                workspace or a service
+              </td>
+            </tr>
+            <tr>
+              <td><code>seed:publishedBy</code></td>
+              <td><code>at:Organization</code> or <code>at:Person</code></td>
+              <td>Narrower form of <code>prov:wasAttributedTo</code></td>
+            </tr>
+            <tr>
+              <td><code>seed:visibility</code></td>
+              <td><code>seed:Visibility</code></td>
+              <td>Private unless it says otherwise</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Five rules the Seed ontology keeps</h3>
+      <ol class="steps">
+        <li>
+          <strong>A mark is the person's.</strong> Held by exactly one person,
+          never by the app or a service.
+        </li>
+        <li>
+          <strong>The text is not here.</strong> No Seed record carries Bible
+          wording.
+        </li>
+        <li>
+          <strong>A listing is not a grant.</strong> Being findable in the town
+          says nothing about who may read.
+        </li>
+        <li>
+          <strong>A secret is a pointer.</strong>
+          <code>seed:SecretRef</code> names a vault entry; it never holds the
+          value.
+        </li>
+        <li>
+          <strong>Visibility is explicit.</strong> Private unless the record
+          says otherwise. (The old reader made everything public by default.)
+        </li>
+      </ol>
+
+      <h2 id="example">Worked example: one highlight</h2>
+      <p>
+        You highlight John 3:16 in yellow. The reader writes this document to
+        your Library under <code>seed-bible/</code>, private by default:
+      </p>
+      <pre><code>{
+  "@context": { "seed": "https://skills.demo/seed#", "scr": "https://skills.demo/scripture#" },
+  "@type": "seed:Highlight",
+  "@id": "urn:seed:highlight:9f2c…",
+  "seed:aboutPassage": "osis:John.3.16",
+  "seed:ofEdition": "BSB",
+  "seed:highlightColor": "seed:HighlightColor-yellow",
+  "seed:heldBy": "did:…:seedreader.me",
+  "seed:visibility": "seed:Visibility-private"
+}</code></pre>
+      <p>
+        Anyone holding the ontology can now reason upward without knowing Seed
+        Bible:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Answered by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>What kind of thing is it?</td>
+              <td>
+                <code>seed:Highlight</code> → <code>at:KnowledgeRecord</code> →
+                <code>prov:Entity</code> (and <code>oa:Annotation</code> by
+                cross-reference)
+              </td>
+            </tr>
+            <tr>
+              <td>Whose is it?</td>
+              <td>
+                <code>seed:heldBy</code> is a <code>prov:wasAttributedTo</code>,
+                pointing at an <code>at:Person</code> → <code>prov:Agent</code>
+              </td>
+            </tr>
+            <tr>
+              <td>What is it about?</td>
+              <td>
+                A <code>scr:Passage</code> in a
+                <code>scr:ScriptureEdition</code> whose text can be proven
+                against the edition's root
+              </td>
+            </tr>
+            <tr>
+              <td>How did it get there?</td>
+              <td>
+                A harness run on your agent (an <code>at:ExecutionTrace</code>,
+                an EP-Plan trace) carrying out a step of a
+                <code>p-plan:Plan</code>, by the workspace acting on your behalf
+                (<code>prov:actedOnBehalfOf</code>) under a delegation
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Where it lives</h2>
+      <ul>
+        <li>
+          <code>~/skills/ontology/seed.ttl</code> — the Seed classes and SHACL
+          shapes; <code>seed.data.ttl</code> holds the controlled values and the
+          skills, capabilities and agent archetypes.
+        </li>
+        <li>
+          <code
+            >~/skills/ontology/{scripture,faith,publishing,commerce}.ttl</code
+          >
+          and <code>agentic-trust/tbox.ttl</code> — the layers below.
+        </li>
+        <li>
+          <code
+            >~/skills/ontology/upper/{prov-o,ep-plan,dolce,web-annotation}.ttl</code
+          >
+          — the trimmed foundations.
+        </li>
+        <li>
+          <code>@agenticprimitives/ontology</code> (<code>tbox/</code>,
+          <code>cbox/</code>, <code>mappings/</code>) — the substrate
+          vocabulary.
+        </li>
+        <li>
+          All of it is loaded into GraphDB as named graphs (Seed is
+          <code>&lt;urn:skills:context:seed&gt;</code>).
+        </li>
+      </ul>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <a href="/architecture/">← Architecture overview</a> · Next:
+        <a href="/architecture/agentic/">Agentic →</a>
+      </div>
+    </footer>
+  </body>
+</html>

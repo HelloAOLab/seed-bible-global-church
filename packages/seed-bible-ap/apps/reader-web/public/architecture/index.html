@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seed Bible Architecture</title>
+    <meta
+      name="description"
+      content="How the Seed Bible reader is built: the ontology its records are written in, the agents it talks to, and the reading experience."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"
+          >Seed Bible <span>Architecture</span></a
+        >
+        <nav>
+          <a href="/architecture/" aria-current="page">Overview</a>
+          <a href="/architecture/ontology/">Ontology</a>
+          <a href="/architecture/agentic/">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <h1>How Seed Bible is built</h1>
+      <p class="lede">
+        Seed Bible is a Bible reader where everything you mark and keep lives in
+        <strong>your own Library</strong>, not in the app's database. The app
+        asks agents to read and write on your behalf. These pages explain how
+        that works, in three views.
+      </p>
+
+      <div class="cards">
+        <a class="card" href="/architecture/ontology/">
+          <div class="kicker">What the data means</div>
+          <h3>Ontology</h3>
+          <p>
+            Every highlight, note and reading plan is a record with an agreed
+            meaning. It is built on shared, standard vocabularies: PROV-O,
+            P-Plan, DOLCE+DnS, the agentic-primitives substrate, and the faith
+            and scripture ontologies.
+          </p>
+          <span class="go">Read the ontology →</span>
+        </a>
+        <a class="card" href="/architecture/agentic/">
+          <div class="kicker">Who talks to whom</div>
+          <h3>Agentic</h3>
+          <p>
+            The app talks to two places: your Home (to sign in) and the reader's
+            workspace agent. The workspace then talks to the other agents over
+            A2A: your own agent, the Scripture agent, the serving plane and the
+            publishing gateway.
+          </p>
+          <span class="go">See the agent map →</span>
+        </a>
+        <a class="card" href="/architecture/ux/">
+          <div class="kicker">What the reader sees</div>
+          <h3>UX</h3>
+          <p>
+            The same screens and words as seedbible.org: tabs and panes, the
+            verse bar, Today, Discover, Library and live sessions. It works on
+            the device first and syncs to your Library when it can.
+          </p>
+          <span class="go">Tour the experience →</span>
+        </a>
+      </div>
+
+      <h2>The idea in four sentences</h2>
+      <ol class="steps">
+        <li>
+          <strong>You own your marks.</strong> A highlight on John 3:16 is a
+          small document in your Library at your Home
+          (<code>www.faithnet.me</code>). The app keeps none of it.
+        </li>
+        <li>
+          <strong>The app never holds a key.</strong> When you sign in, your
+          Home gives the reader's workspace a short-lived "ask-as-me" permission
+          (we call it a <em>wire</em>). You can see and revoke it at your Home.
+        </li>
+        <li>
+          <strong>Agents do the work.</strong> The workspace agent asks your own
+          agent to save the mark, asks the Scripture agent for the text, and
+          asks the serving plane what others have published.
+        </li>
+        <li>
+          <strong>Everything has a shared meaning.</strong> Records are typed
+          with an ontology that grounds on public standards, so any tool that
+          knows PROV-O or the faith ontology can understand them.
+        </li>
+      </ol>
+
+      <h2>Where things live</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Address</th>
+              <th>What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Reader app</td>
+              <td><code>seed-reader.faithnet.io</code></td>
+              <td>The screens you use. Works offline. Holds no key.</td>
+            </tr>
+            <tr>
+              <td>Home</td>
+              <td><code>www.faithnet.me</code></td>
+              <td>Sign-in, sign-out, contacts and friends, your Library.</td>
+            </tr>
+            <tr>
+              <td>Workspace agent</td>
+              <td>
+                <code>seed-reader.workspace</code> at
+                <code>seed-reader-a2a.faithnet.io</code>
+              </td>
+              <td>The reader's backend. Coordinates every other agent.</td>
+            </tr>
+            <tr>
+              <td>Your agent</td>
+              <td>
+                <code>&lt;you&gt;.me</code> at <code>a2a.faithnet.io</code>
+              </td>
+              <td>
+                Writes to and reads from your Library, under your permission.
+              </td>
+            </tr>
+            <tr>
+              <td>Scripture agent</td>
+              <td>
+                <code>scripture-resolver.svc</code> at
+                <code>scripture.faithnet.io</code>
+              </td>
+              <td>
+                The one source of Bible text, signed so it can be checked.
+              </td>
+            </tr>
+            <tr>
+              <td>Serving plane</td>
+              <td>
+                <code>seed-bible.svc</code> at
+                <code>seed-bible-a2a.faithnet.io</code>
+              </td>
+              <td>
+                An index of what people publish, for Discover and Today. Can be
+                rebuilt from the Libraries.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Seed Bible on the agenticprimitives substrate · faithnet estate ·
+        <a href="/">seed-reader.faithnet.io</a>
+      </div>
+    </footer>
+  </body>
+</html>

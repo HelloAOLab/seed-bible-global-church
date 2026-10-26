@@ -11,6 +11,9 @@ export const STATIC_FILE_RE =
 /** Lanes the worker never answers: the reader's agent (ADR-0044) and the Worker's own API routes. */
 export const NETWORK_ONLY_PREFIXES = ["/a2a/", "/api/", "/harness/"];
 
+/** Static pages the build ships beside the app (public/architecture): served as themselves, never stored as the shell. */
+export const STATIC_PAGE_PREFIXES = ["/architecture"];
+
 export interface AppShellNavigationInput {
   url: URL;
   /** The request's `mode`; only "navigate" is a page load. */
@@ -27,6 +30,12 @@ export function isAppShellNavigation(input: AppShellNavigationInput): boolean {
   if (NETWORK_ONLY_PREFIXES.some((p) => url.pathname.startsWith(p)))
     return false;
   if (STATIC_FILE_RE.test(url.pathname)) return false;
+  if (
+    STATIC_PAGE_PREFIXES.some(
+      (p) => url.pathname === p || url.pathname.startsWith(`${p}/`)
+    )
+  )
+    return false;
   return true;
 }
 

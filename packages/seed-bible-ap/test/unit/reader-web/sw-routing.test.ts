@@ -28,6 +28,13 @@ describe("isAppShellNavigation()", () => {
     expect(navigation(`${ORIGIN}/?embed=minimal&theme=dark`)).toBe(true);
   });
 
+  it("leaves the architecture pages to the network", () => {
+    expect(navigation(`${ORIGIN}/architecture`)).toBe(false);
+    expect(navigation(`${ORIGIN}/architecture/`)).toBe(false);
+    expect(navigation(`${ORIGIN}/architecture/ontology/`)).toBe(false);
+    expect(navigation(`${ORIGIN}/architectures`)).toBe(true);
+  });
+
   it("ignores anything that isn't a navigation", () => {
     expect(navigation(`${ORIGIN}/read/BSB/JHN/3`, "cors")).toBe(false);
     expect(navigation(`${ORIGIN}/read/BSB/JHN/3`, "no-cors")).toBe(false);
