@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Seed Bible Ontology</title>
+    <title>Ontology</title>
     <meta
       name="description"
-      content="The layered ontology behind Seed Bible's records: PROV-O, P-Plan, DOLCE+DnS, agentic-primitives, agentic-trust, faith, scripture and seed."
+      content="The layered ontology behind the reader's records: PROV-O, P-Plan, DOLCE+DnS, agentic-primitives, agentic-trust, faith, scripture and seed."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -14,9 +14,7 @@
   <body>
     <header class="top">
       <div class="wrap">
-        <a class="brand" href="/architecture/"
-          >Seed Bible <span>Architecture</span></a
-        >
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
         <nav>
           <a href="/architecture/">Overview</a>
           <a href="/architecture/ontology/" aria-current="page">Ontology</a>
@@ -35,7 +33,7 @@
       <p class="lede">
         Every highlight, note, bookmark and reading plan is saved as a small
         typed document. The type says what it is in words both people and
-        machines agree on. Seed Bible does not invent those words from scratch:
+        machines agree on. The reader does not invent those words from scratch:
         it builds on layers of shared vocabulary, each one resting on the layer
         below.
       </p>
@@ -60,7 +58,7 @@
           <em>entity with a provenance</em> (PROV-O). It points at a
           <em>passage</em> (scripture) and is <em>held by a person</em>, which
           is just PROV-O's "was attributed to". So a tool that has never heard
-          of Seed Bible can still tell who made it, from what, and when.
+          of this reader can still tell who made it, from what, and when.
         </p>
       </div>
 
@@ -68,7 +66,7 @@
       <p>
         Read the picture from top to bottom. Each arrow means "builds on". A
         layer may reach <em>down</em> into any layer below it, never up: the
-        scripture ontology knows nothing about Seed Bible, and the faith
+        scripture ontology knows nothing about the reader, and the faith
         ontology knows nothing about scripture's verses. A check in the skills
         repository (<code>check_domain_firewall</code>) enforces this.
       </p>
