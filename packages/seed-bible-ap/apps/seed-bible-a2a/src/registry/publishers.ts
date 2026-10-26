@@ -138,10 +138,27 @@ export interface WorkRow {
   indexed_at: string;
 }
 
-export async function listPublishers(db: D1Database): Promise<Publisher[]> {
+/** The followed publishers with how their last crawl went — said, never silent. */
+export async function listPublishers(db: D1Database): Promise<
+  Array<
+    Publisher & {
+      cursor: string;
+      lastCrawlAt: string | null;
+      lastError: string | null;
+    }
+  >
+> {
   const r = await db
-    .prepare("SELECT name, endpoint, kind FROM publishers ORDER BY name")
-    .all<Publisher>();
+    .prepare(
+      "SELECT name, endpoint, kind, cursor, last_crawl_at AS lastCrawlAt, last_error AS lastError FROM publishers ORDER BY name"
+    )
+    .all<
+      Publisher & {
+        cursor: string;
+        lastCrawlAt: string | null;
+        lastError: string | null;
+      }
+    >();
   return r.results ?? [];
 }
 
