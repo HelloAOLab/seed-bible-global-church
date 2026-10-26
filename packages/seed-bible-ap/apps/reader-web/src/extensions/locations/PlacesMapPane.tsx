@@ -93,6 +93,8 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
   const chapter = state.reading.chapterData.value;
   const chapterRef = state.reading.chapterRef.value;
   const places = chapter ? placesInChapter(chapter) : [];
+  // The chapter's data can arrive after its ref changes (a fetch), so the map redraws on the places, not the ref alone.
+  const placesKey = places.map((p) => `${p.place}:${p.verse}`).join("|");
 
   useEffect(() => {
     let dead = false;
@@ -120,6 +122,8 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       const map = mapRef.current;
       const layer = layerRef.current!;
       layer.clearLayers();
+      // What is drawn, for anyone checking the map against the chapter (flow X8).
+      host.current.dataset["drawn"] = "";
       if (!places.length) {
         setStatus(
           t("places-none", {
@@ -130,7 +134,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       }
       setStatus(t("places-loading", { defaultValue: "Finding the places…" }));
       const bounds = L.latLngBounds([]);
-      let drawn = 0;
+      const drawn: string[] = [];
       for (const { place, verse } of places) {
         const geo = await loadPlaceGeometry(place);
         if (dead) return;
@@ -152,9 +156,10 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
         g.on("click", () => state.selection.select(verse, verse));
         g.addTo(layer);
         bounds.extend(g.getBounds());
-        drawn++;
+        drawn.push(place.place);
       }
-      if (drawn) {
+      if (host.current) host.current.dataset["drawn"] = drawn.join(",");
+      if (drawn.length) {
         map.fitBounds(bounds.pad(0.3), { maxZoom: 9 });
         setStatus(null);
       } else
@@ -167,7 +172,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     return () => {
       dead = true;
     };
-  }, [chapterRef]);
+  }, [chapterRef, placesKey]);
 
   // A theme change redraws the base map in the other flavour; the places on it stay.
   useEffect(() => {

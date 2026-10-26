@@ -547,6 +547,55 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X8",
+    rows: ["Places"],
+    section: "12. Extensions",
+    title: "Places map follows a chapter that arrives late",
+    checks:
+      "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places (Jerusalem, Galilee, Bethsaida, Nazareth), not Deuteronomy's and not 'names no place'",
+    run: async (c) => {
+      await c.page.route(/\/bible\/api\/rbs\/JHN\/1\.json/, async (route) => {
+        await new Promise((r) => setTimeout(r, 3000));
+        await route.continue();
+      });
+      await c.open("/read/rbs/DEU/32");
+      await c
+        .pressToolbar("Places map")
+        .catch(async () => c.pressToolbar("Places"));
+      const canvas = c.page.locator(".sb-places-map-canvas");
+      await c.page.waitForFunction(
+        () =>
+          !!document.querySelector<HTMLElement>(".sb-places-map-canvas")
+            ?.dataset["drawn"],
+        undefined,
+        { timeout: 30000 }
+      );
+      const before = await canvas.getAttribute("data-drawn");
+      await c.page.evaluate(() => {
+        history.pushState({}, "", "/read/rbs/JHN/1");
+        dispatchEvent(new PopStateEvent("popstate"));
+      });
+      const want = ["Jerusalem", "Galilee", "Bethsaida", "Nazareth"];
+      await c.page
+        .waitForFunction(
+          (names) => {
+            const d =
+              document.querySelector<HTMLElement>(".sb-places-map-canvas")
+                ?.dataset["drawn"] ?? "";
+            return names.every((n) => d.split(",").includes(n));
+          },
+          want,
+          { timeout: 30000 }
+        )
+        .catch(async () => {
+          throw new Error(
+            `John 1's map drew "${await canvas.getAttribute("data-drawn")}" (Deuteronomy 32 had "${before}")`
+          );
+        });
+      return `Deuteronomy 32 drew ${before}; John 1 drew ${await canvas.getAttribute("data-drawn")}`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",
