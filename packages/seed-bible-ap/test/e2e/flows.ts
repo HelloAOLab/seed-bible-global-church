@@ -692,6 +692,57 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X11",
+    rows: ["Places"],
+    section: "12. Extensions",
+    title: "Places map without its base map",
+    checks:
+      "When the base map's library cannot be loaded (as in a tab left open across a deploy, where the host answers the app shell for a chunk it no longer has), the Places map on Acts 6 still draws the chapter's places and says under the map that the base map could not be loaded, with Reload",
+    run: async (c) => {
+      // The map library's chunk, answered as the host answers a stale tab: the app shell, status 200.
+      await c.page.route(/\/assets\/[^/]+\.js(\?.*)?$/, async (route) => {
+        try {
+          const res = await route.fetch();
+          const body = await res.text();
+          if (!body.includes("protomaps"))
+            return await route.fulfill({ response: res, body });
+          return await route.fulfill({
+            status: 200,
+            contentType: "text/html; charset=utf-8",
+            body: "<!doctype html><html><body></body></html>",
+          });
+        } catch {
+          // A request still in flight as the page goes away.
+          await route.continue().catch(() => undefined);
+        }
+      });
+      await c.open("/read/BSB/ACT/6");
+      await c
+        .pressToolbar("Places map")
+        .catch(async () => c.pressToolbar("Places"));
+      const canvas = c.page.locator(".sb-places-map-canvas");
+      await c.page.waitForFunction(
+        () =>
+          (
+            document.querySelector<HTMLElement>(".sb-places-map-canvas")
+              ?.dataset["drawn"] ?? ""
+          )
+            .split(",")
+            .includes("Jerusalem"),
+        undefined,
+        { timeout: 60000 }
+      );
+      const problem = c.page.locator(".sb-places-base-problem");
+      await c.waitText(problem, /base map could not be loaded/i, 20000);
+      await problem.getByRole("button", { name: /^Reload$/ }).waitFor();
+      const markers = await c.page.locator(".leaflet-interactive").count();
+      if (!markers) throw new Error("no markers");
+      const tiles = await c.page.locator("canvas.leaflet-tile").count();
+      if (tiles) throw new Error(`${tiles} tile(s) drawn without the library`);
+      return `drew ${(await canvas.getAttribute("data-drawn"))?.split(",").length} places (${markers} marker(s)) on a blank map; "${(await problem.innerText()).slice(0, 60)}…" with Reload`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

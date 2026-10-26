@@ -239,6 +239,8 @@
   "places-loading": "Finding the places…",
   "places-no-geometry": "The map has no geometry for these places yet.",
   "places-map": "Places map",
+  "places-failed": "The map could not be drawn: {{reason}}",
+  "places-base-map-failed": "The base map could not be loaded, so the places are drawn on a blank map. Reloading the page may bring it back.",
   "transcript": "Transcript",
   "transcript-sign-in": "Sign in to transcribe a recording.",
   "transcript-pick": "Choose a recording",

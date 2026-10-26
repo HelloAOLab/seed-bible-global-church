@@ -1,15 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 17:22 UTC",
+  "when": "2026-10-26 17:38 UTC",
   "results": [
     {
-      "id": "AF1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Add a friend, the whole way",
-      "checks": "As someone new to the app, the real way: Sign in with Faithnet (the Home's window; its demo person Seed Reader; Allow), open Friends, type 'alice', Send request; the small window that opens asks 'Add alice.me as a friend?' — Yes, add them — and closes by itself; the reader says Alice was asked. Then Cancel the request the same way ('Remove … as a friend?' — Yes, remove them). Screenshots of every step with E2E_SHOTS",
-      "mark": "❌",
-      "note": "the window did not close (page.waitForEvent: Timeout 180000ms exceeded while waiting f); it shows: We couldn’t save that just now. Nothing was changed. Please try again. Try again Close Details; it said: error: Failed to load resource: the server responded with a status of 502 () [[console.error] Failed to load resource: the server responded with a status of 404 () | [console.error] Failed to load resource: the server responded with a sta]",
-      "ms": 239245
+      "id": "X1",
+      "section": "12. Extensions",
+      "title": "Places map",
+      "checks": "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
+      "mark": "✅",
+      "note": "base map with 6 tile(s) drawn, 8 marker(s)",
+      "ms": 2997
+    },
+    {
+      "id": "X8",
+      "section": "12. Extensions",
+      "title": "Places map follows a chapter that arrives late",
+      "checks": "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places from the publishers (Jerusalem, Bethany beyond the Jordan, Galilee, Beth-Saida, Nazareth), not Deuteronomy's, and marks Bethany beyond the Jordan's site as uncertain",
+      "mark": "✅",
+      "note": "Deuteronomy 32 drew Bashan,Gomorrah,Sodom,Jordan,Abarim,Canaan,Jericho,Moab,Mount Nebo,Mount Hor (of Edom),Meribah 1,Wilderness of Zin; John 1 drew Alexandria — Valentinians,Lyon (Irenaeus’s opponents) — Valentinians,Rome — Valentinians,Docetic tendencies,Smyrna — Docetic tendencies,Tralles — Docetic tendencies,Rome — Marcionites,Sinope (his home) — Marcionites,Jerusalem,Bethany (Beyond the Jordan),Jordan,Galilee,Beth-Saida,Nazareth; Bethany beyond the Jordan: site uncertain",
+      "ms": 998
+    },
+    {
+      "id": "X10",
+      "section": "12. Extensions",
+      "title": "A people group's region on the map",
+      "checks": "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
+      "mark": "✅",
+      "note": "drew 13 places including the Samaritan believers' region",
+      "ms": 685
+    },
+    {
+      "id": "X11",
+      "section": "12. Extensions",
+      "title": "Places map without its base map",
+      "checks": "When the base map's library cannot be loaded (as in a tab left open across a deploy, where the host answers the app shell for a chunk it no longer has), the Places map on Acts 6 still draws the chapter's places and says under the map that the base map could not be loaded, with Reload",
+      "mark": "✅",
+      "note": "drew 14 places (14 marker(s)) on a blank map; \"The base map could not be loaded, so the places are drawn on…\" with Reload",
+      "ms": 1186
     }
   ]
 }
