@@ -217,7 +217,7 @@ export function skillForPath(
 
 /** Part of every edge-cache key: change it when the scripture agent's answers change shape or scope, so the edge
  * stops serving what was cached before (the Cache API cannot be purged from outside the worker). */
-const CACHE_EPOCH = "6";
+const CACHE_EPOCH = "7";
 const OWN_CACHE_CONTROL = "x-own-cache-control";
 
 async function edgeCached(

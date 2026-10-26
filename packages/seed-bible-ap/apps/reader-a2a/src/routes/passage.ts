@@ -573,18 +573,21 @@ export function scrollItems(
 /** The notes published about the chapter's verses (the publisher contract's `at-verse`, relation `teaches`, kind
  *  `block`): each block as signed, its `[[subject | verses]]` label and `¶ key: value` lines read into fields, anchored
  *  at the verses of the asked span it speaks about. A picture named `asset:sha256:<hex>` becomes the gateway's URL. */
+/** The blocks publishers released at the passage's verses, as items: a note that speaks about its verses (relation
+ *  `teaches`) is a `teaching`; a study note that reads them (`interprets`) is a `study-note`. */
 export function teachingItems(
   asked: Locus,
   chapter: number,
   items: ContractItem[],
-  assetBase: string
+  assetBase: string,
+  relation: "teaches" | "interprets" = "teaches"
 ): PassageItem[] {
   const out: PassageItem[] = [];
   const prefix = `${asked.osis}.${chapter}.`;
   for (const it of items) {
     if (typeof it.item.text !== "string" || !it.item.text) continue;
     const verses = it.references
-      .filter((r) => r.relation === "teaches" && r.to.startsWith(prefix))
+      .filter((r) => r.relation === relation && r.to.startsWith(prefix))
       .map((r) => Number(r.to.slice(prefix.length)))
       .filter(
         (v) =>
@@ -603,7 +606,7 @@ export function teachingItems(
       : null;
     out.push({
       source: "publishing",
-      kind: "teaching",
+      kind: relation === "interprets" ? "study-note" : "teaching",
       locus: anchor(at),
       title: subject,
       detail:
@@ -716,27 +719,44 @@ export function featureItems(
 }
 
 /** What the gateway holds for a chapter, over the publisher contract, narrowed to one relation and kind. */
+/** The gateway's page is at most this many items; a chapter of study notes is read page by page until the cursor ends. */
+const GATEWAY_PAGE = 200;
+const GATEWAY_PAGES_MAX = 10;
+
 async function gatewayAtVerse(
   env: PublishingEnv,
   book: string,
   chapter: number,
   ask: { relation: string; kind: string }
 ): Promise<ContractItem[]> {
-  const res = await publishingFetch(env, "/publisher/at-verse", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ span: `${book}.${chapter}`, ...ask }),
-  });
-  const out = (await res.json().catch(() => null)) as {
-    ok?: boolean;
-    items?: ContractItem[];
-    error?: string;
-  } | null;
-  if (!res.ok || !out?.ok)
-    throw new Error(
-      out?.error ?? `the publishing gateway answered ${res.status}`
-    );
-  return out.items ?? [];
+  const all: ContractItem[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < GATEWAY_PAGES_MAX; page++) {
+    const res = await publishingFetch(env, "/publisher/at-verse", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        span: `${book}.${chapter}`,
+        ...ask,
+        limit: GATEWAY_PAGE,
+        ...(cursor ? { cursor } : {}),
+      }),
+    });
+    const out = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      items?: ContractItem[];
+      cursor?: string;
+      error?: string;
+    } | null;
+    if (!res.ok || !out?.ok)
+      throw new Error(
+        out?.error ?? `the publishing gateway answered ${res.status}`
+      );
+    all.push(...(out.items ?? []));
+    if (!out.cursor || !(out.items ?? []).length) break;
+    cursor = out.cursor;
+  }
+  return all;
 }
 
 interface Offering {
@@ -929,7 +949,7 @@ export async function composePassage(
     gather(async () => {
       const features = Promise.all(
         chapters.map(async (c) => {
-          const [located, taught] = await Promise.all([
+          const [located, taught, read] = await Promise.all([
             gatewayAtVerse(env, asked.osis, c, {
               relation: "locates",
               kind: "feature",
@@ -938,10 +958,15 @@ export async function composePassage(
               relation: "teaches",
               kind: "block",
             }),
+            gatewayAtVerse(env, asked.osis, c, {
+              relation: "interprets",
+              kind: "block",
+            }),
           ]);
           return [
             ...featureItems(asked, c, located),
             ...teachingItems(asked, c, taught, assetBaseOf(env)),
+            ...teachingItems(asked, c, read, assetBaseOf(env), "interprets"),
           ];
         })
       ).then((f) => f.flat());

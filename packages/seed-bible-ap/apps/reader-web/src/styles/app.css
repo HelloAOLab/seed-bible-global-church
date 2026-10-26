@@ -1032,6 +1032,79 @@ body {
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
 }
+.sb-places-current {
+  font-weight: 600;
+}
+.sb-pane-header-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+/* Expanded to the full page: the map fills the page, what a publisher said of the tapped place in a column at its right. */
+.sb-app-pane-full > .sb-pane > .sb-places-map-full {
+  max-width: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  gap: 0;
+  height: calc(100dvh - 3.5rem);
+}
+.sb-places-map-full .sb-places-map-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sb-places-map-full .sb-places-map-canvas {
+  flex: 1;
+  height: auto;
+  min-height: 20rem;
+  border-radius: 0;
+}
+.sb-places-map-full .sb-places-map-stage > p {
+  margin: 0.25rem 0.75rem;
+}
+.sb-places-side {
+  overflow: auto;
+  padding: 0.75rem 1rem 6rem;
+  border-inline-start: 1px solid var(--sb-divider-color, #00000024);
+}
+.sb-places-side .sb-places-list {
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+.sb-places-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.sb-places-detail-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.sb-places-detail-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+}
+.sb-places-detail-summary {
+  margin: 0.5rem 0;
+}
+@media (max-width: 720px) {
+  .sb-app-pane-full > .sb-pane > .sb-places-map-full {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+  .sb-places-map-full .sb-places-map-canvas {
+    min-height: 50vh;
+  }
+  .sb-places-side {
+    border-inline-start: none;
+    border-top: 1px solid var(--sb-divider-color, #00000024);
+  }
+}
 
 /* Playlist items: the inline editor, kind icons, an embedded link in the player */
 .sb-item-editor {

@@ -73,7 +73,9 @@ export function App({ state }: { state: ReaderState }) {
   const embed = state.ui.embed.value;
   // The old reader's full-width panes: they take the reading area beside the sidebar (the chapter stays mounted
   // underneath, hidden, so it comes back where it was); the rest open as a side pane beside the chapter.
-  const full = FULL_WIDTH_PANES.includes(pane);
+  const wide = state.ui.paneWide.value;
+  const full =
+    FULL_WIDTH_PANES.includes(pane) || (pane.startsWith("ext:") && wide);
   const paneClass = `sb-app-pane${full ? " sb-app-pane-full" : ""}`;
   // The floating toolbars centre on the READER column, not the window — or on a full-width pane, which has taken
   // its place: its left edge and width go on the root as CSS variables (app.css), re-measured when a pane opens,
@@ -175,13 +177,28 @@ export function App({ state }: { state: ReaderState }) {
               <section className="sb-pane" aria-label={p?.title ?? "Extension"}>
                 <header className="sb-pane-header">
                   <h2>{p?.title ?? "Extension"}</h2>
-                  <button
-                    className="sb-pane-close"
-                    aria-label="Close"
-                    onClick={() => (state.ui.pane.value = "none")}
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
+                  <span className="sb-pane-header-actions">
+                    <button
+                      className="sb-pane-close sb-pane-expand"
+                      aria-label={wide ? "Shrink" : "Expand"}
+                      title={wide ? "Back beside the chapter" : "Full page"}
+                      onClick={() => (state.ui.paneWide.value = !wide)}
+                    >
+                      <span className="material-symbols-outlined">
+                        {wide ? "close_fullscreen" : "open_in_full"}
+                      </span>
+                    </button>
+                    <button
+                      className="sb-pane-close"
+                      aria-label="Close"
+                      onClick={() => {
+                        state.ui.pane.value = "none";
+                        state.ui.paneWide.value = false;
+                      }}
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </span>
                 </header>
                 {p ? p.render() : null}
               </section>

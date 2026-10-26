@@ -151,6 +151,11 @@ export interface CommentaryWork {
     partition: string;
   } | null;
   claims: number;
+  /** A published study Bible's notes (the licensed partition): listed as reception, no claims. */
+  notes?: number;
+  reception?: boolean;
+  stance?: string | null;
+  attribution?: string | null;
   verses: string[];
   cited: Array<{
     id: string;
@@ -160,6 +165,13 @@ export interface CommentaryWork {
     stance: string | null;
     says: string;
     quote: string | null;
+    /** The published work that carries the whole note. */
+    published?: {
+      work: string;
+      part: number;
+      block: number;
+      url: string;
+    } | null;
   }>;
   note?: string;
 }

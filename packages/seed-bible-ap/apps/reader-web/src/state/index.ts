@@ -546,6 +546,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarCollapsed: signal(false),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
+    /** An extension's pane (the Places map) expanded to the full page, from its header's button. */
+    paneWide: signal(false),
     /** The bookmarks and saves panels above the sidebar's tab list (opened from its header, or the phone's More). */
     bookmarksPanel: signal(false),
     savesPanel: signal(false),

@@ -743,6 +743,180 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X12",
+    rows: ["Content", "Interpretations"],
+    section: "12. Extensions",
+    title: "A study note on a verse",
+    checks:
+      "On Genesis 1 (BSB), tap verse 2 and Content: the pane's 'Study notes on this verse' shows the Reformation Study Bible's note '1:2 The earth.' with its words and Ligonier's attribution, read from Source Publishing; the Interpretations pane shows the same notes under the verse as a later reader's understanding",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.selectVerse(2);
+      const content = c.page.locator(".sb-verse-toolbar-action", {
+        has: c.page.locator(".sb-verse-toolbar-action-label", {
+          hasText: /^Content$/,
+        }),
+      });
+      await content.first().waitFor({ timeout: 40000 });
+      await content.first().click();
+      const section = c.page.locator("#sb-content-study-notes");
+      await section.waitFor({ timeout: 30000 });
+      const item = section.locator(".sb-content-teaching-item", {
+        hasText: /1:2 The earth\./,
+      });
+      await item.first().waitFor({ timeout: 10000 });
+      const text = await item.first().innerText();
+      if (!/lightless and landless/.test(text))
+        throw new Error(`note without its words: ${text.slice(0, 120)}`);
+      if (!/Ligonier/.test(text))
+        throw new Error(`note without its attribution: ${text.slice(0, 160)}`);
+      const notes = await section.locator(".sb-content-teaching-item").count();
+      // the verse bar's Interpretations (Genesis 1:2 carries a record)
+      await c.selectVerse(2);
+      const interpretations = c.page.locator(".sb-verse-toolbar-action", {
+        has: c.page.locator(".sb-verse-toolbar-action-label", {
+          hasText: /^Interpretations$/,
+        }),
+      });
+      await interpretations.first().waitFor({ timeout: 40000 });
+      await interpretations.first().click();
+      const interp = c.page.locator(".sb-interp-study-notes");
+      await interp.waitFor({ timeout: 30000 });
+      await c.waitText(interp, /The earth/, 10000);
+      return `${notes} study note(s) on Genesis 1:2, "1:2 The earth." with its words and © Ligonier; shown under the verse in Interpretations too`;
+    },
+  },
+  {
+    id: "X13",
+    rows: ["Places"],
+    section: "12. Extensions",
+    title: "Places map on the full page with a place's details",
+    checks:
+      "On Acts 8 open the Places map, press Expand on its header: the map fills the page beside a details column; tap 'Samaritan believers' in the list: the column shows the group's picture, period and summary and the verses naming it; Shrink puts the map back beside the chapter",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/8");
+      await c
+        .pressToolbar("Places map")
+        .catch(async () => c.pressToolbar("Places"));
+      await c.page.locator(".sb-places-map-canvas").waitFor({ timeout: 20000 });
+      await c.page.getByRole("button", { name: /^Expand$/ }).click();
+      const full = c.page.locator(".sb-app-pane-full .sb-places-map-full");
+      await full.waitFor({ timeout: 10000 });
+      const side = c.page.locator(".sb-places-side");
+      await side.waitFor({ timeout: 10000 });
+      await side
+        .locator(".sb-places-list button", { hasText: /^Samaritan believers$/ })
+        .first()
+        .click({ timeout: 60000 });
+      const detail = c.page.locator(".sb-places-detail");
+      await detail.waitFor({ timeout: 10000 });
+      await c.waitText(detail, /Samaritan believers/, 5000);
+      await detail
+        .locator("img.sb-places-detail-image")
+        .waitFor({ timeout: 20000 });
+      const text = await detail.innerText();
+      if (!/Named in/.test(text))
+        throw new Error(`no verses in the details: ${text.slice(0, 120)}`);
+      const width = await c.page
+        .locator(".sb-places-map-canvas")
+        .evaluate((el) => el.getBoundingClientRect().width);
+      const page = await c.page
+        .locator(".sb-app-pane-full")
+        .evaluate((el) => el.getBoundingClientRect().width);
+      if (width < page * 0.55)
+        throw new Error(
+          `the full-page map is only ${width}px of the ${page}px pane`
+        );
+      await c.page.getByRole("button", { name: /^Shrink$/ }).click();
+      await c.page
+        .locator(".sb-app-pane-full")
+        .waitFor({ state: "detached", timeout: 10000 });
+      return `full page: map ${Math.round(width)}px of the ${Math.round(page)}px pane with the details column; Samaritan believers' picture, period, summary and verses; shrunk back`;
+    },
+  },
+  {
+    id: "X14",
+    rows: ["Places"],
+    section: "12. Extensions",
+    title: "A place in the list goes to its verse",
+    checks:
+      "On Acts 6 open the Places map and tap 'Alexandria' in the list under it: verse 9 (the Synagogue of the Freedmen) is selected and scrolled into view",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/6");
+      await c
+        .pressToolbar("Places map")
+        .catch(async () => c.pressToolbar("Places"));
+      const link = c.page.locator(".sb-places-list button", {
+        hasText: /^Alexandria$/,
+      });
+      await link.first().waitFor({ timeout: 60000 });
+      await link.first().click();
+      const verse = c.verse(9);
+      await c.page.waitForFunction(
+        () => document.querySelector(".sb-verse-toolbar") !== null,
+        undefined,
+        { timeout: 10000 }
+      );
+      const selected = await c.page.evaluate(() =>
+        Array.from(
+          document.querySelectorAll('[data-verse-number][class*="selected"]')
+        ).map((e) => e.getAttribute("data-verse-number"))
+      );
+      const visible = await verse.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top >= 0 && r.bottom <= window.innerHeight;
+      });
+      if (!visible)
+        throw new Error(
+          `verse 9 not on screen (selected: ${selected.join(",")})`
+        );
+      return `Alexandria → verse 9 selected (${selected.join(",") || "verse bar shown"}) and on screen`;
+    },
+  },
+  {
+    id: "X15",
+    rows: ["Interpretations"],
+    section: "12. Extensions",
+    title: "The Writings pane lists a study Bible's notes as reception",
+    checks:
+      "On Genesis 1 open Writings (the bottom toolbar): under 'Commentary on the chapter — later readers' the Reformation Study Bible's study notes are listed as a later reading (Reformed confessional) with their note count and Ligonier's attribution; 'Show … notes' opens the notes, each with a link to the whole note at the publisher",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.pressToolbar("Writings");
+      const work = c.page.locator(".sb-writing", {
+        hasText: /Reformation Study Bible/,
+      });
+      await work.first().waitFor({ timeout: 60000 });
+      const meta = await work.first().innerText();
+      if (
+        !/later reading \(Reformed confessional\), listed as reception/.test(
+          meta
+        )
+      )
+        throw new Error(`not listed as reception: ${meta.slice(0, 200)}`);
+      const count = /(\d+) notes on verses/.exec(meta)?.[1];
+      if (!count) throw new Error(`no note count: ${meta.slice(0, 200)}`);
+      if (!/Ligonier/.test(meta))
+        throw new Error(`no attribution: ${meta.slice(0, 200)}`);
+      await work
+        .first()
+        .getByRole("button", { name: /Show \d+ notes/ })
+        .click();
+      const link = work
+        .first()
+        .locator("a", { hasText: /read the whole note at the publisher/ });
+      await link.first().waitFor({ timeout: 10000 });
+      const href = (await link.first().getAttribute("href")) ?? "";
+      if (
+        !/publishing\.faithnet\.io\/@demo-admin-1\/reformation-study-bible-study-notes-genesis/.test(
+          href
+        )
+      )
+        throw new Error(`link elsewhere: ${href}`);
+      return `${count} Reformation Study Bible notes on Genesis 1, listed as a later reading (reception) with Ligonier's attribution; each note links to the published work`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

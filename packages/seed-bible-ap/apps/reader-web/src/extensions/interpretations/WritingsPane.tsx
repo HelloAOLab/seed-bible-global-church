@@ -119,12 +119,19 @@ function Commentary({
           <div className="sb-writing-title">{w.label}</div>
           <div className="sb-interp-meta">
             {w.date ?? ""}
-            {w.group ? ` · ${w.group}` : ""} · {w.claims} claim
-            {w.claims === 1 ? "" : "s"} on verses{" "}
-            {w.verses.map((v) => v.split(".")[2]).join(", ")}
+            {w.group ? ` · ${w.group}` : ""}
+            {w.reception
+              ? ` · a later reading${w.stance ? ` (${w.stance})` : ""}, listed as reception`
+              : ""}{" "}
+            ·{" "}
+            {w.notes
+              ? `${w.notes} note${w.notes === 1 ? "" : "s"}`
+              : `${w.claims} claim${w.claims === 1 ? "" : "s"}`}{" "}
+            on verses {w.verses.map((v) => v.split(".")[2]).join(", ")}
             {w.edition?.licence
               ? ` · ${w.edition.versionTitle ?? w.edition.id} (${w.edition.licence})`
               : ""}
+            {w.attribution ? ` · ${w.attribution}` : ""}
           </div>
           {cited.length > 0 && (
             <button
@@ -132,8 +139,10 @@ function Commentary({
               className="sb-interp-more"
               onClick={() => setMore(!more)}
             >
-              {more ? "Hide" : "Show"} {cited.length} cited passage
-              {cited.length === 1 ? "" : "s"}
+              {more ? "Hide" : "Show"} {cited.length}{" "}
+              {w.notes
+                ? `note${cited.length === 1 ? "" : "s"}`
+                : `cited passage${cited.length === 1 ? "" : "s"}`}
             </button>
           )}
           {more &&
@@ -146,6 +155,19 @@ function Commentary({
                   {!c.quote
                     ? " · the edition's rights allow no quotation here; the claim is paraphrased"
                     : ""}
+                  {c.published && (
+                    <>
+                      {" · "}
+                      <a
+                        className="sb-interp-link"
+                        href={c.published.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        read the whole note at the publisher
+                      </a>
+                    </>
+                  )}
                 </footer>
               </blockquote>
             ))}

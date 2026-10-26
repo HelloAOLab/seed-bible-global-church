@@ -2,8 +2,10 @@
 // (a signed map work on the publishing gateway, vector tiles drawn here in the reader's light or dark) and the chapter's
 // places from the publishers (the scripture publisher's Bible places and any published map features), all through the
 // workspace (the page talks to its origin only). A place whose site is uncertain is drawn hollow and dashed and says so;
-// tapping a place selects the first verse of the chapter that names it. The places never wait for the base map: they
-// are drawn as soon as the map exists, and a base map that cannot be loaded is said so under the map, with Reload.
+// tapping a place selects the first verse of the chapter that names it and brings it on screen. The places never wait
+// for the base map: they are drawn as soon as the map exists, and a base map that cannot be loaded is said so under the
+// map, with Reload. Expanded to the full page (the pane header's button), the map fills the page and what a publisher
+// said of the tapped place — its picture, period, summary, verses and who signed it — opens in a column at its right.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { retryChunkImport } from "../../sw/retryChunkImport";
 import type { ReaderState } from "../../state";
@@ -61,9 +63,12 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
   const baseRef = useRef<import("leaflet").Layer | null>(null);
   const infoRef = useRef<TilesInfo | null>(null);
   const dark = state.settings.resolvedTheme().id === "dark";
+  const full = state.ui.paneWide.value;
   const [status, setStatus] = useState<string | null>(null);
   // The base map's own trouble, apart from the places': null while loading or loaded, else why it is not there.
   const [baseProblem, setBaseProblem] = useState<string | null>(null);
+  /** The place whose details are open in the column beside the full-page map. */
+  const [detail, setDetail] = useState<ChapterPlace | null>(null);
   const chapterRef = state.reading.chapterRef.value;
   // The places are asked for by the chapter's ref, so they always belong to the chapter on screen; null while asking.
   const [loaded, setLoaded] = useState<{
@@ -73,6 +78,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
   useEffect(() => {
     let dead = false;
     setLoaded(null);
+    setDetail(null);
     void loadChapterPlaces(chapterRef).then((places) => {
       if (!dead) setLoaded({ ref: chapterRef, places });
     });
@@ -81,6 +87,16 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     };
   }, [chapterRef]);
   const places = loaded?.ref === chapterRef ? loaded.places : null;
+
+  /** Selects the verse and brings it on screen (a selection alone can sit below the fold and look like nothing). */
+  const goToVerse = (v: number) => {
+    state.selection.select(v, v);
+    state.reading.scrollToVerse.value = v;
+  };
+  const open = (p: ChapterPlace) => {
+    setDetail(p);
+    goToVerse(p.verses[0]!);
+  };
 
   /** Puts the base map under `map` (replacing `old` when given); a failure leaves the places on a blank map and says so. */
   async function loadBase(
@@ -177,8 +193,9 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
               ? `${p.name} · ${where} · ${t("places-site-uncertain", { defaultValue: "site uncertain" })}`
               : `${p.name} · ${where}`
           );
-          // What the publisher said of the place beyond its name — a group's picture, period and summary — opens on tap.
-          if (p.summary || p.image)
+          // What the publisher said of the place beyond its name — a group's picture, period and summary — opens on tap:
+          // in the side pane as a popup on the map, on the full page in the column beside it.
+          if (!full && (p.summary || p.image))
             g.bindPopup(
               `<div class="sb-places-popup">${
                 p.image
@@ -191,9 +208,7 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
               }${p.summary ? `<p class="sb-small">${escapeHtml(p.summary)}</p>` : ""}</div>`,
               { maxWidth: 320 }
             );
-          g.on("click", () =>
-            state.selection.select(p.verses[0]!, p.verses[0]!)
-          );
+          g.on("click", () => open(p));
           g.addTo(layer);
           bounds.extend(g.getBounds());
           drawn.push(p.name);
@@ -221,7 +236,13 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     return () => {
       dead = true;
     };
-  }, [chapterRef, places]);
+  }, [chapterRef, places, full]);
+
+  // Expanded or shrunk, the map's box changes size under Leaflet, which only measures it on a window resize.
+  useEffect(() => {
+    const id = setTimeout(() => mapRef.current?.invalidateSize(), 60);
+    return () => clearTimeout(id);
+  }, [full]);
 
   // A theme change redraws the base map in the other flavour; the places on it stay. A base map that failed before
   // is tried again here.
@@ -247,12 +268,36 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
     []
   );
 
-  return (
-    <section
-      className="sb-pane sb-places-map"
-      aria-label={t("places-map", { defaultValue: "Places map" })}
-    >
-      <div className="sb-places-map-canvas" ref={host} />
+  const list = places && places.length > 0 && (
+    <ul className="sb-places-list">
+      {places.map((p) => (
+        <li key={p.id}>
+          <button
+            type="button"
+            className={`sb-presence-where${detail?.id === p.id ? " sb-places-current" : ""}`}
+            onClick={() => open(p)}
+          >
+            {p.name}
+          </button>{" "}
+          <span className="sb-small sb-muted">· {p.verses.join(", ")}</span>
+          {siteUncertain(p) && (
+            <span
+              className="sb-small sb-muted"
+              title={p.identification.basis ?? ""}
+            >
+              {" "}
+              ·{" "}
+              {t("places-site-uncertain", {
+                defaultValue: "site uncertain",
+              })}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+  const statusLines = (
+    <>
       {status && <p className="sb-small sb-muted">{status}</p>}
       {baseProblem && (
         <p className="sb-small sb-muted sb-places-base-problem">
@@ -271,36 +316,109 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
           </span>
         </p>
       )}
-      {places && places.length > 0 && (
-        <ul className="sb-places-list">
-          {places.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                className="sb-presence-where"
-                onClick={() =>
-                  state.selection.select(p.verses[0]!, p.verses[0]!)
-                }
-              >
-                {p.name}
-              </button>{" "}
-              <span className="sb-small sb-muted">· {p.verses.join(", ")}</span>
-              {siteUncertain(p) && (
-                <span
-                  className="sb-small sb-muted"
-                  title={p.identification.basis ?? ""}
-                >
-                  {" "}
-                  ·{" "}
-                  {t("places-site-uncertain", {
-                    defaultValue: "site uncertain",
-                  })}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+    </>
+  );
+
+  return (
+    <section
+      className={`sb-pane sb-places-map${full ? " sb-places-map-full" : ""}`}
+      aria-label={t("places-map", { defaultValue: "Places map" })}
+    >
+      <div className="sb-places-map-stage">
+        <div className="sb-places-map-canvas" ref={host} />
+        {statusLines}
+      </div>
+      {full ? (
+        <aside
+          className="sb-places-side"
+          aria-label={t("places-details", { defaultValue: "Place details" })}
+        >
+          {detail ? (
+            <PlaceDetail
+              place={detail}
+              goToVerse={goToVerse}
+              close={() => setDetail(null)}
+            />
+          ) : (
+            <p className="sb-small sb-muted">
+              {t("places-tap-for-details", {
+                defaultValue:
+                  "Tap a place on the map or in the list to read what its publisher said of it.",
+              })}
+            </p>
+          )}
+          {list}
+        </aside>
+      ) : (
+        list
       )}
     </section>
+  );
+}
+
+/** What a publisher said of one place: picture, name, period and group, summary, the verses naming it, how sure the
+ *  site is and why, and who published it under what licence. */
+function PlaceDetail({
+  place: p,
+  goToVerse,
+  close,
+}: {
+  place: ChapterPlace;
+  goToVerse: (v: number) => void;
+  close: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <article className="sb-places-detail">
+      <header className="sb-places-detail-head">
+        <h3>{p.name}</h3>
+        <button
+          type="button"
+          className="sb-pane-close"
+          aria-label={t("close", { defaultValue: "Close" })}
+          onClick={close}
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </header>
+      {p.image && (
+        <img
+          className="sb-places-detail-image"
+          src={p.image}
+          alt=""
+          loading="lazy"
+        />
+      )}
+      {(p.period || p.group) && (
+        <p className="sb-small sb-muted">
+          {[p.group, p.period].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      {p.summary && <p className="sb-places-detail-summary">{p.summary}</p>}
+      <p className="sb-small">
+        {t("places-named-in", { defaultValue: "Named in" })}{" "}
+        {p.verses.map((v, i) => (
+          <span key={v}>
+            {i > 0 && ", "}
+            <button
+              type="button"
+              className="sb-presence-where"
+              onClick={() => goToVerse(v)}
+            >
+              {t("verse", { defaultValue: "verse" })} {v}
+            </button>
+          </span>
+        ))}
+      </p>
+      {siteUncertain(p) && (
+        <p className="sb-small sb-muted">
+          {t("places-site-uncertain", { defaultValue: "site uncertain" })}
+          {p.identification.basis ? ` — ${p.identification.basis}` : ""}
+        </p>
+      )}
+      <p className="sb-small sb-muted">
+        {p.attribution || `${p.publisher} · ${p.license}`}
+      </p>
+    </article>
   );
 }

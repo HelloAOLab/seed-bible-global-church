@@ -354,14 +354,28 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
             const args = JSON.parse(String(init?.body)) as {
               span: string;
               kind?: string;
+              relation?: string;
+              limit?: number;
+              cursor?: string;
             };
             const pool = args.kind === "block" ? notes : features;
+            const all = pool.filter((f) =>
+              f.references.some(
+                (r) =>
+                  r.to.startsWith(`${args.span}.`) &&
+                  (!args.relation || r.relation === args.relation)
+              )
+            );
+            // One item a page, as the gateway pages a long chapter: the route must follow the cursor to the end.
+            const at = Number(args.cursor ?? 0);
+            const page = args.limit ? all.slice(at, at + 1) : all;
             return Response.json({
               ok: true,
               span: args.span,
-              items: pool.filter((f) =>
-                f.references.some((r) => r.to.startsWith(`${args.span}.`))
-              ),
+              items: page,
+              ...(args.limit && at + 1 < all.length
+                ? { cursor: String(at + 1) }
+                : {}),
             });
           }
           asked.push(url.searchParams.get("verseId")!);
@@ -373,6 +387,38 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
   /** A note a publisher released about Genesis 1:1–2, as the gateway serves the block: the label and the ¶ lines
    *  joined into one committed line, the picture named by its hash. */
   const notes = [
+    // A study note that READS the verse (relation interprets): a study-note item, never a teaching.
+    {
+      item: {
+        kind: "block",
+        id: "0xstudy",
+        text: "[[1:2 The earth. | Gen.1.2]] The primordial earth is lightless and landless.",
+        sourceLabel: "1:2 The earth.",
+        part: 2,
+        partTitle: "Genesis 1",
+        block: 5,
+        url: "https://publishing.faithnet.io/@demo/study-notes-genesis/2#b5",
+        commitment: { value: "0xbeef" },
+      },
+      references: [
+        {
+          to: "Gen.1.2",
+          relation: "interprets",
+          confidence: 1,
+          method: "publisher-label",
+        },
+      ],
+      location: null,
+      publisher: { handle: "demo" },
+      release: {
+        work: "demo/study-notes-genesis",
+        title: "Study notes — Genesis",
+        version: 1,
+        signatureStatus: "signed",
+      },
+      license: "ALL-RIGHTS-RESERVED",
+      attribution: "Study notes © A publisher. Used by permission.",
+    },
     {
       item: {
         kind: "block",
@@ -490,6 +536,28 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
     expect(two.items.filter((i) => i.kind === "teaching")).toHaveLength(0);
   });
 
+  it("a study note that reads the verse is a study-note item with its words and its publisher's rights, read page by page from the gateway", async () => {
+    const out = (await (
+      await app(gen1Env([])).get("Gen.1.2")
+    ).json()) as Answer;
+    const study = out.items.filter((i) => i.kind === "study-note");
+    expect(study).toHaveLength(1);
+    expect(study[0]).toMatchObject({
+      source: "publishing",
+      title: "1:2 The earth.",
+      locus: { ref: "GEN.1.2" },
+      data: {
+        text: "The primordial earth is lightless and landless.",
+        workTitle: "Study notes — Genesis",
+        licence: "ALL-RIGHTS-RESERVED",
+        attribution: "Study notes © A publisher. Used by permission.",
+        citation: { work: "@demo/study-notes-genesis@1", part: 2, block: 5 },
+      },
+    });
+    // the note that teaches is not a study note, and the study note is not a teaching
+    expect(out.items.filter((i) => i.kind === "teaching")).toHaveLength(1);
+  });
+
   it("a map feature a publisher released at the verse comes with the passage, anchored at that verse", async () => {
     const out = (await (
       await app(gen1Env([])).get("Genesis 1:2")
@@ -561,7 +629,7 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
       },
     });
     // The line, the map feature and the note a publisher released at the verse.
-    expect(out.sources.publishing).toEqual({ ok: true, count: 3 });
+    expect(out.sources.publishing).toEqual({ ok: true, count: 4 });
   });
 
   it("a chapter names its scroll lines without reading their text (the verse is asked for that), and names an unpublished line too", async () => {

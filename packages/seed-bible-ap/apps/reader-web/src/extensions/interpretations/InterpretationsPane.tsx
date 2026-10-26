@@ -16,6 +16,7 @@ import {
   type InterpretedVerse,
 } from "./index";
 import { isDraft, namedReaders, plainQuestion, translatorsNote } from "./plain";
+import { loadPassage, type PassageItem } from "../../state/passage";
 
 const words = (s: string | null | undefined) => (s ?? "").replace(/-/g, " ");
 
@@ -522,6 +523,77 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
       {data?.note && (
         <p className="sb-interp-meta sb-interp-note">{data.note}</p>
       )}
+      {(current?.verse ?? selected[0]) !== undefined && (
+        <StudyNotesAtVerse
+          state={state}
+          chapterRef={chapterRef}
+          verse={current?.verse ?? selected[0]!}
+        />
+      )}
     </div>
+  );
+}
+
+/** The study notes publishers released at the verse (the passage answer's `study-note` items): a later reader's
+ *  understanding beside the translation's record, each under its publisher's licence — never the record itself. */
+function StudyNotesAtVerse({
+  state,
+  chapterRef,
+  verse,
+}: {
+  state: ReaderState;
+  chapterRef: string;
+  verse: number;
+}) {
+  const { t } = useI18n();
+  const [notes, setNotes] = useState<PassageItem[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    setNotes(null);
+    void loadPassage(`${chapterRef}.${verse}`, state.stores.chapters)
+      .then(
+        (a) =>
+          live &&
+          setNotes((a?.items ?? []).filter((i) => i.kind === "study-note"))
+      )
+      .catch(() => live && setNotes([]));
+    return () => {
+      live = false;
+    };
+  }, [chapterRef, verse]);
+  if (!notes?.length) return null;
+  const str = (it: PassageItem, k: string) => {
+    const v = it.data?.[k];
+    return typeof v === "string" ? v : null;
+  };
+  return (
+    <section className="sb-interp-study-notes">
+      <h4 className="sb-interp-h4">
+        {t("interp-study-notes", {
+          defaultValue: "Study notes at this verse",
+        })}
+      </h4>
+      <p className="sb-interp-meta">
+        {t("interp-study-notes-what", {
+          defaultValue:
+            "What a published study Bible says of the verse: a later reader's understanding, shown as its publisher released it. It is not this translation's record and did not inform its readings.",
+        })}
+      </p>
+      <ul className="sb-interp-study-notes-list">
+        {notes.map((it) => (
+          <li
+            key={`${it.title}:${it.locus.ref}`}
+            className="sb-interp-study-note"
+          >
+            <p className="sb-interp-study-note-title">{it.title}</p>
+            <p>{str(it, "text")}</p>
+            <p className="sb-interp-meta">
+              {str(it, "workTitle") ?? str(it, "work")}
+              {str(it, "attribution") ? ` · ${str(it, "attribution")}` : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

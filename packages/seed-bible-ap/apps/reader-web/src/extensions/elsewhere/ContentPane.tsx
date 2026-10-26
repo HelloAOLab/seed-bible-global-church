@@ -29,6 +29,7 @@ export const contentVerses = signal<number[]>([]);
 /** The kinds of item that are a verse's content. */
 export const CONTENT_KINDS = new Set([
   "teaching",
+  "study-note",
   "scroll-line",
   "scroll-quote",
   "parallel",
@@ -82,6 +83,7 @@ function Teaching({ it }: { it: PassageItem }) {
         {[
           str("workTitle") || str("work"),
           str("publisher") ? `@${str("publisher")}` : "",
+          str("attribution"),
           str("licence"),
           str("signatureStatus") === "signed"
             ? t("content-signed", { defaultValue: "signed by the publisher" })
@@ -266,6 +268,8 @@ export function ContentPane({
     (a, b) =>
       a.locus.span[0] - b.locus.span[0] || a.title.localeCompare(b.title)
   );
+  // Study notes keep their publisher's order (a note per verse, then the notes on its phrases), work by work.
+  const studyNotes = of("study-note");
   const byRelation = (section: string) =>
     parallels.filter((p) => relationSection(p.data?.["relation"]) === section);
   const goTo = (p: PassageItem) => {
@@ -311,6 +315,15 @@ export function ContentPane({
                   t("content-n-published", {
                     count: teachings.length,
                     defaultValue: "{{count}} from publishers",
+                  }),
+                ]
+              : null,
+            studyNotes.length
+              ? [
+                  "sb-content-study-notes",
+                  t("content-n-study-notes", {
+                    count: studyNotes.length,
+                    defaultValue: "{{count}} study notes",
                   }),
                 ]
               : null,
@@ -408,6 +421,26 @@ export function ContentPane({
           </p>
           <ul className="sb-content-lines sb-content-teachings">
             {teachings.map((it) => (
+              <Teaching key={`${it.title}:${it.locus.ref}`} it={it} />
+            ))}
+          </ul>
+        </Section>
+      )}
+      {studyNotes.length > 0 && (
+        <Section
+          id="sb-content-study-notes"
+          title={t("content-study-notes", {
+            defaultValue: "Study notes on this verse",
+          })}
+        >
+          <p className="sb-small sb-muted">
+            {t("content-study-notes-what", {
+              defaultValue:
+                "What a published study Bible says of this verse — a later reader's understanding, read here as its publisher released it, under its own licence; not the translation's own record of what the verse says.",
+            })}
+          </p>
+          <ul className="sb-content-lines sb-content-teachings sb-content-study-notes">
+            {studyNotes.map((it) => (
               <Teaching key={`${it.title}:${it.locus.ref}`} it={it} />
             ))}
           </ul>

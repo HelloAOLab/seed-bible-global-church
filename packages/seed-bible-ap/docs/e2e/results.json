@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 17:38 UTC",
+  "when": "2026-10-26 18:31 UTC",
   "results": [
     {
       "id": "X1",
@@ -9,7 +9,7 @@
       "checks": "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
       "mark": "✅",
       "note": "base map with 6 tile(s) drawn, 8 marker(s)",
-      "ms": 2997
+      "ms": 3786
     },
     {
       "id": "X8",
@@ -18,7 +18,16 @@
       "checks": "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places from the publishers (Jerusalem, Bethany beyond the Jordan, Galilee, Beth-Saida, Nazareth), not Deuteronomy's, and marks Bethany beyond the Jordan's site as uncertain",
       "mark": "✅",
       "note": "Deuteronomy 32 drew Bashan,Gomorrah,Sodom,Jordan,Abarim,Canaan,Jericho,Moab,Mount Nebo,Mount Hor (of Edom),Meribah 1,Wilderness of Zin; John 1 drew Alexandria — Valentinians,Lyon (Irenaeus’s opponents) — Valentinians,Rome — Valentinians,Docetic tendencies,Smyrna — Docetic tendencies,Tralles — Docetic tendencies,Rome — Marcionites,Sinope (his home) — Marcionites,Jerusalem,Bethany (Beyond the Jordan),Jordan,Galilee,Beth-Saida,Nazareth; Bethany beyond the Jordan: site uncertain",
-      "ms": 998
+      "ms": 2053
+    },
+    {
+      "id": "X9",
+      "section": "12. Extensions",
+      "title": "A people group published at a verse",
+      "checks": "On Acts 6, tap verse 1 and Content: the pane shows the published note about the Hellenists (Greek-speaking Jewish Christians) with its picture and its fields, read from Source Publishing",
+      "mark": "✅",
+      "note": "\"Aramaic-speaking Jewish followers of Jesus\" with its picture and fields Where, Period, Writings, Why these verses, Sources",
+      "ms": 2268
     },
     {
       "id": "X10",
@@ -27,7 +36,7 @@
       "checks": "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
       "mark": "✅",
       "note": "drew 13 places including the Samaritan believers' region",
-      "ms": 685
+      "ms": 1070
     },
     {
       "id": "X11",
@@ -36,7 +45,34 @@
       "checks": "When the base map's library cannot be loaded (as in a tab left open across a deploy, where the host answers the app shell for a chunk it no longer has), the Places map on Acts 6 still draws the chapter's places and says under the map that the base map could not be loaded, with Reload",
       "mark": "✅",
       "note": "drew 14 places (14 marker(s)) on a blank map; \"The base map could not be loaded, so the places are drawn on…\" with Reload",
-      "ms": 1186
+      "ms": 1919
+    },
+    {
+      "id": "X13",
+      "section": "12. Extensions",
+      "title": "Places map on the full page with a place's details",
+      "checks": "On Acts 8 open the Places map, press Expand on its header: the map fills the page beside a details column; tap 'Samaritan believers' in the list: the column shows the group's picture, period and summary and the verses naming it; Shrink puts the map back beside the chapter",
+      "mark": "✅",
+      "note": "full page: map 576px of the 960px pane with the details column; Samaritan believers' picture, period, summary and verses; shrunk back",
+      "ms": 1926
+    },
+    {
+      "id": "X14",
+      "section": "12. Extensions",
+      "title": "A place in the list goes to its verse",
+      "checks": "On Acts 6 open the Places map and tap 'Alexandria' in the list under it: verse 9 (the Synagogue of the Freedmen) is selected and scrolled into view",
+      "mark": "✅",
+      "note": "Alexandria → verse 9 selected (9) and on screen",
+      "ms": 1903
+    },
+    {
+      "id": "X15",
+      "section": "12. Extensions",
+      "title": "The Writings pane lists a study Bible's notes as reception",
+      "checks": "On Genesis 1 open Writings (the bottom toolbar): under 'Commentary on the chapter — later readers' the Reformation Study Bible's study notes are listed as a later reading (Reformed confessional) with their note count and Ligonier's attribution; 'Show … notes' opens the notes, each with a link to the whole note at the publisher",
+      "mark": "✅",
+      "note": "36 Reformation Study Bible notes on Genesis 1, listed as a later reading (reception) with Ligonier's attribution; each note links to the published work",
+      "ms": 1610
     }
   ]
 }
