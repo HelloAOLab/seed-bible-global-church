@@ -13,6 +13,7 @@ import type { ReaderState } from "../../state";
 import { InterpretationsPane, interpVerse } from "./InterpretationsPane";
 import { WritingsPane } from "./WritingsPane";
 import { verseSummary } from "./plain";
+import { KEEP_MS } from "../../state/passage";
 import "./interpretations.css";
 
 export const INTERPRETATIONS_BASE_URL = `${BIBLE_API_ENDPOINT}api`;
@@ -263,16 +264,20 @@ export async function loadChapterInterpretations(
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<ChapterInterpretations | null> {
-  const key = `interp1:${translationId}/${bookId}/${chapter}`;
-  const hit = (await cache.get(key)) as ChapterInterpretations | undefined;
-  if (hit) return normalizeChapter(hit);
+  // Kept for a few hours, as a passage answer is: the records are added to and corrected upstream.
+  const key = `interp2:${translationId}/${bookId}/${chapter}`;
+  const hit = (await cache.get(key)) as
+    | { at: number; data: ChapterInterpretations }
+    | undefined;
+  if (hit?.data && Date.now() - hit.at < KEEP_MS)
+    return normalizeChapter(hit.data);
   const res = await fetchImpl(
     `${INTERPRETATIONS_BASE_URL}/${translationId}/${bookId}/${chapter}/interpretations.json`
   );
   if (!res.ok) return null;
   const data = (await res.json()) as ChapterInterpretations;
   if (!Array.isArray(data.verses)) return null;
-  await cache.set(key, data);
+  await cache.set(key, { at: Date.now(), data });
   return normalizeChapter(data);
 }
 

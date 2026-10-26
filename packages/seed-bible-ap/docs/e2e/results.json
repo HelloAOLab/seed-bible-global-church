@@ -1,7 +1,25 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 03:11 UTC",
+  "when": "2026-10-26 03:23 UTC",
   "results": [
+    {
+      "id": "DSS1",
+      "section": "12. Extensions",
+      "title": "Dead Sea Scrolls at a verse",
+      "checks": "On Genesis 1, tap verse 2 → Discover → Dead Sea Scrolls lists the 4Q7 (4Q Genesis) lines that hold verse 2; tap one → its card shows the line in Hebrew (right to left), the English first draft, its state in plain words, the publisher's credit (for study only) and a link to it at the publisher",
+      "mark": "✅",
+      "note": "3 line(s) at Genesis 1:2 (history_edu 4Q Genesis (4Q2) · f1i:1 Genesis 1:1–2…); card: ב ראשית ברא אלהי[ ם את ה… / \"In the beginning, he created gods, the h…\" → publishing.faithnet.io/@demo-admin-1/dead-sea-scrolls-genesis/4#b3",
+      "ms": 2752
+    },
+    {
+      "id": "INT1",
+      "section": "12. Extensions",
+      "title": "Interpretations at a verse, from any translation",
+      "checks": "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
+      "mark": "✅",
+      "note": "card \"forum Genesis 6:2 RBS · “the sons of God saw that the daught…\" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded",
+      "ms": 1958
+    },
     {
       "id": "CNT1",
       "section": "12. Extensions",
@@ -9,7 +27,16 @@
       "checks": "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 each scroll line says which verses it holds ('This line holds Genesis 1:3–4'), the lines that start at verse 3 before any that run on from verse 2; on John 11, verse 35 has none and the bar does not offer Content",
       "mark": "✅",
       "note": "Isaiah 40:3: 5 scroll lines (Hebrew \"[ ב מדבר פנו דרך…\"), Community Rule, Matthew 3:3 opened, Greek; John 11:35: not offered",
-      "ms": 16761
+      "ms": 18418
+    },
+    {
+      "id": "INT3",
+      "section": "12. Extensions",
+      "title": "New Testament interpretations at a verse",
+      "checks": "On Philemon 1, tap verse 6 → Interpretations on the verse bar → 'How Philemon 1:6 is read': 'How do the words relate?' with the Greek and both readings, 'No reviewer has decided this yet', 'This translation reads it as: …' with how it was read, the notes credited to unfoldingWord; 'Which words are original?' with each reading's editions and 'translates the Greek text it is based on' — never 'has recorded a decision' for these; the full record still opens under Details for scholars",
+      "mark": "✅",
+      "note": "Philemon 1:6: How do the words relate? · not yet decided · reads it as … · Which words are original? (Textus Receptus …) · details open",
+      "ms": 3479
     }
   ]
 }

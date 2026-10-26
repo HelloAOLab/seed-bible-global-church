@@ -37,20 +37,28 @@ interface Cache {
 
 const inFlight = new Map<string, Promise<PassageAnswer | null>>();
 
-/** A chapter's answer (`JHN.3`), from the device when read before; null when reader-a2a could not answer. Only a
- *  complete answer is kept, so a source that was down is asked again next time. */
+/** How long an answer kept on the device is used before it is asked again: the sources behind it change (a scroll
+ *  republished, records added), and a reader must get those changes without knowing to clear anything. */
+export const KEEP_MS = 6 * 60 * 60_000;
+
+/** A passage's answer (`JHN.3`, `JHN.3.16`), from the device when read in the last few hours; null when reader-a2a
+ *  could not answer. Only a complete answer is kept, so a source that was down is asked again next time. */
 export function loadPassage(
   chapterRef: string,
   cache: Cache,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  now: () => number = Date.now
 ): Promise<PassageAnswer | null> {
   // The version in the key moves when the answer gains kinds of item, so a chapter kept on the device is asked again.
-  const key = `passage3:${chapterRef}`;
+  const key = `passage4:${chapterRef}`;
   const running = inFlight.get(key);
   if (running) return running;
   const p = (async () => {
-    const hit = (await cache.get(key)) as PassageAnswer | undefined;
-    if (hit?.items) return hit;
+    const hit = (await cache.get(key)) as
+      | (PassageAnswer & { at?: number })
+      | undefined;
+    if (hit?.items && typeof hit.at === "number" && now() - hit.at < KEEP_MS)
+      return hit;
     const res = await fetchImpl(
       `${A2A_BASE}/api/passage/${encodeURIComponent(chapterRef)}`
     );
@@ -62,6 +70,7 @@ export function loadPassage(
         locus: out.locus,
         items: out.items,
         sources: out.sources,
+        at: now(),
       });
     return out;
   })().finally(() => inFlight.delete(key));
