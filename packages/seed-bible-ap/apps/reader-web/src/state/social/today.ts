@@ -92,10 +92,13 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
     contactsLoading.value = true;
     contactsError.value = null;
     try {
-      // The friends read first; an agent without it (an older playbook) answers with its contacts.
+      // The friends read first. The contacts read is only the stand-in for an agent without it (an older playbook):
+      // a Home that has friends has no contacts read any more (2026-10-26: person.contact.list now answers as the
+      // friends read, with no contacts in it), so it is not asked when the friends read answered.
       try {
         friendsView.value = await backend.friends();
         await stores.prefs.set(FRIENDS_KEY, friendsView.value);
+        return;
       } catch {
         friendsView.value = null;
       }

@@ -225,3 +225,31 @@ describe("connectors", () => {
     ).toEqual(["Ligonier:1/2"]);
   });
 });
+
+// A HOME WITH FRIENDS HAS NO CONTACTS READ (2026-10-26: person.contact.list answers as the friends read, with no
+// contacts in it — "your agent's reply carried no result for person.contact.list" stood in the Friends pane): when the
+// friends read answers, the contacts read is not asked, and no error shows.
+describe("friends without the contacts read", () => {
+  it("does not ask for contacts once the friends read has answered", async () => {
+    const backend = createDevBackend(SEED);
+    backend.friendsView = {
+      friends: [
+        { agent: RUTH.agent, name: "Ruth", since: "2026-10-01T00:00:00Z" },
+      ],
+      requests: [],
+      requested: [],
+    };
+    let askedContacts = 0;
+    backend.contacts = async () => {
+      askedContacts++;
+      throw new Error(
+        "your agent's reply carried no result for person.contact.list"
+      );
+    };
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(askedContacts).toBe(0);
+    expect(today.contactsError.value).toBeNull();
+    expect(today.friends.value.map((c) => c.name)).toEqual(["Ruth"]);
+  });
+});
