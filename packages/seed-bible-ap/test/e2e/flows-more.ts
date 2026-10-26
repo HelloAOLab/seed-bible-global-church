@@ -9046,4 +9046,172 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "FX1",
+    timeoutMs: 2_400_000,
+    section: "8. Today, Discover and publishing",
+    title: "Two friends: reading now, a published note, its link",
+    rows: [
+      "Who is reading now",
+      "Friends' notes in Today",
+      "Today's community feed",
+    ],
+    checks:
+      "Seed Reader and Ruth Bankole on two browsers become friends the real way (Seed Reader sends a request, Ruth accepts; each through their Home's window). Seed Reader reads John 3: Ruth's Today shows the green dot with 'reading John 3', and tapping it opens John 3. Seed Reader writes a note on John 3:16 and publishes it: Ruth's Today Community says 'Seed Reader noted on John 3:16' with the note's words. The note's Copy link, opened by Ruth, shows the note. Afterwards the note is made private and deleted, and both remove each other.",
+    run: async (c) => {
+      const k = friendKit(c);
+      const SR = /reader/i;
+      const ctxR = await c.browser.newContext({
+        permissions: ["clipboard-read", "clipboard-write"],
+      });
+      const ruth = await ctxR.newPage();
+      c.watch(ruth);
+      const text = `a note for friends ${stamp()}`;
+      /** Every note of Seed Reader's on this chapter made private again (a run that failed may have left one public). */
+      const unpublishAll = async () => {
+        await c.pressToolbar("Notes");
+        for (let i = 0; i < 5; i++) {
+          const pub = c.page
+            .locator(".sb-note-card", {
+              has: c.page.locator(".sb-note-published-tag"),
+            })
+            .first();
+          if (!(await pub.count())) break;
+          await c.noteAction(pub, /make private again/i);
+          await pub
+            .locator(".sb-note-published-tag")
+            .waitFor({ state: "detached", timeout: 120000 })
+            .catch(() => {});
+        }
+        await c.page.keyboard.press("Escape").catch(() => {});
+      };
+      const openToday = async (pg: import("playwright").Page) => {
+        await pg.keyboard.press("Escape").catch(() => {});
+        await c.pressToolbar("Today", pg);
+        await c.pane(pg).waitFor({ timeout: 10000 });
+        return c.pane(pg);
+      };
+      try {
+        // 0. two people, friends the real way
+        await k.signIn(c.page, c.context, /seed ?reader/i, "sr");
+        await k.signIn(ruth, ctxR, /ruth bankole/i, "ruth");
+        await k.removeAll(
+          c.page,
+          c.context,
+          /ruth|@example\.invalid/i,
+          "sr-pre"
+        );
+        await k.removeAll(ruth, ctxR, SR, "ruth-pre");
+        const pane = await k.openFriends(c.page);
+        await pane.getByLabel("Add a friend").fill("ruth.me");
+        const w = c.context.waitForEvent("page", { timeout: 15000 });
+        w.catch(() => undefined);
+        await pane.getByRole("button", { name: /send request/i }).click();
+        await k.answer(await w, /yes, add them/i, "sr-asks");
+        await k.expectRow(ruth, "Friend requests", SR, "ruth-request");
+        const p2 = await k.openFriends(ruth);
+        const w2 = ctxR.waitForEvent("page", { timeout: 15000 });
+        w2.catch(() => undefined);
+        await p2
+          .locator(".sb-friends-row", { hasText: SR })
+          .getByRole("button", { name: /^accept/i })
+          .click();
+        await k.answer(await w2, /yes, add them/i, "ruth-accepts");
+        await k.expectRow(c.page, "Friends", /ruth/i, "sr-friends");
+        await k.expectRow(ruth, "Friends", SR, "ruth-friends");
+
+        // 1. who is reading now: Seed Reader on John 3 → Ruth's green dot, and a tap takes her there
+        await c.open("/read/BSB/JHN/3");
+        let dot = false;
+        const t0 = Date.now();
+        while (!dot && Date.now() - t0 < 150000) {
+          await c.open("/read/BSB/GEN/1", ruth);
+          const today = await openToday(ruth);
+          dot = await today
+            .locator(".sb-presence-where", { hasText: /John 3/ })
+            .first()
+            .waitFor({ timeout: 35000 })
+            .then(() => true)
+            .catch(() => false);
+        }
+        await k.shot(ruth, "ruth-sees-reading-now");
+        if (!dot)
+          throw new Error(
+            `Ruth's Today shows no green dot for Seed Reader reading John 3: ${(await c.pane(ruth).innerText()).replace(/\s+/g, " ").slice(0, 300)}`
+          );
+        await c
+          .pane(ruth)
+          .locator(".sb-presence-where", { hasText: /John 3/ })
+          .first()
+          .click();
+        await ruth.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+        await k.shot(ruth, "ruth-opened-john-3");
+
+        // 2. a published note reaches the friend's Today
+        await unpublishAll();
+        await deleteAllNotes(c);
+        await writeNote(c, 16, text);
+        await synced(c);
+        await c.pressToolbar("Notes");
+        const card = c.page
+          .locator(".sb-note-card:not(.sb-note-card-draft)")
+          .first();
+        await c.noteAction(card, /publish to your public shelf/i);
+        await card
+          .locator(".sb-note-published-tag")
+          .waitFor({ timeout: 120000 });
+        await k.shot(c.page, "sr-published");
+        let seen = "";
+        const t1 = Date.now();
+        while (!seen && Date.now() - t1 < 600000) {
+          await ruth.reload();
+          const today = await openToday(ruth);
+          const row = today
+            .locator(".sb-today-feed-row", { hasText: text })
+            .first();
+          if (
+            await row
+              .waitFor({ timeout: 30000 })
+              .then(() => true)
+              .catch(() => false)
+          )
+            seen = (await row.innerText()).replace(/\s+/g, " ");
+          else await ruth.waitForTimeout(15000);
+        }
+        await k.shot(ruth, "ruth-community");
+        if (!seen)
+          throw new Error(
+            "Seed Reader's published note never reached Ruth's Today"
+          );
+        if (!/noted on John 3:16/i.test(seen))
+          throw new Error(`Ruth's Today said: ${seen.slice(0, 200)}`);
+        const noticedIn = Math.round((Date.now() - t1) / 1000);
+
+        // 3. its link, opened by the friend
+        await c.noteAction(card, /copy link/i);
+        await c.page.waitForTimeout(300);
+        const link = await c.page
+          .evaluate(() => navigator.clipboard.readText())
+          .catch(() => "");
+        if (!/offering=/.test(link)) throw new Error(`no link: "${link}"`);
+        await ruth.goto(link);
+        await c.waitText(
+          ruth.locator("body"),
+          new RegExp(text.slice(0, 20)),
+          60000
+        );
+        await k.shot(ruth, "ruth-opened-link");
+
+        return `friends the real way; Ruth saw Seed Reader 'reading John 3' (tap → John 3); his published note in her Community in ${noticedIn}s ('${seen.slice(0, 70)}'); its link opened it for her`;
+      } finally {
+        // tidy, whatever happened: the note withdrawn and deleted; the friendship ended on both sides
+        await c.open("/read/BSB/JHN/3").catch(() => {});
+        await unpublishAll().catch(() => {});
+        await deleteAllNotes(c).catch(() => {});
+        await k.removeAll(c.page, c.context, /ruth/i, "sr-post").catch(() => 0);
+        await k.removeAll(ruth, ctxR, SR, "ruth-post").catch(() => 0);
+        await ctxR.close().catch(() => {});
+      }
+    },
+  },
 ];

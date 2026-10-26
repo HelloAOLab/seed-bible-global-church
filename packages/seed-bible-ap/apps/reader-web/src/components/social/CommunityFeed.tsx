@@ -149,7 +149,12 @@ export function CommunityFeed({ state }: { state: ReaderState }) {
                 defaultValue: "{{name}} shared a reading plan at {{reference}}",
               }),
       reference: passageLabel(o.passage),
-      quote: o.title,
+      // a note's own first words when its publisher sent them; its title otherwise
+      quote:
+        typeof o.descriptor?.["schema:abstract"] === "string" &&
+        o.descriptor["schema:abstract"]
+          ? (o.descriptor["schema:abstract"] as string)
+          : o.title,
       at: Date.parse(o.indexedAt) || 0,
       open: () => go(o.passage.split("-")[0]!.split(".").slice(0, 2).join(".")),
     });

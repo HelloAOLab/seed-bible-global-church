@@ -44,6 +44,10 @@ describe("publish and discover", () => {
       passage: "JHN.3.16-JHN.3.17",
       owner: RUTH.agent,
     });
+    // its first words travel with it, plain — what a friend's Today quotes
+    expect(String(list[0]!.descriptor["schema:abstract"])).toMatch(
+      /^For God so loved/
+    );
     const body = discover.body(list[0]!);
     await settle();
     expect(body.value).toContain("# Ruth on John 3");

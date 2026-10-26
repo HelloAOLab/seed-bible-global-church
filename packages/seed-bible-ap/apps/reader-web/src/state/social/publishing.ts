@@ -63,6 +63,14 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
   const slugOf = (note: Note) =>
     `note-${note.id.split(":").pop()!.slice(0, 12).toLowerCase()}`;
 
+  /** A note's first words, plain — what a friend's Today quotes. */
+  const excerptOf = (text: string) => {
+    const plain = (isHtmlNote(text) ? text.replace(/<[^>]+>/g, " ") : text)
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return plain.length > 240 ? `${plain.slice(0, 239).trimEnd()}…` : plain;
+  };
   async function publishNote(chapterRef: string, note: Note, title: string) {
     busy.value = note.id;
     error.value = null;
@@ -76,7 +84,10 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
         title,
         slug: slugOf(note),
         markdown,
-        descriptor: { "prov:wasDerivedFrom": note.id },
+        descriptor: {
+          "prov:wasDerivedFrom": note.id,
+          "schema:abstract": excerptOf(note.note),
+        },
       });
       published.value = {
         ...published.value,
