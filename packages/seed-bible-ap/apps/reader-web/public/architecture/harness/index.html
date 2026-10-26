@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scripture harness</title>
+    <meta
+      name="description"
+      content="How the Scripture agent answers a question from evidence: the sources of content, how they are published and indexed, the seven recorded steps, what comes out, and the checks that make it robust."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> / Scripture harness
+      </div>
+      <h1>Scripture harness: how a question is answered from evidence</h1>
+      <p class="lede">
+        When someone asks the Scripture agent a question such as "who were the
+        sons of God in Genesis 6?", the answer is not written from the model's
+        memory. It is built from evidence the agent holds: the verses from a
+        signed corpus, the manuscripts and versions, the writings of the
+        passage's own time, and what later readers made of it. This page shows
+        every source that feeds the answer, the seven steps that produce it,
+        what comes out, and the checks that keep it honest.
+      </p>
+
+      <h2>The flow, in one picture</h2>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 960 760"
+          role="img"
+          aria-labelledby="flow-t"
+        >
+          <title id="flow-t">
+            Five kinds of source feed a signed Scripture corpus and Source
+            Publishing's signed works. Six rebuildable indexes are projected
+            from the works. The harness runs seven recorded steps on the
+            Scripture agent: classify, gather, select, compose, check, revise,
+            answer. The answer carries claims, evidence by layer, what was
+            struck, coverage and a run record.
+          </title>
+          <defs>
+            <marker
+              id="fa"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+            <marker
+              id="fa-hot"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow hot" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="30" y="28">
+            From the sources to a checked answer
+          </text>
+
+          <!-- A · sources of content -->
+          <rect class="zone" x="20" y="44" width="920" height="150" rx="12" />
+          <text class="lbl" x="30" y="62">SOURCES OF CONTENT</text>
+
+          <rect
+            class="box domain"
+            x="30"
+            y="72"
+            width="172"
+            height="108"
+            rx="10"
+          />
+          <text
+            x="116"
+            y="92"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Scripture
+          </text>
+          <text class="sub" x="116" y="110" text-anchor="middle">
+            BSB · WEB · ASV · KJV · RBS
+          </text>
+          <text class="sub" x="116" y="126" text-anchor="middle">
+            frozen Hebrew and Greek
+          </text>
+          <text class="sub" x="116" y="142" text-anchor="middle">
+            tokens · the Septuagint
+          </text>
+          <text class="sub" x="116" y="158" text-anchor="middle">
+            signed corpora, 10 editions
+          </text>
+
+          <rect
+            class="box domain"
+            x="214"
+            y="72"
+            width="172"
+            height="108"
+            rx="10"
+          />
+          <text
+            x="300"
+            y="92"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Witnesses
+          </text>
+          <text class="sub" x="300" y="110" text-anchor="middle">
+            the Dead Sea Scrolls
+          </text>
+          <text class="sub" x="300" y="126" text-anchor="middle">
+            1,027 manuscripts
+          </text>
+          <text class="sub" x="300" y="142" text-anchor="middle">
+            53,694 lines
+          </text>
+          <text class="sub" x="300" y="158" text-anchor="middle">
+            28 published works
+          </text>
+
+          <rect
+            class="box domain"
+            x="398"
+            y="72"
+            width="172"
+            height="108"
+            rx="10"
+          />
+          <text
+            x="484"
+            y="92"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Writings of the period
+          </text>
+          <text class="sub" x="484" y="110" text-anchor="middle">
+            1 Enoch · Josephus
+          </text>
+          <text class="sub" x="484" y="126" text-anchor="middle">
+            Testaments · deuterocanon
+          </text>
+          <text class="sub" x="484" y="142" text-anchor="middle">
+            2 Esdras · targums
+          </text>
+          <text class="sub" x="484" y="158" text-anchor="middle">
+            rabbinic comment (Sefaria)
+          </text>
+
+          <rect
+            class="box domain"
+            x="582"
+            y="72"
+            width="172"
+            height="108"
+            rx="10"
+          />
+          <text
+            x="668"
+            y="92"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Later readers
+          </text>
+          <text class="sub" x="668" y="110" text-anchor="middle">
+            Justin · Irenaeus · Origen
+          </text>
+          <text class="sub" x="668" y="126" text-anchor="middle">
+            Augustine · the Fathers
+          </text>
+          <text class="sub" x="668" y="142" text-anchor="middle">
+            Reformation Study Bible
+          </text>
+          <text class="sub" x="668" y="158" text-anchor="middle">
+            notes (by permission)
+          </text>
+
+          <rect
+            class="box domain"
+            x="766"
+            y="72"
+            width="172"
+            height="108"
+            rx="10"
+          />
+          <text
+            x="852"
+            y="92"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Knowledge · chronology
+          </text>
+          <text class="sub" x="852" y="110" text-anchor="middle">
+            3,129 persons · 1,007 places
+          </text>
+          <text class="sub" x="852" y="126" text-anchor="middle">
+            5,168 key terms
+          </text>
+          <text class="sub" x="852" y="142" text-anchor="middle">
+            register · atlas · 603 works
+          </text>
+          <text class="sub" x="852" y="158" text-anchor="middle">
+            each book's date window
+          </text>
+
+          <!-- A → B -->
+          <path class="edge" d="M116 180V226" marker-end="url(#fa)" />
+          <path class="edge" d="M300 180V226" marker-end="url(#fa)" />
+          <path class="edge" d="M484 180V226" marker-end="url(#fa)" />
+          <path class="edge" d="M668 180V226" marker-end="url(#fa)" />
+          <path class="edge" d="M900 180V318" marker-end="url(#fa)" />
+          <text class="lbl" x="906" y="260">dates,</text>
+          <text class="lbl" x="906" y="274">names,</text>
+          <text class="lbl" x="906" y="288">windows</text>
+
+          <!-- B · the records -->
+          <rect
+            class="box agent"
+            x="30"
+            y="226"
+            width="150"
+            height="72"
+            rx="10"
+          />
+          <text
+            x="105"
+            y="248"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Signed corpus
+          </text>
+          <text class="sub" x="105" y="266" text-anchor="middle">
+            Scripture data worker
+          </text>
+          <text class="sub" x="105" y="282" text-anchor="middle">
+            every verse + commitment
+          </text>
+
+          <rect
+            class="box found"
+            x="290"
+            y="226"
+            width="560"
+            height="72"
+            rx="10"
+          />
+          <text
+            x="570"
+            y="248"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Source Publishing · signed works
+          </text>
+          <text class="sub" x="570" y="266" text-anchor="middle">
+            publishing.faithnet.io · one work per edition, one block per citable
+            unit,
+          </text>
+          <text class="sub" x="570" y="282" text-anchor="middle">
+            each block labelled with the verses it reads · licence recorded per
+            edition
+          </text>
+
+          <!-- B → C -->
+          <path class="edge" d="M570 298V318" marker-end="url(#fa)" />
+          <text class="lbl" x="582" y="312">the indexer, the only writer</text>
+
+          <!-- C · indexes -->
+          <rect class="zone" x="190" y="318" width="750" height="130" rx="12" />
+          <text class="lbl" x="200" y="336">
+            INDEXES · rebuilt from the works, never authored
+          </text>
+
+          <rect
+            class="box agent"
+            x="200"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="258"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            By verse
+          </text>
+          <text class="sub" x="258" y="384" text-anchor="middle">
+            units that cite it
+          </text>
+          <text class="sub" x="258" y="400" text-anchor="middle">
+            3,088 links
+          </text>
+
+          <rect
+            class="box agent"
+            x="324"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="382"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            By name
+          </text>
+          <text class="sub" x="382" y="384" text-anchor="middle">
+            a person or place
+          </text>
+          <text class="sub" x="382" y="400" text-anchor="middle">
+            13,675 hits
+          </text>
+          <text class="sub" x="382" y="416" text-anchor="middle">
+            891 names
+          </text>
+
+          <rect
+            class="box agent"
+            x="448"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="506"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            By source word
+          </text>
+          <text class="sub" x="506" y="384" text-anchor="middle">
+            every verse a
+          </text>
+          <text class="sub" x="506" y="400" text-anchor="middle">
+            Strong's number has
+          </text>
+          <text class="sub" x="506" y="416" text-anchor="middle">
+            437,587 tokens
+          </text>
+
+          <rect
+            class="box agent"
+            x="572"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="630"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            By meaning
+          </text>
+          <text class="sub" x="630" y="384" text-anchor="middle">
+            Vectorize, bge-m3
+          </text>
+          <text class="sub" x="630" y="400" text-anchor="middle">
+            10,297 vectors
+          </text>
+          <text class="sub" x="630" y="416" text-anchor="middle">
+            fixed floor 0.5
+          </text>
+
+          <rect
+            class="box agent"
+            x="696"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="754"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Chapter record
+          </text>
+          <text class="sub" x="754" y="384" text-anchor="middle">
+            writings, by chapter
+          </text>
+          <text class="sub" x="754" y="400" text-anchor="middle">
+            1,189 chapters
+          </text>
+
+          <rect
+            class="box agent"
+            x="820"
+            y="346"
+            width="116"
+            height="86"
+            rx="8"
+          />
+          <text
+            x="878"
+            y="366"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Book windows
+          </text>
+          <text class="sub" x="878" y="384" text-anchor="middle">
+            period or later,
+          </text>
+          <text class="sub" x="878" y="400" text-anchor="middle">
+            decided by date
+          </text>
+          <text class="sub" x="878" y="416" text-anchor="middle">66 books</text>
+
+          <!-- B/C → gather -->
+          <path
+            class="edge hot"
+            d="M105 298V462H310V504"
+            marker-end="url(#fa-hot)"
+          />
+          <text class="lbl" x="112" y="400">verses resolved</text>
+          <text class="lbl" x="112" y="414">and verified</text>
+          <path
+            class="edge hot"
+            d="M560 448V472H338V504"
+            marker-end="url(#fa-hot)"
+          />
+          <text class="lbl" x="570" y="468">every channel, in parallel</text>
+
+          <!-- D · the harness -->
+          <rect class="zone" x="150" y="476" width="790" height="120" rx="12" />
+          <text class="lbl" x="420" y="494">
+            THE HARNESS · seven recorded steps on the Scripture agent ·
+            scripture.faithnet.io
+          </text>
+
+          <rect
+            class="box seed"
+            x="20"
+            y="504"
+            width="120"
+            height="76"
+            rx="10"
+          />
+          <text
+            x="80"
+            y="528"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Asker
+          </text>
+          <text class="sub" x="80" y="546" text-anchor="middle">
+            a question,
+          </text>
+          <text class="sub" x="80" y="562" text-anchor="middle">
+            a role, an edition
+          </text>
+          <path class="edge" d="M140 542H160" marker-end="url(#fa)" />
+
+          <rect
+            class="box domain"
+            x="160"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="212"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            1 classify
+          </text>
+          <text class="sub" x="212" y="544" text-anchor="middle">
+            model (Haiku)
+          </text>
+          <text class="sub" x="212" y="560" text-anchor="middle">
+            anchors checked
+          </text>
+          <path class="edge" d="M264 542H272" marker-end="url(#fa)" />
+
+          <rect
+            class="box agent"
+            x="272"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="324"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            2 gather
+          </text>
+          <text class="sub" x="324" y="544" text-anchor="middle">
+            code only
+          </text>
+          <text class="sub" x="324" y="560" text-anchor="middle">
+            one pool, layered
+          </text>
+          <path class="edge" d="M376 542H384" marker-end="url(#fa)" />
+
+          <rect
+            class="box domain"
+            x="384"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="436"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            3 select
+          </text>
+          <text class="sub" x="436" y="544" text-anchor="middle">
+            model (Opus)
+          </text>
+          <text class="sub" x="436" y="560" text-anchor="middle">
+            sees ids only
+          </text>
+          <path class="edge" d="M488 542H496" marker-end="url(#fa)" />
+
+          <rect
+            class="box domain"
+            x="496"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="548"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            4 compose
+          </text>
+          <text class="sub" x="548" y="544" text-anchor="middle">
+            model (Opus)
+          </text>
+          <text class="sub" x="548" y="560" text-anchor="middle">
+            claims + prose
+          </text>
+          <path class="edge" d="M600 542H608" marker-end="url(#fa)" />
+
+          <rect
+            class="box agent"
+            x="608"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="660"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            5 check
+          </text>
+          <text class="sub" x="660" y="544" text-anchor="middle">
+            code refuses
+          </text>
+          <text class="sub" x="660" y="560" text-anchor="middle">
+            strikes, says why
+          </text>
+          <path class="edge" d="M712 542H720" marker-end="url(#fa)" />
+
+          <rect
+            class="box domain"
+            x="720"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="772"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            6 revise
+          </text>
+          <text class="sub" x="772" y="544" text-anchor="middle">
+            once, only if
+          </text>
+          <text class="sub" x="772" y="560" text-anchor="middle">
+            the check struck
+          </text>
+          <path class="edge" d="M824 542H832" marker-end="url(#fa)" />
+
+          <rect
+            class="box agent"
+            x="832"
+            y="504"
+            width="104"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="884"
+            y="526"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            7 answer
+          </text>
+          <text class="sub" x="884" y="544" text-anchor="middle">
+            final check,
+          </text>
+          <text class="sub" x="884" y="560" text-anchor="middle">
+            evidence, layered
+          </text>
+
+          <!-- D → E -->
+          <path class="edge" d="M884 580V624" marker-end="url(#fa)" />
+
+          <!-- E · outputs -->
+          <rect class="zone" x="20" y="624" width="920" height="116" rx="12" />
+          <text class="lbl" x="30" y="642">
+            WHAT COMES OUT · one record the asker, the workbench and the reader
+            read
+          </text>
+
+          <rect
+            class="box seed"
+            x="30"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="101"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Answer
+          </text>
+          <text class="sub" x="101" y="692" text-anchor="middle">
+            prose, a next step,
+          </text>
+          <text class="sub" x="101" y="708" text-anchor="middle">
+            who answered
+          </text>
+
+          <rect
+            class="box seed"
+            x="182"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="253"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Claims
+          </text>
+          <text class="sub" x="253" y="692" text-anchor="middle">
+            each with its layer,
+          </text>
+          <text class="sub" x="253" y="708" text-anchor="middle">
+            kind and evidence ids
+          </text>
+
+          <rect
+            class="box seed"
+            x="334"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="405"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Evidence by layer
+          </text>
+          <text class="sub" x="405" y="692" text-anchor="middle">
+            text · period · later
+          </text>
+          <text class="sub" x="405" y="708" text-anchor="middle">
+            rights line and link
+          </text>
+
+          <rect
+            class="box seed"
+            x="486"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="557"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Struck
+          </text>
+          <text class="sub" x="557" y="692" text-anchor="middle">
+            what was refused
+          </text>
+          <text class="sub" x="557" y="708" text-anchor="middle">and why</text>
+
+          <rect
+            class="box seed"
+            x="638"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="709"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Coverage
+          </text>
+          <text class="sub" x="709" y="692" text-anchor="middle">
+            gathered · selected · cited
+          </text>
+          <text class="sub" x="709" y="708" text-anchor="middle">
+            channels, cuts, dropped
+          </text>
+
+          <rect
+            class="box seed"
+            x="790"
+            y="652"
+            width="142"
+            height="76"
+            rx="8"
+          />
+          <text
+            x="861"
+            y="674"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="700"
+          >
+            Run record
+          </text>
+          <text class="sub" x="861" y="692" text-anchor="middle">
+            every step a receipt,
+          </text>
+          <text class="sub" x="861" y="708" text-anchor="middle">
+            reproducible
+          </text>
+        </svg>
+        <figcaption>
+          Figure 1. Amber boxes are sources and the steps a model takes; green
+          boxes are records and steps that code takes; blue is the publishing
+          gateway; rose is what the asker sends and gets back. Only three of the
+          seven steps call a model, and the model never supplies a verse's text,
+          a date or a quotation.
+        </figcaption>
+      </figure>
+
+      <h2>What goes in</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>From</th>
+              <th>What it carries</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The question</td>
+              <td>the asker</td>
+              <td>
+                Plain words, in any language. Classified by kind: what the text
+                says, the history of its reading, a term, a source, a
+                comparison, a verse.
+              </td>
+            </tr>
+            <tr>
+              <td>The role</td>
+              <td>the asker</td>
+              <td>
+                Who is asking (a reader, a translator, a teacher). It shapes the
+                register of the prose and nothing else; it never adds evidence.
+              </td>
+            </tr>
+            <tr>
+              <td>The edition</td>
+              <td>the asker</td>
+              <td>
+                Which Bible the verses are quoted from. A caller that sends none
+                gets the Berean Standard Bible, and the answer says so.
+              </td>
+            </tr>
+            <tr>
+              <td>Context on screen</td>
+              <td>the asker, optional</td>
+              <td>
+                The chapter or the selected verses, or the study material the
+                workbench shows. Framing only; it is not treated as evidence.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>The sources of content</h2>
+      <p>
+        Every source is held under its own rights and in its own place. Three
+        things are true of all of them: the text sits in a signed record, the
+        rights are recorded per edition, and the harness reads them through
+        indexes it can rebuild at any time.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>What is held</th>
+              <th>Rights</th>
+              <th>Where it lives</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture</td>
+              <td>
+                Ten editions as signed corpora (BSB, WEB, ASV, KJV, the RBS
+                family and others), each verse with a commitment a reader can
+                verify; the frozen Hebrew and Greek source tokens with their
+                Strong's numbers; Swete's Septuagint.
+              </td>
+              <td>public domain or open licences; per edition</td>
+              <td>Scripture data worker (D1)</td>
+            </tr>
+            <tr>
+              <td>Witnesses</td>
+              <td>
+                The Dead Sea Scrolls: 1,027 manuscripts, 53,694 lines, as 28
+                published works. A line that copies a verse is a witness of its
+                text; a line that quotes it is a writing of its time.
+              </td>
+              <td>
+                CC BY-NC; free lane only, never an input to the translation
+              </td>
+              <td>Source Publishing</td>
+            </tr>
+            <tr>
+              <td>Writings of the period</td>
+              <td>
+                1 Enoch (Charles), Josephus (Whiston), the Testaments of the
+                Twelve, the deuterocanon (Brenton), 2 Esdras; the targums and
+                the rabbinic commentators from Sefaria (Rashi, Ibn Ezra, Radak,
+                Ramban, Rashbam, Sforno, Onkelos, Targum Jonathan) as they
+                finish publishing.
+              </td>
+              <td>public domain, CC0, CC BY, CC BY-SA; per edition</td>
+              <td>Source Publishing, <code>writing-text</code> works</td>
+            </tr>
+            <tr>
+              <td>Later readers</td>
+              <td>
+                Justin, Irenaeus, Origen, Augustine, the Apostolic Fathers; the
+                Reformation Study Bible's study notes, one work per book of the
+                Bible, 22,932 notes.
+              </td>
+              <td>
+                CC BY-SA (the Fathers' transcriptions); all rights reserved,
+                used by permission (the study notes)
+              </td>
+              <td>
+                Source Publishing, <code>writing-text</code> and
+                <code>study-notes</code> works
+              </td>
+            </tr>
+            <tr>
+              <td>Knowledge base</td>
+              <td>
+                3,129 persons, 1,007 places, 5,168 key terms, 45 concepts, 16
+                divine names, with the names each can be called by.
+              </td>
+              <td>CC BY</td>
+              <td>Scripture data worker</td>
+            </tr>
+            <tr>
+              <td>Chronology</td>
+              <td>
+                The reference chronology: 143 register entries, 504 story
+                sources, 603 works with their class, group and date range, the
+                research atlas, and each book's date window.
+              </td>
+              <td>the project's own research</td>
+              <td>the skills repository; projected into the indexes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p>
+          <strong>Rights decide three things.</strong> Whether a source is
+          published as a work (an unlicensed text gets a record with its title
+          and date, and nothing more), whether it is indexed and in which
+          partition, and whether an answer may quote it. The Reformation Study
+          Bible's notes are held by permission in a partition that is never
+          exported, and no claim is ever extracted from them.
+        </p>
+      </div>
+
+      <h2>How a source becomes evidence</h2>
+      <ol class="steps">
+        <li>
+          <strong>Snapshot.</strong> The source's bytes are pinned outside every
+          repository with their hash, the edition and the licence with its
+          evidence.
+        </li>
+        <li>
+          <strong>Publish.</strong> One work per edition on Source Publishing,
+          one signed block per citable unit: a verse of 1 Enoch, a section of
+          Josephus, one comment of Rashi on one verse, a paragraph of Augustine,
+          a study note. A block is placed on a verse only by a citation in its
+          own text or its editor's notes, or by a reviewed link in the research
+          atlas. Nothing is placed by guess, and a verse outside the canon is a
+          refusal, not a silent miss.
+        </li>
+        <li>
+          <strong>Index.</strong> The indexer reads the published works back and
+          writes six projections: by verse, by name, by source word, by meaning,
+          the chapter record and the book windows. It is the only writer. Each
+          unit carries the work's date with the basis for that date, its
+          licence, its partition and the link to the signed block. Wiping an
+          index loses nothing a rebuild does not restore.
+        </li>
+        <li>
+          <strong>Layer.</strong> Code decides, against the asked book's window,
+          whether a writing is of the passage's own period or a later reading. A
+          work with no date is served as undated, never placed.
+        </li>
+      </ol>
+
+      <h2>The indexes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Answers</th>
+              <th>Built from</th>
+              <th>Size today</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>By verse</td>
+              <td>
+                Which published units cite this verse or chapter, with the
+                method of each link (a citation in the text, in a note, or the
+                atlas).
+              </td>
+              <td>the works' block labels and notes</td>
+              <td>3,088 links over 10,297 units</td>
+            </tr>
+            <tr>
+              <td>By name</td>
+              <td>
+                Which units name a person, place or thing the knowledge base
+                holds. Ambiguity is kept: four Johns stay four identities.
+              </td>
+              <td>the units' text against the knowledge base's names</td>
+              <td>13,675 hits, 891 names</td>
+            </tr>
+            <tr>
+              <td>By source word</td>
+              <td>
+                Every verse a Strong's number occurs in, and its Septuagint
+                equivalent, so a word reaches its verses without an English word
+                in between.
+              </td>
+              <td>the frozen source tokens</td>
+              <td>437,587 tokens</td>
+            </tr>
+            <tr>
+              <td>By meaning</td>
+              <td>
+                The units nearest in meaning to a question, in any language, at
+                or above one fixed score. Nothing widens a query that found
+                nothing: empty is the answer.
+              </td>
+              <td>
+                each unit embedded by Workers AI (bge-m3, 1,024 dimensions) into
+                a Vectorize index
+              </td>
+              <td>10,297 vectors, floor 0.5, at most 20 hits</td>
+            </tr>
+            <tr>
+              <td>Chapter record</td>
+              <td>
+                For a chapter: its date window, the period writings, the later
+                writings, the commentary and the register entries.
+              </td>
+              <td>the evidence store and the chronology</td>
+              <td>1,189 chapters</td>
+            </tr>
+            <tr>
+              <td>Book windows</td>
+              <td>
+                The date before which a writing counts as the book's own period:
+                the composition end, else the earliest witness, else the
+                earliest dated copy.
+              </td>
+              <td>the chronology's profiles</td>
+              <td>66 books</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Why not a packaged retrieval product? The unit of retrieval here must be
+        one signed block with its locator, so a hit can be verified against the
+        gateway. Packaged products split files into overlapping chunks that
+        straddle blocks, rewrite the query, and write their own answer. The
+        meaning index is one lane into the pool, with the same discipline as the
+        other five.
+      </p>
+
+      <h2>The seven steps</h2>
+      <p>
+        Each step is recorded as its own receipt under the run. A step that
+        fails returns the failure, and every later step passes it on, so the
+        asker reads the cause rather than a thinner answer.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Classify</strong> (model, Haiku). The question's kind and its
+          anchors: verses, source words at a verse, names, passages of writings
+          named by their own reference, and search phrasings. Code validates
+          every anchor and drops the rest by name: a verse id must parse and be
+          in the canon, a Strong's number must actually occur at the verse it is
+          claimed for, a name must be one the index holds.
+        </li>
+        <li>
+          <strong>Gather</strong> (code, in parallel). The verses resolved from
+          the signed corpus in the asker's edition, each commitment verified;
+          the writings that cite the verse or that the atlas relates to it; the
+          chapter record; the scroll copies and quotations and the Septuagint at
+          the verse; every verse a source word occurs in; the writings that name
+          the anchors; and the meaning index, once per layer. One pool of
+          evidence items, each with an id, a kind, a layer decided by code, its
+          date with its basis, its licence and where it is published. The pool
+          is capped per layer (40 text, 30 period, 30 later, 12 register) and
+          every cut is counted. A channel that fails answers nothing and is
+          named in the record; the gather goes on with the others.
+        </li>
+        <li>
+          <strong>Select</strong> (model, Opus). The model sees ids and one-line
+          summaries only, never the full text, and returns an outline whose
+          every point names its evidence ids. A verse it wants that is not in
+          the pool is resolved and verified like any other, or listed as not
+          used.
+        </li>
+        <li>
+          <strong>Compose</strong> (model, Opus). The model sees the selected
+          items whole and writes claims, each with its layer, its kind (says,
+          attests, interprets, disputes) and its evidence ids, then the prose
+          and a next step.
+        </li>
+        <li>
+          <strong>Check</strong> (code). A claim citing no held item is struck.
+          A year, century or BC/AD span in the prose that no cited item's date
+          carries is struck: the chronology dates, the model never does. A claim
+          about what the text says that cites a later writing is struck. A
+          quotation not found in a held item is struck. Nothing struck is
+          hidden.
+        </li>
+        <li>
+          <strong>Revise</strong> (model, once). Only when the check refused
+          something: the draft once more, told exactly why. A second refusal
+          stands.
+        </li>
+        <li>
+          <strong>Answer</strong> (code). The final check and the record: the
+          prose, the claims, the citations, the evidence grouped by layer and
+          sorted by date, what was struck, what was proposed but not used, and
+          the coverage counts.
+        </li>
+      </ol>
+
+      <h2>What comes out</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>What it holds</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>answer</code>, <code>nextStep</code></td>
+              <td>
+                The prose, and what the asker could do next (often which verses
+                or works to pull in). It names the agent, the model, the
+                classifier and the skill (with its hash) that shaped it.
+              </td>
+            </tr>
+            <tr>
+              <td><code>claims</code></td>
+              <td>
+                Every claim with its layer, its kind, its evidence ids and
+                whether it passed the check.
+              </td>
+            </tr>
+            <tr>
+              <td><code>citations</code></td>
+              <td>
+                The verses, each resolved from the signed corpus with its
+                commitment, and the claim it supports.
+              </td>
+            </tr>
+            <tr>
+              <td><code>evidence</code></td>
+              <td>
+                The cited items grouped as text, period, later, register and
+                undated, each with its title, reference, date and basis,
+                licence, attribution and link to the signed block.
+              </td>
+            </tr>
+            <tr>
+              <td><code>struck</code></td>
+              <td>What the check refused, and why, in words.</td>
+            </tr>
+            <tr>
+              <td><code>notUsed</code></td>
+              <td>
+                Verses the model proposed that could not be resolved, with the
+                reason.
+              </td>
+            </tr>
+            <tr>
+              <td><code>coverage</code></td>
+              <td>
+                How many items were gathered, selected and cited per layer;
+                which channel found each item; what was cut by the caps; which
+                channels dropped out; how many revise rounds ran.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>window</code>, <code>anchors</code>, <code>runId</code>
+              </td>
+              <td>
+                The book window the layers were decided against, the validated
+                anchors, and the run whose seven receipts reproduce the answer
+                from the works at that version.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Robustness: checks, not intentions</h2>
+      <ul>
+        <li>
+          <strong
+            >The model never supplies a verse, a date or a quotation.</strong
+          >
+          Verses come from the signed corpus and are commitment-verified. Dates
+          come only from the chronology. A quotation must be in a held item
+          whose edition allows quoting.
+        </li>
+        <li>
+          <strong>Layers are decided by code.</strong> Period or later is a
+          comparison of the work's date with the book's window, done at query
+          time. The model never labels a writing.
+        </li>
+        <li>
+          <strong>Three things stay visibly apart:</strong> what the text says,
+          what writings of its own time say, and what later readers made of it.
+          Where faithful readers differ, the answer names the disagreement and
+          does not resolve it.
+        </li>
+        <li>
+          <strong>One mechanism per channel.</strong> The meaning index has one
+          fixed floor and no second, looser one; a thin pool is reported as
+          thin, never padded.
+        </li>
+        <li>
+          <strong>A failed channel is named, not hidden.</strong> A tool that
+          errors contributes nothing and is listed under dropped; a failed step
+          returns its cause and every later step carries it to the asker.
+        </li>
+        <li>
+          <strong>Every cut is counted.</strong> Verses past the cap, items past
+          a layer's cap, Hebrew twins of a comment also held in English, names
+          the knowledge base does not hold: all appear in the record.
+        </li>
+        <li>
+          <strong>Rights are enforced at three points:</strong> at publish (the
+          lane), at index (the partition in the vector's metadata, filtered per
+          lane), and at answer (quote only where the edition allows it, checked
+          on the signed block).
+        </li>
+        <li>
+          <strong>Nothing here reaches the translation drafter.</strong> The
+          writings index has no binding in the translation runtime, and a
+          continuous-integration check says so. Later readings, including the
+          study notes, never inform a translation decision.
+        </li>
+        <li>
+          <strong>Everything is a projection.</strong> The works are the record.
+          The indexes are rebuilt from them, and the run record names the work
+          versions it read, so an answer can be reproduced.
+        </li>
+        <li>
+          <strong>Every step is a receipt.</strong> The run is a recorded plan
+          on the agent; the asker can read what each step received and returned.
+        </li>
+      </ul>
+
+      <h2>How it is measured</h2>
+      <p>
+        A set of ten cases, each with its gold evidence by id and a reference
+        answer, is run in arms: the older single-skill ask, the harness without
+        the meaning channel, the meaning channel alone, and the whole harness,
+        three fresh runs each. Deterministic graders score evidence recall per
+        layer, citation coverage, date provenance (the target is every date
+        carried by a cited item), layer discipline, quotation rights and which
+        channel found the required items. A judge model scores whether each
+        claim follows from its evidence. The default switches only on a lift in
+        recall with date provenance intact.
+      </p>
+      <div class="note">
+        <p>
+          <strong>Where it stands, 26 October 2026.</strong> The harness is live
+          on the Scripture agent and answers the dev set in 60 to 140 seconds a
+          case; the latest run answered six of eight, and two failed in gather
+          with a bare server error from the data worker that is being chased.
+          The meaning index was built from the first eight works; the Apostolic
+          Fathers, 2 Esdras, Josephus' Against Apion, the Sefaria commentaries
+          and the study notes publish today and enter the indexes at the next
+          rebuild. The translation workbench asks the harness today; the
+          reader's Companion still asks the serving plane's model about the
+          chapter on screen, and wiring it to this record is next.
+        </p>
+      </div>
+
+      <h2>Where it runs</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Host</th>
+              <th>Built from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture agent (the harness, the seven steps)</td>
+              <td><code>scripture.faithnet.io</code></td>
+              <td>verifiable-content-demo</td>
+            </tr>
+            <tr>
+              <td>
+                Scripture data worker (the signed corpus, the indexes, the
+                retrieval tools)
+              </td>
+              <td><code>bsb.faithnet.io</code> (D1, Workers AI, Vectorize)</td>
+              <td>verifiable-content-demo</td>
+            </tr>
+            <tr>
+              <td>Source Publishing (the signed works)</td>
+              <td><code>publishing.faithnet.io</code></td>
+              <td>verifiable-content-demo</td>
+            </tr>
+            <tr>
+              <td>Importers, index builder, evidence store, chronology</td>
+              <td>run locally; snapshots outside every repository</td>
+              <td>the skills repository</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
