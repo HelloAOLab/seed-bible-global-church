@@ -4408,7 +4408,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "A verse's content from the verse bar",
     rows: ["Content for a verse"],
     checks:
-      "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; on John 11, verse 35 has none and the bar does not offer Content",
+      "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 a scroll line that runs on from verse 2 says 'This line holds Genesis 1:2–3', after the lines that start at verse 3; on John 11, verse 35 has none and the bar does not offer Content",
     run: async (c) => {
       const dir = process.env["E2E_SHOTS"];
       await c.open("/read/BSB/ISA/40");
@@ -4446,6 +4446,20 @@ export const MORE_FLOWS: Flow[] = [
       const copies = await pane.locator(".sb-content-line").count();
       await pane.getByRole("button", { name: "Matthew 3:3" }).click();
       await c.page.waitForURL(/\/read\/[^/]+\/MAT\/3/, { timeout: 15000 });
+      // A scroll line can run across two verses: at Genesis 1:3 a line from verse 2 says which verses it holds, and the
+      // lines that start at verse 3 come first.
+      await c.open("/read/BSB/GEN/1");
+      await c.selectVerse(3);
+      await bar.getByRole("button", { name: "Content" }).click();
+      await c.waitText(pane, /Content for Genesis 1:3/, 20000);
+      await c.waitText(pane, /This line holds Genesis 1:2–3/, 30000);
+      const first = (
+        await pane.locator(".sb-content-line").first().innerText()
+      ).replace(/\s+/g, " ");
+      if (/holds Genesis 1:2/.test(first))
+        throw new Error(
+          `a line from verse 2 is listed first: ${first.slice(0, 80)}`
+        );
       await c.open("/read/BSB/JHN/11");
       await c.selectVerse(35);
       await bar.waitFor({ timeout: 10000 });

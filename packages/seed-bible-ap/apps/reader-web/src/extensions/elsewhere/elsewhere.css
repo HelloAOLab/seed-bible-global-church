@@ -80,3 +80,6 @@
 .sb-content-section-v {
   scroll-margin-top: 8px;
 }
+.sb-content-line-verses {
+  color: var(--sb-primary-color, #e07b4c);
+}

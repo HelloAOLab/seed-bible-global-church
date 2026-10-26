@@ -33,7 +33,14 @@ export const CONTENT_KINDS = new Set([
   "septuagint",
 ]);
 
-function ScrollLine({ it }: { it: PassageItem }) {
+function ScrollLine({
+  it,
+  verses,
+}: {
+  it: PassageItem;
+  /** The verses this line holds, said plainly ("Genesis 1:2–3"), when it holds more than the one asked for. */
+  verses?: string | null;
+}) {
   const { t } = useI18n();
   const d = (it.data ?? {}) as Record<string, unknown>;
   const str = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
@@ -47,6 +54,14 @@ function ScrollLine({ it }: { it: PassageItem }) {
       <p className="sb-content-line-name">
         {named.scroll} · {named.line}
       </p>
+      {verses && (
+        <p className="sb-small sb-content-line-verses">
+          {t("content-line-holds", {
+            verses,
+            defaultValue: "This line holds {{verses}}",
+          })}
+        </p>
+      )}
       {str("hebrew") ? (
         <>
           <p className="sb-content-line-hebrew" lang="he" dir="rtl">
@@ -161,7 +176,18 @@ export function ContentPane({
   const ref = `${state.reading.bookName.value} ${state.reading.chapterNumber.value}:${verse}`;
   const items = (answer?.items ?? []).filter((i) => CONTENT_KINDS.has(i.kind));
   const of = (kind: string) => items.filter((i) => i.kind === kind);
-  const copies = of("scroll-line");
+  // The lines that start at this verse first; then those that run into it from the verse before.
+  const copies = of("scroll-line").sort(
+    (a, b) =>
+      Number(a.locus.span[0] < (answer?.locus.span[0] ?? 0)) -
+        Number(b.locus.span[0] < (answer?.locus.span[0] ?? 0)) ||
+      a.locus.span[0] - b.locus.span[0]
+  );
+  /** The verses a line holds, when it holds more than this one verse. */
+  const holds = (it: PassageItem) =>
+    it.locus.span[0] === it.locus.span[1]
+      ? null
+      : verseLabel(it.locus.ref, bookName);
   const quotes = of("scroll-quote");
   const parallels = of("parallel");
   const greek = of("septuagint")[0];
@@ -293,12 +319,12 @@ export function ContentPane({
           <p className="sb-small sb-muted">
             {t("content-copies-what", {
               defaultValue:
-                "Copies of this verse among the scrolls found near the Dead Sea, made before and around Jesus' time.",
+                "Copies of this verse among the scrolls found near the Dead Sea, made before and around Jesus' time. A scroll's lines don't start where verses start, so a line can hold the end of the verse before or the start of the next.",
             })}
           </p>
           <ul className="sb-content-lines">
             {(allCopies ? copies : copies.slice(0, 3)).map((it) => (
-              <ScrollLine key={`${it.title}`} it={it} />
+              <ScrollLine key={`${it.title}`} it={it} verses={holds(it)} />
             ))}
           </ul>
           {copies.length > 3 && (
@@ -332,7 +358,7 @@ export function ContentPane({
           </p>
           <ul className="sb-content-lines">
             {quotes.map((it) => (
-              <ScrollLine key={it.title} it={it} />
+              <ScrollLine key={it.title} it={it} verses={holds(it)} />
             ))}
           </ul>
         </Section>

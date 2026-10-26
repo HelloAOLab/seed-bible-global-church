@@ -1080,7 +1080,7 @@
   "scrolls-quote-from": "A line from the {{work}}, a writing of the time that is not part of the Bible, quoting this verse.",
   "content-at": "Content for {{ref}}",
   "content-copies": "In the Dead Sea Scrolls",
-  "content-copies-what": "Copies of this verse among the scrolls found near the Dead Sea, made before and around Jesus' time.",
+  "content-copies-what": "Copies of this verse among the scrolls found near the Dead Sea, made before and around Jesus' time. A scroll's lines don't start where verses start, so a line can hold the end of the verse before or the start of the next.",
   "content-empty": "Tap a verse, then Content on its bar.",
   "content-greek": "In Greek (the Septuagint)",
   "content-in-nt": "Quoted in the New Testament",
@@ -1098,5 +1098,6 @@
   "content-n-nt": "{{count}} in the New Testament",
   "content-n-parallels": "{{count}} parallel passages",
   "content-n-quoted": "{{count}} quoted in other writings",
-  "content-on-this-verse": "On this verse"
+  "content-on-this-verse": "On this verse",
+  "content-line-holds": "This line holds {{verses}}"
 }
