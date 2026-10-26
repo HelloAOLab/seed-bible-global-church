@@ -89,6 +89,11 @@ binding = "SCRIPTURE"
 service = "demo-bible-a2a-faithnet"
 
 # seed-bible.svc — the serving plane (the Seed registry), over a service binding.
+# The publishing gateway (publishing.faithnet.io's API): published works by verse — the Dead Sea Scroll lines. Read only.
+[[env.faithnet.services]]
+binding = "PUBLISHING"
+service = "demo-publishing-a2a-production"
+
 [[env.faithnet.services]]
 binding = "PLATFORM"
 service = "seed-bible-svc-a2a-faithnet"

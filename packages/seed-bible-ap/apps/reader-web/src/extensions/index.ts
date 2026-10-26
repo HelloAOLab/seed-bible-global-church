@@ -11,10 +11,13 @@ import transcript from "./transcript";
 import defaultContent from "./defaultContent";
 import theographic from "./theographic";
 import interpretations from "./interpretations";
+import scrolls from "./scrolls";
 
 export function registerBuiltInExtensions(host: ExtensionHost) {
   for (const ext of [
     compare,
+    // Before the other sources: a verse's scroll lines are few and easily lost below its cross-references.
+    scrolls,
     references,
     locations,
     companion,

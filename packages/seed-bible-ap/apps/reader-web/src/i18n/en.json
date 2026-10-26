@@ -1044,5 +1044,13 @@
   "copy-your-email": "Copy your email",
   "findable-by-email-here": "Let people who have my email ({{email}}) find me",
   "friends-find-you-by-email": "Friends can find you by your email",
-  "friends-find-you-nothing": "You don't have a name friends can type yet, so they can't find you by searching. Send them your friend link instead."
+  "friends-find-you-nothing": "You don't have a name friends can type yet, so they can't find you by searching. Send them your friend link instead.",
+  "scrolls-empty": "Open a Dead Sea Scroll line from Discover.",
+  "scrolls-english": "English first draft",
+  "scrolls-line": "line",
+  "scrolls-marks": "Square brackets mark letters restored where the scroll is damaged.",
+  "scrolls-not-published": "This scroll has a line here, but its text is not published yet.",
+  "scrolls-see-publisher": "See it at the publisher",
+  "scrolls-study-only": "For study only, not for commercial use.",
+  "scrolls-uncertain": "partly restored and uncertain"
 }

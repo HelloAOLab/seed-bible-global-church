@@ -4233,6 +4233,56 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "DSS1",
+    section: "12. Extensions",
+    title: "Dead Sea Scrolls at a verse",
+    rows: ["Dead Sea Scrolls at a verse"],
+    checks:
+      "On Genesis 1, tap verse 2 → Discover → Dead Sea Scrolls lists the 4Q7 (4Q Genesis) lines that hold verse 2; tap one → its card shows the line in Hebrew (right to left), the English first draft, its state in plain words, the publisher's credit (for study only) and a link to it at the publisher",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      const shot = async (name: string) => {
+        if (dir)
+          await c.page
+            .screenshot({ path: `${dir}/dss1-${name}.png` })
+            .catch(() => {});
+      };
+      await c.open("/read/BSB/GEN/1");
+      await c.selectVerse(2);
+      await c.pressToolbar("Discover");
+      const section = c.pane().locator(".sb-content-section", {
+        hasText: "Dead Sea Scrolls",
+      });
+      await c.waitText(section, /4Q7/, 30000);
+      await shot("discover");
+      const rows = section.locator(".sb-discover-item");
+      const listed = (await rows.allInnerTexts()).map((t) =>
+        t.replace(/\s+/g, " ").trim()
+      );
+      if (!listed.every((t) => /Genesis 1:[12]/.test(t)))
+        throw new Error(`lines not at verse 2: ${listed.join(" | ")}`);
+      await rows.first().locator("button").click();
+      const card = c.page.locator(".sb-scroll-card");
+      await card.waitFor({ timeout: 10000 });
+      const hebrew = card.locator('.sb-scroll-hebrew[lang="he"][dir="rtl"]');
+      const he = (await hebrew.innerText()).trim();
+      if (!/[\u0590-\u05FF]/.test(he)) throw new Error(`no Hebrew: "${he}"`);
+      await c.waitText(card, /English first draft/, 5000);
+      const en = (await card.locator(".sb-scroll-english").innerText()).trim();
+      if (!en) throw new Error("no English draft");
+      await c.waitText(card, /First draft/, 5000);
+      await c.waitText(card, /For study only/, 5000);
+      const href =
+        (await card
+          .getByRole("link", { name: /see it at the publisher/i })
+          .getAttribute("href")) ?? "";
+      if (!/^https:\/\/publishing\.faithnet\.io\//.test(href))
+        throw new Error(`publisher link ${href}`);
+      await shot("card");
+      return `${listed.length} line(s) at Genesis 1:2 (${listed[0]!.slice(0, 50)}…); card: ${he.slice(0, 24)}… / "${en.slice(0, 40)}…" → ${href.replace("https://", "")}`;
+    },
+  },
+  {
     id: "G19",
     timeoutMs: 240_000,
     section: "8. Today, Discover and publishing",

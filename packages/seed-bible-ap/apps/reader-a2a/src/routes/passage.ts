@@ -6,7 +6,9 @@
 //   content   — the writings around the passage (served by the scripture agent's passage-writings until the content
 //               agent stands on its own; `from` says which agent answered);
 //   person    — the signed-in reader's own highlights and notes, read from their own agent's Library (never the registry);
-//   registry  — what Seed Bible agents published for the chapter (public content only).
+//   publishing — the publishing gateway's signed works by verse (the Dead Sea Scroll lines: Hebrew, an English first draft,
+//               status, licence and a citation {locus, work, block, commitment}), read by canonical verse id, never copied;
+//   registry  — what Seed Bible agents published for the passage (public content only).
 // A source that fails is reported in `sources` and left out; the others still answer.
 import { Hono } from "hono";
 import {
@@ -141,9 +143,18 @@ interface WritingEntry {
   why?: string;
   links?: Array<{ url: string; title?: string }>;
 }
+/** A Dead Sea Scroll line whose words fall in the chapter; `published` names the gateway work carrying its text. */
+interface ScrollLine {
+  manuscript: string;
+  line: string;
+  verses: number[];
+  allVerses?: string[];
+  method?: string;
+  published?: string | null;
+}
 interface WritingsAnswer {
   writings?: {
-    witnesses?: { ofBook?: WritingEntry[] };
+    witnesses?: { ofBook?: WritingEntry[]; atVerse?: ScrollLine[] };
     period?: WritingEntry[];
     later?: WritingEntry[];
     commentary?: WritingEntry[];
@@ -259,6 +270,122 @@ export function writingItems(
         },
       });
     }
+  // A scroll line whose text the gateway does not carry yet is named here; a published one comes from the gateway.
+  for (const line of w.witnesses?.atVerse ?? []) {
+    if (line.published) continue;
+    const at = versesLocus(asked.book, chapter, line.verses);
+    if (!at || !overlaps(at.span, asked.span)) continue;
+    out.push({
+      source: "content",
+      kind: "scroll-line",
+      locus: anchor(at),
+      title: line.line,
+      detail: "Its text is not published yet.",
+      from: "scripture-agent",
+      data: { manuscript: line.manuscript, published: null },
+    });
+  }
+  return out;
+}
+
+/** The verses of the asked span that a published scroll line touches — the ones worth asking the gateway about. */
+export function scrollVerses(
+  asked: Locus,
+  chapter: number,
+  body: WritingsAnswer
+): number[] {
+  const out = new Set<number>();
+  for (const line of body.writings?.witnesses?.atVerse ?? [])
+    if (line.published)
+      for (const v of line.verses) {
+        const at = locusOf(asked.book, chapter, v);
+        if (at && overlaps(at.span, asked.span)) out.add(v);
+      }
+  return [...out].sort((a, b) => a - b);
+}
+
+/** One reading the publishing gateway holds for a verse (`/public/locus`): a block of a signed work, its text carried
+ *  verbatim with its licence. */
+export interface GatewayReading {
+  handle: string;
+  slug: string;
+  version: number;
+  work: string;
+  partTitle?: string;
+  block: number;
+  sourceLabel?: string;
+  relation?: string;
+  text: string;
+  commitment?: { value?: string } & Record<string, unknown>;
+  licence?: string;
+  attribution?: string;
+  commercialUse?: boolean;
+  url?: string;
+}
+
+/** A scroll line's block text: `[[4Q7 f1:1 | Gen.1.1-2]] he: … en: … ¶ status: … ¶ source: …`. */
+export function parseScrollBlock(text: string) {
+  const head = /^\s*\[\[([^|\]]+)\|\s*([^\]]+)\]\]\s*/.exec(text);
+  const rest = head ? text.slice(head[0].length) : text;
+  const [body = "", ...notes] = rest.split(/\s*¶\s*/);
+  const he =
+    /(?:^|\s)he:\s*([\s\S]*?)(?=\s+en:|$)/.exec(body)?.[1]?.trim() ?? "";
+  const en = /(?:^|\s)en:\s*([\s\S]*)$/.exec(body)?.[1]?.trim() ?? "";
+  const meta = (k: string) =>
+    notes
+      .find((n) => n.startsWith(`${k}:`))
+      ?.slice(k.length + 1)
+      .trim() ?? null;
+  return {
+    label: head?.[1]?.trim() ?? null,
+    ref: head?.[2]?.trim() ?? null,
+    hebrew: he,
+    english: en,
+    status: meta("status"),
+    source: meta("source"),
+  };
+}
+
+export function scrollItems(
+  asked: Locus,
+  readings: GatewayReading[]
+): PassageItem[] {
+  const out: PassageItem[] = [];
+  const seen = new Set<string>();
+  for (const r of readings) {
+    const key = `${r.handle}/${r.slug}@${r.version}#${r.block}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const b = parseScrollBlock(r.text);
+    const at = (b.ref && parseLocus(b.ref)) || null;
+    if (!at || !overlaps(at.span, asked.span)) continue;
+    out.push({
+      source: "publishing",
+      kind: "scroll-line",
+      locus: anchor(at),
+      title: r.sourceLabel ?? b.label ?? r.work,
+      ...(b.english ? { detail: b.english } : {}),
+      ...(r.url ? { link: r.url } : {}),
+      from: "publishing-gateway",
+      data: {
+        work: r.work,
+        manuscript: r.partTitle ?? null,
+        hebrew: b.hebrew,
+        english: b.english,
+        status: b.status,
+        source: b.source,
+        licence: r.licence ?? null,
+        attribution: r.attribution ?? null,
+        commercialUse: r.commercialUse ?? false,
+        citation: {
+          locus: at.id,
+          work: `@${r.handle}/${r.slug}@${r.version}`,
+          block: r.block,
+          commitment: r.commitment?.value ?? null,
+        },
+      },
+    });
+  }
   return out;
 }
 
@@ -339,8 +466,42 @@ const failed = (e: unknown): SourceReport => ({
 });
 
 /** Ask every source for the locus at once; one that fails is reported, not fatal. */
+export interface PublishingEnv {
+  /** The publishing gateway over a service binding (its routes without the site's `/api`). */
+  PUBLISHING?: {
+    fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  };
+  /** Its public API when there is no binding (dev). */
+  PUBLISHING_URL?: string;
+}
+
+/** At most this many verses are asked of the gateway for one passage. */
+export const MAX_SCROLL_VERSES = 40;
+
+async function gatewayReadings(
+  env: PublishingEnv,
+  verseId: string
+): Promise<GatewayReading[]> {
+  const path = `/public/locus?verseId=${verseId}`;
+  const res = env.PUBLISHING
+    ? await env.PUBLISHING.fetch(`https://publishing${path}`)
+    : await fetch(
+        `${(env.PUBLISHING_URL ?? "https://publishing.faithnet.io/api").replace(/\/$/, "")}${path}`
+      );
+  const out = (await res.json().catch(() => null)) as {
+    ok?: boolean;
+    readings?: GatewayReading[];
+    error?: string;
+  } | null;
+  if (!res.ok || !out?.ok)
+    throw new Error(
+      out?.error ?? `the publishing gateway answered ${res.status}`
+    );
+  return out.readings ?? [];
+}
+
 export async function composePassage(
-  env: BibleEnv & PlatformEnv,
+  env: BibleEnv & PlatformEnv & PublishingEnv,
   asked: Locus,
   person?: PersonMarks
 ): Promise<{
@@ -361,7 +522,20 @@ export async function composePassage(
   };
   const perChapter = (fn: (c: number) => Promise<PassageItem[]>) => async () =>
     (await Promise.all(chapters.map(fn))).flat();
-  const [scripture, content, registry, mine] = await Promise.all([
+  // The writings are asked once per chapter: they are the content source, and their scroll lines say which verses
+  // the publishing gateway holds text for.
+  const writings = new Map(
+    chapters.map((c) => [
+      c,
+      askScripture(env, "passage-writings", {
+        book: asked.book,
+        chapter: c,
+        ...verse,
+      }) as Promise<WritingsAnswer>,
+    ])
+  );
+  for (const w of writings.values()) w.catch(() => undefined);
+  const [scripture, content, registry, mine, publishing] = await Promise.all([
     gather(
       perChapter(async (c) => {
         const ask = (dataset: string) =>
@@ -380,17 +554,7 @@ export async function composePassage(
       })
     ),
     gather(
-      perChapter(async (c) =>
-        writingItems(
-          asked,
-          c,
-          (await askScripture(env, "passage-writings", {
-            book: asked.book,
-            chapter: c,
-            ...verse,
-          })) as WritingsAnswer
-        )
-      )
+      perChapter(async (c) => writingItems(asked, c, await writings.get(c)!))
     ),
     // The registry matches by verse span itself: one ask for the whole locus, a range across chapters included.
     gather(async () => {
@@ -407,17 +571,40 @@ export async function composePassage(
           )
         )
       : null,
+    // The publishing gateway: the published scroll lines at the verses that have them, read by canonical verse id and
+    // carried with their licence — never copied into any store here.
+    gather(async () => {
+      const verses = (
+        await Promise.all(
+          chapters.map(async (c) =>
+            scrollVerses(asked, c, await writings.get(c)!).map(
+              (v) => [c, v] as const
+            )
+          )
+        )
+      )
+        .flat()
+        .slice(0, MAX_SCROLL_VERSES);
+      const readings = await Promise.all(
+        verses.map(([c, v]) =>
+          gatewayReadings(env, locusOf(asked.book, c, v)!.id)
+        )
+      );
+      return scrollItems(asked, readings.flat());
+    }),
   ]);
   return {
     items: [
       ...(mine?.items ?? []),
       ...scripture.items,
       ...content.items,
+      ...publishing.items,
       ...registry.items,
     ],
     sources: {
       scripture: scripture.report,
       content: content.report,
+      publishing: publishing.report,
       registry: registry.report,
       ...(mine ? { person: mine.report } : {}),
     },
@@ -425,7 +612,7 @@ export async function composePassage(
 }
 
 /** The route; `personFor` turns the request's bearer into the reader's own marks, or null when signed out. */
-export function passageRoutes<E extends BibleEnv & PlatformEnv>(
+export function passageRoutes<E extends BibleEnv & PlatformEnv & PublishingEnv>(
   personFor: (c: {
     req: { raw: Request };
     env: E;
