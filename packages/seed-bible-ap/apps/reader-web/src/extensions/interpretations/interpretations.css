@@ -1,0 +1,337 @@
+/* INTERPRETATIONS & WRITINGS — the two panes the interpretations extension opens. Plain global classes, like the other
+   extensions; colours come from the reader's theme variables so the panes follow light and dark. */
+.sb-interp-pane {
+  padding: 0 1rem 1.5rem;
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+  line-height: 1.45;
+}
+.sb-interp-intro {
+  margin: 0.75rem 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color) 8%, transparent);
+  font-size: 0.9rem;
+}
+.sb-interp-meta {
+  color: var(--sb-secondary-font-color, var(--sb-content-muted, inherit));
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+.sb-interp-p {
+  margin: 0.35rem 0;
+  font-size: 0.92rem;
+}
+.sb-interp-note {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--sb-divider-color);
+}
+.sb-interp-icon {
+  font-size: 1.25rem;
+  color: var(--sb-primary-color);
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+.sb-interp-icon-sm {
+  font-size: 0.95rem;
+  vertical-align: -0.15em;
+}
+.sb-interp-link {
+  display: inline-block;
+  margin: 0.2rem 0.6rem 0 0;
+  color: var(--sb-primary-color);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.sb-interp-link:hover {
+  text-decoration: underline;
+}
+.sb-interp-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--sb-divider-color);
+  font-size: 0.72rem;
+  line-height: 1.3rem;
+  vertical-align: middle;
+}
+.sb-interp-tag--in {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-primary-color);
+}
+.sb-interp-tag--after {
+  opacity: 0.75;
+}
+.sb-interp-more {
+  margin: 0.3rem 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.sb-interp-more:hover {
+  text-decoration: underline;
+}
+.sb-interp-quote {
+  margin: 0.6rem 0 0.6rem 0.25rem;
+  padding: 0.3rem 0.75rem;
+  border-left: 2px solid var(--sb-divider-color);
+  font-size: 0.88rem;
+}
+.sb-interp-quote p {
+  margin: 0 0 0.25rem;
+}
+.sb-interp-quote footer {
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
+/* interpretations pane */
+.sb-interp-verse {
+  margin: 1rem 0 1.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.6rem;
+  background: var(--sb-background);
+}
+.sb-interp-verse--selected {
+  border-color: var(--sb-primary-color);
+  box-shadow: 0 0 0 1px var(--sb-primary-color) inset;
+}
+.sb-interp-verse-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.sb-interp-verse-head h3,
+.sb-writing-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.sb-interp-text {
+  margin: 0.4rem 0 0.6rem;
+  font-size: 0.95rem;
+}
+.sb-interp-h4 {
+  margin: 0.9rem 0 0.3rem;
+  font-size: 0.9rem;
+}
+.sb-interp-question,
+.sb-interp-path {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-primary-color) 6%, transparent);
+}
+.sb-interp-question--open {
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-color, var(--sb-primary-color)) 8%,
+    transparent
+  );
+}
+.sb-interp-question-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.sb-interp-question-text {
+  font-weight: 600;
+  font-size: 0.93rem;
+}
+.sb-interp-decided {
+  margin-top: 0.5rem;
+  font-size: 0.92rem;
+}
+.sb-interp-footnote {
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.4rem;
+  background: var(--sb-background);
+}
+.sb-interp-caution {
+  font-style: italic;
+  opacity: 0.85;
+}
+.sb-interp-alternatives,
+.sb-interp-writings {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+.sb-interp-alternatives ul,
+.sb-interp-works,
+.sb-interp-path ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
+}
+.sb-interp-works li {
+  margin: 0.15rem 0;
+  font-size: 0.86rem;
+}
+
+/* writings pane */
+.sb-writing-section {
+  margin: 1.1rem 0;
+}
+.sb-writing-section h3 {
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+.sb-writing-window {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-primary-color) 6%, transparent);
+}
+.sb-writing-window h3 {
+  border-bottom: 0;
+}
+.sb-writing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sb-writing {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-divider-color) 60%, transparent);
+}
+.sb-writing:last-child {
+  border-bottom: 0;
+}
+.sb-writing--after {
+  opacity: 0.85;
+}
+.sb-writing-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.sb-writing-body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.sb-writing-title {
+  font-weight: 600;
+  font-size: 0.93rem;
+}
+.sb-writing-researched {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 0.4rem 0 0.75rem;
+  font-size: 0.88rem;
+}
+.sb-writing-researched img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  border: 1px solid var(--sb-divider-color);
+}
+@media (max-width: 480px) {
+  .sb-writing-researched {
+    flex-direction: column;
+  }
+}
+
+/* ── One verse in plain words ── */
+.sb-interp-verse-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sb-interp-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sb-interp-plain-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.sb-interp-plain-verse {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--sb-primary-color, #e07b4c);
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e07b4c),
+    transparent 92%
+  );
+  border-radius: 0 8px 8px 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.sb-interp-plain-edition {
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+.sb-interp-plain-q {
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.1));
+  border-left-width: 4px;
+  border-radius: 8px;
+}
+.sb-interp-plain-q--decided {
+  border-left-color: #3f8f5a;
+}
+.sb-interp-plain-q--open {
+  border-left-color: #c58a1b;
+}
+.sb-interp-plain-q--belief {
+  border-left-color: #7a7a8a;
+}
+.sb-interp-plain-ask {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.sb-interp-plain-term {
+  font-size: 1.1rem;
+}
+.sb-interp-plain-label {
+  margin: 6px 0 2px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.sb-interp-plain-readings {
+  margin: 0 0 6px;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+.sb-interp-plain-outcome,
+.sb-interp-plain-other {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.sb-interp-plain-note p {
+  margin: 0;
+  line-height: 1.55;
+}
+.sb-interp-plain-readers {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.sb-interp-plain-details > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  padding: 6px 0;
+}
+.sb-interp-plain-q--policy {
+  border-left-color: #5b7fb0;
+}
+.sb-interp-plain-reads p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+.sb-interp-plain-credit {
+  margin: 6px 0 0;
+}

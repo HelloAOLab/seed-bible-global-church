@@ -1,0 +1,65 @@
+{
+  "v": 1,
+  "note": "The Seed Bible reader workspace on faithchain — public addresses only; keys live in .seed/ (gitignored) and, for Quick Connect, in the Home's roster.",
+  "chainId": 34348,
+  "estate": "faithnet",
+  "clientId": "seed-bible-reader",
+  "workspace": {
+    "name": "seed-reader.workspace",
+    "sa": "0x5dd5f3db5085604b0f6a907bbb35ae645afd307f",
+    "displayName": "Seed Bible reader workspace",
+    "agentType": "workspace",
+    "custodian": "seedreader",
+    "custodianEoa": "0xE7d5068b8D0bBca9a08f3642d183f08aAAA774a2",
+    "salt": 1,
+    "estate": "faithnet.estate",
+    "charteredAt": "2026-10-21T23:20:00Z",
+    "charteredBy": "ap-home scripts/charter-service-agent.mts --type workspace (standalone: no governing organization)",
+    "deployTx": "0xb15cd3d3c04979e64704927741fce9aea6085df89e0dfb1a16123cb11658a196",
+    "endpoints": {
+      "a2aEndpoint": "https://seed-reader-a2a.faithnet.io"
+    },
+    "notWritten": [],
+    "nameBought": {
+      "at": "2026-10-21",
+      "claimTx": "0x6ee27457681edeae…",
+      "records": [
+        "addr",
+        "agentKind",
+        "displayName",
+        "description",
+        "a2aEndpoint"
+      ]
+    },
+    "vaultKeyBound": "2026-10-21 (until 2027-10-21)",
+    "governor": {
+      "name": "seed-reader.org",
+      "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
+      "paired": false
+    }
+  },
+  "people": {
+    "seedreader": {
+      "name": "seedreader.me",
+      "displayName": "Seed Reader",
+      "sa": "0xdbb41f779194d605e636f9bab64b105fd025b3db",
+      "custodianEoa": "0xE7d5068b8D0bBca9a08f3642d183f08aAAA774a2",
+      "deployed": true,
+      "blurb": "The Seed Bible reader workspace's demo reader — signs in at the faithnet Home and says hello through seed-reader.workspace."
+    }
+  },
+  "org": {
+    "name": "seed-reader.org",
+    "sa": "0x0d6f3d14fa8d28b8a8681649368b073bdc5cea26",
+    "facts": "estate/seed-reader-org.faithnet.json"
+  },
+  "service": {
+    "name": "seed-bible.svc",
+    "sa": "0x8f627eca02ecff4e948bc39b7da3cc79ddf9333c",
+    "facts": "estate/seed-bible-svc.faithnet.json"
+  },
+  "client": {
+    "client_id": "seed-bible-reader",
+    "facts": "estate/client.seed-bible-reader.json"
+  }
+}

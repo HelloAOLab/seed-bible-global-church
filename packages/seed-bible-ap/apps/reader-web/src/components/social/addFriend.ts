@@ -1,0 +1,94 @@
+// ADD A FRIEND — one box, a name or an email. A name is a friend request (the old reader's instant answers first:
+// your own account, already friends, already asked; then the Home's signature). An email is an invitation the Home
+// mails; it reaches them whether or not they're here yet, and their link brings them back to this reader.
+import type { ReaderState } from "../../state";
+import { fullName } from "../../state/social/homeProfile";
+import type { useI18n } from "../../i18n";
+import { standingOf } from "../../state/social/friendship";
+import { isEmail } from "../../state/social/invites";
+
+type T = ReturnType<typeof useI18n>["t"];
+
+/** Act on what was typed; the line to show under the box, or null when the Home's window says it instead. */
+/** Whether a name is one a person goes by — not an agent's address (a nameless agent's sign-in carries its address
+ *  as its name: "0xe2bfa5…"). */
+export function isPersonName(name: string | null | undefined): name is string {
+  const n = (name ?? "").trim();
+  return !!n && /\p{L}/u.test(n) && !/^0x[0-9a-f]{4,}/i.test(n);
+}
+
+/** The name friends know this reader by: their Home profile's name, else the reader profile's, else the name their Home gave at sign-in — null when
+ *  neither is a person's name, so the reader asks rather than sending an address. */
+export function myFriendlyName(state: ReaderState): string | null {
+  const home = fullName(state.homeProfile.value.value);
+  if (isPersonName(home)) return home;
+  const own = state.profile.mine.value?.displayName;
+  if (isPersonName(own)) return own.trim();
+  const fromHome = state.session.value?.name;
+  return isPersonName(fromHome) ? fromHome.trim() : null;
+}
+
+export async function addFriendOrInvite(
+  state: ReaderState,
+  typed: string,
+  t: T,
+  /** The name to invite as, when the reader just gave one. */
+  asName?: string | null
+): Promise<string | null> {
+  const name = typed.trim();
+  if (!name) return null;
+  const me = state.session.value;
+  if (isEmail(name)) {
+    const myName = asName?.trim() || myFriendlyName(state);
+    const r = await state.invites.send(name, myName);
+    if (!r.ok)
+      return t("friend-invite-failed", {
+        error: r.error ?? "",
+        defaultValue: "Couldn't send the invitation: {{error}}",
+      });
+    if (r.window === "blocked")
+      return t("friend-invite-sent-window-blocked", {
+        email: name,
+        defaultValue:
+          "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends.",
+      });
+    return r.again
+      ? t("friend-invite-sent-again", {
+          email: name,
+          defaultValue: "Sent your invitation to {{email}} again.",
+        })
+      : t("friend-invite-sent", {
+          email: name,
+          defaultValue:
+            "Invitation sent to {{email}}. Say yes in your Home's window and you'll be friends as soon as they accept.",
+        });
+  }
+  const own =
+    !!me &&
+    [me.sub.replace(/^eip155:\d+:/, ""), me.name ?? ""]
+      .filter(Boolean)
+      .map((x) => x.toLowerCase().replace(/\s+/g, ""))
+      .some((x) => {
+        const n = name.toLowerCase().replace(/\s+/g, "");
+        return x === n || x.split(".")[0] === n.split(".")[0];
+      });
+  const standing = standingOf(state.today.friendsView.value, name);
+  if (own)
+    return t("friend-request-self", {
+      defaultValue: "That's your own account.",
+    });
+  if (standing === "friend")
+    return t("friend-already-friends", {
+      defaultValue: "You're already friends.",
+    });
+  if (standing === "you-asked")
+    return t("friend-request-already-sent", {
+      defaultValue: "You've already sent them a request.",
+    });
+  state.friendship.add(name);
+  return standing === "asked-you"
+    ? t("friend-request-accepted-theirs", {
+        defaultValue: "They'd already asked you, so you're now friends.",
+      })
+    : null;
+}

@@ -1,0 +1,4 @@
+{
+  "why": "Keys the components build at runtime (a template literal, so the static scan cannot see them); an en.json key matching one of these patterns counts as referenced.",
+  "patterns": ["^setting-[a-zA-Z]+(-[a-zA-Z0-9]+)?$"]
+}

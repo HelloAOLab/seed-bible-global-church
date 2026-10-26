@@ -1,0 +1,785 @@
+// BOOK IDS, SLUGS AND REFERENCE PARSING — ported verbatim from packages/seed-bible BibleDataManager (the pure part:
+// no CasualOS, no signals). `lib/scripture` is what reader-web and the workspace share for "what passage is this".
+
+/** What a reference parser needs to know about a translation's book (the API's `TranslationBook` fits). */
+import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
+import { isVerseReferenceInBounds } from "./verseReferenceBounds";
+import {
+  BOOK_CHAPTER_JOIN_PATTERN,
+  PROSE_REFERENCE_NUMBERS_PATTERN,
+  buildTail,
+} from "./verseReferenceSyntax";
+
+export interface TranslationBookLike {
+  id: string;
+  name: string;
+  commonName: string;
+  firstChapterNumber?: number;
+  numberOfChapters?: number;
+}
+
+export type BookId =
+  // 'FRT' |
+  | "GEN"
+  | "EXO"
+  | "LEV"
+  | "NUM"
+  | "DEU"
+  | "JOS"
+  | "JDG"
+  | "RUT"
+  | "1SA"
+  | "2SA"
+  | "1KI"
+  | "2KI"
+  | "1CH"
+  | "2CH"
+  | "EZR"
+  | "NEH"
+  | "EST"
+  | "JOB"
+  | "PSA"
+  | "PRO"
+  | "ECC"
+  | "SNG"
+  | "ISA"
+  | "JER"
+  | "LAM"
+  | "EZK"
+  | "DAN"
+  | "HOS"
+  | "JOL"
+  | "AMO"
+  | "OBA"
+  | "JON"
+  | "MIC"
+  | "NAM"
+  | "HAB"
+  | "ZEP"
+  | "HAG"
+  | "ZEC"
+  | "MAL"
+  | "MAT"
+  | "MRK"
+  | "LUK"
+  | "JHN"
+  | "ACT"
+  | "ROM"
+  | "1CO"
+  | "2CO"
+  | "GAL"
+  | "EPH"
+  | "PHP"
+  | "COL"
+  | "1TH"
+  | "2TH"
+  | "1TI"
+  | "2TI"
+  | "TIT"
+  | "PHM"
+  | "HEB"
+  | "JAS"
+  | "1PE"
+  | "2PE"
+  | "1JN"
+  | "2JN"
+  | "3JN"
+  | "JUD"
+  | "REV"
+  | "TOB"
+  | "JDT"
+  | "ESG"
+  | "WIS"
+  | "SIR"
+  | "BAR"
+  | "LJE"
+  | "S3Y"
+  | "SUS"
+  | "BEL"
+  | "1MA"
+  | "2MA"
+  | "3MA"
+  | "4MA"
+  | "1ES"
+  | "2ES"
+  | "MAN"
+  | "PS2"
+  | "ODA"
+  | "PSS"
+  | "EZA"
+  | "5EZ"
+  | "6EZ"
+  | "DAG"
+  | "PS3"
+  | "2BA"
+  | "LBA"
+  | "JUB"
+  | "ENO"
+  | "1MQ"
+  | "2MQ"
+  | "3MQ"
+  | "REP"
+  | "4BA"
+  | "LAO";
+
+export interface VerseRef {
+  book: BookId;
+  chapter: number;
+  verse?: number;
+  /** The text content following the verse reference, e.g. "In the beginning..." in "GEN 1:1 In the beginning..." */
+  content?: string;
+  /** End chapter for multi-chapter ranges, e.g. 2 in "GEN 1:1-2:3" */
+  endChapter?: number;
+  /** End verse for multi-verse ranges, e.g. 3 in "GEN 1:1-1:3" */
+  endVerse?: number;
+}
+
+export interface VerseRefMatch {
+  ref: VerseRef;
+  /** Inclusive start index of the match within the source text. */
+  start: number;
+  /** Exclusive end index of the match within the source text. */
+  end: number;
+}
+
+/**
+ * Resolves a typed book name to a {@link BookId} for free-text scanning and
+ * single-string refs in chat / footnotes.
+ *
+ * When `books` is provided, only an exact match on localized common name, name,
+ * or id is tried (e.g. spa_onbv "Esdras" → EZR). Unique-prefix expansion of
+ * short tokens (e.g. "Is" → Isaiah) is intentionally not used here — that
+ * belongs in the deliberate single-reference parser. Falls back to the English
+ * name / USFM id map via {@link getBookId}, which only accepts the typed text
+ * as a prefix of a known key (so "Isaac" does not become Isaiah).
+ */
+function resolveBookId(
+  book: string,
+  books?: TranslationBookLike[]
+): BookId | null {
+  if (books?.length) {
+    const exact = exactTranslationBook(normalizeBookName(book), books);
+    if (exact) {
+      return exact.id as BookId;
+    }
+  }
+
+  return getBookId(book);
+}
+
+/**
+ * Parses the given verse reference.
+ * Formatted like "GEN 1:1".
+ *
+ * @param text The reference to parse.
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels (e.g. "Esdras") resolve correctly.
+ */
+export function parseVerseReference(
+  text: string,
+  books?: TranslationBookLike[]
+): VerseRef | null {
+  // Formats supported (`:` and `.` are interchangeable):
+  //   GEN 1          – chapter only
+  //   GEN 1:1        – chapter + verse
+  //   GEN 1.1        – same, European period
+  //   GEN.1.1        – compact period form
+  //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
+  //   GEN 5:16-19    – verse range within one chapter
+  //   GEN 1:1-2:10   – cross-chapter verse range
+  // Book names may include non-ASCII letters (e.g. Spanish "Génesis").
+  const match = text.match(
+    new RegExp(
+      `^\\s*((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+\\p{L}[\\p{L}\\p{N}]*)*)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+      "u"
+    )
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const [reference, book, chapterStr, verseStr, endChapterStr, endVerseStr] =
+    match;
+
+  if (!book || !chapterStr) {
+    return null;
+  }
+
+  const chapter = parseInt(chapterStr);
+  if (isNaN(chapter)) {
+    return null;
+  }
+
+  const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+  if (tail === null) {
+    return null;
+  }
+
+  const { verse, endChapter, endVerse } = tail;
+
+  const content =
+    reference.length !== text.length
+      ? text.substring(reference.length).trim() || undefined
+      : undefined;
+
+  const bookId = resolveBookId(book, books);
+  if (
+    bookId &&
+    !isVerseReferenceInBounds(
+      bookId,
+      chapter,
+      verse,
+      endChapter,
+      endVerse,
+      books
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    book: (bookId ?? book) as BookId,
+    chapter,
+    verse,
+    content,
+    endChapter,
+    endVerse,
+  };
+}
+
+/**
+ * Finds and parses all verse references in free prose, returning each with its
+ * character offsets (start inclusive, end exclusive).
+ *
+ * Distinct from {@link parseSingleVerseReference} /
+ * {@link parseVerseReferenceCandidates} in `parseVerseReference.ts`, which
+ * parse one deliberate typed reference (search box) with ambiguous-prefix
+ * expansion.
+ *
+ * @param books Optional current-translation books; searched before English
+ * names / book ids so localized labels resolve correctly. Matching is exact
+ * (plus conservative English ids via {@link getBookId}); free-text scanning
+ * does not apply unique-prefix expansion of short tokens. Chapter/verse
+ * numbers must exist for the book ({@link isVerseReferenceInBounds}).
+ */
+export function scanVerseReferencesInText(
+  text: string,
+  books?: TranslationBookLike[]
+): VerseRefMatch[] {
+  const results: VerseRefMatch[] = [];
+  // Book name patterns (Unicode-aware so accented names like "Génesis" match):
+  //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
+  //   \p{L}[\p{L}\p{N}]* — word starting with a letter in any script
+  //   (?:\s+[Oo][Ff]\s+\p{L}[\p{L}\p{N}]*)? — optional "of …" for "Song of Solomon"
+  // Word boundary: not preceded by a letter/digit (ASCII \b alone fails for non-ASCII).
+  // Numeric tail is {@link PROSE_REFERENCE_NUMBERS_PATTERN}, which requires a
+  // tight range mark ("Luke 1-2", not "Luke 1 - 2"). The book→chapter joiner is
+  // {@link BOOK_CHAPTER_JOIN_PATTERN}, which excludes the colon, so a list
+  // header like "Mark: 3 things" is not Mark chapter 3.
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])((?:\\d+\\s?)?\\p{L}[\\p{L}\\p{N}]*(?:\\s+[Oo][Ff]\\s+\\p{L}[\\p{L}\\p{N}]*)?)${BOOK_CHAPTER_JOIN_PATTERN}${PROSE_REFERENCE_NUMBERS_PATTERN}`,
+    "gu"
+  );
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const [
+      fullMatch,
+      bookStr,
+      chapterStr,
+      verseStr,
+      endChapterStr,
+      endVerseStr,
+    ] = match;
+
+    // Rejected candidates must retry one character later. Otherwise a false
+    // hit like "See 1" consumes the leading digit of "1 Corinthians" and the
+    // real numbered-book reference is never found.
+    const retryFromNextChar = () => {
+      pattern.lastIndex = match!.index + 1;
+    };
+
+    if (!bookStr || !chapterStr) {
+      retryFromNextChar();
+      continue;
+    }
+
+    const bookId = resolveBookId(bookStr, books);
+    if (!bookId) {
+      retryFromNextChar();
+      continue;
+    }
+
+    const chapter = parseInt(chapterStr);
+    if (isNaN(chapter)) {
+      retryFromNextChar();
+      continue;
+    }
+
+    const tail = buildTail(verseStr, endChapterStr, endVerseStr);
+    if (tail === null) {
+      retryFromNextChar();
+      continue;
+    }
+
+    const { verse, endChapter, endVerse } = tail;
+
+    if (
+      !isVerseReferenceInBounds(
+        bookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+        books
+      )
+    ) {
+      retryFromNextChar();
+      continue;
+    }
+
+    results.push({
+      ref: {
+        book: bookId as BookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+      },
+      start: match.index,
+      end: match.index + fullMatch.length,
+    });
+  }
+
+  return results;
+}
+
+/** @deprecated Use {@link scanVerseReferencesInText}. */
+export const parseVerseReferences = scanVerseReferencesInText;
+
+/**
+ * Defines a map that maps the book ID to the USFM Book identifier.
+ */
+export const BOOK_ID_MAP: Map<string, BookId> = new Map([
+  ["gen", "GEN"],
+  ["genesis", "GEN"],
+  ["exo", "EXO"],
+  ["exodus", "EXO"],
+  ["lev", "LEV"],
+  ["leviticus", "LEV"],
+  // Typo alias retained for tolerance; correct spelling is above.
+  ["laviticus", "LEV"],
+  ["num", "NUM"],
+  ["numbers", "NUM"],
+  ["deu", "DEU"],
+  ["deuteronomy", "DEU"],
+  ["jos", "JOS"],
+  ["joshua", "JOS"],
+  ["jdg", "JDG"],
+  ["judges", "JDG"],
+  ["rut", "RUT"],
+  ["ruth", "RUT"],
+  ["1sa", "1SA"],
+  ["1samuel", "1SA"],
+  ["2sa", "2SA"],
+  ["2samuel", "2SA"],
+  ["1ki", "1KI"],
+  ["1kings", "1KI"],
+  ["1kgs", "1KI"],
+  ["2ki", "2KI"],
+  ["2kings", "2KI"],
+  ["2kgs", "2KI"],
+  ["1ch", "1CH"],
+  ["1chronicles", "1CH"],
+  ["chronicles1", "1CH"],
+  ["2ch", "2CH"],
+  ["2chronicles", "2CH"],
+  ["chronicles2", "2CH"],
+  ["ezr", "EZR"],
+  ["ezra", "EZR"],
+  ["neh", "NEH"],
+  ["nehemiah", "NEH"],
+  ["est", "EST"],
+  ["esther", "EST"],
+  // Typo alias retained for tolerance; correct spelling is above.
+  ["ester", "EST"],
+  ["job", "JOB"],
+  ["ps", "PSA"],
+  ["psa", "PSA"],
+  ["psalms", "PSA"],
+  ["psalm", "PSA"],
+  ["pr", "PRO"],
+  ["pro", "PRO"],
+  ["proverbs", "PRO"],
+  ["ecc", "ECC"],
+  ["ecclesiastes", "ECC"],
+  ["eccl", "ECC"],
+  ["sng", "SNG"],
+  ["song", "SNG"],
+  ["songofsolomon", "SNG"],
+  ["songofsongs", "SNG"],
+  ["isa", "ISA"],
+  ["isaiah", "ISA"],
+  ["jer", "JER"],
+  ["jeremiah", "JER"],
+  ["lam", "LAM"],
+  ["lamentations", "LAM"],
+  ["ezk", "EZK"],
+  ["ezekiel", "EZK"],
+  ["ezek", "EZK"],
+  ["dan", "DAN"],
+  ["daniel", "DAN"],
+  ["hos", "HOS"],
+  ["hosea", "HOS"],
+  ["jol", "JOL"],
+  ["joel", "JOL"],
+  ["amo", "AMO"],
+  ["amos", "AMO"],
+  ["oba", "OBA"],
+  ["obadiah", "OBA"],
+  ["jon", "JON"],
+  ["jonah", "JON"],
+  ["mic", "MIC"],
+  ["micah", "MIC"],
+  ["nam", "NAM"],
+  ["nahum", "NAM"],
+  ["nah", "NAM"],
+  ["hab", "HAB"],
+  ["habakkuk", "HAB"],
+  ["zep", "ZEP"],
+  ["zephaniah", "ZEP"],
+  // Typo alias retained for tolerance; correct spelling is above.
+  ["zepaniah", "ZEP"],
+  ["hag", "HAG"],
+  ["haggai", "HAG"],
+  ["zec", "ZEC"],
+  ["zechariah", "ZEC"],
+  ["mal", "MAL"],
+  ["malachi", "MAL"],
+  ["mat", "MAT"],
+  ["matthew", "MAT"],
+  ["mrk", "MRK"],
+  ["mark", "MRK"],
+  ["luk", "LUK"],
+  ["luke", "LUK"],
+  ["jhn", "JHN"],
+  ["john", "JHN"],
+  ["act", "ACT"],
+  ["acts", "ACT"],
+  ["rom", "ROM"],
+  ["romans", "ROM"],
+  ["1co", "1CO"],
+  ["1corinthians", "1CO"],
+  ["2co", "2CO"],
+  ["2corinthians", "2CO"],
+  ["gal", "GAL"],
+  ["galatians", "GAL"],
+  ["eph", "EPH"],
+  ["ephesians", "EPH"],
+  ["php", "PHP"],
+  ["philippians", "PHP"],
+  ["phil", "PHP"],
+  ["col", "COL"],
+  ["colossians", "COL"],
+  ["1th", "1TH"],
+  ["1thessalonians", "1TH"],
+  ["2th", "2TH"],
+  ["2thessalonians", "2TH"],
+  ["1ti", "1TI"],
+  ["1timothy", "1TI"],
+  ["2ti", "2TI"],
+  ["2timothy", "2TI"],
+  ["tit", "TIT"],
+  ["titus", "TIT"],
+  ["phm", "PHM"],
+  ["philemon", "PHM"],
+  ["phlm", "PHM"],
+  ["heb", "HEB"],
+  ["hebrews", "HEB"],
+  ["jas", "JAS"],
+  ["james", "JAS"],
+  ["1pe", "1PE"],
+  ["1peter", "1PE"],
+  ["2pe", "2PE"],
+  ["2peter", "2PE"],
+  ["1jn", "1JN"],
+  ["1john", "1JN"],
+  ["2jn", "2JN"],
+  ["2john", "2JN"],
+  ["3jn", "3JN"],
+  ["3john", "3JN"],
+  ["jud", "JUD"],
+  ["jude", "JUD"],
+  ["rev", "REV"],
+  ["revelation", "REV"],
+  ["tob", "TOB"],
+  ["jdt", "JDT"],
+  // Spelled out because the prefix fallback below would otherwise hand
+  // "judith" to Jude ("jud") and "ecclesiasticus" to Ecclesiastes ("ecc").
+  // Exact lookups run before that fallback, so position here doesn't matter.
+  ["judith", "JDT"],
+  ["esg", "ESG"],
+  ["wis", "WIS"],
+  ["sir", "SIR"],
+  ["ecclesiasticus", "SIR"],
+  ["bar", "BAR"],
+  ["lje", "LJE"],
+  ["s3y", "S3Y"],
+  ["sus", "SUS"],
+  ["bel", "BEL"],
+  ["1ma", "1MA"],
+  ["2ma", "2MA"],
+  ["3ma", "3MA"],
+  ["4ma", "4MA"],
+  ["1es", "1ES"],
+  ["2es", "2ES"],
+  ["man", "MAN"],
+  ["ps2", "PS2"],
+  ["oda", "ODA"],
+  ["pss", "PSS"],
+  ["eza", "EZA"],
+  ["5ez", "5EZ"],
+  ["6ez", "6EZ"],
+  ["dag", "DAG"],
+  ["ps3", "PS3"],
+  ["2ba", "2BA"],
+  ["lba", "LBA"],
+  ["jub", "JUB"],
+  ["eno", "ENO"],
+  ["1mq", "1MQ"],
+  ["2mq", "2MQ"],
+  ["3mq", "3MQ"],
+  ["rep", "REP"],
+  ["4ba", "4BA"],
+  ["lao", "LAO"],
+]);
+
+/**
+ * Gets the ID of the given book.
+ * Returns null if the ID could not be found.
+ * @param book The name/ID of the book. Whitespace, hyphens, and trailing
+ * punctuation are ignored, so "Song of Solomon", "song-of-solomon", and
+ * "Gen." all resolve.
+ */
+export function getBookId(book: string): BookId | null {
+  const hadSpaces = /\s/.test(book.trim());
+  // Strip whitespace/hyphens, then trailing punctuation (e.g. "Gen." → "gen").
+  const bookLower = book
+    .toLowerCase()
+    .replaceAll(/[\s-]+/g, "")
+    .replace(/[^\p{L}\p{N}]+$/u, "");
+
+  if (!bookLower) {
+    return null;
+  }
+
+  const id = BOOK_ID_MAP.get(bookLower);
+  if (id) {
+    return id;
+  }
+
+  // Abbreviation fallback: the typed text must be a prefix of a known key
+  // (e.g. "Genes" → "genesis", "1 chron" → "1chronicles"), and at least three
+  // characters so two-letter ordinary words ("Is", "So", "Jo") never match.
+  // The opposite direction — key is a prefix of the typed text — would link
+  // ordinary words like "Isaac" / "Judah" / "Jerusalem" to Isaiah / Jude /
+  // Jeremiah. Multi-word phrases that aren't numbered — like "Song of Moses"
+  // — must match a book name exactly, or not at all.
+  if (bookLower.length >= 3 && (!hadSpaces || /^\d/.test(bookLower))) {
+    for (const [key, mappedId] of BOOK_ID_MAP) {
+      if (key.startsWith(bookLower)) {
+        return mappedId;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Canonical, human-readable URL slug for each book, used for path-based
+ * routing (e.g. "/genesis/1"). Apocrypha books fall back to their lowercase
+ * USFM code since they have no full-name entry in `BOOK_ID_MAP`.
+ */
+export const BOOK_SLUGS: Record<BookId, string> = {
+  GEN: "genesis",
+  EXO: "exodus",
+  LEV: "leviticus",
+  NUM: "numbers",
+  DEU: "deuteronomy",
+  JOS: "joshua",
+  JDG: "judges",
+  RUT: "ruth",
+  "1SA": "1-samuel",
+  "2SA": "2-samuel",
+  "1KI": "1-kings",
+  "2KI": "2-kings",
+  "1CH": "1-chronicles",
+  "2CH": "2-chronicles",
+  EZR: "ezra",
+  NEH: "nehemiah",
+  EST: "esther",
+  JOB: "job",
+  PSA: "psalms",
+  PRO: "proverbs",
+  ECC: "ecclesiastes",
+  SNG: "song-of-solomon",
+  ISA: "isaiah",
+  JER: "jeremiah",
+  LAM: "lamentations",
+  EZK: "ezekiel",
+  DAN: "daniel",
+  HOS: "hosea",
+  JOL: "joel",
+  AMO: "amos",
+  OBA: "obadiah",
+  JON: "jonah",
+  MIC: "micah",
+  NAM: "nahum",
+  HAB: "habakkuk",
+  ZEP: "zephaniah",
+  HAG: "haggai",
+  ZEC: "zechariah",
+  MAL: "malachi",
+  MAT: "matthew",
+  MRK: "mark",
+  LUK: "luke",
+  JHN: "john",
+  ACT: "acts",
+  ROM: "romans",
+  "1CO": "1-corinthians",
+  "2CO": "2-corinthians",
+  GAL: "galatians",
+  EPH: "ephesians",
+  PHP: "philippians",
+  COL: "colossians",
+  "1TH": "1-thessalonians",
+  "2TH": "2-thessalonians",
+  "1TI": "1-timothy",
+  "2TI": "2-timothy",
+  TIT: "titus",
+  PHM: "philemon",
+  HEB: "hebrews",
+  JAS: "james",
+  "1PE": "1-peter",
+  "2PE": "2-peter",
+  "1JN": "1-john",
+  "2JN": "2-john",
+  "3JN": "3-john",
+  JUD: "jude",
+  REV: "revelation",
+  TOB: "tob",
+  JDT: "jdt",
+  ESG: "esg",
+  WIS: "wis",
+  SIR: "sir",
+  BAR: "bar",
+  LJE: "lje",
+  S3Y: "s3y",
+  SUS: "sus",
+  BEL: "bel",
+  "1MA": "1ma",
+  "2MA": "2ma",
+  "3MA": "3ma",
+  "4MA": "4ma",
+  "1ES": "1es",
+  "2ES": "2es",
+  MAN: "man",
+  PS2: "ps2",
+  ODA: "oda",
+  PSS: "pss",
+  EZA: "eza",
+  "5EZ": "5ez",
+  "6EZ": "6ez",
+  DAG: "dag",
+  PS3: "ps3",
+  "2BA": "2ba",
+  LBA: "lba",
+  JUB: "jub",
+  ENO: "eno",
+  "1MQ": "1mq",
+  "2MQ": "2mq",
+  "3MQ": "3mq",
+  REP: "rep",
+  "4BA": "4ba",
+  LAO: "lao",
+};
+
+/**
+ * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
+ * build path-based routes and the canonical URL. Falls back to a lowercased
+ * version of the id itself for an unrecognized value (e.g. a malformed
+ * `?book=` from an old link) rather than emitting "undefined" as a path
+ * segment.
+ */
+export function getBookSlug(bookId: BookId): string {
+  return BOOK_SLUGS[bookId] ?? String(bookId).toLowerCase();
+}
+
+/** Classic Levenshtein (single-character insert/delete/substitute) edit distance. */
+function levenshteinDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  let previousRow = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const currentRow = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      currentRow.push(
+        Math.min(
+          currentRow[j - 1]! + 1, // insertion
+          previousRow[j]! + 1, // deletion
+          previousRow[j - 1]! + substitutionCost // substitution
+        )
+      );
+    }
+    previousRow = currentRow;
+  }
+
+  return previousRow[b.length]!;
+}
+
+/**
+ * Finds the book whose alias/abbreviation or URL slug is closest to `input`
+ * by edit distance, for correcting a close typo (e.g. "genesys" -> "GEN").
+ * Returns null when there's no confident, unambiguous match — a wrong
+ * redirect is worse than falling through to a "book not found" response, so
+ * this is deliberately conservative: `input` must be long enough to judge,
+ * the best match's distance must be small relative to the candidate's
+ * length, and it must not tie with a different book at the same distance.
+ */
+export function findClosestBookId(input: string): BookId | null {
+  const normalized = input.toLowerCase().replaceAll(/[\s-]+/g, "");
+  if (normalized.length < 3) {
+    return null;
+  }
+
+  const candidates = new Map<string, BookId>(BOOK_ID_MAP);
+  for (const bookId of Object.keys(BOOK_SLUGS) as BookId[]) {
+    candidates.set(BOOK_SLUGS[bookId].replaceAll("-", ""), bookId);
+  }
+
+  let bestDistance = Infinity;
+  let bestId: BookId | null = null;
+  let bestIsAmbiguous = false;
+
+  for (const [candidate, id] of candidates) {
+    const distance = levenshteinDistance(normalized, candidate);
+    const maxAllowedDistance = Math.min(2, Math.ceil(candidate.length * 0.3));
+    if (distance > maxAllowedDistance) {
+      continue;
+    }
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestId = id;
+      bestIsAmbiguous = false;
+    } else if (distance === bestDistance && id !== bestId) {
+      bestIsAmbiguous = true;
+    }
+  }
+
+  return bestIsAmbiguous ? null : bestId;
+}

@@ -1,0 +1,46 @@
+{
+  "chainId": 34348,
+  "service": {
+    "name": "seed-bible.svc",
+    "sa": "0x8f627ecA02eCfF4E948bc39B7da3cC79ddF9333c",
+    "charteredUnder": "seedreader",
+    "custodian": "0xe7d5068b8d0bbca9a08f3642d183f08aaaa774a2",
+    "named": true,
+    "displayName": "Seed Bible service",
+    "endpoints": {
+      "a2aEndpoint": "https://seed-bible-a2a.faithnet.io",
+      "mcpEndpoint": "https://seed-bible-mcp.faithnet.io/mcp"
+    },
+    "vaultKeyBound": "2026-10-21 (until 2027-10-21)",
+    "role": "serving plane \u2014 the Seed registry over public shelves, public files and caches; rebuildable, never the record"
+  },
+  "charteredBy": {
+    "persona": "seedreader",
+    "sa": "0xdbb41f779194d605e636f9bab64b105fd025b3db"
+  },
+  "charteredAt": "2026-10-21T23:43:09.835Z",
+  "nameBought": {
+    "at": "2026-10-21",
+    "price": "10 SHQ",
+    "payer": "0x0a27f9dc2eaf2a532599acdbeea354a707833cc7",
+    "records": [
+      "addr",
+      "agentKind",
+      "displayName",
+      "description",
+      "a2aEndpoint",
+      "mcpEndpoint"
+    ]
+  },
+  "note": "Public facts only. A2A_AGENT_SA for apps/seed-bible-a2a (step 3). The hosts named in the endpoint records are routed when the Workers deploy.",
+  "deployed": {
+    "at": "2026-10-21",
+    "workers": {
+      "seed-bible-svc-a2a-faithnet": "https://seed-bible-a2a.faithnet.io",
+      "seed-bible-svc-mcp-faithnet": "https://seed-bible-mcp.faithnet.io"
+    },
+    "d1": "seed-bible-svc (48e64d24-f48d-4017-ba5a-401e3b435ad8)",
+    "r2": "seed-bible-files (binding FILES, created 2026-10-22; the file lane is step 7)",
+    "cron": "*/15 * * * *"
+  }
+}

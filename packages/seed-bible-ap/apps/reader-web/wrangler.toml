@@ -1,0 +1,30 @@
+# reader-web on the faithnet estate — a Worker in front of static assets (the same shape as bible.faithnet.io).
+# The Worker renders a chapter URL on the edge (worker/index.ts); every other path is the asset the build emitted.
+# Build FIRST (`pnpm deploy:faithnet` does): a bare `wrangler deploy` ships whatever stale dist/ holds.
+name = "seed-bible-reader-web"
+main = "worker/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]
+
+[env.faithnet]
+name = "seed-bible-reader-web-faithnet"
+workers_dev = true
+
+[env.faithnet.vars]
+A2A_BASE = "https://seed-reader-a2a.faithnet.io"
+
+[[env.faithnet.routes]]
+pattern = "seed-reader.faithnet.io"
+custom_domain = true
+
+[env.faithnet.assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]

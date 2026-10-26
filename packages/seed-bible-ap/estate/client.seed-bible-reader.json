@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "note": "The seed-bible-reader relying client at the faithnet Home (ap-home apps/home/src/whitelabel/config.ts). Public facts only.",
+  "home": "https://www.faithnet.me",
+  "client_id": "seed-bible-reader",
+  "name": "Seed Bible Reader",
+  "redirect_uris": [
+    "https://seed-reader.faithnet.io/",
+    "http://localhost:5185/"
+  ],
+  "allowed_scopes": ["openid", "profile", "agent"],
+  "allowed_delegation_templates": ["site-login", "ask-as-me"],
+  "delegate": "0x89D13c596c45E4eE80Af5ae06C727FE9A820ffD0",
+  "ask_delegate": "0xb77a627a4ad23af518f9626186F7bE4D2cC4BFf1",
+  "ask_with_login": true,
+  "libraryFolders": ["seed-bible"],
+  "registered": [
+    {
+      "at": "2026-10-21",
+      "commit": "ap-home c02ca7bc",
+      "what": "client registered (site-login)"
+    },
+    {
+      "at": "2026-10-21",
+      "commit": "ap-home 41b30c77",
+      "what": "ask-as-me template, ask_delegate (reader-a2a asking key), ask_with_login, libraryFolders"
+    }
+  ],
+  "askingKey": {
+    "holder": "reader-a2a (secret READER_ASK_PRIVATE_KEY; local .seed/reader-a2a-ask.local.json)",
+    "address": "0xb77a627a4ad23af518f9626186F7bE4D2cC4BFf1",
+    "note": "a revocable delegate the Home registers; rotate by generating a new key, updating ask_delegate at the Home, and re-connecting readers"
+  }
+}

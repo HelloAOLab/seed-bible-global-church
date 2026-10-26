@@ -1,0 +1,23 @@
+# reader-mcp — the hello-world reader tools. Local dev: `pnpm dev:mcp` (:8890).
+name = "seed-bible-reader-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8890
+local_protocol = "http"
+
+[vars]
+WORKSPACE_NAME = "seed-reader.workspace"
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# FAITHNET (faithchain 34348, Home www.faithnet.me) — the estate this reader runs on.
+# Hosts on faithnet.io subdomains are the estate operator's to route; workers.dev is the fallback.
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+[env.faithnet]
+name = "seed-bible-reader-mcp-faithnet"
+workers_dev = true
+
+[env.faithnet.vars]
+WORKSPACE_NAME = "seed-reader.workspace"

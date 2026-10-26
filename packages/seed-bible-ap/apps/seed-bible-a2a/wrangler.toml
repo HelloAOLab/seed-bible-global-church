@@ -1,0 +1,91 @@
+# seed-bible-a2a — `seed-bible.svc`, the serving plane: the Seed registry (a rebuildable D1 index of what Seed Bible
+# agents released on their public shelves), later public files and caches. Not the record, not the identity.
+# Local dev: `pnpm dev:svc` (:8892). Dev secrets in `.dev.vars` beside this file (gitignored):
+#   A2A_INTERNAL_MARKER   the in-Worker marker the run object requires
+#   ADMIN_TOKEN           what `POST /admin/*` (reindex, wipe, shelves) requires — an operator's door, not a grant
+name = "seed-bible-svc-a2a"
+main = "src/worker.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8892
+local_protocol = "http"
+
+[vars]
+MCP_URL = "http://127.0.0.1:8893"
+AGENT_NAME = "seed-bible.svc"
+A2A_CHAIN_ID = "34348"
+EDGE_URL = "https://edge.faithnet.io"
+SHELF_FOLDER = "seed-bible/public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "seed-bible-svc"
+database_id = "48e64d24-f48d-4017-ba5a-401e3b435ad8"
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "RUNS"
+class_name = "SvcRunDO"
+
+# Public file bytes (hero images, photos, playlist assets — step 7). A serving-plane cache like D1: the vault
+# holds the catalog, R2 holds bytes that can be re-put from it (ADR-0004).
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "seed-bible-files"
+
+[[migrations]]
+tag = "v1-svc-runs"
+new_sqlite_classes = ["SvcRunDO"]
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[ai]
+binding = "AI"
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+# FAITHNET — the host the name record `seed-bible.svc` → atl:a2aEndpoint names. Secrets:
+#   wrangler secret put A2A_INTERNAL_MARKER -c apps/seed-bible-a2a/wrangler.toml --env faithnet
+#   wrangler secret put ADMIN_TOKEN         -c apps/seed-bible-a2a/wrangler.toml --env faithnet
+# ─────────────────────────────────────────────────────────────────────────────────────────────
+[env.faithnet]
+name = "seed-bible-svc-a2a-faithnet"
+workers_dev = true
+
+[[env.faithnet.routes]]
+pattern = "seed-bible-a2a.faithnet.io"
+custom_domain = true
+
+[env.faithnet.vars]
+AGENT_NAME = "seed-bible.svc"
+A2A_AGENT_SA = "0x8f627ecA02eCfF4E948bc39B7da3cC79ddF9333c"
+A2A_CHAIN_ID = "34348"
+A2A_PUBLIC_ORIGIN = "https://seed-bible-a2a.faithnet.io"
+EDGE_URL = "https://edge.faithnet.io"
+SHELF_FOLDER = "seed-bible/public"
+
+[[env.faithnet.services]]
+binding = "MCP"
+service = "seed-bible-svc-mcp-faithnet"
+
+[[env.faithnet.d1_databases]]
+binding = "DB"
+database_name = "seed-bible-svc"
+database_id = "48e64d24-f48d-4017-ba5a-401e3b435ad8"
+migrations_dir = "migrations"
+
+[[env.faithnet.durable_objects.bindings]]
+name = "RUNS"
+class_name = "SvcRunDO"
+
+[[env.faithnet.r2_buckets]]
+binding = "FILES"
+bucket_name = "seed-bible-files"
+
+[env.faithnet.triggers]
+crons = ["*/15 * * * *"]
+
+[env.faithnet.ai]
+binding = "AI"

@@ -1,0 +1,6 @@
+# Secrets and per-developer state. Public addresses go in estate/*.json; keys never do.
+.dev.vars
+.dev.vars.*
+.seed/
+.wrangler/
+dist/

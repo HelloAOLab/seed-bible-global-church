@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "node", "vite/client"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@seed/*": ["lib/*"]
+    }
+  },
+  "include": [
+    "estate/**/*.ts",
+    "lib/**/*.ts",
+    "apps/reader-mcp/src/**/*",
+    "apps/reader-a2a/src/**/*",
+    "apps/seed-bible-mcp/src/**/*",
+    "apps/seed-bible-a2a/src/**/*",
+    "scripts/smoke.ts",
+    "scripts/smoke/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "scripts/smoke/reader-web.ts",
+    "scripts/smoke/session.ts",
+    "test/e2e",
+    "test/helpers/TestHost.tsx",
+    "test/helpers/bibleResponses.ts",
+    "test/helpers/createTestReaderState.ts",
+    "test/helpers/fakeSpeechSynthesis.ts",
+    "test/helpers/pressAndRelease.ts",
+    "test/helpers/storageRecorder.ts",
+    "test/helpers/stubColorScheme.ts",
+    "test/integration",
+    "test/unit/reader-a2a/log-hygiene.test.ts",
+    "test/unit/reader-a2a/publish-without-reads.test.ts",
+    "test/unit/reader-a2a/bucket-doc-id.test.ts",
+    "test/unit/reader-a2a/bucket-cache.test.ts",
+    "test/unit/reader-a2a/bucket-list.test.ts",
+    "test/unit/reader-web"
+  ]
+}

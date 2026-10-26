@@ -1,0 +1,27 @@
+{
+  "lockVersion": 1,
+  "packages": {
+    "@agenticprimitives/a2a": "0.0.0-alpha.45",
+    "@agenticprimitives/agent-account": "1.0.0-alpha.41",
+    "@agenticprimitives/agent-naming": "1.0.0-alpha.41",
+    "@agenticprimitives/connect-client": "1.0.0-alpha.31",
+    "@agenticprimitives/delegation": "1.0.0-alpha.41",
+    "@agenticprimitives/devkit": "0.0.0-alpha.29",
+    "@agenticprimitives/orchestration": "0.0.0-alpha.22",
+    "@agenticprimitives/service-host": "0.0.0-alpha.24",
+    "@agenticprimitives/types": "1.0.0-alpha.41"
+  },
+  "rules": {},
+  "devkit": "0.0.0-alpha.29",
+  "doctor": {
+    "custodianCoverage": {
+      "skip": "This product is a relying app only: custody is handed off to the faithnet Home through @agenticprimitives/connect-client, and no Home custody surface lives here."
+    },
+    "archetypeCatalog": {
+      "skip": "No archetype catalog: the reader agent has one hello skill, declared in apps/reader-a2a/src/host.ts."
+    },
+    "demoPersonOrgDistinct": {
+      "skip": "The only demo person is the seed reader in .seed/reader.local.json (gitignored); no demo organization exists yet."
+    }
+  }
+}

@@ -1,0 +1,2406 @@
+/* This app's own layer over the copied reader stylesheets: the shell layout, the side pane and note cards, the
+   translation list, and the flat highlight fill that stands in for the ribbon layer. */
+
+html,
+body {
+  margin: 0;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+}
+
+.sb-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.sb-app-with-pane {
+  grid-template-columns: minmax(0, 1fr) min(26rem, 40vw);
+}
+
+.sb-app-main {
+  min-width: 0;
+  background: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
+}
+
+.sb-app-pane {
+  border-inline-start: 1px solid var(--sb-divider-color, #00000024);
+  background: var(--sb-sidebar-background, var(--sb-background));
+  color: var(--sb-sidebar-font-color, var(--sb-font-color));
+  overflow: auto;
+  max-height: 100dvh;
+  position: sticky;
+  top: 0;
+}
+
+/* A full-width pane (Today, as in the old reader): it takes the reading area beside the sidebar, its header across
+   the top over a thin rule, its content in a centred column; the chapter waits underneath, hidden. */
+@media (min-width: 721px) {
+  .sb-app-with-full-pane .sb-app-main {
+    display: none;
+  }
+  .sb-app-pane-full {
+    height: 100dvh;
+    border-inline-start: none;
+    background: var(--sb-reader-background, var(--sb-background));
+    color: var(--sb-reader-font-color, var(--sb-font-color));
+  }
+  .sb-app-pane-full > .sb-pane {
+    padding: 0 0 7rem;
+  }
+  .sb-app-pane-full > .sb-pane > .sb-pane-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 0 1.5rem;
+    padding: 0.625rem 0.75rem 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--sb-divider-color, #00000024);
+    background: inherit;
+    background-color: var(--sb-reader-background, var(--sb-background, #fff));
+  }
+  .sb-app-pane-full > .sb-pane > :not(.sb-pane-header) {
+    max-width: 51.25rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .sb-app-with-pane {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sb-app-pane {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 70dvh;
+    border-inline-start: none;
+    border-top: 1px solid var(--sb-divider-color, #00000024);
+    z-index: 98;
+    /* Over the reader the pane needs a solid sheet: the theme's sidebar background is often transparent (on a wide
+       screen the pane sits on the page, which shows through). */
+    background: var(--sb-background, #fff);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 0.875rem 0.875rem 0 0;
+  }
+}
+
+/* The ribbon layer sits behind the text of this column. */
+.sb-chapter-content {
+  position: relative;
+}
+
+.sb-reader-from-device {
+  color: var(--sb-primary-color);
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: 0.5rem;
+}
+
+/* Panes */
+.sb-pane {
+  padding: 1rem 1.125rem 6rem;
+}
+.sb-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.sb-pane-header h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.sb-pane-close {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+}
+.sb-pane-empty,
+.sb-pane-error,
+.sb-muted {
+  color: color-mix(in srgb, currentColor, transparent 35%);
+}
+.sb-pane-error {
+  color: #c0392b;
+}
+.sb-small {
+  font-size: 0.875rem;
+}
+
+.sb-note-card,
+.sb-account-card {
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  margin-bottom: 0.75rem;
+  background: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
+}
+.sb-note-card-conflict {
+  border-color: var(--sb-primary-color);
+}
+.sb-note-card-conflict-note {
+  font-size: 0.8125rem;
+  color: var(--sb-primary-color);
+  margin: 0 0 0.5rem;
+}
+.sb-note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+.sb-note-card-ref {
+  border: none;
+  background: transparent;
+  color: var(--sb-link-color);
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.sb-note-card-when {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+.sb-note-card-body {
+  margin: 0 0 0.5rem;
+  white-space: pre-wrap;
+}
+.sb-note-editor {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  resize: vertical;
+}
+.sb-note-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+.sb-note-button {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  background: var(--sb-tertiary-color);
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+.sb-note-button-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-color: transparent;
+}
+.sb-note-button-danger {
+  color: #c0392b;
+}
+.sb-note-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.sb-people {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: grid;
+  gap: 0.375rem;
+}
+/* A checkbox and its words: a wrapped line lines up under the words, not under the box. */
+.sb-check {
+  display: block;
+  margin: 0.5rem 0;
+  padding-inline-start: 1.75rem;
+  text-indent: -1.75rem;
+  line-height: 1.4;
+}
+.sb-check > input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.5rem 0 0.25rem;
+  vertical-align: -0.15em;
+}
+.sb-account-card label {
+  display: block;
+  margin-bottom: 0.375rem;
+}
+/* A named setting with a picker: the name on the left, the picker on the right, space between. */
+.sb-account-card label:has(> select) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+.sb-account-card select {
+  font: inherit;
+  max-width: 100%;
+  min-width: 7rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.5rem;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}
+.sb-account-card > :first-child {
+  margin-top: 0;
+}
+.sb-account-card > :last-child {
+  margin-bottom: 0;
+}
+/* A card's title on its own line, its explanation under it. */
+.sb-account-card > p.sb-small:first-child > strong:first-child {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+/* The verse toolbar, docked above the reader toolbar in this cut (the old one is positioned at the selection). */
+/* The floating toolbars sit over the reader column (App.tsx measures it into --sb-main-left / --sb-main-width), so
+   a side pane or the sidebar never has the pill running underneath it. */
+/* Centred on the reading area. Sized to its buttons outright: left to shrink-to-fit, Firefox caps a fixed box at the
+   room between `left` and the viewport's edge (half the reading area), and the last buttons spill out of the pill. */
+.sb-reader-toolbar {
+  left: calc(var(--sb-main-left, 0px) + var(--sb-main-width, 100vw) / 2);
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+}
+/* The same size as toolbar.css's flex basis, said as a width too: Firefox counts a flex item's width, not its fixed
+   flex basis, when it works out the bar's own width. */
+.sb-reader-toolbar .sb-reader-toolbar-item {
+  width: 2.75rem;
+}
+.sb-reader-toolbar .sb-reader-toolbar-center-item {
+  width: auto;
+}
+/* Off a phone: the old reader's labelled bar (toolbar.css's `.sb-reader-toolbar-labeled` rules, for the layout the
+   old reader gives that class): a word under each icon, the chapter arrows at the two ends. */
+@media (min-width: 721px) {
+  .sb-reader-toolbar
+    .sb-reader-toolbar-item:not(.sb-reader-toolbar-item-arrow) {
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+  }
+  .sb-reader-toolbar
+    .sb-reader-toolbar-item:not(.sb-reader-toolbar-item-arrow)
+    > .sb-reader-toolbar-button {
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.1875rem;
+    border-radius: var(--sb-reader-toolbar-button-border-radius);
+    height: var(--sb-reader-toolbar-button-height);
+    padding: var(--sb-reader-toolbar-button-padding);
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-button > svg,
+  .sb-reader-toolbar .sb-reader-toolbar-button > .material-symbols-outlined {
+    width: var(--sb-reader-toolbar-button-icon-size);
+    height: var(--sb-reader-toolbar-button-icon-size);
+    font-size: var(--sb-reader-toolbar-button-icon-size);
+    flex-shrink: 0;
+  }
+  .sb-reader-toolbar-desk-end,
+  .sb-reader-toolbar-next {
+    order: 1;
+  }
+}
+@media (max-width: 720px) {
+  .sb-reader-toolbar-desk-only,
+  .sb-reader-toolbar-button-label {
+    display: none;
+  }
+}
+.sb-verse-toolbar-docked {
+  left: calc(var(--sb-main-left, 0px) + var(--sb-main-width, 100vw) / 2);
+  bottom: calc(var(--sb-reader-toolbar-bottom) + 4rem);
+  transform: translateX(-50%);
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: calc(100vw - 2rem);
+}
+.sb-verse-toolbar-color-active {
+  outline: 2px solid var(--sb-font-color);
+  outline-offset: 2px;
+}
+.sb-reader-toolbar-center-button {
+  white-space: nowrap;
+  padding-inline: 0.75rem;
+  font-weight: 600;
+}
+.sb-reader-toolbar-item-arrow .sb-reader-toolbar-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-selector-pane-picker {
+  display: flex;
+  gap: 0.375rem;
+}
+
+/* Notes as TipTap output. */
+.sb-note-editor-tiptap .sb-editor-content {
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  min-height: 5rem;
+}
+.sb-note-editor-tiptap .ProseMirror {
+  outline: none;
+  min-height: 4rem;
+}
+.sb-note-editor-loading {
+  min-height: 6rem;
+}
+.sb-note-card-body .text-center {
+  text-align: center;
+}
+.sb-note-card-body .text-right {
+  text-align: right;
+}
+.sb-note-card-body .text-justify {
+  text-align: justify;
+}
+.sb-note-card-body p:first-child {
+  margin-top: 0;
+}
+.sb-note-card-body p:last-child {
+  margin-bottom: 0;
+}
+.sb-verse-reference-link {
+  color: var(--sb-link-color);
+  text-decoration: underline dotted;
+}
+.sb-content-screen {
+  --sb-content-padding: 0;
+}
+/* The verse the recording or the voice is on. */
+.sb-verse-playing .sb-verse-decorator {
+  text-decoration: underline;
+  text-decoration-color: var(--sb-primary-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+/* Tabs sidebar + panes. The sidebar's stylesheet starts it invisible for a fade the old app ran; it is simply on here. */
+.sb-tabs-sidebar {
+  opacity: 1;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  /* Above the reader panes, so the pane-layout menu that opens out of it is not drawn under them. */
+  z-index: 60;
+}
+.sb-app {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.sb-app-with-pane {
+  grid-template-columns: auto minmax(0, 1fr) min(26rem, 40vw);
+}
+.sb-app-main {
+  height: 100dvh;
+  overflow: hidden;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  background: var(--sb-background);
+}
+.sb-pane-shell {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  border: 1px solid transparent;
+}
+.sb-pane-shell-active {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+}
+.sb-pane-reader-outer,
+.sb-pane-reader {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.sb-pane-reader > .sb-bible-reader {
+  overflow: auto;
+  flex: 1 1 auto;
+}
+.sb-tab-close-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+}
+.sb-tab-row:hover .sb-tab-close-button {
+  opacity: 1;
+}
+.sb-tab-pane-count {
+  margin-inline-start: 0.375rem;
+  font-size: 0.7rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+}
+.sb-sidebar-logo {
+  font-family: var(--sb-book-title-font-family);
+  font-weight: 700;
+  margin-inline-start: 0.5rem;
+}
+.sb-pane-layout-anchor {
+  position: relative;
+}
+/* The pane-layout menu opens out of the sidebar into the reader: it must sit above the panes, and in the phone
+   drawer it is positioned to the viewport so the drawer's own scroll clip cannot cut it off. */
+.sb-pane-layout-menu {
+  z-index: 130;
+}
+/* Shown on a phone only, behind the open drawer (the rule inside the phone block below). */
+.sb-drawer-backdrop {
+  display: none;
+}
+@media (max-width: 720px) {
+  .sb-app,
+  .sb-app-with-pane {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sb-tabs-sidebar {
+    display: none;
+  }
+  /* On a phone the sidebar is a drawer over the reader, opened from the toolbar's menu button. */
+  .sb-tabs-sidebar.sb-tabs-sidebar-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(20rem, 85vw);
+    z-index: 120;
+    background: var(--sb-background, #fff);
+    color: var(--sb-font-color);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
+    overflow-y: auto;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .sb-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 119;
+  }
+  .sb-tabs-sidebar.sb-tabs-sidebar-drawer .sb-pane-layout-menu {
+    position: fixed;
+    top: 3.5rem;
+    inset-inline-start: 0.5rem;
+    width: min(23.25rem, calc(100vw - 1rem));
+  }
+}
+/* More holds what the reader took out of the bar, and the way to sign in; with neither it is not drawn, unless the
+   bar folds (below). */
+.sb-reader-toolbar-more-empty .sb-reader-toolbar-more-button {
+  display: none;
+}
+/* A button still in the bar is not listed again in More (one folded out of it is: ReaderToolbar marks which). */
+.sb-reader-toolbar-more-item.sb-reader-toolbar-more-item-in-bar {
+  display: none;
+}
+/* A bar wider than its reading area (ReaderToolbar measures that): the actions that do not fit go under "More",
+   from the end; the rest stay in the bar. */
+.sb-reader-toolbar-folded .sb-reader-toolbar-secondary-folded {
+  display: none;
+}
+.sb-reader-toolbar-folded .sb-reader-toolbar-more-button {
+  display: block;
+}
+@media (max-width: 480px) {
+  .sb-reader-toolbar-secondary {
+    display: none;
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-more-button {
+    display: block;
+  }
+  .sb-reader-toolbar .sb-reader-toolbar-more-item-in-bar {
+    display: flex;
+  }
+}
+.sb-reader-toolbar-more-menu {
+  position: fixed;
+  left: calc(var(--sb-main-left, 0px) + 0.5rem);
+  width: calc(var(--sb-main-width, 100vw) - 1rem);
+  bottom: 4.75rem;
+  z-index: 102;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: var(
+    --sb-reader-toolbar-background,
+    var(--sb-background-color, #fff)
+  );
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+/* Off a phone the bar is moved into place with a transform, which makes it the box a fixed menu inside it is placed
+   in: the menu sits just above the bar, centred on it, and as wide as the reading area allows. */
+@media (min-width: 721px) {
+  .sb-reader-toolbar .sb-reader-toolbar-more-menu {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+    width: min(24rem, calc(var(--sb-main-width, 100vw) - 1rem));
+  }
+}
+.sb-reader-toolbar-more-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.sb-reader-toolbar-more-item-active {
+  color: var(--sb-primary-color);
+}
+.sb-reader-toolbar-more-signin {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sb-reader-toolbar-signin .sb-reader-toolbar-button {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-radius: 999px;
+}
+/* The account button's count of changes still to send sits on its corner, ringed in the bar's colour, so it reads
+   apart from the picture or the filled sign-in button under it. */
+.sb-reader-toolbar
+  > .sb-reader-toolbar-item:last-child
+  .sb-reader-toolbar-unread-indicator {
+  top: -0.125rem;
+  right: -0.125rem;
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background, #fff);
+  box-shadow: 0 0 0 2px
+    var(--sb-reader-toolbar-background, var(--sb-reader-background, #fff));
+}
+
+/* Discover + Today */
+.sb-discover-item-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: start;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.sb-discover-item-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sb-discover-item-description {
+  font-size: 0.8125rem;
+  opacity: 0.7;
+}
+.sb-discover-item-body {
+  padding: 0 0 0.75rem 2.25rem;
+}
+.sb-discover-markdown {
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+.sb-discover-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sb-note-button-published {
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+}
+.sb-friends-row {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0;
+}
+.sb-friends-person-text {
+  display: flex;
+  flex-direction: column;
+}
+.sb-friends-person-subtitle {
+  font-size: 0.8125rem;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+/* Live session pane */
+.sb-session-join {
+  display: grid;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+.sb-session-chat {
+  max-height: 16rem;
+  overflow: auto;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+}
+.sb-session-chat-line {
+  font-size: 0.9375rem;
+}
+.sb-session-chat-mine .sb-session-chat-name {
+  color: var(--sb-primary-color);
+}
+.sb-session-chat-name {
+  font-weight: 600;
+  margin-inline-end: 0.25rem;
+}
+.sb-session-say {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+.sb-session-say input {
+  flex: 1;
+}
+.sb-session-role-select {
+  margin-inline-start: auto;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+/* Library pane */
+.sb-library-items {
+  padding-inline-start: 1.25rem;
+  margin: 0.25rem 0;
+}
+.sb-library-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.125rem 0;
+}
+.sb-rp-card-progress-bar {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--sb-tertiary-color);
+  overflow: hidden;
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-rp-card-progress-fill {
+  height: 100%;
+  background: var(--sb-primary-color);
+}
+.sb-rpb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.125rem 0;
+}
+.sb-rp-today {
+  outline: 1px solid
+    color-mix(in srgb, var(--sb-primary-color), transparent 50%);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+.sb-rp-section-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+/* Files and link previews */
+.sb-playlist-hero {
+  width: 100%;
+  max-height: 10rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-link-card {
+  display: flex;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+.sb-link-card-image {
+  width: 5rem;
+  height: 5rem;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  flex: 0 0 auto;
+}
+.sb-link-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.125rem;
+}
+.sb-link-card-title {
+  font-weight: 600;
+}
+.sb-link-card-description {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+.sb-link-card-site {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+.sb-inline-form {
+  display: flex;
+  gap: 0.375rem;
+  flex: 1 1 100%;
+}
+.sb-inline-form input {
+  flex: 1;
+}
+
+/* Customizations editor */
+.sb-customization-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.75rem;
+}
+.sb-customization-field {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.sb-customization-field input[type="color"] {
+  width: 1.75rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 0.25rem;
+  background: transparent;
+}
+.sb-customization-logo {
+  height: 1.5rem;
+  max-width: 6rem;
+  object-fit: contain;
+}
+
+/* Extensions */
+.sb-companion-log {
+  max-height: 24rem;
+}
+.sb-companion-text {
+  white-space: pre-wrap;
+}
+
+/* Embed mode: the reader alone */
+.sb-app-embed {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sb-app-embed .sb-bible-reader-content {
+  padding: 0;
+}
+.sb-sidebar-logo-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Scripture map */
+.sb-map {
+  display: grid;
+  gap: 0.25rem;
+}
+.sb-map-book {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.375rem;
+}
+.sb-map-book-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+.sb-map-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.sb-map-chapter {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 2px;
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color) calc(var(--sb-map-heat, 0) * 100%),
+    transparent
+  );
+  cursor: pointer;
+}
+.sb-map-chapter-here {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 1px;
+}
+.sb-about p {
+  margin: 0.5rem 0;
+}
+.sb-about h3 {
+  margin: 1rem 0 0.25rem;
+  font-size: 1rem;
+}
+.sb-legal {
+  font-size: 0.875rem;
+}
+
+/* The map: a dot for a chapter with a mark; the shade is the reads. */
+.sb-map-chapter {
+  position: relative;
+}
+.sb-map-chapter-marked::after {
+  content: "";
+  position: absolute;
+  inset: auto 2px 2px auto;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+/* Today: recent reading chips */
+.sb-recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sb-recent-chip {
+  border: 1px solid var(--sb-divider-color, #00000024);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+.sb-recent-chip:hover {
+  border-color: var(--sb-primary-color);
+}
+
+/* Your Content: this chapter / all chapters */
+.sb-content-scope {
+  display: inline-flex;
+  border: 1px solid var(--sb-divider-color, #00000024);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 0 1rem;
+}
+.sb-content-scope-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+}
+.sb-content-scope-active {
+  background: var(--sb-primary-color);
+  color: var(--sb-on-primary-color, #fff);
+}
+.sb-content-chapter-group {
+  margin: 0 0 0.75rem;
+}
+.sb-content-chapter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.75;
+  margin: 0.25rem 0;
+}
+
+/* Today: friend requests and the add / invite actions */
+.sb-friend-requests {
+  margin: 0 0 0.75rem;
+}
+.sb-friend-actions {
+  margin-top: 0.5rem;
+}
+
+/* Presence: a friend here now, and where */
+.sb-presence-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #2e9e5b;
+  margin-inline-end: 0.35rem;
+  vertical-align: middle;
+}
+.sb-presence-where {
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-size: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
+/* The places map */
+.sb-places-map-canvas {
+  height: min(60vh, 28rem);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--sb-divider-color, #eee);
+}
+/* Leaflet paints its controls white; in the reader's theme they follow light and dark like the map under them. */
+.sb-places-map .sb-places-map-canvas .leaflet-control-attribution,
+.sb-places-map .sb-places-map-canvas .leaflet-bar a {
+  background: color-mix(in srgb, var(--sb-background, #fff) 85%, transparent);
+  color: var(--sb-font-color, #333);
+}
+.sb-places-map .sb-places-map-canvas .leaflet-control-attribution a {
+  color: var(--sb-link-color, var(--sb-primary-color, #0078a8));
+}
+/* What a publisher said of a place, opened on tap: its picture, name, period and summary. */
+.sb-places-popup {
+  max-width: 300px;
+}
+.sb-places-popup-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.4rem;
+  border-radius: 4px;
+}
+.sb-places-popup p {
+  margin: 0.3rem 0 0;
+}
+.sb-places-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.sb-places-current {
+  font-weight: 600;
+}
+.sb-pane-header-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+/* Expanded to the full page: the map fills the page, what a publisher said of the tapped place in a column at its right. */
+.sb-app-pane-full > .sb-pane > .sb-places-map-full {
+  max-width: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  gap: 0;
+  height: calc(100dvh - 3.5rem);
+}
+.sb-places-map-full .sb-places-map-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sb-places-map-full .sb-places-map-canvas {
+  flex: 1;
+  height: auto;
+  min-height: 20rem;
+  border-radius: 0;
+}
+.sb-places-map-full .sb-places-map-stage > p {
+  margin: 0.25rem 0.75rem;
+}
+.sb-places-side {
+  overflow: auto;
+  padding: 0.75rem 1rem 6rem;
+  border-inline-start: 1px solid var(--sb-divider-color, #00000024);
+}
+.sb-places-side .sb-places-list {
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+.sb-places-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.sb-places-detail-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.sb-places-detail-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+}
+.sb-places-detail-summary {
+  margin: 0.5rem 0;
+}
+@media (max-width: 720px) {
+  .sb-app-pane-full > .sb-pane > .sb-places-map-full {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+  .sb-places-map-full .sb-places-map-canvas {
+    min-height: 50vh;
+  }
+  .sb-places-side {
+    border-inline-start: none;
+    border-top: 1px solid var(--sb-divider-color, #00000024);
+  }
+}
+
+/* Playlist items: the inline editor, kind icons, an embedded link in the player */
+.sb-item-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.sb-item-icon {
+  font-size: 1rem;
+  vertical-align: text-bottom;
+  margin-inline-end: 0.35rem;
+  opacity: 0.7;
+}
+.sb-link-embed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.75rem;
+  background: #000;
+}
+
+/* Bookmarks and saves: the inline editors */
+.sb-bookmark-swatches {
+  display: flex;
+  gap: 0.35rem;
+}
+.sb-content-folder {
+  margin: 0 0 0.5rem;
+}
+
+/* Typography a church theme sets, and the reader's own overrides (data attributes on <html>) */
+html {
+  font-size: var(--sb-ui-font-size, 100%);
+}
+html[data-sb-scale="s"] {
+  font-size: 90%;
+}
+html[data-sb-scale="l"] {
+  font-size: 112.5%;
+}
+html[data-sb-scale="xl"] {
+  font-size: 125%;
+}
+.sb-bible-reader {
+  line-height: var(--sb-reader-line-height, inherit);
+}
+.sb-chapter-content {
+  max-width: var(--sb-reader-max-width, none);
+  margin-inline: auto;
+}
+html[data-sb-line="compact"] .sb-bible-reader {
+  line-height: 1.45;
+}
+html[data-sb-line="relaxed"] .sb-bible-reader {
+  line-height: 1.95;
+}
+html[data-sb-line="loose"] .sb-bible-reader {
+  line-height: 2.5;
+}
+/* The old reader's Scripture Width control (ScriptureWidthField). */
+.sb-scripture-width {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.sb-customization-text {
+  grid-template-columns: 1fr;
+}
+.sb-customization-field-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.sb-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+/* Pane dividers: a thin draggable strip on each column boundary */
+.sb-pane-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  margin-left: -5px;
+  cursor: col-resize;
+  z-index: 5;
+  touch-action: none;
+}
+.sb-pane-divider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--sb-divider-color, #00000024);
+  transition: background 0.15s;
+}
+.sb-pane-divider:hover::after,
+.sb-pane-divider:active::after {
+  background: var(--sb-primary-color);
+}
+.sb-reader-toolbar-reader {
+  font: inherit;
+  font-size: 0.75rem;
+  max-width: 7rem;
+  margin-inline-start: 0.35rem;
+}
+
+/* Profiles: yours in Account, friends' in Today */
+.sb-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-profile-picture,
+.sb-friends-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--sb-divider-color, #00000014);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sb-friends-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-inline-end: 0.6rem;
+}
+.sb-profile-picture-empty,
+.sb-friends-avatar-empty {
+  opacity: 0.5;
+}
+.sb-friends-person-about {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Watch: the chat embed under the player */
+.sb-watch-chat {
+  width: 100%;
+  height: 22rem;
+  border: none;
+  border-radius: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.sb-connector {
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--sb-divider-color, #00000014);
+}
+
+.sb-voice-controls .material-symbols-outlined {
+  font-size: 1rem;
+  vertical-align: text-bottom;
+}
+
+/* Who is connected: the chip (sidebar footer, toolbar), the avatar, the tidied sign-in and signed-in cards */
+.sb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
+  color: var(--sb-primary-color);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.sb-avatar-s {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.sb-avatar-m {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.1rem;
+}
+.sb-sidebar-footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+/* The profile circle carries the count of changes still to send on its corner. */
+.sb-sidebar-profile-button {
+  position: relative;
+}
+.sb-sidebar-profile-button .sb-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+/* The old reader's bottom row: ⚙ Settings, then who is connected taking the rest. */
+.sb-sidebar-footer.sb-sidebar-bottom-actions {
+  gap: 0.25rem;
+}
+.sb-sidebar-bottom-actions .sb-connected-chip {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.sb-sidebar-bottom-actions-collapsed .sb-connected-chip {
+  flex: 0 0 auto;
+}
+.sb-connected-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  position: relative;
+}
+.sb-connected-chip:hover,
+.sb-connected-chip-active {
+  background: color-mix(in srgb, var(--sb-font-color) 7%, transparent);
+}
+.sb-connected-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+.sb-connected-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-connected-sub {
+  font-size: 0.7rem;
+  opacity: 0.65;
+}
+.sb-connected-chip-out .material-symbols-outlined {
+  font-size: 1.2rem;
+  color: var(--sb-primary-color);
+}
+.sb-connected-dot {
+  position: absolute;
+  top: 0.35rem;
+  left: 1.5rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+.sb-tabs-sidebar-collapsed .sb-connected-chip {
+  justify-content: center;
+  padding: 0.35rem 0;
+}
+.sb-account-who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.sb-account-who-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sb-account-sub {
+  font-size: 0.75rem;
+}
+.sb-signin-title {
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+.sb-signin-button {
+  width: 100%;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+.sb-signin-estate {
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-signin-card details {
+  margin-top: 0.5rem;
+}
+.sb-signin-card summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+.sb-people li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.sb-reader-toolbar-button .sb-avatar {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.7rem;
+}
+
+.sb-transcript-text {
+  max-height: 50vh;
+  overflow: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* The book picker's testament filter: a row of chips above the books, then a titled section per testament. */
+.sb-selector-testament-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+.sb-selector-testament + .sb-selector-testament {
+  margin-top: 1rem;
+}
+
+/* The verse toolbar as a right-click menu: opened at the pointer instead of docked over the bottom toolbar. */
+.sb-verse-toolbar-menu {
+  max-width: min(23rem, calc(100vw - 1rem));
+}
+.sb-verse-toolbar-menu .sb-verse-toolbar-tools {
+  flex-wrap: wrap;
+}
+
+/* Playlist history under the Playlists tab: one row per playlist, grouped by day. */
+.sb-play-history {
+  margin-top: 1.25rem;
+}
+.sb-play-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sb-play-history ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.sb-play-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.125rem 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--sb-divider-color, #00000014);
+}
+.sb-play-history-row > .sb-note-button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+}
+.sb-play-history-title {
+  font-weight: 600;
+}
+
+/* Account → Toolbar: one row per button, show/hide and move. */
+.sb-toolbar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-toolbar-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.sb-toolbar-list-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.125rem 0;
+  padding-inline-start: 0;
+  text-indent: 0;
+}
+.sb-toolbar-list-row .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* The guided tour: the step's element spotlit by a ring and a dimming shadow around it, a card beside it. */
+/* Above the book picker (1000), whose own tour spotlights the picker's parts. */
+.sb-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+}
+.sb-tour-spot {
+  position: fixed;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 2px var(--sb-primary-color, #e07a4a),
+    0 0 0 9999px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+.sb-tour-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.sb-tour-card {
+  position: fixed;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+  border-radius: 0.875rem;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+.sb-tour-card h3 {
+  margin: 0.125rem 0 0.375rem;
+  font-size: 1.0625rem;
+}
+.sb-tour-actions {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+.sb-tour-spacer {
+  flex: 1;
+}
+
+/* A shared page (/shared/…): a page of its own over the reader, centred and readable. */
+.sb-shared-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  overflow-y: auto;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+}
+.sb-shared-page {
+  position: relative;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 3rem 1rem 4rem;
+}
+.sb-shared-page h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.75rem;
+}
+.sb-shared-kind {
+  margin: 0;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.sb-shared-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.sb-shared-body {
+  line-height: 1.6;
+}
+.sb-shared-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: 0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* The plan editor: a day's name and its move/remove buttons on one row, readings as rows beneath. */
+.sb-plan-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-plan-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.sb-plan-edit-row .sb-note-editor {
+  flex: 1;
+  min-width: 8rem;
+}
+.sb-plan-edit-label {
+  flex: 1;
+  min-width: 0;
+}
+.sb-plan-edit-icon {
+  padding: 0.125rem 0.25rem;
+  font-size: 1.125rem;
+}
+.sb-plan-edit-cadences {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+/* Cropping a picture: the window of the target's shape (round for a profile picture) on a checkerboard, so a logo's
+   transparent margin shows. */
+.sb-crop-window {
+  position: relative;
+  margin: 0.5rem auto;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  cursor: grab;
+  touch-action: none;
+  max-width: 100%;
+  background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+}
+.sb-crop-window-round {
+  border-radius: 50%;
+}
+.sb-crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sb-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sb-crop-zoom input {
+  flex: 1;
+}
+.sb-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+  gap: 0.5rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.sb-gallery-item {
+  padding: 0;
+  border: 1px solid var(--sb-border-color, #ddd);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  background: none;
+}
+.sb-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Account → Text: a section's name, then its font, weight and italics on one row (wrapping on a phone). */
+.sb-text-style-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.25rem 0;
+}
+.sb-text-style-name {
+  flex: 0 0 5.5rem;
+}
+.sb-text-style-row select {
+  flex: 1;
+  min-width: 7rem;
+  width: auto;
+}
+
+/* Theme previews (the old CustomizationPreviews' styles, copied): a variant's "Aa" thumbnail and its miniature reader. */
+.sb-cz-theme-thumb {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 4rem;
+  padding: 0 0.875rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+.sb-cz-theme-thumb-aa {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.sb-cz-theme-thumb-bars {
+  display: flex;
+  gap: 0.25rem;
+}
+.sb-cz-theme-thumb-bars > span {
+  width: 1.25rem;
+  height: 0.3125rem;
+  border-radius: 1rem;
+}
+.sb-cz-live-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.sb-cz-live-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.sb-cz-live-preview-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+.sb-cz-live-preview-bar {
+  width: 3rem;
+  height: 0.25rem;
+  border-radius: 1rem;
+  background: currentColor;
+  opacity: 0.3;
+}
+.sb-cz-live-preview-reader {
+  position: relative;
+  padding: 0.875rem 1rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb, black, transparent 92%);
+}
+.sb-cz-live-preview-book {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sb-cz-live-preview-chapter {
+  margin: 0.125rem 0 0.375rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+.sb-cz-live-preview-verse {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.sb-cz-live-preview-verse mark {
+  padding: 0 0.125rem;
+  border-radius: 0.1875rem;
+}
+.sb-cz-live-preview-link {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.sb-cz-live-preview-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  /* Stays clear of the floating button in the corner. */
+  padding-inline-end: 2.5rem;
+}
+.sb-cz-live-preview-buttons > span {
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.sb-cz-live-preview-fab {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  bottom: 0.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, black, transparent 86%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+/* Account → Church theme: its variants as a row of thumbnails, plus Automatic (follows light and dark). */
+.sb-variant-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.sb-variant-option {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  width: 5.5rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.sb-variant-option .sb-cz-theme-thumb {
+  height: 3.25rem;
+}
+.sb-variant-option-on {
+  border-color: var(--sb-primary-color);
+  box-shadow: 0 0 0 1px var(--sb-primary-color);
+}
+.sb-variant-auto {
+  align-items: center;
+  font-size: 1.5rem;
+}
+.sb-customization-variant-head,
+.sb-customization-add-variant {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.5rem 0;
+}
+.sb-customization-variant-name {
+  flex: 1;
+  min-width: 8rem;
+}
+
+/* Today as a side pane: the copied today.css lays its container out as a ROW (the old full-page Today wrapped one
+   centred column); here the header and every section are its children, so it is a plain column like any pane. */
+.sb-pane.sb-today-container {
+  display: block;
+  height: auto;
+  overflow-y: visible;
+  padding-bottom: 6rem;
+}
+/* A notice in a pane section: what is wrong in words, and the one thing to do about it. */
+.sb-pane-notice {
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e07a4a),
+    transparent 90%
+  );
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.sb-pane-notice p {
+  margin: 0 0 0.5rem;
+}
+
+/* Today and Friends in the side pane: section titles at the pane's scale (the copied Your Content size is for a full
+   page), and room between sections so a section's buttons never touch the next title. */
+.sb-pane.sb-today-container .sb-content-section,
+.sb-friends-pane .sb-content-section {
+  margin-bottom: 1.5rem;
+}
+.sb-pane.sb-today-container .sb-content-section-title,
+.sb-friends-pane .sb-content-section-title {
+  font-size: 1.0625rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.sb-friend-actions {
+  margin-top: 0.5rem;
+}
+
+/* A PHONE: THE OLD READER'S PHONE SHELL (PhoneNav.tsx, the chapter header below). The chapter pill and the five
+   tabs sit fixed along the bottom, clear of the home bar; the page leaves room under the text for them; the verse
+   actions sit just above the chapter pill. The desktop bar is not drawn. */
+@media (max-width: 720px) {
+  .sb-reader-toolbar-desk,
+  .sb-bible-reader-header {
+    display: none;
+  }
+  .sb-phone-nav .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
+    padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* The old reader's play: its colour, the glyph cut out in white. */
+  .sb-phone-nav {
+    --sb-reader-floating-nav-play-background: var(--sb-primary-color);
+    --sb-reader-floating-nav-play-glyph: #fff;
+  }
+  /* Its phone margins: the text clear of the edges by the width of its note gutter. */
+  .sb-bible-reader .sb-chapter-content {
+    padding-inline: 2rem;
+  }
+  .sb-app-main {
+    padding-top: 0;
+    padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .sb-verse-toolbar-docked {
+    top: auto;
+    bottom: calc(8.25rem + env(safe-area-inset-bottom, 0px));
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    max-width: none;
+    justify-content: center;
+  }
+  .sb-verse-toolbar-docked .sb-verse-toolbar-tools {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.25rem;
+  }
+  .sb-mobile-more-menu {
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+  }
+  .sb-floating-search-panel {
+    bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* On a phone the chapter and the Discover card stack at the screen's width (the old reader lays them out as plain
+     blocks there); a centred column would let either grow to its widest line and run off the edge. */
+  .sb-bible-reader-content {
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+  .sb-bible-reader-main-content {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* The Discover card follows the chapter on a phone, a deliberate scroll away (the old reader's mobile margins). */
+  .sb-bible-reader-discover-panel {
+    margin: 6rem 1rem 2rem;
+    justify-self: auto;
+    align-self: stretch;
+    flex: none;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+  .sb-discover-content-panel {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+@media (min-width: 721px) {
+  .sb-phone-nav,
+  .sb-bible-reader-mobile-header,
+  .sb-bible-reader-mobile-content-title {
+    display: none;
+  }
+}
+
+/* A picture held over the button: it takes the drop. */
+.sb-picture-drop {
+  outline: 2px dashed var(--sb-primary-color, #e07a4a);
+  outline-offset: 2px;
+}
+
+/* A PHONE USES THE WHOLE SCREEN. The page itself scrolls (not a box inside it), so Safari and Chrome fold their own
+   bars away as the reader reads; the reader runs edge to edge without the desktop frame; a pane is a full screen of
+   its own with its close button, clear of the notch and the home bar; the menu button opens the sidebar drawer. */
+@media (max-width: 720px) {
+  .sb-app-main {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .sb-pane-shell,
+  .sb-pane-reader-outer,
+  .sb-pane-reader,
+  .sb-pane-reader > .sb-bible-reader {
+    overflow: visible;
+    flex: none;
+    min-height: 0;
+  }
+  .sb-pane-shell,
+  .sb-pane-shell-active {
+    border-color: transparent;
+  }
+  .sb-bible-reader {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  .sb-app-pane {
+    inset: 0;
+    max-height: none;
+    border-top: none;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 105;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overscroll-behavior: contain;
+  }
+}
+
+.sb-fullscreen-steps {
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .sb-selector-overlay {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* The old reader locked the document in place on a phone (base.css: html, body fixed, overflow hidden) so a pull past
+   its bottom toolbar showed no white gap — but a page that never scrolls never lets Safari or Chrome fold their own
+   bars away. The page scrolls now; the gap is closed by giving the page the reader's colour and no overscroll bounce. */
+@media (max-width: 720px) {
+  html,
+  body {
+    position: static;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    overscroll-behavior-y: none;
+    background: var(--sb-reader-background, var(--sb-background));
+  }
+}
+/* Something the reader tapped is still working: a line moving across the very top, over everything. */
+.sb-activity-bar {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 2000;
+  overflow: hidden;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--sb-primary-color) 20%, transparent);
+}
+.sb-activity-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--sb-primary-color);
+  animation: sb-activity-slide 1.1s ease-in-out infinite;
+}
+@keyframes sb-activity-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-activity-bar::before {
+    width: 100%;
+    animation: sb-activity-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes sb-activity-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+/* Live session: the Session ID and Code in a two-column list, each value with its own Copy. */
+.sb-session-ids {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.375rem 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+.sb-session-ids dt {
+  font-weight: 600;
+}
+.sb-session-ids dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.sb-session-ids code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+}
+.sb-session-ids code.sb-session-code {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.sb-session-copy {
+  flex: none;
+}
+
+/* A short line that goes by itself, above the foot of the screen and clear of the home bar. */
+.sb-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1500;
+  max-width: calc(100vw - 2rem);
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  background: var(--sb-font-color);
+  color: var(--sb-reader-background, #fff);
+  font-size: 0.9375rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+/* Friends: requests to answer, a friend being added at the Home, add by name, and your friend link. */
+.sb-friend-subtitle {
+  display: block;
+  margin: 0.75rem 0 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.sb-friend-request {
+  gap: 0.5rem;
+}
+.sb-friend-request .sb-friends-person-text {
+  flex: 1;
+  min-width: 0;
+}
+.sb-friend-tools {
+  margin-top: 0.5rem;
+}
+.sb-friend-add-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.sb-friend-add-row .sb-note-editor {
+  flex: 1;
+  min-width: 0;
+}
+.sb-friend-link-url {
+  display: block;
+  margin: 0.375rem 0;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--sb-background);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.sb-friend-invite-agent {
+  overflow-wrap: anywhere;
+}
+
+/* The drawer's own way out, top right: a phone has no other control in reach while it covers the toolbar. */
+.sb-sidebar-drawer-close {
+  margin-inline-start: auto;
+}
+
+/* The scripture check: a badge beside the translation, a mark on each checked verse number, an alarm on a verse
+   whose words do not match what was published. */
+.sb-scripture-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline-start: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.sb-scripture-check .material-symbols-outlined {
+  font-size: 1rem;
+}
+.sb-scripture-check-ok {
+  color: #1a7f4b;
+  border-color: color-mix(in srgb, #1a7f4b 35%, transparent);
+}
+.sb-scripture-check-bad {
+  color: #b42318;
+  border-color: color-mix(in srgb, #b42318 45%, transparent);
+  background: color-mix(in srgb, #b42318 8%, transparent);
+}
+.sb-scripture-check-busy,
+.sb-scripture-check-none {
+  color: var(--sb-muted-color, #6b7280);
+  border-color: var(--sb-divider-color, #00000024);
+}
+/* A verse that checks out is drawn as any verse (the header badge says Verified); only a failed one is marked. */
+.sb-verse-number.sb-verse-check-text-differs,
+.sb-verse-number.sb-verse-check-not-in-corpus {
+  color: #b42318;
+  font-weight: 700;
+}
+.sb-verse-check-text-differs::after,
+.sb-verse-check-not-in-corpus::after {
+  content: "⚠";
+  margin-inline-start: 0.125rem;
+}
+.sb-scripture-check-sheet .sb-scripture-check-list {
+  margin: 0.5rem 0;
+  padding-inline-start: 1.25rem;
+  line-height: 1.5;
+}
+.sb-scripture-check-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+.sb-scripture-check-facts dt {
+  font-weight: 600;
+}
+.sb-scripture-check-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .sb-scripture-check-label {
+    display: none;
+  }
+}
+
+/* The book picker's books and translation pill are buttons where the old reader used divs (keyboard and screen
+   readers reach them); its stylesheet assumes a div, so the button's own dress is taken off — at no specificity, so
+   every rule of that stylesheet still wins. */
+:where(
+  button.sidebar-itm,
+  button.sidebar-translation-selector,
+  button.sb-selector-mobile-close
+) {
+  font: inherit;
+  text-align: start;
+  background-color: transparent;
+  border: 0;
+}
+:where(button.sidebar-translation-selector) {
+  border: 1px solid var(--sb-divider-color);
+}
+
+/* Your content's playlist and plan rows: the whole row opens it, its ⋯ beside (the old reader's Discover row). */
+.sb-content-work {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.sb-content-work-thumb {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+  color: var(--sb-primary-color);
+}
+.sb-content-work-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sb-content-dialog {
+  max-width: min(32rem, calc(100vw - 2rem));
+}
+
+/* In the Discover card the items are compact rows, as the old reader lists them there: the icon beside the title. */
+.sb-discover-content-panel .sb-discover-item {
+  padding: 0;
+}
+.sb-discover-content-panel .sb-discover-item-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.sb-discover-content-panel .sb-discover-item-icon {
+  font-size: 1.125rem;
+  opacity: 0.6;
+}
+.sb-discover-content-panel .sb-discover-item-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The empty slot for a colour of your own: the dashed circle with a + (its colour chooser is the hidden input). */
+.sb-verse-toolbar-add-color {
+  cursor: pointer;
+}
+.sb-verse-toolbar-add-color .sb-verse-toolbar-color-slot {
+  display: inline-grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+.sb-verse-toolbar-add-color .material-symbols-outlined {
+  font-size: 0.875rem;
+}
+
+/* An embed: the chapter bar along the bottom at any width (PhoneNav's ChapterNav), the text clear of it. */
+.sb-reader-toolbar-wrap-embed {
+  --sb-reader-floating-nav-play-background: var(--sb-primary-color);
+  --sb-reader-floating-nav-play-glyph: #fff;
+}
+.sb-app-embed .sb-bible-reader-content {
+  padding-bottom: 4.5rem;
+}
+/* The note an emailed invitation carried, in the inviter's words. */
+.sb-friend-invite-note {
+  margin: 0.5rem 0;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 3px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  opacity: 0.85;
+}
+.sb-friend-invite-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-scripture-margins-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* An invited person's welcome: the inviter's initial beside one plain sentence, one wide button, small print. */
+.sb-invite-welcome {
+  max-width: 28rem;
+}
+.sb-invite-who {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+.sb-invite-initial {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 72%);
+  color: var(--sb-primary-color);
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+.sb-invite-lead {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.sb-invite-continue {
+  width: 100%;
+  justify-content: center;
+  padding-block: 0.75rem;
+  font-size: 1rem;
+}
+.sb-invite-fineprint {
+  margin: 0.25rem 0 0;
+  text-align: center;
+}
+
+/* Your Home profile in the reader: first and last name side by side, a line saying where they are kept. */
+.sb-profile-name-row {
+  display: flex;
+  gap: 8px;
+}
+.sb-profile-name-row > input {
+  flex: 1;
+  min-width: 0;
+}
+.sb-profile-home-note {
+  margin: 0 0 6px;
+}

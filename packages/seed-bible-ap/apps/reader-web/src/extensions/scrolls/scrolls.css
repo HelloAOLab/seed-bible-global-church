@@ -1,0 +1,42 @@
+/* A Dead Sea Scroll line: which scroll and line, the verses, the Hebrew large and right to left, the English draft,
+   its state, the publisher's link and credit. */
+.sb-scroll-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-scroll-verses {
+  margin: 0;
+}
+.sb-scroll-hebrew {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
+  line-height: 1.7;
+  font-family:
+    "SBL Hebrew", "Ezra SIL", "Noto Serif Hebrew", "Times New Roman", serif;
+  text-align: right;
+}
+.sb-scroll-marks {
+  margin: 0;
+}
+.sb-scroll-subhead {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+.sb-scroll-english {
+  margin: 0;
+  line-height: 1.6;
+}
+.sb-scroll-status {
+  margin: 0;
+  color: var(--sb-text-secondary, inherit);
+}
+.sb-scroll-source {
+  align-self: flex-start;
+  text-decoration: none;
+}
+.sb-scroll-credit {
+  margin-top: 0.5rem;
+  white-space: pre-line;
+}

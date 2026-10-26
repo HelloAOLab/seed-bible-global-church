@@ -42,6 +42,8 @@ export default defineConfig([
     "**/dist/**",
     "**/typings/**",
     "**/obsolete/**",
+    // Cloudflare Workers + Vite project with its own tsconfig and typecheck (`pnpm --filter @seed-bible/ap typecheck`).
+    "packages/seed-bible-ap/**",
     "tsc-silent.config.cjs",
     "jest.config.cjs",
     "babel.config.cjs",

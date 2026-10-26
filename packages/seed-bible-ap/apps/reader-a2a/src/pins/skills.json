@@ -1,0 +1,73 @@
+{
+  "pinnedAt": "2026-10-22T01:38:37.171Z",
+  "registry": "https://skills-a2a-production.richardpedersen3.workers.dev",
+  "domain": "seed",
+  "archetypes": {
+    "seed-reader": {
+      "digest": "0x62111ac9bc9037e92a61b66f0fc32d8a917ee707e90d7080d2bebfd9eec02ff9",
+      "tools": 7,
+      "warnings": 4
+    },
+    "seed-publisher": {
+      "digest": "0x7bd91626b87fd970ca512ad64d81016fdf3cd9c29dd596b4dea394c914435491",
+      "tools": 2,
+      "warnings": 0
+    },
+    "seed-workspace": {
+      "digest": "0x848a2554b565f6e7752ae60520999b1f7fff4c724dbc99885f39f2cdc0fafdc9",
+      "tools": 1,
+      "warnings": 0
+    }
+  },
+  "skills": {
+    "skill:seed/annotation-put": {
+      "version": "0.1.0",
+      "contractDigest": "0x0dc217334c3f4aa0021ca6bc7afc9e8f6e41c34356f821a71b89aeff6ad4016a",
+      "capability": "seed.annotation.put",
+      "publishedVersion": 2,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/bookmark-put": {
+      "version": "0.1.0",
+      "contractDigest": "0xb67004bab40d434cef36e1ced3ff2ddc612155302867551399028f215ee7db28",
+      "capability": "seed.bookmark.put",
+      "publishedVersion": 1,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/bucket-merge": {
+      "version": "0.2.0",
+      "contractDigest": "0x49449643cb9626959ca31daef0156f2d45d3d1327782efde8e84f429d38f4170",
+      "capability": "seed.bucket.merge",
+      "publishedVersion": 2,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/hello": {
+      "version": "0.1.0",
+      "contractDigest": "0xa526fa5ab991c1c5fb4d0bf7a69c1569823f8933da713a8b8899b96254b79d0a",
+      "capability": "seed.hello",
+      "publishedVersion": 1,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/highlight-put": {
+      "version": "0.1.0",
+      "contractDigest": "0x9a0b8f2f51ed782b8b94593a54e4a354b4ef37729a74680c5517a044314619cc",
+      "capability": "seed.highlight.put",
+      "publishedVersion": 1,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/publish-slice": {
+      "version": "0.1.0",
+      "contractDigest": "0xd5de470325356a0b0c04564c966b45248f8f3c64e8d31c13daf95b8560ffb161",
+      "capability": "seed.publish.slice",
+      "publishedVersion": 1,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    },
+    "skill:seed/reading-position-set": {
+      "version": "0.1.0",
+      "contractDigest": "0x5105d5edf6d054734bb49022ca1bca93023b916a448f97b5e8371a6d2878c053",
+      "capability": "seed.reading.position.set",
+      "publishedVersion": 1,
+      "owner": "eip155:34348:0x6142b0fca982f6701cf2248bf368ab44a48c5725"
+    }
+  }
+}

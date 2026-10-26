@@ -1,0 +1,507 @@
+// THE FLOW HARNESS — Playwright over the deployed reader (or a local one): a fresh browser context per flow so
+// marks never bleed between flows, the few things every flow does (open a chapter, get past the welcome dialog,
+// select a verse, press a toolbar button, sign in as one of the Home's sample people), and the result shape the
+// runner (scripts/e2e.ts) writes into docs/e2e-results.* and the training manual's Test column reads.
+import {
+  chromium,
+  type Browser,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from "playwright";
+
+export const BASE = (
+  process.env["E2E_BASE"] ?? "https://seed-reader.faithnet.io"
+).replace(/\/$/, "");
+/** The reader agent the page talks to (its own origin, for a flow that asks it directly). */
+export const A2A = (
+  process.env["E2E_A2A"] ?? "https://seed-reader-a2a.faithnet.io"
+).replace(/\/$/, "");
+
+export interface FlowResult {
+  id: string;
+  section: string;
+  title: string;
+  /** What the flow checks, in one line — what a tester would do by hand. */
+  checks: string;
+  mark: "✅" | "❌" | "⏭️";
+  note: string;
+  ms: number;
+}
+
+export interface Flow {
+  id: string;
+  section: string;
+  title: string;
+  checks: string;
+  /** The training manual's feature rows this flow tests (their first cell, exactly); the runner writes its mark there. */
+  rows?: string[];
+  /** The flow's budget in ms (default 120 s); publishing, two-device sync and transcription take longer. */
+  timeoutMs?: number;
+  /** Skip with a reason (a feature that cannot be driven headless, say). */
+  skip?: string;
+  run: (ctx: FlowContext) => Promise<string | void>;
+}
+
+export class FlowContext {
+  readonly logs: string[] = [];
+  constructor(
+    readonly browser: Browser,
+    readonly context: BrowserContext,
+    readonly page: Page
+  ) {
+    this.watch(page);
+  }
+
+  /** The guided tour's card on each page, dismissed whenever it appears (keepTours lets the tour's own flow see it). */
+  private tourCards = new WeakMap<
+    Page,
+    { card: Locator; added: Promise<void> }
+  >();
+
+  watch(page: Page) {
+    // A contextual tour shows the first time the book picker or the translation list opens; a flow about something
+    // else dismisses it the way a reader would (Esc) and carries on.
+    const card = page.locator(".sb-tour-card");
+    const added = page
+      .addLocatorHandler(
+        card,
+        async () => {
+          // Only while it still shows: an Esc after it has gone would close whatever the flow opened.
+          if (await card.isVisible()) await page.keyboard.press("Escape");
+        },
+        { noWaitAfter: true }
+      )
+      .catch(() => undefined);
+    this.tourCards.set(page, { card, added });
+    page.on("pageerror", (e) => this.logs.push(`[pageerror] ${e.message}`));
+    page.on("console", (m) => {
+      if (m.type() === "error") this.logs.push(`[console.error] ${m.text()}`);
+    });
+  }
+
+  /** Stop dismissing tours on this page: the flow is about the tour. */
+  async keepTours(page: Page = this.page): Promise<void> {
+    const held = this.tourCards.get(page);
+    if (!held) return;
+    await held.added;
+    await page.removeLocatorHandler(held.card);
+  }
+
+  /** A second device: its own storage, same browser. */
+  async secondPage(): Promise<Page> {
+    const ctx = await this.browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      permissions: ["microphone", "camera"],
+    });
+    const page = await ctx.newPage();
+    this.watch(page);
+    return page;
+  }
+
+  async open(path: string, page: Page = this.page): Promise<void> {
+    // tsx names the functions a flow hands to page.evaluate with a `__name` helper the page does not have.
+    await page.addInitScript({ content: "window.__name = (f) => f;" });
+    await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
+    await this.dismissWelcome(page);
+    await page.locator(".sb-app:not(.sb-app-ssr)").waitFor({ timeout: 20000 });
+  }
+
+  /** Turn down the first visit's tour offer, and the install offer that can follow it. */
+  async dismissWelcome(page: Page = this.page): Promise<void> {
+    const noThanks = page.getByRole("button", { name: /no, thanks/i });
+    try {
+      await noThanks.waitFor({ timeout: 4000 });
+      await noThanks.click();
+    } catch {
+      return; /* no offer this time (a returning device) */
+    }
+    const later = page.getByRole("button", { name: /maybe later|got it/i });
+    if (await later.count()) await later.first().click();
+  }
+
+  /** Let a tour that is about to show come up, and skip it (Esc closes a tour and nothing else). */
+  async settleTours(page: Page = this.page): Promise<void> {
+    await page.waitForTimeout(700);
+    const card = page.locator(".sb-tour-card");
+    if (await card.isVisible().catch(() => false)) {
+      await page.keyboard.press("Escape");
+      await card.waitFor({ state: "detached", timeout: 3000 }).catch(() => {});
+    }
+  }
+
+  /** Tap a verse at its number (its text when it has none drawn). */
+  async tapVerse(
+    n: number,
+    page: Page = this.page,
+    opts: { shift?: boolean } = {}
+  ): Promise<void> {
+    const num = this.verse(n, page).locator(".sb-verse-number").first();
+    const mods = opts.shift ? { modifiers: ["Shift" as const] } : {};
+    // A noted verse's number opens its note; its words start just after it.
+    const noted = await num
+      .evaluate((n) => n.classList.contains("sb-verse-number-annotated"))
+      .catch(() => false);
+    if (noted) {
+      await num.evaluate((n) => n.scrollIntoView({ block: "center" }));
+      await page.waitForTimeout(200);
+      const box = (await num.boundingBox())!;
+      if (opts.shift) await page.keyboard.down("Shift");
+      await page.mouse.click(box.x + box.width + 10, box.y + box.height / 2);
+      if (opts.shift) await page.keyboard.up("Shift");
+    } else if (await num.isVisible().catch(() => false)) await num.click(mods);
+    else
+      await this.verse(n, page).click({ position: { x: 40, y: 8 }, ...mods });
+  }
+
+  verse(n: number, page: Page = this.page): Locator {
+    return page
+      .locator(`.sb-bible-reader-active [data-verse-number="${n}"]`)
+      .first();
+  }
+
+  /** Select a verse by tapping its number, which is always where the verse starts (a verse that starts mid-line has
+   *  the one before it at its left edge; blank space in a poetry line does not select, by design). */
+  async selectVerse(n: number, page: Page = this.page): Promise<void> {
+    await this.verse(n, page).waitFor({ timeout: 20000 });
+    await this.tapVerse(n, page);
+    await page.locator(".sb-verse-toolbar").waitFor({ timeout: 5000 });
+    await this.settled(page.locator(".sb-verse-toolbar"));
+  }
+
+  /** The verse toolbar's Highlight, then a colour (by its place in the picker). */
+  async pickColor(n: number, page: Page = this.page): Promise<void> {
+    const trigger = page.locator(".sb-verse-toolbar-highlight-trigger:visible");
+    if (await trigger.count()) await trigger.first().click();
+    await page.locator(".sb-verse-toolbar-color-button").nth(n).click();
+  }
+
+  /** The verse toolbar's Highlight, then Clear. */
+  async clearHighlight(page: Page = this.page): Promise<void> {
+    const trigger = page.locator(".sb-verse-toolbar-highlight-trigger:visible");
+    if (await trigger.count()) await trigger.first().click();
+    await page.locator(".sb-verse-toolbar-clear").click();
+  }
+
+  /** Extensions → Available → the named one's Install (nothing when it is already installed). */
+  async installExtension(scope: Locator, name: string): Promise<void> {
+    const installed = scope.locator(".sb-extensions-tab", {
+      hasText: /installed/i,
+    });
+    await installed.click();
+    const row = scope.locator(".sb-extension-row", {
+      has: scope.page().locator(".sb-extension-name", { hasText: name }),
+    });
+    if (await row.count()) return;
+    await scope
+      .locator(".sb-extensions-tab", { hasText: /available/i })
+      .click();
+    await row.getByRole("button", { name: "Install" }).click();
+    await scope
+      .locator(".sb-extensions-tab", { hasText: /installed/i })
+      .click();
+    await row.waitFor({ timeout: 5000 });
+  }
+
+  /** Answer a "Delete …?" check when one comes up (playlists and plans ask first, as the old reader does). */
+  async confirmDelete(page: Page = this.page): Promise<void> {
+    const box = page.locator(".sb-confirm-delete").last();
+    if (
+      !(await box.waitFor({ timeout: 2500 }).then(
+        () => true,
+        () => false
+      ))
+    )
+      return;
+    await box.locator(".sb-note-button-danger").click();
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
+  /** A note's ⋮ → an item (Delete answers its confirmation too). */
+  async noteAction(
+    card: Locator,
+    item: RegExp,
+    page: Page = this.page
+  ): Promise<void> {
+    await card.locator(".sb-annotation-item-menu").first().click();
+    await page.getByRole("menuitem", { name: item }).first().click();
+    if (item.test("Delete")) {
+      const confirm = page.getByRole("dialog", { name: "Delete annotation?" });
+      await confirm.waitFor({ timeout: 5000 });
+      await confirm.getByRole("button", { name: /^delete$/i }).click();
+      await confirm.waitFor({ state: "detached", timeout: 5000 });
+    }
+  }
+
+  /** The save window: tick the named folders (making any that are new), then Save — or Remove from all folders. */
+  async savePicker(
+    opts: { folders?: string[]; remove?: boolean } = {},
+    page: Page = this.page
+  ): Promise<void> {
+    const box = page.locator(".sb-save-picker");
+    await box.waitFor({ timeout: 5000 });
+    if (opts.remove) {
+      await box.locator(".sb-save-picker-remove").click();
+    } else {
+      for (const f of opts.folders ?? []) {
+        const row = box.locator(".sb-save-picker-category", { hasText: f });
+        if (await row.count()) {
+          if ((await row.first().getAttribute("aria-checked")) !== "true")
+            await row.first().click();
+          continue;
+        }
+        await box.locator(".sb-save-picker-add-new").click();
+        await box.locator(".sb-save-picker-new-input").last().fill(f);
+        await box.locator(".sb-save-picker-stage-folder").click();
+      }
+      await box.locator(".sb-save-picker-save").click();
+    }
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
+  /** The bookmark window: place a new bookmark here (the offered one, or + New bookmark), or remove them all. */
+  async bookmarkPicker(
+    opts: { remove?: boolean } = {},
+    page: Page = this.page
+  ): Promise<void> {
+    const box = page.locator(".sb-bookmark-picker");
+    await box.waitFor({ timeout: 5000 });
+    if (opts.remove) {
+      const bins = box.locator(
+        ".sb-bookmark-picker-row .sb-bookmark-picker-remove"
+      );
+      while (await bins.count()) {
+        const n = await bins.count();
+        await bins.first().click();
+        for (let i = 0; i < 20 && (await bins.count()) === n; i++)
+          await page.waitForTimeout(100);
+      }
+      await page.locator(".sb-footnote-modal-close").first().click();
+    } else {
+      if (!(await box.locator(".sb-bookmark-picker-save").count()))
+        await box.locator(".sb-bookmark-add-new").click();
+      await box.locator(".sb-bookmark-picker-save").click();
+    }
+    await box.waitFor({ state: "detached", timeout: 5000 });
+  }
+
+  /** Wait until an element stops moving (the verse toolbar slides into place after it appears). */
+  async settled(locator: Locator, timeout = 3000): Promise<void> {
+    const t0 = Date.now();
+    let last = "";
+    for (;;) {
+      const b = await locator.boundingBox();
+      const now = b
+        ? `${Math.round(b.x)},${Math.round(b.y)},${Math.round(b.width)}`
+        : "";
+      if (now && now === last) return;
+      last = now;
+      if (Date.now() - t0 > timeout) return;
+      await locator.page().waitForTimeout(150);
+    }
+  }
+
+  /** A bottom-toolbar button by its label (aria-label), e.g. "Notes", "Your content", "Today". */
+  toolbar(label: string | RegExp, page: Page = this.page): Locator {
+    return page
+      .locator(".sb-reader-toolbar .sb-reader-toolbar-button")
+      .filter({ has: page.locator(`[aria-label]`) })
+      .or(page.locator(".sb-reader-toolbar .sb-reader-toolbar-button"))
+      .filter({ hasText: label })
+      .first()
+      .or(
+        page.locator(`.sb-reader-toolbar button[aria-label="${label}"]`).first()
+      );
+  }
+
+  /** Discover's sources start folded: tap one's header open, as a person would (no-op when it is open). */
+  async openSource(
+    label: string | RegExp,
+    page: Page = this.page
+  ): Promise<void> {
+    const head = page
+      .locator(".sb-discover-source-head", { hasText: label })
+      .first();
+    await head.waitFor({ timeout: 30000 });
+    if ((await head.getAttribute("aria-expanded")) !== "true")
+      await head.click();
+  }
+
+  async pressToolbar(label: string, page: Page = this.page): Promise<void> {
+    // Only what is on screen: the phone's and the desktop's buttons are both in the page, CSS shows one set.
+    const byAria = page
+      .locator(`.sb-reader-toolbar button[aria-label="${label}"]:visible`)
+      .first();
+    if (await byAria.count()) {
+      await byAria.click();
+      return;
+    }
+    // A phone: its tabs (Sign in is the You tab), then its More sheet.
+    const phoneMore = page
+      .locator(".sb-phone-more-tab > button:visible")
+      .first();
+    if (await phoneMore.count()) {
+      const tab = page
+        .locator(
+          `.sb-phone-nav button[aria-label="${label === "Sign in" ? "You" : label}"]:visible`
+        )
+        .first();
+      if (await tab.count()) {
+        await tab.click();
+        return;
+      }
+      await phoneMore.click();
+      await page
+        .locator(`.sb-mobile-more-menu button:visible:has-text("${label}")`)
+        .first()
+        .click();
+      return;
+    }
+    const more = page
+      .locator(".sb-reader-toolbar-more-button button:visible")
+      .first();
+    if (await more.count()) await more.click();
+    await page
+      .locator(
+        `.sb-reader-toolbar-more-menu button[aria-label="${label}"]:visible, .sb-reader-toolbar-more-menu button:visible:has-text("${label}")`
+      )
+      .first()
+      .click();
+  }
+
+  /** The account pane, signed in or not: signed in, Profile (the sidebar's profile circle, the phone's account button)
+   *  → Account settings; signed out, More → Sign in. */
+  async openAccount(page: Page = this.page): Promise<Locator> {
+    const signedIn = !!(await page.evaluate(() =>
+      document.querySelector(".sb-sidebar-profile-button-in")
+    ));
+    const phoneAccount = page
+      .locator('.sb-reader-toolbar button[aria-label="Profile"]:visible')
+      .first();
+    if (signedIn) {
+      if (await phoneAccount.count()) await phoneAccount.click();
+      else
+        await page
+          .locator(".sb-sidebar-profile-button:visible")
+          .first()
+          .click();
+      await page
+        .locator(".sb-profile-row", { hasText: "Account settings" })
+        .click();
+      await page.locator(".sb-account-pane").waitFor({ timeout: 5000 });
+    } else await this.pressToolbar("Sign in", page);
+    await this.pane(page).waitFor({ timeout: 5000 });
+    return this.pane(page);
+  }
+
+  /** The Library pane on one of its tabs. */
+  async openLibrary(
+    tab: "Playlists" | "Reading plans" | "Customizations",
+    page: Page = this.page
+  ): Promise<Locator> {
+    await this.pressToolbar("Library", page);
+    await this.pane(page).waitFor({ timeout: 5000 });
+    await this.pane(page).getByRole("tab", { name: tab }).click();
+    return this.pane(page);
+  }
+
+  /** A checkbox in a pane by the text of its label. */
+  check(scope: Locator, label: string | RegExp): Locator {
+    return scope
+      .locator("label", { hasText: label })
+      .locator('input[type="checkbox"]')
+      .first();
+  }
+
+  pane(page: Page = this.page): Locator {
+    return page.locator(".sb-app-pane").first();
+  }
+
+  async paneText(page: Page = this.page): Promise<string> {
+    return (
+      await this.pane(page)
+        .innerText()
+        .catch(() => "")
+    ).replace(/\s+/g, " ");
+  }
+
+  /** Sign in as one of the Home's sample people (Quick Connect): the account pane's list. */
+  async signInAsSample(
+    preferred = /seed ?reader/i,
+    page: Page = this.page,
+    opts: { adopt?: "add" | "discard" | "none"; paneOpen?: boolean } = {}
+  ): Promise<string> {
+    if (!opts.paneOpen) await this.pressToolbar("Sign in", page);
+    await this.pane(page).waitFor({ timeout: 5000 });
+    // Sign-in asks for the terms first, as the old reader's did.
+    const terms = page.locator("#sb-login-terms");
+    if (await terms.count()) await terms.check();
+    const details = page.locator(".sb-app-pane details").first();
+    await details.waitFor({ timeout: 15000 });
+    if (!(await details.getAttribute("open")))
+      await details.locator("summary").click();
+    const buttons = details.locator("button");
+    await buttons.first().waitFor({ timeout: 15000 });
+    const names = await buttons.allInnerTexts();
+    let idx = names.findIndex((n) => preferred.test(n));
+    if (idx < 0) idx = 0;
+    await buttons.nth(idx).click();
+    // The flow answers "Sync device content?" itself.
+    if (opts.adopt === "none") return names[idx]!.trim();
+    // Marks made here signed out: the reader asks whether they join the account; a flow's are added.
+    const signedIn = page.locator(".sb-sidebar-profile-button-in");
+    const adopt = page.getByRole("dialog", { name: "Sync device content?" });
+    await Promise.race([
+      signedIn.waitFor({ timeout: 30000 }),
+      adopt.waitFor({ timeout: 30000 }).then(async () => {
+        await adopt
+          .getByRole("button", {
+            name: opts.adopt === "discard" ? "Don't add" : "Add to account",
+          })
+          .click();
+      }),
+    ]).catch(() => undefined);
+    await signedIn.waitFor({ timeout: 30000 });
+    await page
+      .locator(".sb-pane-close")
+      .first()
+      .click()
+      .catch(() => undefined);
+    return names[idx]!.trim();
+  }
+
+  async waitText(locator: Locator, re: RegExp, timeout = 15000): Promise<void> {
+    const t0 = Date.now();
+    for (;;) {
+      const text = (await locator.innerText().catch(() => "")).replace(
+        /\s+/g,
+        " "
+      );
+      if (re.test(text)) return;
+      if (Date.now() - t0 > timeout)
+        throw new Error(
+          `waited ${timeout}ms for ${re} in: ${text.slice(0, 160)}`
+        );
+      await locator.page().waitForTimeout(250);
+    }
+  }
+}
+
+export async function launch(): Promise<Browser> {
+  // A fake microphone (a steady tone) with no prompt, so the call's flows can talk.
+  return chromium.launch({
+    args: [
+      "--use-fake-ui-for-media-stream",
+      "--use-fake-device-for-media-stream",
+    ],
+  });
+}
+
+export async function newFlowContext(browser: Browser): Promise<FlowContext> {
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    permissions: ["clipboard-read", "clipboard-write", "microphone", "camera"],
+  });
+  const page = await context.newPage();
+  return new FlowContext(browser, context, page);
+}
