@@ -9,7 +9,7 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { friendLink, standingOf } from "../../state/social/friendship";
 import { isEmail } from "../../state/social/invites";
-import { addFriendOrInvite } from "./addFriend";
+import { addFriendOrInvite, isPersonName, myFriendlyName } from "./addFriend";
 import {
   DEFAULT_ESTATE,
   HOME_SIGNIN_AVAILABLE,
@@ -200,6 +200,8 @@ export function FriendsPane({ state }: { state: ReaderState }) {
     agent: string;
     name: string;
   } | null>(null);
+  /** The email an invitation is waiting to go to, while the reader says how they want to be known. */
+  const [naming, setNaming] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<{
     agent: string;
     name: string;
@@ -234,7 +236,7 @@ export function FriendsPane({ state }: { state: ReaderState }) {
   const me = s.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0] ?? "";
   const publicName = state.invites.publicName.value;
   const email = sessionEmail(s);
-  const myName = state.profile.mine.value?.displayName || s.name || "";
+  const myName = myFriendlyName(state) ?? "";
   const link = me ? friendLink(location.origin, me, myName) : "";
   const invitation = t("friend-link-message", {
     name: myName || t("a-friend", { defaultValue: "A friend" }),
@@ -436,42 +438,63 @@ export function FriendsPane({ state }: { state: ReaderState }) {
             <Heading icon="person_add">
               {t("add-friend", { defaultValue: "Add a friend" })}
             </Heading>
-            <form
-              className="sb-friends-add-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const typed = who;
-                setAnswer(null);
-                void addFriendOrInvite(state, typed, t).then((said) => {
-                  setAnswer(said);
-                  if (said === null || isEmail(typed)) setWho("");
-                });
-              }}
-            >
-              <input
-                type="text"
-                className="sb-friends-add-input"
-                value={who}
-                onInput={(e) => setWho((e.target as HTMLInputElement).value)}
-                placeholder={t("friend-add-placeholder-plain", {
-                  defaultValue: "Their email, or their name here",
-                })}
-                aria-label={t("add-friend", { defaultValue: "Add a friend" })}
-                autoComplete="off"
-                spellcheck={false}
-              />
-              <button
-                type="submit"
-                className="sb-friends-button sb-friends-button--primary"
-                disabled={!who.trim()}
+            {!naming && (
+              <form
+                className="sb-friends-add-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const typed = who;
+                  setAnswer(null);
+                  // An invitation names who sent it: with no name to give (a nameless agent), ask for one first.
+                  if (isEmail(typed) && !myFriendlyName(state)) {
+                    setNaming(typed.trim());
+                    return;
+                  }
+                  void addFriendOrInvite(state, typed, t).then((said) => {
+                    setAnswer(said);
+                    if (said === null || isEmail(typed)) setWho("");
+                  });
+                }}
               >
-                {isEmail(who)
-                  ? t("send-friend-invitation", {
-                      defaultValue: "Send invitation",
-                    })
-                  : t("send-friend-request", { defaultValue: "Send request" })}
-              </button>
-            </form>
+                <input
+                  type="text"
+                  className="sb-friends-add-input"
+                  value={who}
+                  onInput={(e) => setWho((e.target as HTMLInputElement).value)}
+                  placeholder={t("friend-add-placeholder-plain", {
+                    defaultValue: "Their email, or their name here",
+                  })}
+                  aria-label={t("add-friend", { defaultValue: "Add a friend" })}
+                  autoComplete="off"
+                  spellcheck={false}
+                />
+                <button
+                  type="submit"
+                  className="sb-friends-button sb-friends-button--primary"
+                  disabled={!who.trim()}
+                >
+                  {isEmail(who)
+                    ? t("send-friend-invitation", {
+                        defaultValue: "Send invitation",
+                      })
+                    : t("send-friend-request", {
+                        defaultValue: "Send request",
+                      })}
+                </button>
+              </form>
+            )}
+            {naming && (
+              <NameForInvite
+                state={state}
+                email={naming}
+                onCancel={() => setNaming(null)}
+                onSent={(said) => {
+                  setNaming(null);
+                  setAnswer(said);
+                  setWho("");
+                }}
+              />
+            )}
             {answer && (
               <p className="sb-small sb-friends-answer" role="status">
                 {answer}
@@ -771,5 +794,91 @@ function FindMeAs({
         />
       )}
     </div>
+  );
+}
+
+/** Before an invitation goes out from someone the Home knows by no name (a nameless agent): how they want their friend
+ *  to know them — their first and last name — and whether to keep that in their profile, so they are not asked again. */
+function NameForInvite({
+  state,
+  email,
+  onCancel,
+  onSent,
+}: {
+  state: ReaderState;
+  email: string;
+  onCancel: () => void;
+  onSent: (said: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const [name, setName] = useState("");
+  const [keep, setKeep] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const ok = isPersonName(name);
+  return (
+    <form
+      className="sb-friends-name-for-invite"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!ok || busy) return;
+        setBusy(true);
+        void (async () => {
+          if (keep)
+            await state.profile
+              .save({ displayName: name.trim() })
+              .catch(() => undefined);
+          onSent(await addFriendOrInvite(state, email, t, name.trim()));
+        })().finally(() => setBusy(false));
+      }}
+    >
+      <label className="sb-friends-name-for-invite-ask" htmlFor="sb-invite-as">
+        {t("invite-as-ask", {
+          email,
+          defaultValue: "How should {{email}} know you?",
+        })}
+      </label>
+      <p className="sb-small sb-muted">
+        {t("invite-as-why", {
+          defaultValue:
+            "Your invitation says who it is from. Your Home doesn't have a name for you yet.",
+        })}
+      </p>
+      <input
+        id="sb-invite-as"
+        type="text"
+        className="sb-friends-add-input"
+        autoComplete="name"
+        value={name}
+        placeholder={t("invite-as-placeholder", {
+          defaultValue: "Your first and last name",
+        })}
+        onInput={(e) => setName((e.target as HTMLInputElement).value)}
+      />
+      <label className="sb-friends-name-for-invite-keep">
+        <input
+          type="checkbox"
+          checked={keep}
+          onChange={(e) => setKeep((e.target as HTMLInputElement).checked)}
+        />{" "}
+        {t("invite-as-keep", {
+          defaultValue:
+            "Save this name to my profile, so friends always see it",
+        })}
+      </label>
+      <div className="sb-note-card-actions">
+        <button
+          type="submit"
+          className="sb-note-button sb-note-button-primary"
+          disabled={!ok || busy}
+        >
+          {busy
+            ? t("sending", { defaultValue: "Sending…" })
+            : t("invite-as-send", { defaultValue: "Send invitation" })}
+        </button>
+        <button type="button" className="sb-note-button" onClick={onCancel}>
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+      </div>
+    </form>
   );
 }

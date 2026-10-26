@@ -1,42 +1,60 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 03:23 UTC",
+  "when": "2026-10-26 10:17 UTC",
   "results": [
     {
-      "id": "DSS1",
-      "section": "12. Extensions",
-      "title": "Dead Sea Scrolls at a verse",
-      "checks": "On Genesis 1, tap verse 2 → Discover → Dead Sea Scrolls lists the 4Q7 (4Q Genesis) lines that hold verse 2; tap one → its card shows the line in Hebrew (right to left), the English first draft, its state in plain words, the publisher's credit (for study only) and a link to it at the publisher",
+      "id": "FR1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Friends: the old reader's full page",
+      "checks": "Signed in: Profile → Friends opens a full page (the reading area gives way) with ← back to Profile: Friends (each with Remove), Add a friend (Send request; your friend link with Copy and Email it; your user ID with Copy) and, when there are any, Friend requests (Accept, Decline) and Sent requests (Cancel). Send request opens your Home's add-a-contact page for exactly that name; Remove asks first (Remove friend?) and then opens your Home's page to remove exactly that friend. (The test records the Home address instead of opening it, so nothing is signed)",
       "mark": "✅",
-      "note": "3 line(s) at Genesis 1:2 (history_edu 4Q Genesis (4Q2) · f1i:1 Genesis 1:1–2…); card: ב ראשית ברא אלהי[ ם את ה… / \"In the beginning, he created gods, the h…\" → publishing.faithnet.io/@demo-admin-1/dead-sea-scrolls-genesis/4#b3",
-      "ms": 2752
+      "note": "full page with Friend requests · Friends · Add a friend; Send request opened the Home for that name; Remove asked first, then opened the Home to remove exactly that friend; ← back to Profile",
+      "ms": 36131
     },
     {
-      "id": "INT1",
-      "section": "12. Extensions",
-      "title": "Interpretations at a verse, from any translation",
-      "checks": "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
+      "id": "S3",
+      "section": "8. Today, Discover and publishing",
+      "title": "Friends (the pane)",
+      "checks": "Signed in as Seed Reader: Today shows the Friends section with Add a friend and Invite by email, and no error (the sample person has no mutual friends, so the list itself is not exercised)",
       "mark": "✅",
-      "note": "card \"forum Genesis 6:2 RBS · “the sons of God saw that the daught…\" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded",
-      "ms": 1958
+      "note": "Friends Refresh Friend requests (1) ezra.me wants to be friends Accept Not now person ruth.me 0x8421bd63c048506c629894ac",
+      "ms": 34862
     },
     {
-      "id": "CNT1",
-      "section": "12. Extensions",
-      "title": "A verse's content from the verse bar",
-      "checks": "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 each scroll line says which verses it holds ('This line holds Genesis 1:3–4'), the lines that start at verse 3 before any that run on from verse 2; on John 11, verse 35 has none and the bar does not offer Content",
+      "id": "PC1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Tap a friend: their profile",
+      "checks": "Signed in as Seed Reader, tapping a friend in Friends opens Profile with their picture and name, and their description or 'This person hasn't set up their profile yet.'; Close shuts it",
       "mark": "✅",
-      "note": "Isaiah 40:3: 5 scroll lines (Hebrew \"[ ב מדבר פנו דרך…\"), Community Rule, Matthew 3:3 opened, Greek; John 11:35: not offered",
-      "ms": 18418
+      "note": "'ezra.me' opened Profile showing 'This person hasn't set up their profile yet.'; Close shut it",
+      "ms": 34803
     },
     {
-      "id": "INT3",
-      "section": "12. Extensions",
-      "title": "New Testament interpretations at a verse",
-      "checks": "On Philemon 1, tap verse 6 → Interpretations on the verse bar → 'How Philemon 1:6 is read': 'How do the words relate?' with the Greek and both readings, 'No reviewer has decided this yet', 'This translation reads it as: …' with how it was read, the notes credited to unfoldingWord; 'Which words are original?' with each reading's editions and 'translates the Greek text it is based on' — never 'has recorded a decision' for these; the full record still opens under Details for scholars",
+      "id": "SF1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Add a friend from a session's roster",
+      "checks": "Seed Reader hosts a session and another sample person joins signed in: in the host's Here list that person carries where they stand — Friends, Requested, Accept or Add friend — and the host's own row carries none",
       "mark": "✅",
-      "note": "Philemon 1:6: How do the words relate? · not yet decided · reads it as … · Which words are original? (Textus Receptus …) · details open",
-      "ms": 3479
+      "note": "'Alice Okoro' joined and shows 'Friends' in the host's list; the host's own row shows none (code D3GVQP)",
+      "ms": 78161
+    },
+    {
+      "id": "IN1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Invite a friend by email",
+      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending says 'Invitation sent to …' with no Home window, and Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+      "mark": "✅",
+      "note": "'flow-101519@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; no Home window",
+      "ms": 34722
+    },
+    {
+      "id": "IN2",
+      "section": "8. Today, Discover and publishing",
+      "title": "An emailed invitation opens in the reader",
+      "checks": "The link /invite/<token> opens a welcome: 'Ruth invited you to Seed Bible' with Ruth's note, the terms and one Continue (it asks for the terms first); a dead link says 'This invitation can't be opened'; signed in, 'Welcome' and Add Ruth as a friend takes the invitation (the Home is told) and opens the Home for one tap. (The invitation calls are answered by the test)",
+      "mark": "✅",
+      "note": "a dead link: can't be opened; 'Ruth invited you to Seed Bible' with her note; Continue asks for the terms; signed in, 'Welcome' and Add took the invitation and opened the Home to add Ruth",
+      "ms": 74988
     }
   ]
 }

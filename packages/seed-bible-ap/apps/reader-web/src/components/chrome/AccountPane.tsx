@@ -42,6 +42,8 @@ import type {
 } from "../../state/chrome/settings";
 
 const progress = signal("");
+/** Stops a sign-in that is waiting on the Home's window (one closed, or given up on). */
+let stopSignIn: AbortController | null = null;
 const samplePeople = signal<QuickConnectIdentity[]>([]);
 const devReaders = signal<DevReader[]>([]);
 const error = signal("");
@@ -583,9 +585,12 @@ export function AccountCard({ state }: { state: ReaderState }) {
     if (needAgreement()) return;
     error.value = "";
     try {
+      stopSignIn?.abort();
+      stopSignIn = new AbortController();
       const out = await connectViaHome(
         DEFAULT_ESTATE,
-        (m) => (progress.value = m)
+        (m) => (progress.value = m),
+        { signal: stopSignIn.signal }
       );
       if (out) await state.signIn(out, { announce: true });
     } catch (e) {
@@ -789,7 +794,19 @@ export function AccountCard({ state }: { state: ReaderState }) {
             </p>
           )}
           {progress.value && (
-            <p className="sb-small sb-muted">{progress.value}</p>
+            <p className="sb-small sb-muted">
+              {progress.value}{" "}
+              <button
+                type="button"
+                className="sb-discover-create-link"
+                onClick={() => {
+                  stopSignIn?.abort();
+                  progress.value = "";
+                }}
+              >
+                {t("cancel", { defaultValue: "Cancel" })}
+              </button>
+            </p>
           )}
           {samplePeople.value.length > 0 && (
             <details>

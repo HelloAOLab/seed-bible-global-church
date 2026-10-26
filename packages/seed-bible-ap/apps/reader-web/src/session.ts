@@ -15,7 +15,7 @@
 // not used: `/fedcm/grant` mints the site-login template only.
 
 import {
-  connectViaPopup,
+  openCentralAuthPopup,
   connectViaRedirect,
   createConnectClient,
   listQuickConnect,
@@ -247,11 +247,98 @@ export async function finish(
   return s;
 }
 
+/** How long a sign-in in the Home's window is waited for, all told. The SDK's popup gives up after 2 minutes (under the
+ *  Home's opener policy it cannot see the window close); signing in by email — go to the inbox, find the code, type
+ *  it — takes longer than that, and the code the Home then sends would reach no one. */
+export const SIGN_IN_WAIT_MS = 15 * 60_000;
+
+/** The Home's sign-in window, waited for as long as a person may take: past the SDK's 2-minute backstop it goes on
+ *  listening on the relay for this sign-in's code ("Still waiting…"), until it comes, Cancel, or SIGN_IN_WAIT_MS. */
+export async function signInPopup(
+  c: ConnectClient,
+  onProgress?: (msg: string) => void,
+  signal?: AbortSignal
+): Promise<
+  | {
+      status: "success";
+      authOrigin: string;
+      code: string;
+      codeVerifier: string;
+      stash: { nonce: string };
+    }
+  | { status: "cancelled" | "blocked" | "error"; error?: string }
+> {
+  const start = await c.startEnrollment("");
+  const opened = Date.now();
+  const res = await openCentralAuthPopup(
+    start.url,
+    start.state,
+    start.authOrigin,
+    RELAY_CHANNEL,
+    onProgress,
+    signal,
+    c.isAllowedIssuerOrigin
+  );
+  const ok = (code: string, iss?: string) => ({
+    status: "success" as const,
+    authOrigin:
+      iss && c.isAllowedIssuerOrigin?.(iss)
+        ? iss
+        : ((res as { authOrigin?: string }).authOrigin ?? start.authOrigin),
+    code,
+    codeVerifier: start.codeVerifier,
+    stash: { nonce: start.nonce },
+  });
+  if (res.status === "success") return ok(res.code, res.authOrigin);
+  if (res.status !== "cancelled" || signal?.aborted) return res;
+  onProgress?.(
+    "Still waiting for your Home — finish signing in there. (Cancel if you closed it.)"
+  );
+  const late = await lateRelay(
+    start.state,
+    SIGN_IN_WAIT_MS - (Date.now() - opened),
+    signal
+  );
+  return late ? ok(late.code, late.iss) : { status: "cancelled" };
+}
+
+/** A sign-in's code arriving late on the relay (the Home's window relays it on this origin): null on timeout or abort. */
+function lateRelay(
+  state: string,
+  ms: number,
+  signal?: AbortSignal
+): Promise<{ code: string; iss?: string } | null> {
+  if (typeof BroadcastChannel === "undefined" || ms <= 0)
+    return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const relay = new BroadcastChannel(RELAY_CHANNEL);
+    const done = (v: { code: string; iss?: string } | null) => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      relay.close();
+      resolve(v);
+    };
+    const onAbort = () => done(null);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    const timer = setTimeout(() => done(null), ms);
+    relay.onmessage = (e: MessageEvent) => {
+      const m = e.data as {
+        kind?: string;
+        state?: string;
+        code?: string;
+        iss?: string;
+      } | null;
+      if (m?.kind === "ac-relay" && m.state === state && m.code)
+        done({ code: m.code, ...(m.iss ? { iss: m.iss } : {}) });
+    };
+  });
+}
+
 /** Sign in with your own Home. Popup first; a full-page redirect when the popup is blocked, announced. */
 export async function connectViaHome(
   estateId: EstateId,
   onProgress?: (msg: string) => void,
-  opts: { then?: string } = {}
+  opts: { then?: string; signal?: AbortSignal } = {}
 ): Promise<ReaderSession | null> {
   if (!HOME_SIGNIN_AVAILABLE)
     throw new Error(
@@ -259,7 +346,7 @@ export async function connectViaHome(
     );
   const c = clientFor(estateId, opts.then);
   onProgress?.("Opening your Home…");
-  const popup = await connectViaPopup(c, undefined, RELAY_CHANNEL, onProgress);
+  const popup = await signInPopup(c, onProgress, opts.signal);
   if (popup.status === "success") {
     onProgress?.("Signing you in…");
     return finish(

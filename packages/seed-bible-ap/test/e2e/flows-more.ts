@@ -7946,7 +7946,16 @@ export const MORE_FLOWS: Flow[] = [
       await c.page.getByRole("menuitem", { name: "Friends" }).click();
       const pane = c.page.locator(".sb-friends-pane");
       await pane.waitFor({ timeout: 5000 });
-      await c.page.waitForTimeout(2500);
+      // The friends list read from the Home first — a request left by an earlier run is only seen once it has.
+      await c.page.waitForFunction(
+        () =>
+          !/Loading…/.test(
+            document.querySelector(".sb-friends-pane")?.textContent ??
+              "Loading…"
+          ),
+        undefined,
+        { timeout: 60000 }
+      );
       await shot(c.page, "friends");
       // One friend act through the Home's small window: its plain question, one tap, and it closes by itself.
       const confirmInWindow = async (
@@ -8028,15 +8037,40 @@ export const MORE_FLOWS: Flow[] = [
         await leftover.first().waitFor({ state: "detached", timeout: 60000 });
         await c.page.waitForTimeout(1500);
       }
+      // …and alice already a friend (another flow made them friends): removed the same way — the reader asks first.
+      const already = pane
+        .locator(".sb-friends-row", { hasText: /alice/i })
+        .filter({ has: c.page.getByRole("button", { name: /^remove/i }) });
+      if (await already.count()) {
+        await confirmInWindow(
+          async () => {
+            await already
+              .first()
+              .getByRole("button", { name: /^remove/i })
+              .click();
+            await shot(c.page, "unfriend-confirm");
+            await c.page
+              .locator(".sb-confirm-delete-actions")
+              .getByRole("button", { name: /^remove$/i })
+              .click();
+          },
+          /yes, remove them/i,
+          "unfriend"
+        );
+        await already.first().waitFor({ state: "detached", timeout: 60000 });
+        await c.page.waitForTimeout(1500);
+      }
       await pane.getByLabel("Add a friend").fill("alice");
       const added = await confirmInWindow(
         () => pane.getByRole("button", { name: /send request/i }).click(),
         /yes, add them/i,
         "add"
       );
+      // The reader says so — asked (they have not added back) or friends (they already had); a notice left by the
+      // cleanup above may sit beside it, so the pane is read, not one notice.
       await c.waitText(
-        pane.locator(".sb-friend-waiting"),
-        /asked|friends/i,
+        pane,
+        /Asked alice|alice[^.]*are friends|You and alice/i,
         30000
       );
       await shot(c.page, "added");

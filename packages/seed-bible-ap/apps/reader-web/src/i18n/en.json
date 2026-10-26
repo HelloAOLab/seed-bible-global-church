@@ -1104,5 +1104,13 @@
   "interp-policy": "{{edition}} translates the Greek text it is based on.",
   "interp-reads": "This translation reads it as:",
   "interp-reads-open": "This translation leaves it open.",
-  "interp-undecided": "No reviewer has decided this yet."
+  "interp-undecided": "No reviewer has decided this yet.",
+  "invite-a-friend": "A friend",
+  "invite-as-ask": "How should {{email}} know you?",
+  "invite-as-keep": "Save this name to my profile, so friends always see it",
+  "invite-as-placeholder": "Your first and last name",
+  "invite-as-send": "Send invitation",
+  "invite-as-why": "Your invitation says who it is from. Your Home doesn't have a name for you yet.",
+  "invite-welcome-lead-unnamed": "Read the Bible together. Friends see what each other share, and when the other is reading.",
+  "sending": "Sending…"
 }

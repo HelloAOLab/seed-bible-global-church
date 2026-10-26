@@ -392,3 +392,27 @@
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* Before an invitation from someone with no name: how they want to be known, and whether to keep it. */
+.sb-friends-name-for-invite {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+}
+.sb-friends-name-for-invite-ask {
+  font-weight: 600;
+}
+.sb-friends-name-for-invite p {
+  margin: 0;
+}
+.sb-friends-name-for-invite-keep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}

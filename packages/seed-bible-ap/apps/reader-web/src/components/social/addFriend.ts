@@ -9,16 +9,34 @@ import { isEmail } from "../../state/social/invites";
 type T = ReturnType<typeof useI18n>["t"];
 
 /** Act on what was typed; the line to show under the box, or null when the Home's window says it instead. */
+/** Whether a name is one a person goes by — not an agent's address (a nameless agent's sign-in carries its address
+ *  as its name: "0xe2bfa5…"). */
+export function isPersonName(name: string | null | undefined): name is string {
+  const n = (name ?? "").trim();
+  return !!n && /\p{L}/u.test(n) && !/^0x[0-9a-f]{4,}/i.test(n);
+}
+
+/** The name friends know this reader by: their profile's name, else the name their Home gave at sign-in — null when
+ *  neither is a person's name, so the reader asks rather than sending an address. */
+export function myFriendlyName(state: ReaderState): string | null {
+  const own = state.profile.mine.value?.displayName;
+  if (isPersonName(own)) return own.trim();
+  const fromHome = state.session.value?.name;
+  return isPersonName(fromHome) ? fromHome.trim() : null;
+}
+
 export async function addFriendOrInvite(
   state: ReaderState,
   typed: string,
-  t: T
+  t: T,
+  /** The name to invite as, when the reader just gave one. */
+  asName?: string | null
 ): Promise<string | null> {
   const name = typed.trim();
   if (!name) return null;
   const me = state.session.value;
   if (isEmail(name)) {
-    const myName = state.profile.mine.value?.displayName || me?.name || null;
+    const myName = asName?.trim() || myFriendlyName(state);
     const r = await state.invites.send(name, myName);
     if (!r.ok)
       return t("friend-invite-failed", {

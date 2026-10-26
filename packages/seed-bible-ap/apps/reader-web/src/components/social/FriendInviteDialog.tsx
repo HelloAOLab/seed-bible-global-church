@@ -3,11 +3,12 @@
 // terms and one Continue that signs them in at their Home (or creates their account there); then "Welcome, <name>"
 // with one tap to add the inviter; then done, back to reading. Accepting an emailed invitation also takes it, so the
 // inviter sees they joined. The link carries no authority; it only names who asked.
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { standingOf } from "../../state/social/friendship";
+import { isPersonName } from "./addFriend";
 import {
   connectViaHome,
   DEFAULT_ESTATE,
@@ -67,6 +68,8 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  /** Stops a sign-in still waiting on the Home's window. */
+  const stop = useRef<AbortController | null>(null);
   // Out of the way while the reader uses another way to sign in; back once they have.
   if (!inv || state.ui.pane.value === "account") return null;
   const close = () => (friendship.invite.value = null);
@@ -87,7 +90,10 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
         </p>
       </Frame>
     );
-  const name = inv.name ?? `${inv.agent.slice(0, 8)}…`;
+  // Never an address: a sender who gave no name is "A friend".
+  const name = isPersonName(inv.name)
+    ? inv.name
+    : t("invite-a-friend", { defaultValue: "A friend" });
   const s = state.session.value;
   const me = s?.sub.match(/0x[0-9a-fA-F]{40}$/)?.[0];
   const self = !!me && me.toLowerCase() === inv.agent;
@@ -111,11 +117,12 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
         ? new URL(friendship.homeUrl("add", inv.agent, inv.name)).pathname +
           new URL(friendship.homeUrl("add", inv.agent, inv.name)).search
         : undefined;
-      const out = await connectViaHome(
-        DEFAULT_ESTATE,
-        (m) => setBusy(m),
-        addPath ? { then: addPath } : {}
-      );
+      stop.current?.abort();
+      stop.current = new AbortController();
+      const out = await connectViaHome(DEFAULT_ESTATE, (m) => setBusy(m), {
+        ...(addPath ? { then: addPath } : {}),
+        signal: stop.current.signal,
+      });
       if (out) {
         await state.signIn(out);
         if (addPath) {
@@ -156,11 +163,16 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
         <div className="sb-invite-who">
           <Initial name={name} />
           <p className="sb-invite-lead">
-            {t("invite-welcome-lead", {
-              name,
-              defaultValue:
-                "Read the Bible together with {{name}}. Friends see what each other share, and when the other is reading.",
-            })}
+            {isPersonName(inv.name)
+              ? t("invite-welcome-lead", {
+                  name,
+                  defaultValue:
+                    "Read the Bible together with {{name}}. Friends see what each other share, and when the other is reading.",
+                })
+              : t("invite-welcome-lead-unnamed", {
+                  defaultValue:
+                    "Read the Bible together. Friends see what each other share, and when the other is reading.",
+                })}
           </p>
         </div>
         {note}
@@ -203,6 +215,18 @@ export function FriendInviteDialog({ state }: { state: ReaderState }) {
         >
           {busy ?? t("invite-continue", { defaultValue: "Continue" })}
         </button>
+        {busy && (
+          <button
+            type="button"
+            className="sb-discover-create-link"
+            onClick={() => {
+              stop.current?.abort();
+              setBusy(null);
+            }}
+          >
+            {t("cancel", { defaultValue: "Cancel" })}
+          </button>
+        )}
         <p className="sb-small sb-muted sb-invite-fineprint">
           {t("invite-continue-hint", {
             defaultValue:
