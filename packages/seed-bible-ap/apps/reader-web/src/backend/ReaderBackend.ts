@@ -86,6 +86,10 @@ export interface Friend {
   since?: string;
   /** When they added the reader (a request). */
   at?: string | null;
+  /** Their own Home profile's name and photo — read by the reader's agent under the grant their friendship offer gave
+   *  (a friend, or someone asking to be one). A nameless agent has no other name. */
+  profileName?: string;
+  photo?: string;
 }
 export interface FriendsView {
   /** Mutual: the reader added them and they added the reader back. */

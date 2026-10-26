@@ -198,6 +198,33 @@ describe("profiles", () => {
     // The profile is shown with the friend, not among their releases.
     expect(today.releases.value.map((o) => o.kind)).not.toContain("profile");
   });
+  it("a nameless friend is shown by their Home profile's name and photo, which win over an old published copy", async () => {
+    const backend = createDevBackend(SEED);
+    const NAMELESS = "0x" + "e2".repeat(20);
+    backend.friendsView = {
+      friends: [
+        {
+          agent: NAMELESS,
+          name: null,
+          profileName: "Rich Pedersen",
+          photo: "data:image/jpeg;base64,AAAA",
+        },
+      ],
+      requests: [
+        { agent: "0x" + "55".repeat(20), name: null, profileName: "Naomi B" },
+      ],
+      requested: [],
+    };
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(today.profiles.value[NAMELESS]).toEqual({
+      displayName: "Rich Pedersen",
+      picture: "data:image/jpeg;base64,AAAA",
+    });
+    expect(today.profiles.value["0x" + "55".repeat(20)]).toEqual({
+      displayName: "Naomi B",
+    });
+  });
 });
 
 describe("connectors", () => {

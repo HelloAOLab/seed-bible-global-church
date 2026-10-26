@@ -63,19 +63,35 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   const requested = computed<Friend[]>(
     () => friendsView.value?.requested ?? []
   );
-  /** Friends' published profiles (kind profile in their recent releases), by agent address. */
+  /** Friends' profiles by agent address: first what their own Home profile says (its name and photo, read under the
+   *  grant their friendship offer gave), then what they published (kind profile in their recent releases) where the
+   *  Home profile says nothing. */
   const profiles = computed<Record<string, FriendProfile>>(() => {
     const out: Record<string, FriendProfile> = {};
+    for (const f of [
+      ...(friendsView.value?.friends ?? []),
+      ...(friendsView.value?.requests ?? []),
+    ]) {
+      if (!f.profileName && !f.photo) continue;
+      out[f.agent.toLowerCase()] = {
+        ...(f.profileName ? { displayName: f.profileName } : {}),
+        ...(f.photo ? { picture: f.photo } : {}),
+      };
+    }
+    const published = new Set<string>();
     for (const o of feed.value) {
       if (o.kind !== "profile") continue;
       const w = (o.descriptor as { work?: FriendProfile }).work ?? {};
       const key = o.owner.toLowerCase();
-      if (!out[key])
-        out[key] = {
-          ...(w.displayName ? { displayName: w.displayName } : {}),
-          ...(w.about ? { about: w.about } : {}),
-          ...(w.picture ? { picture: w.picture } : {}),
-        };
+      if (published.has(key)) continue; // the newest release only
+      published.add(key);
+      const home = out[key] ?? {};
+      out[key] = {
+        ...(w.displayName ? { displayName: w.displayName } : {}),
+        ...(w.about ? { about: w.about } : {}),
+        ...(w.picture ? { picture: w.picture } : {}),
+        ...home,
+      };
     }
     return out;
   });

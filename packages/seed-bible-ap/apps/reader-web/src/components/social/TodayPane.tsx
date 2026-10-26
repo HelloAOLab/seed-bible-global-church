@@ -396,7 +396,9 @@ function FriendRequests({ state }: { state: ReaderState }) {
       {asks.map((r) => (
         <div key={r.agent} className="sb-friends-row sb-friend-request">
           <span className="sb-friends-person-text">
-            <span className="sb-friends-person-name">{r.name ?? r.agent}</span>
+            <span className="sb-friends-person-name">
+              {r.profileName ?? r.name ?? r.agent}
+            </span>
             <span className="sb-friends-person-subtitle">
               {t("friend-request-line", {
                 defaultValue: "wants to be friends",
