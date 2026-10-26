@@ -1059,7 +1059,7 @@
   "discover-book": "Discover {{book}}",
   "discover-sources": "What to show",
   "interp-belief": "Not part of the translation: a later belief about the verse, shown so you know it exists.",
-  "interp-decided": "{{edition}} chose one reading — it is the one in its text above.",
+  "interp-decided": "{{edition}} has recorded a decision for one reading.",
   "interp-details": "Details for scholars — the full record",
   "interp-draft": "A draft — not yet checked by a person.",
   "interp-how-read": "How {{ref}} is read",

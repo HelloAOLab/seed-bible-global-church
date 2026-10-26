@@ -317,7 +317,7 @@ function PlainVerse({
                 t("interp-decided", {
                   edition: ed,
                   defaultValue:
-                    "{{edition}} chose one reading — it is the one in its text above.",
+                    "{{edition}} has recorded a decision for one reading.",
                 })}
               {pq.state === "open" &&
                 t("interp-open", {
