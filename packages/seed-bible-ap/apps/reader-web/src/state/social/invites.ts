@@ -113,6 +113,16 @@ export function createInvites(deps: {
     return !!r?.ok;
   }
 
+  /** Clear the invitations a person accepted from your list — they became your friend (the invitation did its work),
+   *  you removed them, or you would rather not add them — so "Joined from your invitation" never offers them again. */
+  async function clearAccepted(agent: string): Promise<void> {
+    const who = agent.toLowerCase();
+    for (const i of sent.value.filter(
+      (x) => x.acceptedBy?.toLowerCase() === who
+    ))
+      await cancel(i.token);
+  }
+
   async function resend(token: string): Promise<boolean> {
     const r = await post({ token, resend: true }).catch(() => null);
     return !!r?.ok;
@@ -170,6 +180,7 @@ export function createInvites(deps: {
     refresh,
     send,
     cancel,
+    clearAccepted,
     resend,
     lookup,
     claim,

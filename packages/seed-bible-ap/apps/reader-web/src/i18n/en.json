@@ -120,7 +120,6 @@
   "profile-about": "A line about you",
   "published": "Published",
   "publish": "Publish",
-  "profile-note": "Publish puts a public copy of your profile (name, line and picture) on your shelf in Seed Bible: your friends see it in their Today, and anyone can look it up. Your Home profile is not changed by publishing; publish again after a change to update the copy.",
   "connected-sources": "Connected sources",
   "connectors-none": "No MCP servers are connected to your agent.",
   "connectors-no-reads": "no reads",
@@ -455,8 +454,6 @@
   "working": "Working…",
   "session-share-how": "Send friends the link (it carries both), or have them open Live session and enter the Session ID and Code.",
   "session-record-saved": "A record of this session is kept in your Library.",
-  "profile-publishing": "Publishing to your shelf…",
-  "profile-publish-failed": "Not published: {{reason}}",
   "signed-in-as": "Signed in as {{name}}",
   "friend-requests-title": "Friend requests ({{count}})",
   "friend-request-line": "wants to be friends",
@@ -1120,5 +1117,7 @@
   "profile-home-note": "Your name, photo and line about you are your Home profile: the same in every app you let read it. Save opens a small window from your Home to save the change there.",
   "profile-home-saved": "✓ Saved to your Home profile",
   "profile-home-waiting": "A small window opened from your Home. Tap “Save to my profile” there.",
-  "remove-photo": "Remove photo"
+  "remove-photo": "Remove photo",
+  "profile-take-down": "Take down the public copy of your profile you published earlier",
+  "friend-joined-dismiss-user": "Remove {{name}} from this list"
 }

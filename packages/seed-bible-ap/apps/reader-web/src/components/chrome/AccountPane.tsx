@@ -71,7 +71,8 @@ export function NeedsHomeHint({ error }: { error: string | null | undefined }) {
   );
 }
 
-/** The reader's profile: a name, a line, a picture from the gallery; published to the public shelf for friends. */
+/** The reader's profile: signed in, your Home profile's name, line and photo (changes saved at your Home); signed out,
+ *  a name, a line and a picture kept on this device. */
 /** The Home profile takes the photo itself: a 256-px JPEG (well under its 200 KB) of the same round crop. */
 const HOME_PICTURE: CropTarget = {
   ...PROFILE_PICTURE,
@@ -138,7 +139,6 @@ export function ProfileCard({ state }: { state: ReaderState }) {
     return Object.keys(d).length ? d : null;
   };
   const published = !!p && state.publishing.isPublished(p["@id"]);
-  const canPublish = !!state.session.value?.wire;
   // What became of the last save: the device copy is at once, the Library's takes a few seconds (or fails).
   const [status, setStatus] = useState<"saving" | "saved" | "failed" | null>(
     null
@@ -298,37 +298,21 @@ export function ProfileCard({ state }: { state: ReaderState }) {
               ? t("saving", { defaultValue: "Saving…" })
               : t("save", { defaultValue: "Save" })}
           </button>
-          {canPublish && p && (
-            <button
-              type="button"
-              className={`sb-note-button${published ? " sb-note-button-published" : ""}`}
-              disabled={state.publishing.busy.value === p["@id"]}
-              onClick={() =>
-                void (
-                  published
-                    ? state.publishing.withdrawWork(p["@id"], "profile")
-                    : state.publishing.publishProfile(p)
-                ).catch(() => {})
-              }
-            >
-              {published
-                ? t("published", { defaultValue: "Published" })
-                : t("publish", { defaultValue: "Publish" })}
-            </button>
-          )}
         </div>
       </form>
       <p
-        className={`sb-small${status === "failed" || state.publishing.error.value ? " sb-pane-error" : " sb-muted"}`}
+        className={`sb-small${status === "failed" ? " sb-pane-error" : " sb-muted"}`}
         role="status"
       >
         {status === "saving" &&
+          !fromHome &&
           (state.session.value
             ? t("profile-saving", {
                 defaultValue: "Saving to your Library…",
               })
             : t("saving", { defaultValue: "Saving…" }))}
         {status === "saved" &&
+          !fromHome &&
           (state.session.value
             ? t("profile-saved", {
                 defaultValue: "✓ Saved to your Library",
@@ -352,17 +336,8 @@ export function ProfileCard({ state }: { state: ReaderState }) {
             defaultValue:
               "Your name and photo were not changed — your Home's window was closed without saving.",
           })}{" "}
-        {state.publishing.busy.value === p?.["@id"] &&
-          t("profile-publishing", {
-            defaultValue: "Publishing to your shelf…",
-          })}
-        {state.publishing.error.value &&
-          state.publishing.busy.value === null &&
-          t("profile-publish-failed", {
-            defaultValue: "Not published: {{reason}}",
-            reason: state.publishing.error.value,
-          })}
         {status === "failed" &&
+          !fromHome &&
           (NEEDS_HOME.test(state.profile.error.value ?? "")
             ? t("profile-save-needs-home", {
                 defaultValue:
@@ -374,15 +349,30 @@ export function ProfileCard({ state }: { state: ReaderState }) {
                 reason: state.profile.error.value ?? "",
               }))}
       </p>
-      {status === "failed" && (
+      {status === "failed" && !fromHome && (
         <NeedsHomeHint error={state.profile.error.value} />
       )}
-      <p className="sb-small sb-muted">
-        {t("profile-note", {
-          defaultValue:
-            "Publish puts a public copy of your profile (name, line and picture) on your shelf in Seed Bible: your friends see it in their Today, and anyone can look it up. Your Home profile is not changed by publishing; publish again after a change to update the copy.",
-        })}
-      </p>
+      {/* Profiles are no longer published from here — your Home profile is what friends see. A copy published
+          earlier can still be taken down. */}
+      {published && p && (
+        <p className="sb-small sb-muted">
+          <button
+            type="button"
+            className="sb-discover-create-link"
+            disabled={state.publishing.busy.value === p["@id"]}
+            onClick={() =>
+              void state.publishing
+                .withdrawWork(p["@id"], "profile")
+                .catch(() => {})
+            }
+          >
+            {t("profile-take-down", {
+              defaultValue:
+                "Take down the public copy of your profile you published earlier",
+            })}
+          </button>
+        </p>
+      )}
     </div>
   );
 }

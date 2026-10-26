@@ -14,7 +14,8 @@ export function Avatar({
   const s = state.session.value;
   // Signed in, your Home profile's photo and name are yours here; the reader's own copy is the fallback.
   const home = s ? state.homeProfile.value.value : null;
-  const picture = home?.photo ?? state.profile.mine.value?.picture;
+  // Once the Home profile is read, its photo — or its having none — is the answer; the reader's copy only before.
+  const picture = home ? home.photo : state.profile.mine.value?.picture;
   const name =
     fullName(home) || state.profile.mine.value?.displayName || s?.name || "";
   const initial = (name.trim()[0] ?? "?").toUpperCase();

@@ -337,7 +337,9 @@ export function ProfilePane({ state }: { state: ReaderState }) {
   const mine = state.profile.mine.value;
   const home = state.homeProfile.value.value;
   const name = fullName(home) || mine?.displayName || s.name || s.sub;
-  const picture = home?.photo ?? mine?.picture;
+  const picture = home ? home.photo : mine?.picture;
+  // Your line about you is your Home profile's; the reader's own copy only until the Home's has been read.
+  const about = home ? home.about : mine?.about;
   const friends = state.today.friends.value.length;
   const requests = state.friendship.requests.value.length;
   const friendsLine =
@@ -419,7 +421,7 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           >
             <span className="sb-profile-name">{name}</span>
           </button>
-          {mine?.about ? <Description text={mine.about} /> : null}
+          {about ? <Description text={about} /> : null}
           <p className="sb-profile-sync sb-muted sb-small">
             {state.outbox.flushing.value
               ? t("sync-flushing", { defaultValue: "Sending your changes…" })

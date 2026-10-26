@@ -15,7 +15,6 @@ import type {
   Playlist,
   ReadingPlan,
   PlaylistItem,
-  Profile,
 } from "@seed/seed-schema";
 import { spanOf } from "../records/marks";
 import { passageOf } from "../records/marks";
@@ -180,36 +179,6 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
   }
 
   /** The reader's profile released to the public shelf (kind profile, no passage): friends' Today shows it. */
-  async function publishProfile(profile: Profile) {
-    busy.value = profile["@id"];
-    error.value = null;
-    try {
-      const r = await backend.publishSlice({
-        ...asArg(),
-        kind: "profile",
-        title: profile.displayName ?? "Profile",
-        slug: "profile",
-        markdown: `# ${profile.displayName ?? "Profile"}\n\n${profile.about ?? ""}`,
-        descriptor: { "prov:wasDerivedFrom": profile["@id"], work: profile },
-      });
-      published.value = {
-        ...published.value,
-        [profile["@id"]]: {
-          noteId: profile["@id"],
-          slug: "profile",
-          descriptorId: r.descriptorId,
-          passage: "*",
-          publishedAt: new Date().toISOString(),
-        },
-      };
-      await save();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-      throw e;
-    } finally {
-      busy.value = null;
-    }
-  }
 
   async function publishCustomization(work: Customization) {
     const slug = `customization-${work["@id"].split(":").pop()!.slice(0, 12).toLowerCase()}`;
@@ -268,7 +237,6 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     recordOf,
     publishAs,
     setPublishAs,
-    publishProfile,
     published,
     busy,
     error,

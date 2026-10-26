@@ -2380,67 +2380,41 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "S4",
-    timeoutMs: 360_000,
+    timeoutMs: 120_000,
     section: "8. Today, Discover and publishing",
     title: "Your profile",
     rows: ["Your profile"],
     checks:
-      "Account → Your profile: a display name and a long description (up to 300 characters) → Save says Saving…, then ✓ Saved to your Library; after a reload they are still there; Publish → Published, then unpublished; the Profile shows the description folded with Read more",
+      "Signed in, Edit profile is your Home profile — first and last name, line about you, photo — with Save (to your Home) and no Publish: friends see your Home profile; the Profile shows the line about you from your Home",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
-      let pane = await c.openAccount();
-      // Long enough to fold under Read more on the Profile (the old reader's 300-character description).
-      const line =
-        `flow ${stamp()} ${"of the reading of the word ".repeat(9)}`.trim();
-      await pane
-        .locator('input[placeholder="Profile name"]')
-        .fill("Seed Reader");
-      await pane.locator('textarea[placeholder="A line about you"]').fill(line);
-      await pane
-        .getByRole("button", { name: /^save$/i })
-        .first()
-        .click();
-      const status = pane.locator(".sb-profile-card [role=status]");
-      const t0 = Date.now();
-      await c.waitText(status, /Saved to your Library/, 60000);
-      const took = ((Date.now() - t0) / 1000).toFixed(1);
-      await c.page.reload();
+      await c.page.locator(".sb-sidebar-profile-button-in").first().click();
       await c.page
-        .locator(".sb-app:not(.sb-app-ssr)")
-        .waitFor({ timeout: 20000 });
-      pane = await c.openAccount();
-      await c.page.waitForFunction(
-        (l) =>
-          [...document.querySelectorAll("input, textarea")].some(
-            (i) => (i as HTMLInputElement).value === l
-          ),
-        line,
-        { timeout: 30000 }
-      );
-      const pub = pane
-        .locator("button", { hasText: /(^|\s)Publish\s*$/ })
-        .first();
-      await pub.click();
-      await pane
-        .locator("button", { hasText: /(^|\s)Published\s*$/ })
-        .first()
-        .waitFor({ timeout: 90000 });
-      await pane
-        .locator("button", { hasText: /(^|\s)Published\s*$/ })
+        .getByRole("button", { name: "Edit profile" })
         .first()
         .click();
-      await pane
-        .locator("button", { hasText: /(^|\s)Publish\s*$/ })
+      const card = c.page.locator(".sb-profile-card");
+      await c.waitText(card, /are your Home profile/, 30000);
+      await card.getByLabel("First name").waitFor({ timeout: 5000 });
+      await card.getByLabel("Last name").waitFor({ timeout: 5000 });
+      if (await card.getByRole("button", { name: /^publish(ed)?$/i }).count())
+        throw new Error("the profile still offers Publish");
+      if (/Publish puts|Private until you publish/.test(await card.innerText()))
+        throw new Error("the profile still explains publishing");
+      const line = (await card.getByLabel("Description").inputValue()).trim();
+      await c.page
+        .getByRole("button", { name: "Back" })
         .first()
-        .waitFor({ timeout: 90000 });
-      // The Profile shows it folded to one line, with Read more.
-      await c.page.locator(".sb-sidebar-profile-button").click();
-      const more = c.page.locator(".sb-profile-screen .sb-profile-read-more");
-      await more.waitFor({ timeout: 10000 });
-      await more.click();
-      await c.waitText(more, /read less/i, 3000);
-      return `"Saved to your Library" after ${took}s; the description kept across a reload and folded under Read more on the Profile; published, then withdrawn`;
+        .click()
+        .catch(() => undefined);
+      if (line)
+        await c.waitText(
+          c.page.locator(".sb-profile-screen"),
+          new RegExp(line.slice(0, 20).replace(/[()]/g, ".")),
+          10000
+        );
+      return `Edit profile: Home name, line and photo, Save, no Publish; the Profile shows "${line.slice(0, 40)}"`;
     },
   },
   {
@@ -4549,22 +4523,29 @@ export const MORE_FLOWS: Flow[] = [
       // …and the line about you, and a new photo (cropped, kept as the image itself for the Home)
       const line = `Reads the Bible with friends (${next})`;
       await card.getByLabel("Description").fill(line);
-      await card.locator('input[type="file"]').first().setInputFiles({
-        name: "me.png",
-        mimeType: "image/png",
-        buffer: PNG,
-      });
-      await c.page.locator(".sb-crop-confirm").click();
-      await c.page.waitForFunction(
-        () =>
-          (
-            document.querySelector(
-              ".sb-profile-card img.sb-profile-picture"
-            ) as HTMLImageElement | null
-          )?.src.startsWith("data:image/jpeg"),
-        undefined,
-        { timeout: 20000 }
-      );
+      // The photo too: removed when the Home has one, added when it has none — each run changes it.
+      const hadPhoto =
+        (await card.getByRole("button", { name: "Remove photo" }).count()) > 0;
+      if (hadPhoto)
+        await card.getByRole("button", { name: "Remove photo" }).click();
+      else {
+        await card.locator('input[type="file"]').first().setInputFiles({
+          name: "me.png",
+          mimeType: "image/png",
+          buffer: PNG,
+        });
+        await c.page.locator(".sb-crop-confirm").click();
+        await c.page.waitForFunction(
+          () =>
+            (
+              document.querySelector(
+                ".sb-profile-card img.sb-profile-picture"
+              ) as HTMLImageElement | null
+            )?.src.startsWith("data:image/jpeg"),
+          undefined,
+          { timeout: 20000 }
+        );
+      }
       const opened = c.context.waitForEvent("page", { timeout: 15000 });
       await card.getByRole("button", { name: "Save", exact: true }).click();
       const home = await opened;
@@ -4596,10 +4577,17 @@ export const MORE_FLOWS: Flow[] = [
       await c.waitText(card, /Saved to your Home profile/, 60000);
       if ((await card.getByLabel("Description").inputValue()) !== line)
         throw new Error("the line about you was not read back from the Home");
-      const avatar =
-        (await c.page.locator(".sb-avatar").first().getAttribute("src")) ?? "";
-      if (!avatar.startsWith("data:image/jpeg"))
-        throw new Error(`the avatar is ${avatar.slice(0, 30)}`);
+      const avatar = c.page.locator("img.sb-avatar").first();
+      if (
+        hadPhoto
+          ? await avatar.count()
+          : !(await avatar.getAttribute("src"))?.startsWith("data:image/jpeg")
+      )
+        throw new Error(
+          hadPhoto
+            ? "the removed photo is still the avatar"
+            : "the new photo is not the avatar"
+        );
       if ((await last.inputValue()) !== next)
         throw new Error(`the field shows ${await last.inputValue()}`);
       await shot(c.page, "saved");

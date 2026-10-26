@@ -172,9 +172,16 @@ describe("profiles", () => {
       about: "Where you go, I will go.",
       picture: "https://files.test/ruth.jpg",
     });
-    const publishing = createPublishing(backend, ruthStores);
-    await publishing.publishProfile(profile.mine.value!);
-    expect(publishing.isPublished(profile.mine.value!["@id"])).toBe(true);
+    // A profile copy published before the reader stopped publishing profiles (its Home profile is what friends see
+    // now) is still read by a friend's Today.
+    const mine = profile.mine.value!;
+    await backend.publishSlice({
+      kind: "profile",
+      title: mine.displayName ?? "Profile",
+      slug: "profile",
+      markdown: `# ${mine.displayName}\n\n${mine.about ?? ""}`,
+      descriptor: { "prov:wasDerivedFrom": mine["@id"], work: mine },
+    });
     // A friend's Today, over the registry.
     backend.setIdentity(SEED);
     backend.friendsView = {

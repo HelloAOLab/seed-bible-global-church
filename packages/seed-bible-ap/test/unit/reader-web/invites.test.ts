@@ -180,3 +180,46 @@ describe("createInvites", () => {
     expect(refused.findable.value).toBe(true);
   });
 });
+
+// AN ACCEPTED INVITATION IS CLEARED ONCE IT HAS DONE ITS WORK (2026-10-26: a friend removed reappeared under "Joined from
+// your invitation" with Finish adding): clearing a person's accepted invitations takes them off the sent list at the
+// Home, and leaves the others alone.
+describe("clearing a person's accepted invitations", () => {
+  it("takes only theirs off the list", async () => {
+    const { fetchImpl, calls } = fakeHome();
+    const invites = createInvites({
+      base: HOME,
+      bearer: () => "tok",
+      fetchImpl,
+    });
+    invites.sent.value = [
+      {
+        token: "t1".padEnd(40, "0"),
+        email: "ruth@example.org",
+        createdAt: 1,
+        expiresAt: 2,
+        acceptedBy: "0xRUTH",
+      },
+      {
+        token: "t2".padEnd(40, "0"),
+        email: "boaz@example.org",
+        createdAt: 1,
+        expiresAt: 2,
+        acceptedBy: "0xBOAZ",
+      },
+      {
+        token: "t3".padEnd(40, "0"),
+        email: "naomi@example.org",
+        createdAt: 1,
+        expiresAt: 2,
+      },
+    ];
+    await invites.clearAccepted("0xruth");
+    const cancels = calls.filter(
+      (c) => (c.body as { cancel?: boolean } | null)?.cancel
+    );
+    expect(cancels.map((c) => (c.body as { token: string }).token)).toEqual([
+      "t1".padEnd(40, "0"),
+    ]);
+  });
+});

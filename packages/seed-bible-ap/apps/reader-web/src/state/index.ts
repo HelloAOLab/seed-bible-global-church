@@ -179,6 +179,18 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     void invites.refresh();
     void invites.loadFindable();
   });
+  // An invitation someone accepted is done once they are your friend, and done when you remove them: cleared then, so
+  // "Joined from your invitation" never offers again someone you are friends with, or removed.
+  effect(() => {
+    const friends = new Set(
+      (today.friendsView.value?.friends ?? []).map((f) => f.agent.toLowerCase())
+    );
+    const removed = friendship.removing.value;
+    if (removed?.done) friends.add(removed.who.toLowerCase());
+    for (const i of invites.sent.value)
+      if (i.acceptedBy && friends.has(i.acceptedBy.toLowerCase()))
+        void invites.clearAccepted(i.acceptedBy);
+  });
   // Your Home profile (name and photo) is yours in the reader: read at sign-in, and whenever the reader comes back.
   const homeProfile = createHomeProfile({
     base: A2A_BASE,

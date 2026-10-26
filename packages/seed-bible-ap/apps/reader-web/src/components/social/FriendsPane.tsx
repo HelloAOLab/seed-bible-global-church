@@ -319,6 +319,20 @@ export function FriendsPane({ state }: { state: ReaderState }) {
                             defaultValue: "Finish adding",
                           })}
                         </button>
+                        {/* Not someone to add after all: clear the invitation they accepted, so they are not offered again. */}
+                        <button
+                          type="button"
+                          className="sb-friends-button"
+                          aria-label={t("friend-joined-dismiss-user", {
+                            name,
+                            defaultValue: "Remove {{name}} from this list",
+                          })}
+                          onClick={() =>
+                            void state.invites.clearAccepted(agent)
+                          }
+                        >
+                          {t("remove", { defaultValue: "Remove" })}
+                        </button>
                       </span>
                     </li>
                   );

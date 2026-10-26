@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 11:27 UTC",
+  "when": "2026-10-26 11:47 UTC",
   "results": [
     {
       "id": "PRF1",
@@ -8,8 +8,8 @@
       "title": "Your profile is your Home profile",
       "checks": "Signed in as Seed Reader: Edit profile shows the name, line about you and photo from the Home (and says they are the Home profile); changing the last name, the line and the photo and Save opens the Home's window — 'Update your Home profile?' with old beside new for each — Save to my profile; the window closes and the reader says 'Saved to your Home profile' and shows them, read back from the Home, the avatar included",
       "mark": "✅",
-      "note": " Reader →  Reader-Test: Home window, Save to my profile, read back",
-      "ms": 48525
+      "note": " Reader-Test →  Reader: Home window, Save to my profile, read back",
+      "ms": 45814
     }
   ]
 }
