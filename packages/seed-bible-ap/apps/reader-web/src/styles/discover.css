@@ -557,21 +557,17 @@
   overflow: hidden;
 }
 /* The chips across the top, as the old reader has them: All, then one per source that has something here. They
-   stay in view while the pane scrolls and scroll sideways when there are more than fit. */
+   stay in view while the pane scrolls and wrap onto more lines rather than run off the edge. */
 .sb-discover-chips {
   position: sticky;
   top: 0;
   z-index: 2;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
   margin: 0 0 8px;
   padding: 6px 0 10px;
   background: var(--sb-background);
-}
-.sb-discover-chips::-webkit-scrollbar {
-  display: none;
 }
 .sb-discover-chip {
   flex: 0 0 auto;
