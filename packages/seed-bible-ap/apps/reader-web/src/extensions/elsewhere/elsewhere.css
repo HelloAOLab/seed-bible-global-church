@@ -1,0 +1,82 @@
+/* A verse in Greek: the reference, the Greek large, what the Septuagint is, and its edition. */
+.sb-greek-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-greek-verse {
+  margin: 0;
+}
+.sb-greek-text {
+  margin: 0.25rem 0;
+  font-size: 1.35rem;
+  line-height: 1.7;
+  font-family:
+    "Gentium Plus", "SBL Greek", "Noto Serif", "Times New Roman", serif;
+}
+.sb-greek-credit {
+  margin-top: 0.5rem;
+}
+
+/* A verse's content, in one pane: a section for each kind, scroll lines as Hebrew over their English draft. */
+.sb-content-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 0.25rem;
+}
+.sb-content-pane-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.sb-content-section-v-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.sb-content-lines {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sb-content-line {
+  padding: 10px 12px;
+  border: 1px solid var(--sb-divider-color, rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+}
+.sb-content-line p {
+  margin: 0 0 4px;
+}
+.sb-content-line-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.sb-content-line-hebrew {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  text-align: right;
+  font-family:
+    "SBL Hebrew", "Ezra SIL", "Noto Serif Hebrew", "Times New Roman", serif;
+}
+.sb-content-line-english {
+  line-height: 1.5;
+}
+.sb-content-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sb-content-credits {
+  margin-top: 4px;
+}
+.sb-content-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sb-content-section-v {
+  scroll-margin-top: 8px;
+}

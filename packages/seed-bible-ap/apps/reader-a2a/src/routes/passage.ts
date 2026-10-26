@@ -311,6 +311,8 @@ export interface GatewayReading {
   slug: string;
   version: number;
   work: string;
+  /** The part of the work the block is in; blocks are numbered within their part. */
+  part?: number;
   partTitle?: string;
   block: number;
   sourceLabel?: string;
@@ -346,6 +348,180 @@ export function parseScrollBlock(text: string) {
   };
 }
 
+/** What bears on a verse from outside the edition (the Scripture Agent's `verse-associations`): the scroll lines that
+ *  copy it, the non-biblical scroll lines that quote it, its UBS parallel passages and its Septuagint text. */
+export interface VerseAssociations {
+  verses?: Array<{
+    verse: number;
+    quotedIn?: Array<{
+      line: string;
+      manuscript: string;
+      composition?: string;
+      work?: string;
+    }>;
+    parallels?: Array<{ osis: string; kind: string; group?: string }>;
+    septuagint?: { text: string; edition?: string; label?: string } | null;
+  }>;
+  sources?: Record<string, string>;
+}
+
+/** A verse's parallel passages and its Septuagint text, as items at the verse. */
+export function associationItems(
+  asked: Locus,
+  chapter: number,
+  body: VerseAssociations
+): PassageItem[] {
+  const out: PassageItem[] = [];
+  for (const v of body.verses ?? []) {
+    const at = locusOf(asked.book, chapter, v.verse);
+    if (!at || !overlaps(at.span, asked.span)) continue;
+    for (const p of v.parallels ?? []) {
+      const to = parseLocus(p.osis);
+      if (!to) continue;
+      out.push({
+        source: "scripture",
+        kind: "parallel",
+        locus: anchor(at),
+        title: to.alias,
+        from: "scripture-agent",
+        data: {
+          to: anchor(to),
+          relation: p.kind,
+          licence: body.sources?.["parallels"] ?? null,
+        },
+      });
+    }
+    if (v.septuagint?.text)
+      out.push({
+        source: "scripture",
+        kind: "septuagint",
+        locus: anchor(at),
+        title: "Septuagint",
+        detail: v.septuagint.text,
+        from: "scripture-agent",
+        data: {
+          edition: v.septuagint.edition ?? null,
+          label: v.septuagint.label ?? null,
+        },
+      });
+  }
+  return out;
+}
+
+/** The non-biblical scroll lines that quote the asked verses: [verse, line, composition]. */
+export function quotations(
+  asked: Locus,
+  chapter: number,
+  body: VerseAssociations
+) {
+  const out: Array<{
+    verse: number;
+    line: string;
+    composition: string | null;
+  }> = [];
+  for (const v of body.verses ?? []) {
+    const at = locusOf(asked.book, chapter, v.verse);
+    if (!at || !overlaps(at.span, asked.span)) continue;
+    for (const q of v.quotedIn ?? [])
+      out.push({
+        verse: v.verse,
+        line: q.line,
+        composition: q.composition ?? null,
+      });
+  }
+  return out;
+}
+
+/** A scroll line that quotes a verse, read by its own reference at the gateway: anchored at the verse it quotes. */
+export function quoteItem(
+  quoted: Locus,
+  composition: string | null,
+  r: GatewayReading,
+  foundBy: string | null = null
+): PassageItem {
+  const b = parseScrollBlock(r.text);
+  return {
+    source: "publishing",
+    kind: "scroll-quote",
+    locus: anchor(quoted),
+    title: r.sourceLabel ?? b.label ?? r.work,
+    ...(b.english ? { detail: b.english } : {}),
+    ...(r.url ? { link: r.url } : {}),
+    from: "publishing-gateway",
+    data: {
+      work: r.work,
+      manuscript: r.partTitle ?? null,
+      composition,
+      /** How the quotation was found (by code, with its measured precision), in the source's words. */
+      foundBy,
+      hebrew: b.hebrew,
+      english: b.english,
+      status: b.status,
+      licence: r.licence ?? null,
+      attribution: r.attribution ?? null,
+      commercialUse: r.commercialUse ?? false,
+      citation: {
+        locus: quoted.id,
+        work: `@${r.handle}/${r.slug}@${r.version}`,
+        part: r.part ?? null,
+        block: r.block,
+        commitment: r.commitment?.value ?? null,
+      },
+    },
+  };
+}
+
+/** A passage up to this many verses carries its scroll lines' text; a longer one (a chapter) names them only — reading
+ *  every line's text queues on the Worker's few connections (Isaiah 40: 15 s) — and the text is had by asking the verse. */
+export const TEXT_SPAN = 3;
+
+/** The scroll lines at a long passage, named without their text: the copies (writings' atVerse, published ones — an
+ *  unpublished one is the content source's) and the quoting lines (verse-associations). `textAt` is the verse to ask. */
+export function scrollNameItems(
+  asked: Locus,
+  chapter: number,
+  w: WritingsAnswer,
+  a: VerseAssociations
+): PassageItem[] {
+  const out: PassageItem[] = [];
+  for (const line of w.writings?.witnesses?.atVerse ?? []) {
+    if (!line.published) continue;
+    const at = versesLocus(asked.book, chapter, line.verses);
+    if (!at || !overlaps(at.span, asked.span)) continue;
+    out.push({
+      source: "publishing",
+      kind: "scroll-line",
+      locus: anchor(at),
+      title: line.line,
+      from: "publishing-gateway",
+      data: {
+        manuscript: line.manuscript,
+        textAt: seedRef(locusOf(asked.book, chapter, at.verse!)!),
+      },
+    });
+  }
+  for (const q of quotations(asked, chapter, a)) {
+    const at = locusOf(asked.book, chapter, q.verse)!;
+    out.push({
+      source: "publishing",
+      kind: "scroll-quote",
+      locus: anchor(at),
+      title: q.line,
+      from: "publishing-gateway",
+      data: {
+        manuscript: q.line.split(" ")[0] ?? q.line,
+        composition: q.composition,
+        foundBy: a.sources?.["quotedIn"] ?? null,
+        textAt: seedRef(at),
+      },
+    });
+  }
+  return out;
+}
+
+/** At most this many quoting lines are read from the gateway for one passage. */
+export const MAX_QUOTES = 30;
+
 export function scrollItems(
   asked: Locus,
   readings: GatewayReading[]
@@ -353,7 +529,7 @@ export function scrollItems(
   const out: PassageItem[] = [];
   const seen = new Set<string>();
   for (const r of readings) {
-    const key = `${r.handle}/${r.slug}@${r.version}#${r.block}`;
+    const key = `${r.handle}/${r.slug}@${r.version}/${r.part ?? 0}#${r.block}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const b = parseScrollBlock(r.text);
@@ -380,6 +556,7 @@ export function scrollItems(
         citation: {
           locus: at.id,
           work: `@${r.handle}/${r.slug}@${r.version}`,
+          part: r.part ?? null,
           block: r.block,
           commitment: r.commitment?.value ?? null,
         },
@@ -480,9 +657,9 @@ export const MAX_SCROLL_VERSES = 40;
 
 async function gatewayReadings(
   env: PublishingEnv,
-  verseId: string
+  by: { verseId: string } | { source: string }
 ): Promise<GatewayReading[]> {
-  const path = `/public/locus?verseId=${verseId}`;
+  const path = `/public/locus?${new URLSearchParams(by)}`;
   const res = env.PUBLISHING
     ? await env.PUBLISHING.fetch(`https://publishing${path}`)
     : await fetch(
@@ -535,6 +712,16 @@ export async function composePassage(
     ])
   );
   for (const w of writings.values()) w.catch(() => undefined);
+  const associations = new Map(
+    chapters.map((c) => [
+      c,
+      askScripture(env, "verse-associations", {
+        book: asked.book,
+        chapter: c,
+      }) as Promise<VerseAssociations>,
+    ])
+  );
+  for (const a of associations.values()) a.catch(() => undefined);
   const [scripture, content, registry, mine, publishing] = await Promise.all([
     gather(
       perChapter(async (c) => {
@@ -547,9 +734,14 @@ export async function composePassage(
           ask("open-cross-ref"),
           ask("theographic"),
         ]);
+        // An agent that does not answer verse-associations yet leaves the rest of the scripture items standing.
+        const a = await associations
+          .get(c)!
+          .catch(() => ({}) as VerseAssociations);
         return [
           ...crossReferenceItems(asked, c, x as CrossRefChapter),
           ...theographicItems(asked, c, t as TheographicChapter),
+          ...associationItems(asked, c, a),
         ];
       })
     ),
@@ -574,6 +766,21 @@ export async function composePassage(
     // The publishing gateway: the published scroll lines at the verses that have them, read by canonical verse id and
     // carried with their licence — never copied into any store here.
     gather(async () => {
+      if (asked.span[1] - asked.span[0] + 1 > TEXT_SPAN || chapters.length > 1)
+        return (
+          await Promise.all(
+            chapters.map(async (c) =>
+              scrollNameItems(
+                asked,
+                c,
+                await writings.get(c)!.catch(() => ({}) as WritingsAnswer),
+                await associations
+                  .get(c)!
+                  .catch(() => ({}) as VerseAssociations)
+              )
+            )
+          )
+        ).flat();
       const verses = (
         await Promise.all(
           chapters.map(async (c) =>
@@ -587,10 +794,42 @@ export async function composePassage(
         .slice(0, MAX_SCROLL_VERSES);
       const readings = await Promise.all(
         verses.map(([c, v]) =>
-          gatewayReadings(env, locusOf(asked.book, c, v)!.id)
+          gatewayReadings(env, { verseId: locusOf(asked.book, c, v)!.id })
         )
       );
-      return scrollItems(asked, readings.flat());
+      const quoting = (
+        await Promise.all(
+          chapters.map(async (c) => {
+            const a: VerseAssociations = await associations
+              .get(c)!
+              .catch(() => ({}));
+            return quotations(asked, c, a).map((q) => ({
+              ...q,
+              chapter: c,
+              foundBy: a.sources?.["quotedIn"] ?? null,
+            }));
+          })
+        )
+      )
+        .flat()
+        .slice(0, MAX_QUOTES);
+      const quotes = await Promise.all(
+        quoting.map(async (q) => {
+          const [r] = await gatewayReadings(env, { source: q.line });
+          return r
+            ? quoteItem(
+                locusOf(asked.book, q.chapter, q.verse)!,
+                q.composition,
+                r,
+                q.foundBy
+              )
+            : null;
+        })
+      );
+      return [
+        ...scrollItems(asked, readings.flat()),
+        ...quotes.filter((q): q is PassageItem => q !== null),
+      ];
     }),
   ]);
   return {

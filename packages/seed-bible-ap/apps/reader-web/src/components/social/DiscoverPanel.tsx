@@ -292,6 +292,9 @@ function sectionName(t: ReturnType<typeof useI18n>["t"], name: string) {
 function FoldingSection(props: { title: string; items: DiscoverItem[] }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(true);
+  const [all, setAll] = useState(false);
+  // Five at first, then "Show all N": a section of fifty-three scroll lines must not bury the next one.
+  const FIRST = 5;
   return (
     <section className="sb-discover-section sb-discover-fold">
       <button
@@ -311,7 +314,23 @@ function FoldingSection(props: { title: string; items: DiscoverItem[] }) {
           expand_more
         </span>
       </button>
-      {open && <ItemRows items={props.items} />}
+      {open && (
+        <ItemRows items={all ? props.items : props.items.slice(0, FIRST)} />
+      )}
+      {open && props.items.length > FIRST && (
+        <button
+          type="button"
+          className="sb-content-see-all sb-discover-show-all"
+          onClick={() => setAll(!all)}
+        >
+          {all
+            ? t("show-fewer", { defaultValue: "Show fewer" })
+            : t("show-all-count", {
+                count: props.items.length,
+                defaultValue: "Show all {{count}}",
+              })}
+        </button>
+      )}
     </section>
   );
 }

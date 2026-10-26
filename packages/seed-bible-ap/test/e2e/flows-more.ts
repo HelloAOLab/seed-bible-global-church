@@ -4357,6 +4357,105 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "ELS1",
+    section: "12. Extensions",
+    title:
+      "Elsewhere at a verse: the New Testament, the Greek, the scrolls that quote it",
+    rows: ["Elsewhere at a verse"],
+    checks:
+      "On Isaiah 40, tap verse 3 → Discover → Elsewhere lists it as 'Quoted in the New Testament' (Matthew 3:3 …) and 'In Greek (Septuagint)'; the Greek opens in a card; Scrolls lists 'Quoted in other writings' — the Community Rule (1QS) line that quotes it, whose card says 'Quotes Isaiah 40:3' with its Hebrew and English",
+    run: async (c) => {
+      await c.open("/read/BSB/ISA/40");
+      await c.selectVerse(3);
+      await c.pressToolbar("Discover");
+      await c.openSource(/Elsewhere in the Bible/);
+      const pane = c.pane();
+      await c.waitText(pane, /Quoted in the New Testament/, 30000);
+      await c.waitText(pane, /Matthew 3:3/, 5000);
+      await c.waitText(pane, /In Greek \(Septuagint\)/, 5000);
+      await pane
+        .locator(".sb-discover-item", { hasText: /in Greek/ })
+        .first()
+        .locator("button")
+        .click();
+      const card = c.page.locator(".sb-greek-card");
+      await card.waitFor({ timeout: 10000 });
+      const greek = (await card.locator(".sb-greek-text").innerText()).trim();
+      if (!/[\u0370-\u03FF\u1F00-\u1FFF]/.test(greek))
+        throw new Error(`no Greek: ${greek}`);
+      await c.pressToolbar("Discover");
+      await c.openSource(/Dead Sea Scrolls/);
+      await c.waitText(c.pane(), /Quoted in other writings/, 30000);
+      const quote = c
+        .pane()
+        .locator(".sb-discover-item", { hasText: /Community Rule \(1QS\)/ })
+        .first();
+      await quote.waitFor({ timeout: 10000 });
+      await quote.locator("button").click();
+      const sc = c.page.locator(".sb-scroll-card");
+      await c.waitText(sc, /Quotes Isaiah 40:3/, 10000);
+      await c.waitText(sc, /A line from the Community Rule/, 5000);
+      await c.waitText(sc, /Found by a computer/, 5000);
+      const he = (await sc.locator(".sb-scroll-hebrew").innerText()).trim();
+      if (!/[\u0590-\u05FF]/.test(he))
+        throw new Error("no Hebrew in the quoting line");
+      return `Matthew 3:3 under Quoted in the New Testament; Greek "${greek.slice(0, 30)}…"; Community Rule (1QS) quotes Isaiah 40:3: ${he.slice(0, 20)}…`;
+    },
+  },
+  {
+    id: "CNT1",
+    section: "12. Extensions",
+    title: "A verse's content from the verse bar",
+    rows: ["Content for a verse"],
+    checks:
+      "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; on John 11, verse 35 has none and the bar does not offer Content",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      await c.open("/read/BSB/ISA/40");
+      await c.selectVerse(3);
+      const bar = c.page.locator(".sb-verse-toolbar").first();
+      const button = bar.getByRole("button", { name: "Content" });
+      await button.waitFor({ timeout: 30000 });
+      await button.click();
+      const pane = c.page.locator(".sb-content-pane");
+      await c.waitText(pane, /Content for Isaiah 40:3/, 20000);
+      await c.waitText(pane, /In the Dead Sea Scrolls/, 30000);
+      const he = (
+        await pane.locator(".sb-content-line-hebrew").first().innerText()
+      ).trim();
+      if (!/[\u0590-\u05FF]/.test(he))
+        throw new Error("no Hebrew in the copies");
+      await c.waitText(
+        pane,
+        /Quoted in other writings[\s\S]*Community Rule/,
+        5000
+      );
+      await c.waitText(pane, /Found by a computer/, 5000);
+      await c.waitText(
+        pane,
+        /Quoted in the New Testament[\s\S]*Matthew 3:3/,
+        5000
+      );
+      await c.waitText(pane, /In Greek \(the Septuagint\)/, 5000);
+      await c.waitText(
+        pane,
+        /CC BY-NC 4\.0[\s\S]*CC BY-SA 4\.0[\s\S]*public domain/,
+        5000
+      );
+      if (dir) await c.page.screenshot({ path: `${dir}/cnt1-isa-40-3.png` });
+      const copies = await pane.locator(".sb-content-line").count();
+      await pane.getByRole("button", { name: "Matthew 3:3" }).click();
+      await c.page.waitForURL(/\/read\/[^/]+\/MAT\/3/, { timeout: 15000 });
+      await c.open("/read/BSB/JHN/11");
+      await c.selectVerse(35);
+      await bar.waitFor({ timeout: 10000 });
+      await c.page.waitForTimeout(4000);
+      if (await bar.getByRole("button", { name: "Content" }).count())
+        throw new Error("Content offered on John 11:35, which has none");
+      return `Isaiah 40:3: ${copies} scroll lines (Hebrew "${he.slice(0, 16)}…"), Community Rule, Matthew 3:3 opened, Greek; John 11:35: not offered`;
+    },
+  },
+  {
     id: "G19",
     timeoutMs: 240_000,
     section: "8. Today, Discover and publishing",

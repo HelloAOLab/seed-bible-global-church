@@ -1,15 +1,51 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 01:36 UTC",
+  "when": "2026-10-26 02:04 UTC",
   "results": [
     {
-      "id": "R1",
-      "section": "3. Reading",
-      "title": "Open a chapter",
-      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
+      "id": "S1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Discover for a chapter",
+      "checks": "The Discover pane opens for John 3 and lists what was published (or says nothing yet) without an error",
       "mark": "✅",
-      "note": "edge-rendered, then live; header \"John3\"",
-      "ms": 1203
+      "note": "Discover John + Create close All Elsewhere References Places Content People & events Writings NOTES ",
+      "ms": 3172
+    },
+    {
+      "id": "DS1",
+      "section": "3. Reading",
+      "title": "The old reader's display choices",
+      "checks": "Settings → Display & Theme: text size XXL, line height Loose (2.5), interface Extra large (125%); Book order Tanakh puts Isaiah right after 2 Kings in the book picker; Show discovered content off takes the Discover card away; Verse selection effects offers Default, Enabled, Disabled",
+      "mark": "✅",
+      "note": "XXL, Loose and Extra large applied; Tanakh order put Isaiah after 2 Kings; the Discover card hid and came back; the effects choice is there",
+      "ms": 1198
+    },
+    {
+      "id": "X3",
+      "section": "12. Extensions",
+      "title": "Cross-references",
+      "checks": "Select John 3:16 → Discover → Cross-references lists related passages; tapping one opens it",
+      "mark": "✅",
+      "note": "\"link Romans 5:8 from verse 16\" → /read/BSB/ROM/5",
+      "ms": 902
+    },
+    {
+      "id": "G17",
+      "section": "12. Extensions",
+      "title": "Videos and articles in Discover",
+      "checks": "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
+      "mark": "✅",
+      "note": "picture cards by author; the Upper Room video played in place and its page opened (https://www.youtube.com/watch?v=1e5paRyG)",
+      "ms": 929
+    },
+    {
+      "id": "G18",
+      "section": "12. Extensions",
+      "title": "People, places and events",
+      "checks": "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
+      "mark": "✅",
+      "note": "Abraham's card; Terah's card and Back; Genesis 11:29 opened at /read/BSB/GEN/11",
+      "ms": 1511
     },
     {
       "id": "INT1",
@@ -18,16 +54,7 @@
       "checks": "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
       "mark": "✅",
       "note": "card \"forum Genesis 6:2 RBS · “the sons of God saw that the daught…\" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded",
-      "ms": 3251
-    },
-    {
-      "id": "INT2",
-      "section": "12. Extensions",
-      "title": "Interpretations from the verse bar",
-      "checks": "On Genesis 6, tap verse 2 → the verse bar offers Interpretations → it opens 'How Genesis 6:2 is read' for that verse alone (no other verses to switch to); tap verse 3, which has no record → the bar does not offer it",
-      "mark": "✅",
-      "note": "verse 2: Interpretations on the bar → How Genesis 6:2 is read, that verse alone; verse 3: not offered",
-      "ms": 4100
+      "ms": 1108
     }
   ]
 }

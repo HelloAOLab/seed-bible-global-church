@@ -117,6 +117,7 @@ const FIRST = 5;
 /** Each source's chip, short as the old reader's (All · Content · People · Events · References). */
 const CHIP: Record<string, string> = {
   scrolls: "Scrolls",
+  elsewhere: "Elsewhere",
   references: "References",
   locations: "Places",
   "default-content": "Content",

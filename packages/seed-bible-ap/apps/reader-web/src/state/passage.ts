@@ -44,7 +44,8 @@ export function loadPassage(
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<PassageAnswer | null> {
-  const key = `passage:${chapterRef}`;
+  // The version in the key moves when the answer gains kinds of item, so a chapter kept on the device is asked again.
+  const key = `passage3:${chapterRef}`;
   const running = inFlight.get(key);
   if (running) return running;
   const p = (async () => {
@@ -130,4 +131,35 @@ export function theographicOf(answer: PassageAnswer) {
       events: group("event"),
     },
   };
+}
+
+/** The ordinal of verse 1 of the chapter an answer is about, whatever it was asked for (a chapter, a verse, a range). */
+export function chapterStartOf(answer: PassageAnswer): number {
+  const v = Number(answer.locus.ref.split("-")[0]!.split(".")[2] ?? 1);
+  return answer.locus.span[0] - (v || 1) + 1;
+}
+
+/** The ref to ask for what the selected verses carry in full: those verses when they are a few together (their scroll
+ *  lines come with text), else the chapter (named only). */
+export function refForSelection(chapterRef: string, verses: number[]): string {
+  if (!verses.length) return chapterRef;
+  const lo = Math.min(...verses);
+  const hi = Math.max(...verses);
+  if (hi - lo + 1 > 3) return chapterRef;
+  return lo === hi
+    ? `${chapterRef}.${lo}`
+    : `${chapterRef}.${lo}-${chapterRef}.${hi}`;
+}
+
+/** The items of an answer at the given verses of its chapter (all of them with none given). */
+export function atVerses(
+  items: PassageItem[],
+  chapterStart: number,
+  verses: number[]
+): PassageItem[] {
+  if (!verses.length) return items;
+  const wanted = verses.map((v) => chapterStart - 1 + v);
+  return items.filter((i) =>
+    wanted.some((o) => o >= i.locus.span[0] && o <= i.locus.span[1])
+  );
 }

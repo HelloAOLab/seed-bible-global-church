@@ -4,10 +4,16 @@
 // answer (`/api/passage/<chapter>`), keyed by canonical verse id, under its own licence (non-commercial, attribution
 // required); it is shown, never stored apart from that answer.
 import { signal } from "@preact/signals";
+import { useEffect, useState } from "preact/hooks";
 import type { DiscoverItem, ExtensionRegistration } from "../host";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
-import { loadPassage, type PassageItem } from "../../state/passage";
+import {
+  chapterStartOf,
+  loadPassage,
+  refForSelection,
+  type PassageItem,
+} from "../../state/passage";
 import "./scrolls.css";
 
 /** The line whose card is open. */
@@ -38,6 +44,27 @@ export function scrollName(manuscript: string, line: string) {
   return { scroll, line: short };
 }
 
+/** A quoting scroll by the work it is part of: `1QS — 1Q Community Rule` with `Community Rule` → `Community Rule — 1QS`
+ *  as a manuscript name (`<siglum> — <name>`), so it reads "Community Rule (1QS)". */
+export function quoteName(manuscript: string, composition: string): string {
+  if (!composition) return manuscript;
+  const siglum = manuscript.split(/\s+—\s+/)[0] ?? manuscript;
+  return `${siglum} — ${composition}`;
+}
+
+/** How a quotation was found, plainly: by computer, and how often such a match is right (from the source's measured
+ *  precision, e.g. "precision 0.9888" → about 99 in 100). */
+export function foundByWords(
+  foundBy: string | null | undefined
+): string | null {
+  if (!foundBy) return null;
+  const p = /precision\s+(0?\.\d+)/i.exec(foundBy);
+  const per100 = p ? Math.round(Number(p[1]) * 100) : null;
+  return per100
+    ? `Found by a computer matching the scroll's words to the verse — right about ${per100} times in 100.`
+    : "Found by a computer matching the scroll's words to the verse.";
+}
+
 /** The draft's state in plain words: `first-draft · human-pending` → `First draft, waiting for a person to check it`. */
 export function plainStatus(status: string | null | undefined): string | null {
   if (!status) return null;
@@ -64,7 +91,7 @@ export function scrollLinesFor(
   const base = chapterSpanStart - 1;
   const wanted = selectedVerses.map((v) => base + v);
   return items
-    .filter((i) => i.kind === "scroll-line")
+    .filter((i) => i.kind === "scroll-line" || i.kind === "scroll-quote")
     .filter(
       (i) =>
         !wanted.length ||
@@ -79,6 +106,43 @@ export function scrollLinesFor(
 function Card({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const it = open.value;
+  // A line named in a chapter's answer comes without its text: the verse it is at is asked, and the line taken from there.
+  const textAt =
+    it && typeof it.data?.["textAt"] === "string" && !it.data?.["hebrew"]
+      ? (it.data["textAt"] as string)
+      : null;
+  const [unreadable, setUnreadable] = useState(false);
+  useEffect(() => {
+    if (!textAt || !it) return;
+    setUnreadable(false);
+    let live = true;
+    void loadPassage(textAt, state.stores.chapters)
+      .then((a) => {
+        if (!live) return;
+        const full = a?.items.find(
+          (x) =>
+            x.kind === it.kind &&
+            x.title === it.title &&
+            x.data?.["hebrew"] !== undefined
+        );
+        if (full) open.value = full;
+        else setUnreadable(true);
+      })
+      .catch(() => live && setUnreadable(true));
+    return () => {
+      live = false;
+    };
+  }, [textAt]);
+  if (it && textAt)
+    return (
+      <p className="sb-pane-empty">
+        {unreadable
+          ? t("scrolls-line-unreadable", {
+              defaultValue: "This line could not be read just now.",
+            })
+          : t("scrolls-line-loading", { defaultValue: "Reading the line…" })}
+      </p>
+    );
   if (!it)
     return (
       <p className="sb-pane-empty">
@@ -92,7 +156,11 @@ function Card({ state }: { state: ReaderState }) {
   const bookName = (id: string) =>
     state.reading.books.value.find((b) => b.id === id)?.name ?? id;
   const status = plainStatus(str("status"));
-  const named = scrollName(str("manuscript") || str("work"), it.title);
+  const named = scrollName(
+    quoteName(str("manuscript") || str("work"), str("composition")),
+    it.title
+  );
+  const quotes = it.kind === "scroll-quote";
   const reconstructed = /reconstructed|uncertain/i.test(str("status"));
   return (
     <div className="sb-scroll-card">
@@ -100,9 +168,30 @@ function Card({ state }: { state: ReaderState }) {
         {named.scroll} · {t("scrolls-line", { defaultValue: "line" })}{" "}
         {named.line}
       </p>
-      <h3 className="sb-scroll-verses">{verseLabel(it.locus.ref, bookName)}</h3>
+      <h3 className="sb-scroll-verses">
+        {quotes
+          ? t("scrolls-quotes", {
+              ref: verseLabel(it.locus.ref, bookName),
+              defaultValue: "Quotes {{ref}}",
+            })
+          : verseLabel(it.locus.ref, bookName)}
+      </h3>
       {it.source === "publishing" ? (
         <>
+          {quotes && str("composition") && (
+            <p className="sb-small">
+              {t("scrolls-quote-from", {
+                work: str("composition"),
+                defaultValue:
+                  "A line from the {{work}}, a writing of the time that is not part of the Bible, quoting this verse.",
+              })}
+            </p>
+          )}
+          {quotes && foundByWords(str("foundBy")) && (
+            <p className="sb-small sb-muted sb-scroll-found">
+              {foundByWords(str("foundBy"))}
+            </p>
+          )}
           <p className="sb-scroll-hebrew" lang="he" dir="rtl">
             {str("hebrew")}
           </p>
@@ -177,7 +266,7 @@ const scrolls: ExtensionRegistration = {
       label: "Dead Sea Scrolls",
       discover: async (d): Promise<DiscoverItem[]> => {
         const answer = await loadPassage(
-          d.chapterRef,
+          refForSelection(d.chapterRef, d.selectedVerses),
           state.stores.chapters
         ).catch(() => null);
         if (!answer) return [];
@@ -185,22 +274,32 @@ const scrolls: ExtensionRegistration = {
           d.books.find((b) => b.id === id)?.name ?? id;
         return scrollLinesFor(
           answer.items,
-          answer.locus.span[0],
+          chapterStartOf(answer),
           d.selectedVerses
         ).map((it) => {
           const data = (it.data ?? {}) as Record<string, unknown>;
-          const manuscript =
+          const manuscript = quoteName(
             typeof data["manuscript"] === "string"
               ? (data["manuscript"] as string)
-              : it.title;
+              : it.title,
+            typeof data["composition"] === "string"
+              ? (data["composition"] as string)
+              : ""
+          );
+          const quotes = it.kind === "scroll-quote";
+          const verses = verseLabel(it.locus.ref, bookName);
           return {
-            id: `${it.source}:${it.title}`,
+            id: `${it.source}:${it.kind}:${it.title}`,
             title: (() => {
               const n = scrollName(manuscript, it.title);
               return `${n.scroll} · ${n.line}`;
             })(),
-            description: `${verseLabel(it.locus.ref, bookName)}${it.detail ? ` — ${it.detail}` : ""}`,
-            icon: "history_edu",
+            description: `${quotes ? `quotes ${verses}` : verses}${it.detail ? ` — ${it.detail}` : ""}`,
+            icon: quotes ? "format_quote" : "history_edu",
+            // Copies of the verse, and other writings of the time that quote it — two different kinds of witness.
+            section: quotes
+              ? "Quoted in other writings"
+              : "Copies of this verse",
             onOpen: () => {
               open.value = it;
               ctx.panes.open("scrolls");

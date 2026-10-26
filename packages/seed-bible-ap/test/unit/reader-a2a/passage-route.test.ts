@@ -384,19 +384,15 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
     expect(out.sources.publishing).toEqual({ ok: true, count: 1 });
   });
 
-  it("a chapter asks the gateway only for the verses a published line touches, and names an unpublished line without text", async () => {
+  it("a chapter names its scroll lines without reading their text (the verse is asked for that), and names an unpublished line too", async () => {
     const asked: string[] = [];
     const out = (await (
       await app(gen1Env(asked)).get("GEN.1")
     ).json()) as Answer & {
-      items: Array<{ detail?: string }>;
+      items: Array<{ detail?: string; data?: Record<string, unknown> }>;
     };
-    expect(asked).toEqual([
-      parseLocus("Gen.1.1")!.id,
-      parseLocus("Gen.1.2")!.id,
-    ]);
+    expect(asked).toEqual([]);
     const lines = out.items.filter((i) => i.kind === "scroll-line");
-    // the same block answered for both verses is one line
     expect(lines.map((i) => [i.source, i.title])).toEqual([
       ["content", "4Q2 f1:9"],
       ["publishing", "4Q7 f1:1"],
@@ -404,6 +400,11 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
     expect((lines[0] as { detail?: string }).detail).toMatch(
       /not published yet/
     );
+    expect((lines[1] as { detail?: string }).detail).toBeUndefined();
+    expect((lines[1] as { data?: unknown }).data).toMatchObject({
+      manuscript: "4Q7",
+      textAt: "GEN.1.1",
+    });
   });
 
   it("a verse no scroll line touches does not ask the gateway; a gateway that is down is reported", async () => {
@@ -418,5 +419,149 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
     ).json()) as Answer;
     expect(down.ok).toBe(true);
     expect(down.sources.publishing).toMatchObject({ ok: false });
+  });
+});
+
+// ELSEWHERE AT A VERSE (the Scripture Agent's verse-associations): Isaiah 40:3's parallels in the Gospels and its
+// Septuagint text come as items at the verse; the Community Rule line that quotes it is read from the gateway by its own
+// reference and anchored at the verse it quotes.
+describe("/api/passage/<locus> — elsewhere at a verse", () => {
+  const ISA_40 = {
+    verses: [
+      {
+        verse: 3,
+        quotedIn: [
+          {
+            line: "1QS 8:14",
+            manuscript: "1QS",
+            composition: "Community Rule",
+          },
+        ],
+        parallels: [
+          { osis: "Matt.3.3", kind: "ot-in-nt" },
+          { osis: "John.1.23", kind: "ot-in-nt" },
+        ],
+        septuagint: {
+          text: "Φωνὴ βοῶντος ἐν τῇ ἐρήμῳ",
+          edition: "lxx-swete-1909",
+          label: "Swete, public domain",
+        },
+      },
+      {
+        verse: 9,
+        parallels: [{ osis: "Isa.52.7", kind: "ot-parallel" }],
+        septuagint: null,
+      },
+    ],
+    sources: { parallels: "UBS parallel passages, CC BY-SA 4.0" },
+  };
+  const quote = {
+    handle: "demo-admin-1",
+    slug: "dead-sea-scrolls-non-biblical",
+    version: 4,
+    work: "Dead Sea Scrolls, non-biblical",
+    partTitle: "1QS — 1Q Community Rule",
+    block: 198,
+    sourceLabel: "1QS 8:14",
+    text: "[[1QS 8:14 | ]] he: כ אשר כתוב ב מדבר פנו דרך en: As written in the desert, make clear the way of Yahweh. ¶ status: first-draft · human-pending",
+    licence: "CC-BY-NC-4.0",
+    commercialUse: false,
+    url: "https://publishing.faithnet.io/@demo-admin-1/x/4#b198",
+  };
+  function isaEnv(asked: string[]) {
+    return {
+      SCRIPTURE_ASK_TIMEOUT_MS: 200,
+      SCRIPTURE: {
+        fetch: async (_input: RequestInfo | URL, init?: RequestInit) => {
+          const body = JSON.parse(String(init?.body));
+          const { skill } = body.params.message.parts[0].data;
+          const data =
+            skill === "verse-associations"
+              ? ISA_40
+              : skill === "passage-writings"
+                ? { writings: null }
+                : { chapter: {} };
+          return Response.json({
+            jsonrpc: "2.0",
+            id: body.id,
+            result: {
+              message: {
+                messageId: "m",
+                role: "ROLE_AGENT",
+                parts: [{ data }],
+              },
+            },
+          });
+        },
+      },
+      PLATFORM: {
+        fetch: async () => Response.json({ ok: true, offerings: [] }),
+      },
+      PUBLISHING: {
+        fetch: async (input: RequestInfo | URL) => {
+          asked.push(new URL(String(input)).search);
+          return Response.json({ ok: true, readings: [quote] });
+        },
+      },
+    } as BibleEnv & PlatformEnv;
+  }
+
+  it("a verse: its parallels, its Greek, and the scroll line that quotes it, read by the line's own reference", async () => {
+    const asked: string[] = [];
+    const out = (await (
+      await app(isaEnv(asked)).get("Isaiah 40:3")
+    ).json()) as Answer & {
+      items: Array<{ detail?: string; data?: Record<string, unknown> }>;
+    };
+    const kind = (k: string) => out.items.filter((i) => i.kind === k);
+    expect(kind("parallel").map((i) => i.title)).toEqual([
+      "Matt.3.3",
+      "John.1.23",
+    ]);
+    expect((kind("parallel")[0] as { data?: unknown }).data).toMatchObject({
+      relation: "ot-in-nt",
+    });
+    expect(kind("septuagint")[0]).toMatchObject({
+      detail: "Φωνὴ βοῶντος ἐν τῇ ἐρήμῳ",
+    });
+    expect(asked).toEqual(["?source=1QS+8%3A14"]);
+    expect(kind("scroll-quote")[0]).toMatchObject({
+      source: "publishing",
+      title: "1QS 8:14",
+      detail: "As written in the desert, make clear the way of Yahweh.",
+      locus: { id: parseLocus("Isa.40.3")!.id },
+      data: {
+        composition: "Community Rule",
+        hebrew: "כ אשר כתוב ב מדבר פנו דרך",
+        commercialUse: false,
+      },
+    });
+    // verse 9's parallel is not at verse 3
+    expect(kind("parallel").some((i) => i.title === "Isa.52.7")).toBe(false);
+  });
+});
+
+// Blocks are numbered within a work's PART: two scrolls in one work (4Q2 and 4Q7 in dead-sea-scrolls-genesis) both have
+// a block 3, and both are lines at Genesis 1:2 — neither may hide the other (seen live 2026-10-26).
+describe("scroll lines of one work", () => {
+  it("keeps lines with the same block number in different parts", async () => {
+    const { scrollItems } =
+      await import("../../../apps/reader-a2a/src/routes/passage");
+    const line = (part: number, label: string) => ({
+      handle: "demo-admin-1",
+      slug: "dead-sea-scrolls-genesis",
+      version: 2,
+      work: "Dead Sea Scrolls: Genesis",
+      part,
+      block: 3,
+      sourceLabel: label,
+      text: `[[${label} | Gen.1.1-2]] he: ב en: In the beginning`,
+    });
+    const items = scrollItems(parseLocus("Gen.1.2")!, [
+      line(4, "4Q2 f1i:1"),
+      line(9, "4Q7 f1:1"),
+    ]);
+    expect(items.map((i) => i.title)).toEqual(["4Q2 f1i:1", "4Q7 f1:1"]);
+    expect(items[1]!.data).toMatchObject({ citation: { part: 9, block: 3 } });
   });
 });
