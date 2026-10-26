@@ -3398,6 +3398,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.selectVerse(16);
       await c.pressToolbar("Discover");
       await c.waitText(c.pane(), /cross-references/i);
+      await c.openSource("Cross-references");
       const item = c
         .pane()
         .locator("section, div")
@@ -4146,6 +4147,7 @@ export const MORE_FLOWS: Flow[] = [
         step = "cards";
         await c.open("/read/BSB/MAT/26");
         await c.pressToolbar("Discover");
+        await c.openSource("Videos and articles");
         const pane = c.pane();
         const eb = pane
           .locator(".sb-content-cards", { hasText: /Expedition Bible/i })
@@ -4197,6 +4199,7 @@ export const MORE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open("/read/BSB/GEN/12");
       await c.pressToolbar("Discover");
+      await c.openSource("People, places and events");
       const section = c.pane().locator(".sb-content-section", {
         hasText: "People, places and events",
       });
@@ -4250,6 +4253,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.open("/read/BSB/GEN/1");
       await c.selectVerse(2);
       await c.pressToolbar("Discover");
+      await c.openSource("Dead Sea Scrolls");
       const section = c.pane().locator(".sb-content-section", {
         hasText: "Dead Sea Scrolls",
       });
@@ -4280,6 +4284,35 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(`publisher link ${href}`);
       await shot("card");
       return `${listed.length} line(s) at Genesis 1:2 (${listed[0]!.slice(0, 50)}…); card: ${he.slice(0, 24)}… / "${en.slice(0, 40)}…" → ${href.replace("https://", "")}`;
+    },
+  },
+  {
+    id: "INT1",
+    section: "12. Extensions",
+    title: "Interpretations at a verse, from any translation",
+    rows: ["Interpretations at a verse"],
+    checks:
+      "Reading BSB (which carries no interpretation records), tap Genesis 1:1 → Discover → Interpretations (folded, with its count) lists the RBS translation's questions for that verse, marked RBS; tapping one opens the Interpretations pane, which says these are the RBS translation's and shows the question with what was decided",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.selectVerse(1);
+      await c.pressToolbar("Discover");
+      await c.openSource(/^\s*Interpretations/);
+      const section = c.pane().locator(".sb-discover-source--open", {
+        hasText: "Interpretations",
+      });
+      const row = section.locator(".sb-discover-item").first();
+      await row.waitFor({ timeout: 30000 });
+      const said = (await row.innerText()).replace(/\s+/g, " ").trim();
+      if (!/RBS/.test(said)) throw new Error(`not marked RBS: ${said}`);
+      await row.locator("button").click();
+      const pane = c.page.locator(".sb-interp-pane");
+      await c.waitText(pane, /these are the RBS translation's/, 20000);
+      const question = (
+        await pane.locator(".sb-interp-question-text").first().innerText()
+      ).trim();
+      if (!question) throw new Error("no question shown");
+      return `Discover → Interpretations: "${said.slice(0, 70)}…"; the pane: "${question.slice(0, 60)}…"`;
     },
   },
   {
@@ -7833,7 +7866,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Discover as the old reader's: notes first, Create a note",
     rows: ["Discover"],
     checks:
-      "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
+      "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first, every source folded to one line with its count (tapping one opens it) — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
     run: async (c) => {
       await c.open("/read/BSB/OBA/1");
       await c.settleTours();
@@ -7846,10 +7879,25 @@ export const MORE_FLOWS: Flow[] = [
         15000
       );
       const sections = await pane
-        .locator(".sb-discover-section-title, .sb-content-section-title")
+        .locator(
+          ".sb-discover-section-title, .sb-content-section-title, .sb-discover-source-title"
+        )
         .allInnerTexts();
       if (!/notes/i.test(sections[0] ?? ""))
         throw new Error(`first section is ${sections[0]}`);
+      // Every source starts folded to one line (name and count), so the pane stays short; tapping one opens it.
+      const heads = pane.locator(".sb-discover-source-head");
+      await heads.first().waitFor({ timeout: 15000 });
+      const expanded = await heads.evaluateAll((els) =>
+        els.map((e) => e.getAttribute("aria-expanded"))
+      );
+      if (expanded.some((x) => x !== "false"))
+        throw new Error(`sources not folded: ${expanded.join(",")}`);
+      await heads.first().click();
+      await pane
+        .locator(".sb-discover-source--open .sb-discover-item")
+        .first()
+        .waitFor({ timeout: 15000 });
       if (await pane.getByText("Nothing for this chapter.").count())
         throw new Error("an empty source still shows");
       await pane.getByRole("button", { name: "+ Create" }).click();

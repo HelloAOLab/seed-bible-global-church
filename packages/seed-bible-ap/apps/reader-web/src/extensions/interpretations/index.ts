@@ -229,6 +229,38 @@ export async function loadChapterInterpretations(
   return data;
 }
 
+/** The edition that carries interpretation records today (the Scripture Agent's RBS pilot). */
+export const RECORDS_EDITION = "rbs";
+
+/** The chapter's interpretation records in the translation being read — or, when it carries none, the RBS edition's,
+ *  so a reader on BSB still finds them (said as RBS's, never as their translation's). `edition` is whose they are. */
+export async function interpretationsFor(
+  translationId: string,
+  bookId: string,
+  chapter: number,
+  cache: Cache,
+  fetchImpl: typeof fetch = fetch
+): Promise<{ data: ChapterInterpretations; edition: string } | null> {
+  const own = await loadChapterInterpretations(
+    translationId,
+    bookId,
+    chapter,
+    cache,
+    fetchImpl
+  ).catch(() => null);
+  if (own?.verses.length || translationId.toLowerCase() === RECORDS_EDITION)
+    return own ? { data: own, edition: translationId } : null;
+  const rbs = await loadChapterInterpretations(
+    RECORDS_EDITION,
+    bookId,
+    chapter,
+    cache,
+    fetchImpl
+  ).catch(() => null);
+  if (rbs?.verses.length) return { data: rbs, edition: RECORDS_EDITION };
+  return own ? { data: own, edition: translationId } : null;
+}
+
 /** The writings around the chapter (edition-independent). */
 export async function loadPassageWritings(
   bookId: string,
@@ -432,15 +464,23 @@ const interpretations: ExtensionRegistration = {
       label: "Interpretations",
       discover: async (d) => {
         const [bookId, ch] = d.chapterRef.split(".");
-        const data = await loadChapterInterpretations(
+        const found = await interpretationsFor(
           state.reading.translationId.value,
           bookId!,
           Number(ch),
           state.stores.chapters
         ).catch(() => null);
-        if (!data) return [];
-        return interpretationItems(data, d.selectedVerses).map((it) => ({
+        if (!found) return [];
+        const other =
+          found.edition.toLowerCase() !==
+          state.reading.translationId.value.toLowerCase();
+        return interpretationItems(found.data, d.selectedVerses).map((it) => ({
           ...it,
+          ...(other
+            ? {
+                description: `${found.edition.toUpperCase()} · ${it.description ?? ""}`,
+              }
+            : {}),
           onOpen: () => {
             state.selection.select(it.verse, it.verse);
             ctx.panes.open("interpretations");

@@ -111,6 +111,28 @@ export function OfferingItem({
   );
 }
 
+const OPEN_KEY = "sb.discover.open";
+/** The sources this person opened, remembered on this device (a convenience: any can be lost, all start folded). */
+function openSources(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(OPEN_KEY) ?? "[]") as unknown;
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+function rememberOpen(id: string, open: boolean) {
+  try {
+    const now = new Set(openSources());
+    if (open) now.add(id);
+    else now.delete(id);
+    localStorage.setItem(OPEN_KEY, JSON.stringify([...now]));
+  } catch {
+    /* storage blocked: it folds again next time */
+  }
+}
+
+/** A source in Discover: one line — its name, how many it has, an arrow — folded until tapped, so the pane stays short. */
 export function ProviderSection({
   state,
   provider,
@@ -120,6 +142,7 @@ export function ProviderSection({
 }) {
   const { t } = useI18n();
   const [items, setItems] = useState<DiscoverItem[] | null>(null);
+  const [open, setOpen] = useState(() => openSources().includes(provider.id));
   const chapterRef = state.reading.chapterRef.value;
   const chapter = state.reading.chapterData.value;
   const selected = state.selection.verses.value.join(",");
@@ -148,20 +171,38 @@ export function ProviderSection({
   // A source with nothing for this chapter takes no room, as in the old reader.
   if (items && !items.length) return null;
   return (
-    <div className="sb-content-section">
-      <div className="sb-content-section-head">
-        <h3 className="sb-content-section-title">{provider.label}</h3>
-      </div>
-      {items === null && (
+    <div
+      className={`sb-content-section sb-discover-source${open ? " sb-discover-source--open" : ""}`}
+    >
+      <button
+        type="button"
+        className="sb-discover-source-head"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen(!open);
+          rememberOpen(provider.id, !open);
+        }}
+      >
+        <span className="sb-discover-source-title">{provider.label}</span>
+        <span className="sb-discover-fold-count">
+          {items === null ? "…" : items.length}
+        </span>
+        <span
+          className={`material-symbols-outlined sb-discover-source-arrow${open ? "" : " sb-discover-source-arrow--closed"}`}
+          aria-hidden="true"
+        >
+          expand_more
+        </span>
+      </button>
+      {open && items === null && (
         <p className="sb-muted sb-small">
           {t("loading", { defaultValue: "Loading…" })}
         </p>
       )}
-
-      {items && items.length > 0 && byAuthor(items).groups.length > 0 && (
+      {open && items && byAuthor(items).groups.length > 0 && (
         <ContentCards groups={byAuthor(items).groups} />
       )}
-      {items && byAuthor(items).rest.length > 0 && (
+      {open && items && byAuthor(items).rest.length > 0 && (
         <SectionedRows items={byAuthor(items).rest} />
       )}
     </div>

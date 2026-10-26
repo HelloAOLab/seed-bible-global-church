@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 00:05 UTC",
+  "when": "2026-10-26 00:30 UTC",
   "results": [
     {
-      "id": "DSS1",
+      "id": "G17",
       "section": "12. Extensions",
-      "title": "Dead Sea Scrolls at a verse",
-      "checks": "On Genesis 1, tap verse 2 → Discover → Dead Sea Scrolls lists the 4Q7 (4Q Genesis) lines that hold verse 2; tap one → its card shows the line in Hebrew (right to left), the English first draft, its state in plain words, the publisher's credit (for study only) and a link to it at the publisher",
+      "title": "Videos and articles in Discover",
+      "checks": "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
       "mark": "✅",
-      "note": "2 line(s) at Genesis 1:2 (history_edu 4Q Genesis (4Q7) · f1:1 Genesis 1:1–2 …); card: ב ר#אש#[ ית ברא ]אלהים א… / \"In the beginning, God created the heaven…\" → publishing.faithnet.io/@demo-admin-1/dead-sea-scrolls/3#b3",
-      "ms": 2601
+      "note": "picture cards by author; the Upper Room video played in place and its page opened (https://www.youtube.com/watch?v=1e5paRyG)",
+      "ms": 1341
     }
   ]
 }

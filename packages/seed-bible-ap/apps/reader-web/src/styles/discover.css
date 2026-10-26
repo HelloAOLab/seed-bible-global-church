@@ -494,3 +494,38 @@
   font: inherit;
   cursor: pointer;
 }
+
+/* A source in Discover, folded to one line until tapped: name, count, arrow — a divider between sources. */
+.sb-discover-source {
+  border-top: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+.sb-discover-source-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  text-align: start;
+  font: inherit;
+}
+.sb-discover-source-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.sb-discover-source-arrow {
+  margin-left: auto;
+  transition: transform 0.15s ease;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+.sb-discover-source-arrow--closed {
+  transform: rotate(-90deg);
+}
+.sb-discover-source--open {
+  padding-bottom: 8px;
+}

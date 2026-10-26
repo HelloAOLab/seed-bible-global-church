@@ -314,6 +314,19 @@ export class FlowContext {
       );
   }
 
+  /** Discover's sources start folded: tap one's header open, as a person would (no-op when it is open). */
+  async openSource(
+    label: string | RegExp,
+    page: Page = this.page
+  ): Promise<void> {
+    const head = page
+      .locator(".sb-discover-source-head", { hasText: label })
+      .first();
+    await head.waitFor({ timeout: 30000 });
+    if ((await head.getAttribute("aria-expanded")) !== "true")
+      await head.click();
+  }
+
   async pressToolbar(label: string, page: Page = this.page): Promise<void> {
     // Only what is on screen: the phone's and the desktop's buttons are both in the page, CSS shows one set.
     const byAria = page

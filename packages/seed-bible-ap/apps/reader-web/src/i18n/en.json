@@ -1052,5 +1052,6 @@
   "scrolls-not-published": "This scroll has a line here, but its text is not published yet.",
   "scrolls-see-publisher": "See it at the publisher",
   "scrolls-study-only": "For study only, not for commercial use.",
-  "scrolls-uncertain": "partly restored and uncertain"
+  "scrolls-uncertain": "partly restored and uncertain",
+  "interpretations-other-edition": "{{mine}} has no interpretation records here, so these are the {{theirs}} translation's."
 }

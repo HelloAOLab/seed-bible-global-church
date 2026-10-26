@@ -6,7 +6,7 @@ import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import {
-  loadChapterInterpretations,
+  interpretationsFor,
   statusWords,
   WORKBENCH_URL,
   type ChapterInterpretations,
@@ -255,17 +255,23 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
   const [data, setData] = useState<ChapterInterpretations | null | undefined>(
     undefined
   );
+  /** Whose records these are: the translation being read, or RBS's when it carries none. */
+  const [edition, setEdition] = useState(translationId);
   useEffect(() => {
     let live = true;
     setData(undefined);
     const [bookId, ch] = chapterRef.split(".");
-    void loadChapterInterpretations(
+    void interpretationsFor(
       translationId,
       bookId!,
       Number(ch),
       state.stores.chapters
     )
-      .then((d) => live && setData(d))
+      .then((f) => {
+        if (!live) return;
+        setData(f?.data ?? null);
+        setEdition(f?.edition ?? translationId);
+      })
       .catch(() => live && setData(null));
     return () => {
       live = false;
@@ -286,6 +292,16 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
             "Where this translation had to decide how to read a verse, the record says which questions it faced, what it chose or kept open, the alternatives, and the writings behind each. Documented interpretations within a declared corpus — never all possible ones, never a score.",
         })}
       </p>
+      {data && edition.toLowerCase() !== translationId.toLowerCase() && (
+        <p className="sb-interp-meta sb-interp-other-edition">
+          {t("interpretations-other-edition", {
+            mine: translationId,
+            theirs: edition.toUpperCase(),
+            defaultValue:
+              "{{mine}} has no interpretation records here, so these are the {{theirs}} translation's.",
+          })}
+        </p>
+      )}
       {data === undefined && <p className="sb-interp-meta">Loading…</p>}
       {data === null && (
         <p className="sb-interp-meta">
@@ -302,7 +318,7 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
         <Verse
           key={v.osis}
           v={v}
-          edition={data?.edition ?? translationId}
+          edition={data?.edition ?? edition}
           selected={selected.includes(v.verse)}
         />
       ))}
