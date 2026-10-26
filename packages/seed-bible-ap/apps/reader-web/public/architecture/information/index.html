@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Information Architecture</title>
+    <meta
+      name="description"
+      content="Every kind of data the reader touches, by where it lives: the Home, your personal Library, the Scripture agent's Bible corpora, the published shelf and serving plane, and the publishing agent."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/" aria-current="page"
+            >Information Architecture</a
+          >
+          <a href="/architecture/agentic/">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> / Information Architecture
+      </div>
+      <h1>Information Architecture</h1>
+      <p class="lede">
+        Every piece of data the reader shows or keeps, sorted by where it lives
+        and who owns it. There are five places. Two belong to you (your Home and
+        your Library), one belongs to the Bible publishers (the Scripture
+        agent), one is everything people chose to make public, and one is a
+        public archive of complete works.
+      </p>
+
+      <a class="card" href="/architecture/ontology/" style="max-width: 760px">
+        <div class="kicker">What the records mean</div>
+        <h3>Ontology</h3>
+        <p>
+          Each record on this page has a type (<code>seed:Highlight</code>,
+          <code>scr:ScriptureEdition</code>, …). The Ontology page explains the
+          layers those types come from: PROV-O, P-Plan, DOLCE+DnS,
+          agentic-primitives, faith and scripture.
+        </p>
+        <span class="go">Read the ontology →</span>
+      </a>
+
+      <p class="toc" style="margin-top: 24px">
+        <a href="#home">1. Home</a>
+        <a href="#personal">2. Personal context</a>
+        <a href="#scripture">3. Bible corpora</a>
+        <a href="#published">4. Published context</a>
+        <a href="#publishing">5. Publishing agent</a>
+        <a href="#device">On the device only</a>
+      </p>
+
+      <h2>The five places at a glance</h2>
+      <div class="cards">
+        <a class="card" href="#home">
+          <div class="kicker">1 · Yours · private</div>
+          <h3><span class="chip home">Home</span></h3>
+          <p>
+            Who you are: profile, name, friends, statements of faith you
+            affirmed, the permissions you gave apps.
+          </p>
+        </a>
+        <a class="card" href="#personal">
+          <div class="kicker">2 · Yours · private by default</div>
+          <h3><span class="chip seed">Workspace · personal</span></h3>
+          <p>
+            What you do in the reader: highlights, notes, bookmarks, saves,
+            history, playlists and plans. Kept in your Library.
+          </p>
+        </a>
+        <a class="card" href="#scripture">
+          <div class="kicker">3 · Publishers' · public</div>
+          <h3><span class="chip domain">Scripture agent</span></h3>
+          <p>
+            The Bible itself: signed editions, audio, cross-references, people
+            and places, interpretations, scroll and Greek readings.
+          </p>
+        </a>
+        <a class="card" href="#published">
+          <div class="kicker">4 · Owners' · public</div>
+          <h3><span class="chip agent">Workspace · published</span></h3>
+          <p>
+            What people and churches chose to publish, and the serving plane's
+            index of it for Discover and Today.
+          </p>
+        </a>
+        <a class="card" href="#publishing">
+          <div class="kicker">5 · Stewards' · public or paid</div>
+          <h3><span class="chip found">Publishing agent</span></h3>
+          <p>
+            Complete works with signed manifests: the Dead Sea Scrolls by verse,
+            covenants and confessions, books and series.
+          </p>
+        </a>
+      </div>
+
+      <div class="note">
+        <p>
+          <strong>One rule ties them together.</strong> Your own data is written
+          only by your own agent, in your Home and Library. The reader and its
+          workspace keep nothing of yours that counts; Bible text is never
+          copied into your records (a mark points at a passage); and the serving
+          plane is only an index, which can be rebuilt from the public shelves
+          at any time.
+        </p>
+      </div>
+
+      <!-- 1. HOME -->
+      <h2 id="home"><span class="chip home">1</span> Home — who you are</h2>
+      <p>
+        Your Home at <code>www.faithnet.me</code> holds your identity and your
+        relationships. It is the same for every app you use, not only this
+        reader. Apps may <em>read</em> some of it with your permission, but may
+        never write it: when you change your name in the reader, the change is
+        proposed to your Home, and the Home's own window saves it.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>What it holds</th>
+              <th>How the reader uses it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Profile</strong></td>
+              <td>
+                First and last name, email, phone, location, organization, photo
+                (your vault's <code>impact-profile</code> record)
+              </td>
+              <td>
+                Reads your name and photo and shows them as you everywhere;
+                proposes changes, which the Home saves
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Name and identity</strong></td>
+              <td>
+                Your <code>&lt;you&gt;.me</code> name on faithchain, your
+                agent's account, the key that opens your vault
+              </td>
+              <td>
+                The name every record is "held by"; the address a friend link
+                carries
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Contacts and friends</strong></td>
+              <td>
+                People you added; a friend is someone you both added (role
+                friend); contact notices
+              </td>
+              <td>
+                Today's friends list, Friends pane, friend requests
+                (<code>person.contact.list</code>,
+                <code>person.friend.list</code>)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Invitations</strong></td>
+              <td>
+                Friend invitations sent by email from the Home's own mail;
+                whether people with your email may find you
+              </td>
+              <td>
+                Add a friend by email; the welcome page an invitation opens
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Presence</strong></td>
+              <td>
+                Which friends are here now and where (one presence object per
+                person)
+              </td>
+              <td>The green dot and "reading John 3 · BSB" in Today</td>
+            </tr>
+            <tr>
+              <td><strong>Attestations</strong></td>
+              <td>
+                Statements you affirmed once at your Home: the
+                <strong>WEA Statement of Faith</strong> (the Home holds the
+                exact text and its hash) and
+                <strong>the Lausanne Covenant</strong> (read from the Lausanne
+                Movement's signed release on the publishing agent). The record
+                says "this person affirmed this exact text", with the time and
+                the consent
+              </td>
+              <td>
+                Not read by the reader yet. Any relying app can ask to see that
+                you affirmed a statement without the Home re-sending the text
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Affiliations and roles</strong></td>
+              <td>
+                Churches and organizations you belong to, and the roles you hold
+                in them
+              </td>
+              <td>
+                "Publish as" a church; which church themes you may manage
+                (<code>person.affiliations.list</code>,
+                <code>person.roles.list</code>)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Connected assistants</strong></td>
+              <td>
+                The permissions you gave apps and agents: the reader's "ask as
+                me" wire, grants, consents
+              </td>
+              <td>
+                The wire is what lets the workspace ask your agent to write your
+                Library. You can revoke it here
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Security</strong></td>
+              <td>
+                Sign-in credentials and channels (passkeys, Google, email)
+              </td>
+              <td>
+                Never seen by the reader; sign-in happens in the Home's window
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 2. PERSONAL -->
+      <h2 id="personal">
+        <span class="chip seed">2</span> Workspace — personal context
+      </h2>
+      <p>
+        Everything you make while reading. It is kept in
+        <strong>your Library</strong> (the file shelf at your Home), under the
+        <code>seed-bible/</code> folder, <strong>private</strong> unless you
+        publish it. The reader writes it through the workspace, which asks your
+        agent; it shows on the device first and syncs when you are signed in and
+        online.
+      </p>
+      <h3>Marks (kept in "buckets" that merge without losing anything)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Type</th>
+              <th>What it holds</th>
+              <th>Kept as</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Highlights</strong></td>
+              <td><code>seed:Highlight</code></td>
+              <td>A colour on a verse or range, in a named translation</td>
+              <td>One bucket per chapter</td>
+            </tr>
+            <tr>
+              <td><strong>Notes</strong></td>
+              <td><code>seed:Annotation</code></td>
+              <td>
+                Rich text on a passage; tags, order, replies to another note
+              </td>
+              <td>One bucket per chapter</td>
+            </tr>
+            <tr>
+              <td><strong>Bookmarks</strong></td>
+              <td><code>seed:Bookmark</code></td>
+              <td>A named, coloured, movable place ("My bookmark")</td>
+              <td>One bucket</td>
+            </tr>
+            <tr>
+              <td><strong>Saves</strong></td>
+              <td><code>seed:Save</code>, <code>seed:SaveCategory</code></td>
+              <td>A saved chapter or verse range, in a folder</td>
+              <td>One bucket</td>
+            </tr>
+            <tr>
+              <td><strong>Reading history</strong></td>
+              <td><code>seed:ReadingEvent</code></td>
+              <td>
+                A chapter you kept open about eight seconds; one per chapter per
+                day
+              </td>
+              <td>One bucket per chapter</td>
+            </tr>
+            <tr>
+              <td><strong>Plan progress</strong></td>
+              <td>
+                <code>seed:PlanProgress</code>,
+                <code>seed:SessionProgress</code>
+              </td>
+              <td>
+                Where you are in each reading plan: cadence, time zone,
+                completed readings
+              </td>
+              <td>One bucket</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Works and files (one document each)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Type</th>
+              <th>What it holds</th>
+              <th>Library folder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Playlists</strong></td>
+              <td><code>seed:Playlist</code></td>
+              <td>
+                An ordered list of passages, pages and links
+                (<code>ScriptureItem</code>, <code>HtmlItem</code>,
+                <code>LinkItem</code>)
+              </td>
+              <td><code>seed-bible/playlists/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Reading plans</strong></td>
+              <td><code>seed:ReadingPlan</code></td>
+              <td>
+                Sessions of readings and the paces offered
+                (<code>PlanSession</code>, <code>PlanReading</code>,
+                <code>CadenceOption</code>)
+              </td>
+              <td><code>seed-bible/plans/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Reader profile</strong></td>
+              <td><code>seed:Profile</code></td>
+              <td>
+                Display name, a line about you, the picture you chose (extra to
+                your Home profile)
+              </td>
+              <td><code>seed-bible/profile/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Pictures</strong></td>
+              <td><code>seed:GalleryImage</code></td>
+              <td>
+                Playlist covers and photos you uploaded (bytes plus their
+                fingerprint)
+              </td>
+              <td><code>seed-bible/files/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Church themes kept</strong></td>
+              <td><code>seed:Customization</code></td>
+              <td>
+                A church's branded reader you saved: colours, variants,
+                extensions
+              </td>
+              <td><code>seed-bible/customizations/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Sessions you hosted</strong></td>
+              <td><code>seed:ReadingSession</code></td>
+              <td>
+                The record of a live reading you led (the live room itself is
+                not kept)
+              </td>
+              <td><code>seed-bible/sessions/</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3. SCRIPTURE -->
+      <h2 id="scripture">
+        <span class="chip domain">3</span> Scripture agent — the Bible corpora
+      </h2>
+      <p>
+        The one source of Bible text and Bible data:
+        <code>scripture-resolver.svc</code> at
+        <code>scripture.faithnet.io</code>. Every edition is a signed corpus:
+        each verse's wording has a fingerprint, the fingerprints roll up to one
+        root per edition, and the agent signs an attestation of that root. The
+        reader checks each chapter against it on your device. The reader only
+        reads here; it never writes.
+      </p>
+      <h3>Editions served today</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Edition</th>
+              <th>Language</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Berean Standard Bible (BSB)</td>
+              <td>English</td>
+              <td>Default for English readers</td>
+            </tr>
+            <tr>
+              <td>World English Bible (ENGWEBP)</td>
+              <td>English</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>King James Version</td>
+              <td>English</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>American Standard Version (1901)</td>
+              <td>English</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>RBS</td>
+              <td>English</td>
+              <td>
+                Draft, model-made translation; carries New Testament
+                interpretations
+              </td>
+            </tr>
+            <tr>
+              <td>RBS — Español (Latinoamérica)</td>
+              <td>Spanish</td>
+              <td>Draft</td>
+            </tr>
+            <tr>
+              <td>Spanish Free Bible for the World</td>
+              <td>Spanish</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Reina Valera 1909</td>
+              <td>Spanish</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Kamano-Kafe machine pilot; Tar Melbene (Naba)</td>
+              <td>Kamano-Kafe; Melbene</td>
+              <td>Experimental, clearly labelled as not Scripture</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The list is not fixed in the reader: it follows the agent's
+        <code>list-editions</code>, so a Bible added to the agent appears with
+        no change to the reader.
+      </p>
+      <h3>Data around the text</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>What it holds</th>
+              <th>Where the reader shows it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Chapters and books</strong></td>
+              <td>
+                Text with headings, poetry and footnotes, plus per-verse proofs;
+                whole translations for offline
+              </td>
+              <td>Reading; Download for offline</td>
+            </tr>
+            <tr>
+              <td><strong>Audio and timings</strong></td>
+              <td>Recordings and word timings per chapter</td>
+              <td>Listen, with the verse followed as it plays</td>
+            </tr>
+            <tr>
+              <td><strong>Verse search</strong></td>
+              <td>Ranked search over a committed edition</td>
+              <td>Search</td>
+            </tr>
+            <tr>
+              <td><strong>Cross-references</strong></td>
+              <td>OpenBible.info's 344,799 references</td>
+              <td>Extensions, Discover</td>
+            </tr>
+            <tr>
+              <td><strong>People, places, events</strong></td>
+              <td>
+                Theographic Bible Metadata (3,067 people, places, events); place
+                shapes from OpenBible.info
+              </td>
+              <td>Extensions, the Scripture map</td>
+            </tr>
+            <tr>
+              <td><strong>Interpretations</strong></td>
+              <td>
+                Translation questions per verse and how a translation reads them
+                (for example 3,742 New Testament verses in RBS); textual
+                questions with each Greek reading and the editions that print it
+              </td>
+              <td>Interpretations on the verse bar and in Discover</td>
+            </tr>
+            <tr>
+              <td><strong>Verse associations</strong></td>
+              <td>
+                Dead Sea Scroll copies of a verse, other writings that quote it,
+                UBS parallel passages, the Septuagint
+              </td>
+              <td>Content for a verse; Discover → Scrolls and Elsewhere</td>
+            </tr>
+            <tr>
+              <td><strong>Writings around a passage</strong></td>
+              <td>Period writings and teaching resources tied to a chapter</td>
+              <td>Discover</td>
+            </tr>
+            <tr>
+              <td><strong>Knowledge graph</strong></td>
+              <td>
+                Entities with their relationships and the verses that attest
+                them; verse-grounded character profiles; answers to questions
+                with verified citations
+              </td>
+              <td>
+                Available from the agent; used by the study companion over time
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4. PUBLISHED -->
+      <h2 id="published">
+        <span class="chip agent">4</span> Workspace — published context (serving
+        plane)
+      </h2>
+      <p>
+        Anything you or a church chooses to share. Publishing does two things:
+        your agent copies the item to your <strong>public shelf</strong> (<code
+          >seed-bible/public/&lt;kind&gt;/</code
+        >
+        in your Library, as JSON-LD plus a readable Markdown page) and signs a
+        release of it. The record stays yours. The
+        <strong>serving plane</strong> (<code>seed-bible.svc</code>) then finds
+        it and indexes it so others can discover it.
+      </p>
+      <h3>What can be published</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kind</th>
+              <th>Type</th>
+              <th>Who publishes it</th>
+              <th>Where others see it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Published notes</strong></td>
+              <td><code>seed:Annotation</code> as an offering</td>
+              <td>A reader</td>
+              <td>
+                Discover for the chapter; friends' Today feed; a share link
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Playlists</strong></td>
+              <td><code>seed:Playlist</code></td>
+              <td>A reader or church</td>
+              <td>
+                Discover; Library; <code>/shared/…</code> page ("Save to my
+                Library and play")
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Reading plans</strong></td>
+              <td><code>seed:ReadingPlan</code></td>
+              <td>A reader or church</td>
+              <td>Library; shared page ("Save to my Library and start")</td>
+            </tr>
+            <tr>
+              <td><strong>Church themes</strong></td>
+              <td><code>seed:Customization</code></td>
+              <td>A church, as its own agent</td>
+              <td>Shared page ("Use this theme"); a customization link</td>
+            </tr>
+            <tr>
+              <td><strong>Offerings</strong></td>
+              <td>
+                <code>seed:Offering</code> (video, article, episode, study,
+                image)
+              </td>
+              <td>A church or ministry</td>
+              <td>Discover, for the passage it is about</td>
+            </tr>
+            <tr>
+              <td><strong>Profile and picture</strong></td>
+              <td><code>seed:Profile</code>, <code>seed:GalleryImage</code></td>
+              <td>A reader</td>
+              <td>Friends see your name and picture</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>What the serving plane keeps</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>What it is</th>
+              <th>Can it be lost?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Seed registry</strong></td>
+              <td>
+                An index of every verified public release, by the passage it is
+                about. Rebuilt by crawling the public shelves every 15 minutes
+              </td>
+              <td>No harm: rebuilt from the shelves</td>
+            </tr>
+            <tr>
+              <td><strong>Public file copies</strong></td>
+              <td>
+                Fast copies of published pictures (R2
+                <code>seed-bible-files</code>)
+              </td>
+              <td>No harm: refilled from the Libraries</td>
+            </tr>
+            <tr>
+              <td><strong>Link previews</strong></td>
+              <td>Title and image for links in playlists and notes</td>
+              <td>A cache</td>
+            </tr>
+            <tr>
+              <td><strong>Map tiles</strong></td>
+              <td>Background map for the Scripture map</td>
+              <td>A cache</td>
+            </tr>
+            <tr>
+              <td><strong>Study companion and transcription</strong></td>
+              <td>
+                AI answers about a passage; transcripts of recordings (Workers
+                AI)
+              </td>
+              <td>Not stored as your record</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Live reading sessions are a separate, short-lived room on the workspace:
+        who is in it, the page, the chat. Nothing in the room is your record;
+        only the host's session summary is kept, in their own Library. The
+        town's public graph sees only the Markdown pages, never the structured
+        records.
+      </p>
+
+      <!-- 5. PUBLISHING -->
+      <h2 id="publishing">
+        <span class="chip found">5</span> Publishing agent — complete works
+      </h2>
+      <p>
+        <strong>Source Publishing</strong> at
+        <code>publishing.faithnet.io</code> is a public archive of complete
+        works: books, Bible translations, teaching series, articles and
+        public-domain works. Each is published by its steward under their own
+        Home identity, as a <em>signed manifest</em> that names every part by
+        its fingerprint. So a quote can be checked against the work without
+        trusting the gateway. Works can be free, or paid by credits or
+        subscription (demo credits; no money moves).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>What it holds</th>
+              <th>Who uses it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Works and releases</strong></td>
+              <td>
+                The signed manifest, the release, and the index of parts with
+                their fingerprints
+              </td>
+              <td>Anyone; the Home and the workspace read them over A2A</td>
+            </tr>
+            <tr>
+              <td><strong>Parts and blocks</strong></td>
+              <td>
+                Each part's blocks with proofs that they belong to the release
+              </td>
+              <td>Reading a work; checking a quote</td>
+            </tr>
+            <tr>
+              <td><strong>Readings by verse</strong></td>
+              <td>
+                Every block, across works split by verse, that witnesses a
+                verse. Today this is the <strong>Dead Sea Scroll lines</strong>:
+                Hebrew, an English first draft, status, licence and a citation
+                (verse, work, block, fingerprint)
+              </td>
+              <td>
+                The reader's Content for a verse and Discover → Scrolls, read by
+                verse and never copied
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Quote checks</strong></td>
+              <td>
+                Whether a quote is really the author's words, by fingerprint and
+                proof
+              </td>
+              <td>Any app citing a work</td>
+            </tr>
+            <tr>
+              <td><strong>Statements of faith</strong></td>
+              <td>
+                For example <strong>the Lausanne Covenant</strong>, published by
+                the Lausanne Movement
+              </td>
+              <td>
+                Your Home, which reads the signed release before you affirm it
+                (see Attestations above)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DEVICE -->
+      <h2 id="device">On the device only (for now)</h2>
+      <p>
+        Some things are preferences of one device, not records. They stay in the
+        browser and do not follow you to another device yet. The ontology
+        already has types for the first two (<code>seed:ReaderSettings</code>,
+        <code>seed:ReadingPosition</code>), so they can move into the Library
+        later.
+      </p>
+      <ul>
+        <li>
+          <strong>Settings</strong>: theme, text size, fonts, line height, which
+          elements show, interface language, toolbar layout.
+        </li>
+        <li>
+          <strong>Where you are</strong>: the open chapter, tabs and pane
+          layout. (Recent reading across devices comes from your reading
+          history, which is in your Library.)
+        </li>
+        <li>
+          <strong>Playlist play history</strong>: how far you got in each
+          playlist.
+        </li>
+        <li>
+          <strong>Offline Bibles</strong>: downloaded translations and chapters
+          you have opened.
+        </li>
+        <li>
+          <strong>The outbox</strong>: marks waiting to reach your Library.
+        </li>
+      </ul>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <a href="/architecture/">← Architecture overview</a> ·
+        <a href="/architecture/ontology/">Ontology</a> · Next:
+        <a href="/architecture/agentic/">Agentic →</a>
+      </div>
+    </footer>
+  </body>
+</html>
