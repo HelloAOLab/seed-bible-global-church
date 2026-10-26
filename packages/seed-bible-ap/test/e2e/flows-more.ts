@@ -8006,7 +8006,7 @@ export const MORE_FLOWS: Flow[] = [
   },
   {
     id: "AF1",
-    timeoutMs: 240_000,
+    timeoutMs: 600_000, // three saves on the chain, each up to a couple of minutes
     section: "8. Today, Discover and publishing",
     title: "Add a friend, the whole way",
     rows: ["Friends pane"],
@@ -8085,6 +8085,8 @@ export const MORE_FLOWS: Flow[] = [
         label: string
       ) => {
         const opened = c.context.waitForEvent("page", { timeout: 15000 });
+        // a start that fails must fail this flow, not leave the window's wait to crash the run
+        opened.catch(() => undefined);
         await start();
         const home = await opened;
         // What the Home's window said, for a run that stalls there (the reader's own console does not show it).
@@ -8119,7 +8121,7 @@ export const MORE_FLOWS: Flow[] = [
         const question = (await ask.innerText()).split("\n")[0];
         await ask.getByRole("button", { name: yes }).click();
         const t0 = Date.now();
-        const closed = home.waitForEvent("close", { timeout: 90000 });
+        const closed = home.waitForEvent("close", { timeout: 180000 }); // the window says a save can take a minute or two
         void (async () => {
           for (let i = 0; i < 9 && !home.isClosed(); i++) {
             await home.waitForTimeout(10000).catch(() => {});
@@ -8199,8 +8201,22 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-friends-row", { hasText: /alice/i })
         .first();
       await row.waitFor({ timeout: 30000 });
+      // Asked and waiting: Cancel takes the request back. Friends at once (they had already added this person):
+      // Remove, which the reader asks about first. Either way through the Home's window.
+      const waiting =
+        (await row.getByRole("button", { name: /cancel/i }).count()) > 0;
       const removed = await confirmInWindow(
-        () => row.getByRole("button", { name: /cancel/i }).click(),
+        async () => {
+          if (waiting)
+            await row.getByRole("button", { name: /cancel/i }).click();
+          else {
+            await row.getByRole("button", { name: /^remove/i }).click();
+            await c.page
+              .locator(".sb-confirm-delete-actions")
+              .getByRole("button", { name: /^remove$/i })
+              .click();
+          }
+        },
         /yes, remove them/i,
         "cancel"
       );

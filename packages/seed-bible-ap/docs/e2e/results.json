@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 11:47 UTC",
+  "when": "2026-10-26 12:17 UTC",
   "results": [
     {
-      "id": "PRF1",
-      "section": "2. Getting in",
-      "title": "Your profile is your Home profile",
-      "checks": "Signed in as Seed Reader: Edit profile shows the name, line about you and photo from the Home (and says they are the Home profile); changing the last name, the line and the photo and Save opens the Home's window — 'Update your Home profile?' with old beside new for each — Save to my profile; the window closes and the reader says 'Saved to your Home profile' and shows them, read back from the Home, the avatar included",
+      "id": "AF1",
+      "section": "8. Today, Discover and publishing",
+      "title": "Add a friend, the whole way",
+      "checks": "As someone new to the app, the real way: Sign in with Faithnet (the Home's window; its demo person Seed Reader; Allow), open Friends, type 'alice', Send request; the small window that opens asks 'Add alice.me as a friend?' — Yes, add them — and closes by itself; the reader says Alice was asked. Then Cancel the request the same way ('Remove … as a friend?' — Yes, remove them). Screenshots of every step with E2E_SHOTS",
       "mark": "✅",
-      "note": " Reader-Test →  Reader: Home window, Save to my profile, read back",
-      "ms": 45814
+      "note": "'Add alice as a friend?' → Yes; the window closed itself in 18s and the reader said Alice was asked. 'Remove alice.me as a friend?' → Yes; closed in 13s; the request is gone",
+      "ms": 78548
     }
   ]
 }
