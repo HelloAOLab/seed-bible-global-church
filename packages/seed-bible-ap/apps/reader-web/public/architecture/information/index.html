@@ -184,6 +184,7 @@
         <a href="#published">4. Published context</a>
         <a href="#publishing">5. Publishing agent</a>
         <a href="#device">On the device only</a>
+        <a href="#index">The scripture index</a>
       </p>
 
       <div class="note">
@@ -196,6 +197,126 @@
           at any time.
         </p>
       </div>
+
+      <!-- THE SCRIPTURE INDEX -->
+      <h2 id="index">The scripture index</h2>
+      <p>
+        All five places are <strong>publishers</strong>, and every item a
+        publisher holds, from a map feature to your highlight, is tied to
+        Scripture the same way: by <strong>index entries</strong>
+        (<code>scr:ScriptureReference</code>). One entry says this item is about
+        this verse, in this way, this surely, for this reason. The publisher
+        writes the entries into its signed work, so the index is part of what it
+        signed. That is what lets one question, "what is at John 1:28?", be
+        asked of the Bible, the maps, the writings and your own Library alike.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>What it holds</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>item</code></td>
+              <td>The item's own canonical id</td>
+              <td>a scroll line, a place, a photo</td>
+            </tr>
+            <tr>
+              <td><code>verseId</code></td>
+              <td>The verse's canonical id, the key every lookup uses</td>
+              <td><code>ap.scripture.locus.v1:0x…</code></td>
+            </tr>
+            <tr>
+              <td><code>osis</code>, <code>span</code></td>
+              <td>The verse, or a run of verses in one chapter, for people</td>
+              <td><code>John.1.28</code></td>
+            </tr>
+            <tr>
+              <td><code>relation</code></td>
+              <td>What kind of link it is</td>
+              <td><code>locates</code></td>
+            </tr>
+            <tr>
+              <td>
+                <code>confidence</code>, <code>method</code>, <code>basis</code>
+              </td>
+              <td>How sure, how it was made, and why</td>
+              <td>0.6, scholar identification, "site disputed"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Relation</th>
+              <th>Means</th>
+              <th>Typical item</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>translates</code></td>
+              <td>This text is the verse in a language</td>
+              <td>A verse of an edition</td>
+            </tr>
+            <tr>
+              <td><code>witnesses</code></td>
+              <td>This manuscript line copies the verse</td>
+              <td>A Dead Sea Scroll line</td>
+            </tr>
+            <tr>
+              <td><code>quotes</code></td>
+              <td>This writing quotes or echoes the verse</td>
+              <td>A line of another ancient writing</td>
+            </tr>
+            <tr>
+              <td><code>parallels</code></td>
+              <td>This passage tells the same event or saying</td>
+              <td>A synoptic parallel</td>
+            </tr>
+            <tr>
+              <td><code>interprets</code></td>
+              <td>This explains or comments on the verse</td>
+              <td>An interpretation record</td>
+            </tr>
+            <tr>
+              <td><code>locates</code></td>
+              <td>This place is where the verse happens, or one it names</td>
+              <td>A place, a map feature</td>
+            </tr>
+            <tr>
+              <td><code>depicts</code></td>
+              <td>This picture or media shows the scene</td>
+              <td>A photo of the site, artwork</td>
+            </tr>
+            <tr>
+              <td><code>teaches</code></td>
+              <td>This study, sermon or lesson is on the verse</td>
+              <td>A teaching series part</td>
+            </tr>
+            <tr>
+              <td><code>annotates</code></td>
+              <td>A person's mark on the verse</td>
+              <td>A highlight, a note</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Two rules keep it honest. A low-confidence link is never shown as
+        certain: the reader shows the method and the reason. And an ambiguity is
+        stated, never guessed: when a name fits two places (two Bethanys), the
+        publisher says so instead of picking one. An item with a location
+        carries its geometry and its gazetteer ids beside its entries, with its
+        own confidence that it is the right place. The ontology behind this is
+        on the <a href="/architecture/ontology/">Ontology</a> page.
+      </p>
 
       <!-- 1. HOME -->
       <h2 id="home"><span class="chip home">1</span> Home — who you are</h2>
@@ -742,6 +863,15 @@
           </tbody>
         </table>
       </div>
+      <p>
+        <strong>A person can publish to everyone, too.</strong> Anything in your
+        Library can be released publicly. For a few items your own agent serves
+        it; for content meant for many people, your agent signs a release and
+        offers it to a public publishing server (<code>publisher.offer</code>),
+        which indexes it by verse and place and serves it to everyone who wants
+        it. You stay the publisher: the server holds no key, every copy carries
+        your signature, and you can withdraw it.
+      </p>
       <p>
         Live reading sessions are a separate, short-lived room on the workspace:
         who is in it, the page, the chat. Nothing in the room is your record;

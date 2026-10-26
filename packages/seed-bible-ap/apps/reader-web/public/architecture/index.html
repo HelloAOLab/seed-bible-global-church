@@ -69,7 +69,7 @@
         </a>
       </div>
 
-      <h2>The idea in four sentences</h2>
+      <h2>The idea in five sentences</h2>
       <ol class="steps">
         <li>
           <strong>You own your marks.</strong> A highlight on John 3:16 is a
@@ -91,7 +91,317 @@
           with an ontology that grounds on public standards, so any tool that
           knows PROV-O or the faith ontology can understand them.
         </li>
+        <li>
+          <strong>Every source is a publisher.</strong> The Bible, maps,
+          writings, images and your own highlights all come from publishers that
+          answer the same questions, so "what is at John 1:28?" can be asked of
+          any of them.
+        </li>
       </ol>
+
+      <h2>One publisher contract</h2>
+      <p>
+        Everything the reader shows comes from a <strong>publisher</strong>, and
+        every publisher answers the same A2A skills (<code>publisher.*</code>).
+        There are three kinds: the
+        <strong>scripture publisher</strong> (translated Scripture and what
+        belongs with it), <strong>content publishers</strong> (books, the Dead
+        Sea Scrolls, maps, media), and <strong>a person's own agent</strong>,
+        which publishes their private content the same way and can offer any of
+        it to a public publishing server for everyone. Every item carries a
+        <strong>scripture index</strong>: the verses it is about, how, and how
+        surely.
+      </p>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 760 548"
+          role="img"
+          aria-labelledby="contract-t"
+        >
+          <title id="contract-t">
+            Every source sits behind one publisher contract: the reader app asks
+            the workspace, which with the Seed registry and any other A2A client
+            calls the scripture publisher, content publishers and a person's own
+            agent through the same publisher skills.
+          </title>
+          <defs>
+            <marker
+              id="ca"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="40" y="32">
+            Every source sits behind one publisher contract
+          </text>
+
+          <path class="edge" d="M150 112V136" marker-end="url(#ca)" />
+          <path class="edge" d="M380 172H406" marker-end="url(#ca)" />
+          <path class="edge" d="M645 112V232" marker-end="url(#ca)" />
+          <path class="edge" d="M210 204V232" marker-end="url(#ca)" />
+          <path class="edge" d="M505 204V232" marker-end="url(#ca)" />
+          <path class="edge" d="M144 280V308" marker-end="url(#ca)" />
+          <path class="edge" d="M380 280V308" marker-end="url(#ca)" />
+          <path class="edge" d="M616 280V308" marker-end="url(#ca)" />
+          <path class="edge" d="M512 392H488" marker-end="url(#ca)" />
+
+          <rect
+            class="box seed"
+            x="40"
+            y="52"
+            width="220"
+            height="60"
+            rx="10"
+          />
+          <text
+            x="150"
+            y="77"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Reader app
+          </text>
+          <text class="sub" x="150" y="97" text-anchor="middle">
+            seed-reader.faithnet.io
+          </text>
+
+          <rect
+            class="box plain"
+            x="570"
+            y="52"
+            width="150"
+            height="60"
+            rx="10"
+          />
+          <text
+            x="645"
+            y="75"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Other A2A clients
+          </text>
+          <text class="sub" x="645" y="92" text-anchor="middle">
+            call publishers
+          </text>
+          <text class="sub" x="645" y="106" text-anchor="middle">directly</text>
+
+          <rect
+            class="box agent"
+            x="40"
+            y="140"
+            width="340"
+            height="64"
+            rx="10"
+            style="stroke: var(--accent); stroke-width: 2"
+          />
+          <text
+            x="210"
+            y="162"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Seed Bible workspace · intent router
+          </text>
+          <text class="sub" x="210" y="180" text-anchor="middle">
+            maps what the reader wants to publishers,
+          </text>
+          <text class="sub" x="210" y="196" text-anchor="middle">
+            asks them at once, merges, labels each item
+          </text>
+
+          <text class="lbl" x="395" y="130" text-anchor="middle">asks</text>
+          <rect
+            class="box plain"
+            x="410"
+            y="140"
+            width="190"
+            height="64"
+            rx="10"
+          />
+          <text
+            x="505"
+            y="162"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Seed registry
+          </text>
+          <text class="sub" x="505" y="180" text-anchor="middle">
+            crawls publisher.changes
+          </text>
+          <text class="sub" x="505" y="196" text-anchor="middle">
+            knows who has what, where
+          </text>
+
+          <rect
+            class="box found"
+            x="40"
+            y="236"
+            width="680"
+            height="44"
+            rx="10"
+          />
+          <text
+            x="380"
+            y="254"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            publisher.* skills, the same for every publisher
+          </text>
+          <text class="sub" x="380" y="272" text-anchor="middle">
+            describe · works · work · items · at-verse · near · map · verify ·
+            changes
+          </text>
+
+          <rect
+            class="box domain"
+            x="40"
+            y="312"
+            width="208"
+            height="120"
+            rx="10"
+          />
+          <text
+            x="144"
+            y="336"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Scripture publisher
+          </text>
+          <text class="sub" x="144" y="353" text-anchor="middle">
+            scripture-resolver.svc
+          </text>
+          <text class="sub" x="144" y="371" text-anchor="middle">
+            adds scripture.*
+          </text>
+          <text class="sub" x="144" y="387" text-anchor="middle">
+            editions · interpretations
+          </text>
+          <text class="sub" x="144" y="403" text-anchor="middle">
+            places · cross-references
+          </text>
+          <text class="lbl" x="144" y="420" text-anchor="middle">
+            lane: public
+          </text>
+
+          <rect
+            class="box domain"
+            x="276"
+            y="312"
+            width="208"
+            height="120"
+            rx="10"
+          />
+          <text
+            x="380"
+            y="336"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Content publisher
+          </text>
+          <text class="sub" x="380" y="353" text-anchor="middle">
+            publishing.faithnet.io
+          </text>
+          <text class="sub" x="380" y="371" text-anchor="middle">
+            adds publishing.*
+          </text>
+          <text class="sub" x="380" y="387" text-anchor="middle">
+            books · scrolls · maps · media
+          </text>
+          <text class="sub" x="380" y="403" text-anchor="middle">
+            serves releases people offer
+          </text>
+          <text class="lbl" x="380" y="420" text-anchor="middle">
+            lanes: public, entitled
+          </text>
+
+          <rect
+            class="box home"
+            x="512"
+            y="312"
+            width="208"
+            height="120"
+            rx="10"
+          />
+          <text
+            x="616"
+            y="336"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            A person as publisher
+          </text>
+          <text class="sub" x="616" y="353" text-anchor="middle">
+            name.me (their own agent)
+          </text>
+          <text class="sub" x="616" y="371" text-anchor="middle">
+            no extra skills
+          </text>
+          <text class="sub" x="616" y="387" text-anchor="middle">
+            highlights · notes
+          </text>
+          <text class="sub" x="616" y="403" text-anchor="middle">
+            saved places · photos
+          </text>
+          <text class="lbl" x="616" y="420" text-anchor="middle">
+            lane: private
+          </text>
+
+          <text class="lbl" x="498" y="452" text-anchor="middle">
+            publisher.offer: a signed release, served to everyone
+          </text>
+
+          <rect class="zone" x="40" y="470" width="680" height="54" rx="10" />
+          <text
+            x="380"
+            y="492"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Every item carries scr:ScriptureReference: verse · relation ·
+            confidence · method
+          </text>
+          <text class="sub" x="380" y="510" text-anchor="middle">
+            John 1:28 ← Bethany beyond the Jordan (locates, 0.6) · a scroll line
+            (witnesses) · your note (annotates)
+          </text>
+        </svg>
+        <figcaption>
+          One contract, three kinds of publisher. The reader app talks only to
+          the workspace; the workspace, the registry and any other client call
+          publishers through the same skills. A person publishes privately from
+          their own agent, or offers a signed release to a public publishing
+          server for everyone.
+        </figcaption>
+      </figure>
+      <p>
+        The workspace owns no content: it turns what the reader wants into calls
+        on the right publishers and merges what comes back. See
+        <a href="/architecture/information/#index">Information Architecture</a>
+        for the scripture index and
+        <a href="/architecture/agentic/#contract">Agentic</a>
+        for the skills.
+      </p>
 
       <h2>Where things live</h2>
       <div class="table-wrap">
