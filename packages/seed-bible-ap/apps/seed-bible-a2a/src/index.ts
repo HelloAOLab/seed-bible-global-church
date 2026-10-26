@@ -20,6 +20,14 @@ import {
   snapshot,
   wipe,
 } from "./registry/store";
+import {
+  applyPublisherCrawl,
+  crawlPublishers,
+  listPublishers,
+  listWorks,
+  publisherCursor,
+  putPublisher,
+} from "./registry/publishers";
 import { edgeEndpointFor } from "../../../lib/a2a-client";
 import { parseLocus, seedRef } from "../../../lib/locus";
 import { fetchPreview } from "./preview";
@@ -57,6 +65,14 @@ const DEFAULT_SHELVES = [
   { name: "seedreader.me", kind: "person" as const },
   { name: "seed-reader.org", kind: "organization" as const },
 ];
+/** The publishers followed by `publisher.changes` when the table is empty — the content publisher's contract door. */
+const DEFAULT_PUBLISHERS = [
+  {
+    name: "publishing.faithnet.io",
+    endpoint: "https://publishing.faithnet.io/api",
+    kind: "content",
+  },
+];
 
 const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors());
@@ -85,6 +101,40 @@ async function shelvesOf(env: Env) {
     shelves = await listShelves(env.DB);
   }
   return shelves;
+}
+
+async function publishersOf(env: Env) {
+  let publishers = await listPublishers(env.DB);
+  if (!publishers.length) {
+    for (const p of DEFAULT_PUBLISHERS) await putPublisher(env.DB, p);
+    publishers = await listPublishers(env.DB);
+  }
+  return publishers;
+}
+
+/** Read each followed publisher's changes since its cursor and keep the catalog current. */
+export async function crawlFollowedPublishers(
+  env: Env,
+  fetchImpl: typeof fetch = fetch
+) {
+  const crawls = await crawlPublishers(
+    (u, i) => fetchImpl(u, i),
+    await publishersOf(env),
+    (name) => publisherCursor(env.DB, name)
+  );
+  const report = [];
+  for (const c of crawls) {
+    const r = await applyPublisherCrawl(env.DB, c);
+    report.push({
+      publisher: c.publisher,
+      ok: c.ok,
+      ...(c.error ? { error: c.error } : {}),
+      pages: c.pages,
+      cursor: c.cursor,
+      ...r,
+    });
+  }
+  return report;
 }
 
 export async function reindex(
@@ -294,6 +344,33 @@ app.post("/registry/crawl", async (c) => {
   return c.json({
     ok: true,
     shelves: shelves.map((s) => ({ shelf: s.shelf, ok: s.ok })),
+  });
+});
+/** The publishers the registry follows, and the catalog of their works (`?kind=map`, `?publisher=`,
+ *  `?withdrawn=1` to include what was withdrawn, `?max=`). Public: it lists what publishers released. */
+app.get("/registry/publishers", async (c) =>
+  c.json({ ok: true, publishers: await publishersOf(c.env) })
+);
+app.get("/registry/works", async (c) => {
+  const works = await listWorks(c.env.DB, {
+    publisher: c.req.query("publisher") ?? undefined,
+    kind: c.req.query("kind") ?? undefined,
+    withdrawn: c.req.query("withdrawn") === "1",
+    max: Number(c.req.query("max") ?? 100) || 100,
+  });
+  return c.json({
+    ok: true,
+    count: works.length,
+    works: works.map((w) => ({
+      publisher: w.publisher,
+      work: w.work,
+      title: w.title,
+      kind: w.kind,
+      version: w.version,
+      change: w.change,
+      changedAt: w.changed_at,
+      indexedAt: w.indexed_at,
+    })),
   });
 });
 app.get("/registry/shelves", async (c) =>

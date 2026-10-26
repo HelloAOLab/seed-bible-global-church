@@ -1,5 +1,10 @@
-// The Worker entry: the app, the run object, and the cron that re-crawls the shelves.
-import app, { reindex, SvcRunDO, type Env } from "./index";
+// The Worker entry: the app, the run object, and the cron that re-crawls the shelves and the followed publishers.
+import app, {
+  crawlFollowedPublishers,
+  reindex,
+  SvcRunDO,
+  type Env,
+} from "./index";
 export { SvcRunDO };
 export default {
   fetch: app.fetch,
@@ -8,6 +13,13 @@ export default {
       reindex(env).then((r) =>
         console.log(
           `[registry] cron reindex: ${JSON.stringify(r).slice(0, 600)}`
+        )
+      )
+    );
+    ctx.waitUntil(
+      crawlFollowedPublishers(env).then((r) =>
+        console.log(
+          `[registry] cron publishers: ${JSON.stringify(r).slice(0, 600)}`
         )
       )
     );
