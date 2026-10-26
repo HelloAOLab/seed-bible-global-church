@@ -6,7 +6,7 @@
     <title>Information Architecture</title>
     <meta
       name="description"
-      content="Every kind of data the reader touches, by where it lives: the Home, your personal Library, the Scripture agent's Bible corpora, the published shelf and serving plane, and the publishing agent."
+      content="Every kind of data the reader touches, by where it lives: the Home, your personal Library, the Scripture agent's Bible corpora, the published shelf and Seed registry, and the publishing agent."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -120,8 +120,7 @@
                 <li>Cache of public picture bytes</li>
               </ul>
               <div class="ia-foot">
-                The serving plane: an index and a cache, rebuildable, never the
-                record
+                An index and a cache, rebuildable, never the record
               </div>
             </a>
           </div>
@@ -169,7 +168,7 @@
         <div class="ia-flows" aria-hidden="true">
           <span
             >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Seed
-            registry (serving plane)</span
+            registry (Seed registry)</span
           >
           <span>Publishing agent <b>→ affirm →</b> Home</span>
           <span
@@ -221,9 +220,9 @@
           <strong>One rule ties them together.</strong> Your own data is written
           only by your own agent, in your Home and Library. The reader and its
           workspace keep nothing of yours that counts; Bible text is never
-          copied into your records (a mark points at a passage); and the serving
-          plane is only an index, which can be rebuilt from the public shelves
-          at any time.
+          copied into your records (a mark points at a passage); and the Seed
+          registry is only an index, which can be rebuilt from the public
+          shelves at any time.
         </p>
       </div>
 
@@ -783,8 +782,8 @@
 
       <!-- 4. PUBLISHED -->
       <h2 id="published">
-        <span class="chip agent">4</span> Workspace — published context (serving
-        plane)
+        <span class="chip agent">4</span> Workspace — published context (Seed
+        registry)
       </h2>
       <p>
         Anything you or a church chooses to share. Publishing does two things:
@@ -793,7 +792,7 @@
         >
         in your Library, as JSON-LD plus a readable Markdown page) and signs a
         release of it. The record stays yours. The
-        <strong>serving plane</strong> (<code>seed-bible.svc</code>) then finds
+        <strong>Seed registry</strong> (<code>seed-bible.svc</code>) then finds
         it and indexes it so others can discover it.
       </p>
       <h3>What can be published</h3>
@@ -855,7 +854,7 @@
           </tbody>
         </table>
       </div>
-      <h3>What the serving plane (the Seed registry) keeps</h3>
+      <h3>What the Seed registry keeps</h3>
       <div class="table-wrap">
         <table>
           <thead>
@@ -898,7 +897,7 @@
                 transcription of a recording, and link previews. None is an
                 index. Their place is the Scripture agent's ask and the
                 workspace's tools:
-                <a href="/architecture/agentic/#serving-plane">the breakdown</a>
+                <a href="/architecture/agentic/#seed-registry">the breakdown</a>
               </td>
               <td>Nothing stored as your record</td>
             </tr>
