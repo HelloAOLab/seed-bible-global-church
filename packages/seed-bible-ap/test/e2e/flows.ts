@@ -526,19 +526,24 @@ const BASE_FLOWS: Flow[] = [
     section: "12. Extensions",
     title: "Places map",
     checks:
-      "On Genesis 12 the Places map pane shows a Leaflet map with at least one place marker",
+      "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
     run: async (c) => {
       await c.open("/read/BSB/GEN/12");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
       await c.page.locator(".leaflet-container").waitFor({ timeout: 20000 });
+      await c.page
+        .locator("canvas.leaflet-tile-loaded")
+        .first()
+        .waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(2000);
+      const tiles = await c.page.locator("canvas.leaflet-tile-loaded").count();
       const markers = await c.page
         .locator(".leaflet-marker-icon, .leaflet-interactive")
         .count();
       if (!markers) throw new Error("no markers");
-      return `map with ${markers} marker(s)`;
+      return `base map with ${tiles} tile(s) drawn, ${markers} marker(s)`;
     },
   },
   {

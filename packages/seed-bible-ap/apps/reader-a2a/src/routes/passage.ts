@@ -20,6 +20,9 @@ import {
 } from "../../../../lib/locus";
 import { askScripture, type BibleEnv } from "./bible";
 import { platformGet, type PlatformEnv } from "../clients/platform";
+import { publishingFetch, type PublishingEnv } from "../clients/publishing";
+
+export type { PublishingEnv };
 
 export type PassageSource =
   | "scripture"
@@ -643,15 +646,6 @@ const failed = (e: unknown): SourceReport => ({
 });
 
 /** Ask every source for the locus at once; one that fails is reported, not fatal. */
-export interface PublishingEnv {
-  /** The publishing gateway over a service binding (its routes without the site's `/api`). */
-  PUBLISHING?: {
-    fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-  };
-  /** Its public API when there is no binding (dev). */
-  PUBLISHING_URL?: string;
-}
-
 /** At most this many verses are asked of the gateway for one passage. */
 export const MAX_SCROLL_VERSES = 40;
 
@@ -660,11 +654,7 @@ async function gatewayReadings(
   by: { verseId: string } | { source: string }
 ): Promise<GatewayReading[]> {
   const path = `/public/locus?${new URLSearchParams(by)}`;
-  const res = env.PUBLISHING
-    ? await env.PUBLISHING.fetch(`https://publishing${path}`)
-    : await fetch(
-        `${(env.PUBLISHING_URL ?? "https://publishing.faithnet.io/api").replace(/\/$/, "")}${path}`
-      );
+  const res = await publishingFetch(env, path);
   const out = (await res.json().catch(() => null)) as {
     ok?: boolean;
     readings?: GatewayReading[];

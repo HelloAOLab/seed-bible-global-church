@@ -57,6 +57,7 @@
     "jose": "^6.2.12",
     "leaflet": "1.9.4",
     "preact": "catalog:",
+    "protomaps-leaflet": "5.1.0",
     "qrcode": "catalog:",
     "viem": "^2.52.2",
     "workbox-window": "7.4.1",

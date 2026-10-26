@@ -20,6 +20,7 @@ import { askScripture, bibleRoutes, type BibleEnv } from "./routes/bible";
 import { connectRoutes, hasWire } from "./routes/connect";
 import { publicRoutes } from "./routes/public";
 import { huddleRoutes, type HuddleEnv } from "./routes/huddle";
+import { baseMapRoutes } from "./routes/basemap";
 import { passageRoutes, type PublishingEnv } from "./routes/passage";
 import { agentFor, readBucket } from "./skills/vault";
 // The Agents SDK is loaded when a room is asked for, not at import: it reaches for `cloudflare:workers`, which only
@@ -59,6 +60,7 @@ app.route("/", connectRoutes);
 app.route("/", bibleRoutes);
 app.route("/", publicRoutes);
 app.route("/", huddleRoutes);
+app.route("/", baseMapRoutes);
 // The passage's own marks come from the signed-in reader's agent (their Library), never from the registry.
 app.route(
   "/",
@@ -477,31 +479,6 @@ app.post("/api/transcribe", async (c) => {
   });
 });
 
-/** The places map: tiles and geometry from the serving plane (cached there), so the page talks to this origin only. */
-app.get("/api/tiles/:z/:x/:y", async (c) => {
-  const res = await platformSend(
-    c.env,
-    `/tiles/${c.req.param("z")}/${c.req.param("x")}/${c.req.param("y")}`,
-    { method: "GET" }
-  );
-  return new Response(res.body, {
-    status: res.status,
-    headers: {
-      "content-type": res.headers.get("content-type") ?? "image/png",
-      "cache-control": "public, max-age=604800, immutable",
-    },
-  });
-});
-app.get("/api/tiles-info", async (c) => {
-  const res = await platformSend(c.env, "/tiles/info", { method: "GET" });
-  return new Response(res.body, {
-    status: res.status,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "public, max-age=3600",
-    },
-  });
-});
 // A place's geometry: asked of the scripture agent over A2A (its place-geometry skill — OpenBible.info's geometry, or a
 // Theographic point when exactly one place has the name), handed to the map as GeoJSON with where it came from.
 app.get("/api/places/:name", async (c) => {

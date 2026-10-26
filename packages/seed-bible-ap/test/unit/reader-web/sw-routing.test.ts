@@ -89,7 +89,7 @@ describe("isCacheableStaticAsset()", () => {
   it("refuses the agent's lanes even when they look like files", () => {
     expect(cacheable(`${ORIGIN}/a2a/dev/readers.json`)).toBe(false);
     expect(cacheable(`${ORIGIN}/api/places/jerusalem.json`)).toBe(false);
-    expect(cacheable(`${ORIGIN}/api/tiles/3/4/5.png`)).toBe(false);
+    expect(cacheable(`${ORIGIN}/api/tiles/3/4/5.mvt`)).toBe(false);
   });
 
   it("refuses a third-party origin", () => {

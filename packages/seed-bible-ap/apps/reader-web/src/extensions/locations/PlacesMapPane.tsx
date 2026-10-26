@@ -1,5 +1,6 @@
-// THE PLACES MAP — the old locations map (a CasualOS portal) as a plain web map: Leaflet over map tiles and place
-// geometry the serving plane proxies and caches (the page talks to the workspace's origin only). The places the
+// THE PLACES MAP — the old locations map (a CasualOS portal) as a plain web map: Leaflet over the Bible lands base map
+// (a signed map work on the publishing gateway, vector tiles drawn here in the reader's light or dark) and place
+// geometry from the scripture agent, both relayed by the workspace (the page talks to its origin only). The places the
 // chapter on screen names are drawn; tapping one selects the verse that names it.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { retryChunkImport } from "../../sw/retryChunkImport";
@@ -9,6 +10,38 @@ import { A2A_BASE } from "../../api";
 import { placesInChapter, type PlaceData } from "./index";
 
 type Leaflet = typeof import("leaflet");
+
+/** What `/api/tiles-info` says about the published base map. */
+interface TilesInfo {
+  attribution?: string;
+  maxZoom?: number;
+}
+
+const OSM_CREDIT =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const PLACES_CREDIT =
+  "places: OpenBible.info (CC BY 4.0), Theographic (CC BY-SA 4.0)";
+
+/** The base map layer: the published map's vector tiles, drawn in the page. */
+async function baseMapLayer(
+  L: Leaflet,
+  info: TilesInfo | null,
+  dark: boolean,
+  lang: string
+): Promise<import("leaflet").Layer> {
+  // protomaps-leaflet subclasses the global `L.GridLayer` when a layer is made.
+  (globalThis as unknown as { L?: Leaflet }).L = L;
+  const { leafletLayer } = await retryChunkImport(
+    () => import("protomaps-leaflet")
+  );
+  return leafletLayer({
+    url: `${A2A_BASE}/api/tiles/{z}/{x}/{y}.mvt`,
+    flavor: dark ? "dark" : "light",
+    lang: lang.split("-")[0] || "en",
+    maxDataZoom: info?.maxZoom ?? 10,
+    attribution: `${info?.attribution ?? OSM_CREDIT} · ${PLACES_CREDIT}`,
+  }) as unknown as import("leaflet").Layer;
+}
 
 /**
  * OpenBible's geometry export writes coordinates as strings in [lat, lon] order; GeoJSON is numbers in [lon, lat].
@@ -49,10 +82,13 @@ export async function loadPlaceGeometry(
 }
 
 export function PlacesMapPane({ state }: { state: ReaderState }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const layerRef = useRef<import("leaflet").LayerGroup | null>(null);
+  const baseRef = useRef<import("leaflet").Layer | null>(null);
+  const infoRef = useRef<TilesInfo | null>(null);
+  const dark = state.settings.resolvedTheme().id === "dark";
   const [status, setStatus] = useState<string | null>(null);
   const chapter = state.reading.chapterData.value;
   const chapterRef = state.reading.chapterRef.value;
@@ -66,19 +102,18 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       if (!mapRef.current) {
         const info = (await fetch(`${A2A_BASE}/api/tiles-info`)
           .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null)) as {
-          attribution?: string;
-          maxZoom?: number;
-        } | null;
+          .catch(() => null)) as TilesInfo | null;
+        infoRef.current = info;
         if (dead || !host.current) return;
         const map = L.map(host.current, {
           zoomControl: true,
           attributionControl: true,
+          maxZoom: 13,
         }).setView([31.8, 35.2], 7);
-        L.tileLayer(`${A2A_BASE}/api/tiles/{z}/{x}/{y}.png`, {
-          maxZoom: info?.maxZoom ?? 12,
-          attribution: `${info?.attribution ?? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'} · places: OpenBible.info (CC BY 4.0), Theographic (CC BY-SA 4.0)`,
-        }).addTo(map);
+        const base = await baseMapLayer(L, info, dark, language);
+        if (dead) return;
+        base.addTo(map);
+        baseRef.current = base;
         mapRef.current = map;
         layerRef.current = L.layerGroup().addTo(map);
       }
@@ -133,6 +168,26 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
       dead = true;
     };
   }, [chapterRef]);
+
+  // A theme change redraws the base map in the other flavour; the places on it stay.
+  useEffect(() => {
+    const map = mapRef.current;
+    const old = baseRef.current;
+    if (!map || !old) return;
+    let dead = false;
+    void (async () => {
+      const L: Leaflet = await retryChunkImport(() => import("leaflet"));
+      const base = await baseMapLayer(L, infoRef.current, dark, language);
+      if (dead || mapRef.current !== map) return;
+      map.removeLayer(old);
+      base.addTo(map);
+      (base as import("leaflet").GridLayer).bringToBack?.();
+      baseRef.current = base;
+    })();
+    return () => {
+      dead = true;
+    };
+  }, [dark, language]);
 
   useEffect(
     () => () => {
