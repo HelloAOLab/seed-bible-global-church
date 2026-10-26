@@ -194,13 +194,13 @@
               rx="10"
             />
             <text class="title" x="820" y="240" text-anchor="middle">
-              Serving plane
+              Seed registry
             </text>
             <text class="sub" x="820" y="260" text-anchor="middle">
-              seed-bible.svc
+              seed-bible.svc · the serving plane
             </text>
             <text class="sub" x="820" y="278" text-anchor="middle">
-              registry · files · previews · AI
+              index by passage · works · file cache
             </text>
           </g>
           <g>
@@ -429,10 +429,16 @@
                 Service binding to <code>seed-bible-a2a.faithnet.io</code>
               </td>
               <td>
-                The registry of what people and churches have published (for
-                Discover and Today), public file copies, link previews, and the
-                study companion (Workers AI). It is an index, never the record;
-                it can be rebuilt by crawling the Libraries.
+                The Seed registry: every verified public release on every shelf,
+                indexed by the passage it is about (for Discover and Today); the
+                catalog of works from the publishers it follows; withdrawals
+                kept as tombstones; and a cache of public picture bytes. An
+                index and a cache, never the record: wiped, it is rebuilt from
+                the shelves and the publishers. Link previews, transcription and
+                the study companion run on it today and do not belong there (<a
+                  href="#serving-plane"
+                  >the breakdown</a
+                >).
               </td>
             </tr>
             <tr>
@@ -464,6 +470,116 @@
                 copies of your highlights without losing either). No key, no
                 state.
               </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="serving-plane">The serving plane, precisely</h3>
+      <p>
+        A serving plane is a service that holds only what can be rebuilt: an
+        index, a cache, and the record of its own runs. It never holds a
+        person's record, a key, or any identity but its own. The reader has one,
+        the Seed registry. This table says what belongs on it and what does not.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Piece</th>
+              <th>On the serving plane?</th>
+              <th>Where it is</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Releases by passage</strong></td>
+              <td>
+                Yes. An index over every public shelf, rebuilt every 15 minutes
+                or sooner on a publisher's nudge; one shelf failing never stops
+                the rest.
+              </td>
+              <td>Seed registry (D1)</td>
+            </tr>
+            <tr>
+              <td><strong>Works catalog</strong></td>
+              <td>
+                Yes. One row per work from each publisher it follows, read by
+                <code>publisher.changes</code> from a cursor; never a work's
+                content, which is fetched from the publisher that holds it.
+              </td>
+              <td>Seed registry (D1), <code>/registry/works</code></td>
+            </tr>
+            <tr>
+              <td><strong>Tombstones and the crawl log</strong></td>
+              <td>
+                Yes. A document a shelf stopped listing is a withdrawal with a
+                date, never a silent delete, and every crawl records what it
+                found or failed on.
+              </td>
+              <td>Seed registry (D1)</td>
+            </tr>
+            <tr>
+              <td><strong>Public picture bytes</strong></td>
+              <td>
+                Yes, as a cache keyed by content hash. The record is the file in
+                the owner's Library; the copy is for fast public reads.
+              </td>
+              <td>Seed registry (R2)</td>
+            </tr>
+            <tr>
+              <td><strong>Offering validation</strong></td>
+              <td>
+                Yes. The pure check a shelf document passes (shape, owner,
+                passage) before it is indexed.
+              </td>
+              <td>seed-bible-mcp, <code>offering_validate</code></td>
+            </tr>
+            <tr>
+              <td><strong>Its own runs</strong></td>
+              <td>
+                Yes. Every registry read over A2A is a recorded run; two
+                informational tools, no acts, nothing granted.
+              </td>
+              <td>Seed registry (Durable Object)</td>
+            </tr>
+            <tr>
+              <td><strong>Live reading rooms</strong></td>
+              <td>
+                No. A room belongs to the session and its workspace; the host's
+                record is in their Library.
+              </td>
+              <td>Workspace agent (a Durable Object on reader-a2a)</td>
+            </tr>
+            <tr>
+              <td><strong>Study companion</strong></td>
+              <td>
+                No. A model's answer is not an index. Its place is the Scripture
+                agent's ask, which answers from evidence and checks itself,
+                reached through the workspace.
+              </td>
+              <td>Runs on the serving plane today (Workers AI)</td>
+            </tr>
+            <tr>
+              <td><strong>Transcription</strong></td>
+              <td>
+                No. Stateless compute over the reader's own recording; its place
+                is the workspace's tool server.
+              </td>
+              <td>Runs on the serving plane today (Workers AI)</td>
+            </tr>
+            <tr>
+              <td><strong>Link previews</strong></td>
+              <td>
+                No. A capped read of a page's head with a day's cache, a
+                workspace convenience; its place is the workspace's tool server.
+              </td>
+              <td>Runs on the serving plane today</td>
+            </tr>
+            <tr>
+              <td><strong>Map tiles</strong></td>
+              <td>No. A signed map work is a publisher's.</td>
+              <td>Publishing gateway, since 26 October 2026</td>
             </tr>
           </tbody>
         </table>
@@ -1231,7 +1347,10 @@
               <td>this repository</td>
             </tr>
             <tr>
-              <td>Serving plane (seed-bible-a2a, seed-bible-mcp)</td>
+              <td>
+                Seed registry, the serving plane (seed-bible-a2a,
+                seed-bible-mcp)
+              </td>
               <td>
                 <code>seed-bible-a2a.faithnet.io</code>,
                 <code>seed-bible-mcp.faithnet.io</code>

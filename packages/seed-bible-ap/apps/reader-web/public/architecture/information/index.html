@@ -111,16 +111,18 @@
               </div>
             </a>
             <a class="ia-node" href="#published">
-              <h3>Serving plane</h3>
+              <h3>Seed registry</h3>
               <code>seed-bible.svc</code>
               <ul>
-                <li>Index by passage</li>
-                <li>Re-crawled every 15 min</li>
-                <li>Link previews</li>
-                <li>Study companion</li>
-                <li>Catalog of the publishing agent's works</li>
+                <li>Public releases by passage, every 15 min</li>
+                <li>Catalog of followed publishers' works</li>
+                <li>Withdrawals as tombstones · crawl log</li>
+                <li>Cache of public picture bytes</li>
               </ul>
-              <div class="ia-foot">Only an index: rebuildable</div>
+              <div class="ia-foot">
+                The serving plane: an index and a cache, rebuildable, never the
+                record
+              </div>
             </a>
           </div>
 
@@ -166,8 +168,8 @@
 
         <div class="ia-flows" aria-hidden="true">
           <span
-            >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Serving
-            plane</span
+            >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Seed
+            registry (serving plane)</span
           >
           <span>Publishing agent <b>→ affirm →</b> Home</span>
           <span
@@ -853,7 +855,7 @@
           </tbody>
         </table>
       </div>
-      <h3>What the serving plane keeps</h3>
+      <h3>What the serving plane (the Seed registry) keeps</h3>
       <div class="table-wrap">
         <table>
           <thead>
@@ -881,17 +883,24 @@
               <td>No harm: refilled from the Libraries</td>
             </tr>
             <tr>
-              <td><strong>Link previews</strong></td>
-              <td>Title and image for links in playlists and notes</td>
-              <td>A cache</td>
+              <td><strong>Works catalog</strong></td>
+              <td>
+                One row per work from each publisher the registry follows, read
+                by <code>publisher.changes</code> every 15 minutes from where
+                the last crawl stopped; never a work's content
+              </td>
+              <td>No harm: read again from a cursor of 0</td>
             </tr>
             <tr>
-              <td><strong>Study companion and transcription</strong></td>
+              <td><strong>Running here, not of this plane</strong></td>
               <td>
-                AI answers about a passage; transcripts of recordings (Workers
-                AI)
+                The study companion (a Workers AI answer about a chapter),
+                transcription of a recording, and link previews. None is an
+                index. Their place is the Scripture agent's ask and the
+                workspace's tools:
+                <a href="/architecture/agentic/#serving-plane">the breakdown</a>
               </td>
-              <td>Not stored as your record</td>
+              <td>Nothing stored as your record</td>
             </tr>
           </tbody>
         </table>
