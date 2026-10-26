@@ -4328,6 +4328,35 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "INT2",
+    section: "12. Extensions",
+    title: "Interpretations from the verse bar",
+    rows: ["Interpretations at a verse"],
+    checks:
+      "On Genesis 6, tap verse 2 → the verse bar offers Interpretations → it opens 'How Genesis 6:2 is read' for that verse alone (no other verses to switch to); tap verse 3, which has no record → the bar does not offer it",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/6");
+      await c.selectVerse(2);
+      const bar = c.page.locator(".sb-verse-toolbar").first();
+      const button = bar.getByRole("button", { name: "Interpretations" });
+      await button.waitFor({ timeout: 30000 });
+      await button.click();
+      const pane = c.page.locator(".sb-interp-pane");
+      await c.waitText(pane, /How Genesis 6:2 is read/, 20000);
+      if (await pane.locator(".sb-interp-verse-picker").count())
+        throw new Error("other verses offered beside the one tapped");
+      if ((await pane.locator(".sb-interp-plain").count()) !== 1)
+        throw new Error("more than one verse shown");
+      await c.page.keyboard.press("Escape").catch(() => {});
+      await c.selectVerse(3);
+      await bar.waitFor({ timeout: 10000 });
+      await c.page.waitForTimeout(500);
+      if (await bar.getByRole("button", { name: "Interpretations" }).count())
+        throw new Error("offered on verse 3, which has no record");
+      return "verse 2: Interpretations on the bar → How Genesis 6:2 is read, that verse alone; verse 3: not offered";
+    },
+  },
+  {
     id: "G19",
     timeoutMs: 240_000,
     section: "8. Today, Discover and publishing",

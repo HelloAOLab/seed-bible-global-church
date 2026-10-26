@@ -1,7 +1,16 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 01:08 UTC",
+  "when": "2026-10-26 01:36 UTC",
   "results": [
+    {
+      "id": "R1",
+      "section": "3. Reading",
+      "title": "Open a chapter",
+      "checks": "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
+      "mark": "✅",
+      "note": "edge-rendered, then live; header \"John3\"",
+      "ms": 1203
+    },
     {
       "id": "INT1",
       "section": "12. Extensions",
@@ -9,7 +18,16 @@
       "checks": "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
       "mark": "✅",
       "note": "card \"forum Genesis 6:2 RBS · “the sons of God saw that the daught…\" → How Genesis 6:2 is read: Who is meant here? · divine beings … · Left open · What the translators say; details folded",
-      "ms": 6741
+      "ms": 3251
+    },
+    {
+      "id": "INT2",
+      "section": "12. Extensions",
+      "title": "Interpretations from the verse bar",
+      "checks": "On Genesis 6, tap verse 2 → the verse bar offers Interpretations → it opens 'How Genesis 6:2 is read' for that verse alone (no other verses to switch to); tap verse 3, which has no record → the bar does not offer it",
+      "mark": "✅",
+      "note": "verse 2: Interpretations on the bar → How Genesis 6:2 is read, that verse alone; verse 3: not offered",
+      "ms": 4100
     }
   ]
 }

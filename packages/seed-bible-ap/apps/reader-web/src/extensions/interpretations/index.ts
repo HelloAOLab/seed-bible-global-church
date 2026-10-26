@@ -6,6 +6,7 @@
 // offered in Discover for the verses on screen; each has a pane with the full record. Nothing here is a judgement: the records
 // list documented interpretations and writings within a declared corpus, never all that exist, and say so.
 import { h } from "preact";
+import { signal } from "@preact/signals";
 import type { DiscoverItem, ExtensionRegistration } from "../host";
 import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 import type { ReaderState } from "../../state";
@@ -432,6 +433,52 @@ const interpretations: ExtensionRegistration = {
       id: "writings",
       title: "Writings around this chapter",
       render: () => h(WritingsPane, { state }),
+    });
+    // Which verses of a chapter carry a record, read the first time the verse bar is drawn there (not on every page
+    // turn: most readers never ask) — the bar then offers Interpretations exactly where there is something to show.
+    const withRecords = signal<{ key: string; verses: ReadonlySet<number> }>({
+      key: "",
+      verses: new Set(),
+    });
+    let asked = "";
+    const recordsAt = (chapterRef: string): ReadonlySet<number> => {
+      const translationId = state.reading.translationId.value;
+      const key = `${translationId}/${chapterRef}`;
+      if (withRecords.value.key === key) return withRecords.value.verses;
+      if (asked !== key) {
+        asked = key;
+        const [bookId, ch] = chapterRef.split(".");
+        void interpretationsFor(
+          translationId,
+          bookId!,
+          Number(ch),
+          state.stores.chapters
+        )
+          .then((f) => {
+            withRecords.value = {
+              key,
+              verses: new Set(f?.data.verses.map((v) => v.verse) ?? []),
+            };
+          })
+          .catch(() => undefined);
+      }
+      return new Set();
+    };
+    yield ctx.tools.registerVerseTool({
+      id: "interpretations",
+      label: "Interpretations",
+      icon: "forum",
+      priority: 45,
+      isVisible: (v) => {
+        const at = recordsAt(v.chapterRef);
+        return v.verses.some((n) => at.has(n));
+      },
+      onSelect: (v) => {
+        // Just this verse: the one tapped (the first of a selection that carries a record).
+        const n = v.verses.find((x) => withRecords.value.verses.has(x))!;
+        state.selection.select(n, n);
+        ctx.panes.open("interpretations");
+      },
     });
     yield ctx.toolbar.add({
       id: "writings",

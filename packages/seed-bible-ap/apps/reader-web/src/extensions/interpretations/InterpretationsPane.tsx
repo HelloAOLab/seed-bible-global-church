@@ -406,14 +406,12 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
     };
   }, [chapterRef, translationId]);
 
-  // A verse chosen in the text or in Discover is the one shown.
-  useEffect(() => setShown(null), [selected.join(",")]);
   const verses = data?.verses ?? [];
-  // The verse picked here; else the selected verse when it carries a record; else the first that does.
+  // A selected verse that carries a record is the only one shown (the verse bar's Interpretations, a Discover card);
+  // with none selected, the chapter's verses can be switched between.
+  const atSelected = verses.find((v) => selected.includes(v.verse));
   const current =
-    verses.find((v) => v.verse === shown) ??
-    verses.find((v) => selected.includes(v.verse)) ??
-    verses[0];
+    atSelected ?? verses.find((v) => v.verse === shown) ?? verses[0];
   const chapterLabel = `${reading.bookName.value} ${reading.chapterNumber.value}`;
   const label = (v: InterpretedVerse) =>
     `${reading.bookName.value} ${v.chapter}:${v.verse}`;
@@ -447,7 +445,7 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
           })}
         </p>
       )}
-      {verses.length > 1 && (
+      {verses.length > 1 && !atSelected && (
         <nav
           className="sb-interp-verse-picker"
           aria-label={t("interp-verses", {
