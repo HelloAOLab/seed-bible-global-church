@@ -83,3 +83,45 @@
 .sb-content-line-verses {
   color: var(--sb-primary-color, #e07b4c);
 }
+
+/* A note a publisher released about the verse: its picture above its words, the fields beside them. */
+.sb-content-teaching-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.sb-content-teaching-image {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--sb-border, rgba(128, 128, 128, 0.3));
+  background: #f7f3ea;
+}
+.sb-content-teaching-title {
+  margin: 0;
+  font-weight: 600;
+}
+.sb-content-teaching-text {
+  margin: 0;
+  line-height: 1.5;
+}
+.sb-content-teaching-fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.9em;
+}
+.sb-content-teaching-field {
+  display: grid;
+  grid-template-columns: minmax(5.5em, max-content) 1fr;
+  gap: 0.5rem;
+}
+.sb-content-teaching-field dt {
+  opacity: 0.7;
+}
+.sb-content-teaching-field dd {
+  margin: 0;
+}

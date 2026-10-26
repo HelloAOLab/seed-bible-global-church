@@ -21,6 +21,12 @@ interface TilesInfo {
 const OSM_CREDIT =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const PLACES_CREDIT = "places: OpenBible.info (CC BY 4.0)";
+const escapeHtml = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 
 /** The base map layer: the published map's vector tiles, drawn in the page. */
 async function baseMapLayer(
@@ -144,6 +150,20 @@ export function PlacesMapPane({ state }: { state: ReaderState }) {
             ? `${p.name} · ${where} · ${t("places-site-uncertain", { defaultValue: "site uncertain" })}`
             : `${p.name} · ${where}`
         );
+        // What the publisher said of the place beyond its name — a group's picture, period and summary — opens on tap.
+        if (p.summary || p.image)
+          g.bindPopup(
+            `<div class="sb-places-popup">${
+              p.image
+                ? `<img class="sb-places-popup-image" src="${escapeHtml(p.image)}" alt="" loading="lazy">`
+                : ""
+            }<strong>${escapeHtml(p.name)}</strong>${
+              p.period
+                ? `<div class="sb-small sb-muted">${escapeHtml(p.period)}</div>`
+                : ""
+            }${p.summary ? `<p class="sb-small">${escapeHtml(p.summary)}</p>` : ""}</div>`,
+            { maxWidth: 320 }
+          );
         g.on("click", () => state.selection.select(p.verses[0]!, p.verses[0]!));
         g.addTo(layer);
         bounds.extend(g.getBounds());

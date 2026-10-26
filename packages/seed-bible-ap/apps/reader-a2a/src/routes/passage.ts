@@ -570,6 +570,101 @@ export function scrollItems(
   return out;
 }
 
+/** The notes published about the chapter's verses (the publisher contract's `at-verse`, relation `teaches`, kind
+ *  `block`): each block as signed, its `[[subject | verses]]` label and `¶ key: value` lines read into fields, anchored
+ *  at the verses of the asked span it speaks about. A picture named `asset:sha256:<hex>` becomes the gateway's URL. */
+export function teachingItems(
+  asked: Locus,
+  chapter: number,
+  items: ContractItem[],
+  assetBase: string
+): PassageItem[] {
+  const out: PassageItem[] = [];
+  const prefix = `${asked.osis}.${chapter}.`;
+  for (const it of items) {
+    if (typeof it.item.text !== "string" || !it.item.text) continue;
+    const verses = it.references
+      .filter((r) => r.relation === "teaches" && r.to.startsWith(prefix))
+      .map((r) => Number(r.to.slice(prefix.length)))
+      .filter(
+        (v) =>
+          Number.isInteger(v) &&
+          v > 0 &&
+          touches(asked.book, chapter, [v], asked)
+      );
+    if (!verses.length) continue;
+    const at = versesLocus(asked.book, chapter, verses);
+    if (!at) continue;
+    const note = parseNoteBlock(it.item.text);
+    const subject =
+      it.item.sourceLabel ?? note.label ?? it.release.title ?? it.release.work;
+    const image = note.fields["image"]
+      ? assetUrl(assetBase, note.fields["image"])
+      : null;
+    out.push({
+      source: "publishing",
+      kind: "teaching",
+      locus: anchor(at),
+      title: subject,
+      detail:
+        note.body.length > 200 ? `${note.body.slice(0, 197)}…` : note.body,
+      ...(it.item.url ? { link: it.item.url } : {}),
+      from: "publishing-gateway",
+      data: {
+        text: note.body,
+        fields: note.fields,
+        image,
+        work: it.release.work,
+        workTitle: it.release.title ?? null,
+        part: it.item.partTitle ?? null,
+        publisher: it.publisher.handle ?? it.publisher.name ?? null,
+        licence: it.license,
+        attribution: it.attribution,
+        signatureStatus: it.release.signatureStatus,
+        citation: {
+          locus: at.id,
+          work: `@${it.release.work}${it.release.version ? `@${it.release.version}` : ""}`,
+          part: it.item.part ?? null,
+          block: it.item.block ?? null,
+          commitment: it.item.commitment?.value ?? null,
+        },
+      },
+    });
+  }
+  return out;
+}
+
+/** A note block as signed: `[[subject | verses]]`, the body, then `¶ key: value` fields (the blocks are committed with
+ *  their lines joined by spaces, so the fields are told apart by the pilcrow). */
+export function parseNoteBlock(text: string): {
+  label: string | null;
+  body: string;
+  fields: Record<string, string>;
+} {
+  const head = /^\s*\[\[([^|\]]+)\|\s*([^\]]*)\]\]\s*/.exec(text);
+  const rest = head ? text.slice(head[0].length) : text;
+  const [body = "", ...notes] = rest.split(/\s*¶\s*/);
+  const fields: Record<string, string> = {};
+  for (const n of notes) {
+    const m = /^([^:]{1,40}):\s*([\s\S]*)$/.exec(n.trim());
+    if (m) fields[m[1]!.trim()] = m[2]!.trim();
+  }
+  return { label: head?.[1]?.trim() ?? null, body: body.trim(), fields };
+}
+
+/** `asset:sha256:<hex>` as the URL the gateway serves it at; anything else is left as written. */
+export function assetUrl(base: string, ref: string): string {
+  const m = /^asset:sha256:([0-9a-f]{64})$/.exec(ref.trim());
+  return m ? `${base.replace(/\/$/, "")}/public/asset/${m[1]}` : ref;
+}
+
+/** Where the gateway serves assets from, for the browser: its public API (the service binding has no public name). */
+const assetBaseOf = (env: PublishingEnv) =>
+  (env.PUBLISHING_URL ?? "https://publishing.faithnet.io/api").replace(
+    /\/$/,
+    ""
+  );
+
 /** The map features published at the chapter's verses (the publisher contract's `at-verse`, relation `locates`),
  *  anchored at the verses of the asked span that name them; a feature none of them names is not "at" the passage. */
 export function featureItems(
@@ -612,26 +707,25 @@ export function featureItems(
         publisher: it.publisher.handle ?? it.publisher.name ?? null,
         licence: it.license,
         attribution: it.attribution,
+        ...(it.item.properties ? { properties: it.item.properties } : {}),
+        ...(it.item.image ? { image: it.item.image } : {}),
       },
     });
   }
   return out;
 }
 
-/** The features the gateway holds for a chapter, over the publisher contract. */
-async function gatewayFeatures(
+/** What the gateway holds for a chapter, over the publisher contract, narrowed to one relation and kind. */
+async function gatewayAtVerse(
   env: PublishingEnv,
   book: string,
-  chapter: number
+  chapter: number,
+  ask: { relation: string; kind: string }
 ): Promise<ContractItem[]> {
   const res = await publishingFetch(env, "/publisher/at-verse", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      span: `${book}.${chapter}`,
-      relation: "locates",
-      kind: "feature",
-    }),
+    body: JSON.stringify({ span: `${book}.${chapter}`, ...ask }),
   });
   const out = (await res.json().catch(() => null)) as {
     ok?: boolean;
@@ -829,14 +923,27 @@ export async function composePassage(
           )
         )
       : null,
-    // The publishing gateway: the map features published at the passage's verses (the publisher contract), and the
-    // published scroll lines at the verses that have them, read by canonical verse id and carried with their licence —
-    // never copied into any store here.
+    // The publishing gateway: the map features and the notes published at the passage's verses (the publisher
+    // contract), and the published scroll lines at the verses that have them, read by canonical verse id and carried
+    // with their licence — never copied into any store here.
     gather(async () => {
       const features = Promise.all(
-        chapters.map(async (c) =>
-          featureItems(asked, c, await gatewayFeatures(env, asked.osis, c))
-        )
+        chapters.map(async (c) => {
+          const [located, taught] = await Promise.all([
+            gatewayAtVerse(env, asked.osis, c, {
+              relation: "locates",
+              kind: "feature",
+            }),
+            gatewayAtVerse(env, asked.osis, c, {
+              relation: "teaches",
+              kind: "block",
+            }),
+          ]);
+          return [
+            ...featureItems(asked, c, located),
+            ...teachingItems(asked, c, taught, assetBaseOf(env)),
+          ];
+        })
       ).then((f) => f.flat());
       features.catch(() => undefined);
       if (asked.span[1] - asked.span[0] + 1 > TEXT_SPAN || chapters.length > 1)

@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 13:49 UTC",
+  "when": "2026-10-26 15:31 UTC",
   "results": [
     {
-      "id": "IN1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Invite a friend by email",
-      "checks": "Signed in as Seed Reader, Add a friend with an email address reads Send invitation; sending opens ONE small Home window, pointed at 'Be friends when they accept?' for that invitation (closed unanswered here; IN4 says yes), and says 'Invitation sent to …'; Sent requests shows the address as Invited by email with Resend and Cancel; Resend says it was sent again; Cancel takes it off. (The invitation calls are answered by the test, so no email goes out; each carries the reader's sign-in)",
+      "id": "X9",
+      "section": "12. Extensions",
+      "title": "A people group published at a verse",
+      "checks": "On Acts 6, tap verse 1 and Content: the pane shows the published note about the Hellenists (Greek-speaking Jewish Christians) with its picture and its fields, read from Source Publishing",
       "mark": "✅",
-      "note": "'flow-134920@example.org': Invitation sent; listed as Invited by email; Resend said sent again; Cancel took it off; one Home window, at the sender's half",
-      "ms": 37657
+      "note": "\"Aramaic-speaking Jewish followers of Jesus\" with its picture and fields Where, Period, Writings, Why these verses, Sources",
+      "ms": 1832
     }
   ]
 }

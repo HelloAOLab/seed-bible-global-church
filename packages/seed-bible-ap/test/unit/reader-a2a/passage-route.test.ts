@@ -351,11 +351,15 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
           if (gatewayDown) return new Response("down", { status: 503 });
           // The contract's at-verse (the chapter's features) and the scroll-line reads are told apart by path.
           if (url.pathname === "/publisher/at-verse") {
-            const args = JSON.parse(String(init?.body)) as { span: string };
+            const args = JSON.parse(String(init?.body)) as {
+              span: string;
+              kind?: string;
+            };
+            const pool = args.kind === "block" ? notes : features;
             return Response.json({
               ok: true,
               span: args.span,
-              items: features.filter((f) =>
+              items: pool.filter((f) =>
                 f.references.some((r) => r.to.startsWith(`${args.span}.`))
               ),
             });
@@ -366,6 +370,50 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
       },
     } as BibleEnv & PlatformEnv;
   }
+  /** A note a publisher released about Genesis 1:1–2, as the gateway serves the block: the label and the ¶ lines
+   *  joined into one committed line, the picture named by its hash. */
+  const notes = [
+    {
+      item: {
+        kind: "block",
+        id: "0xblock",
+        text:
+          "[[The deep | Gen.1.1-2]] What the deep was to the first readers. ¶ period: before all days ¶ image: asset:sha256:" +
+          "a".repeat(64) +
+          " ¶ sources: an editor",
+        sourceLabel: "The deep",
+        part: 2,
+        partTitle: "The first chapter",
+        block: 3,
+        url: "https://publishing.faithnet.io/@demo/creation-notes/2#b3",
+        commitment: { value: "0xc0ffee" },
+      },
+      references: [
+        {
+          to: "Gen.1.1",
+          relation: "teaches",
+          confidence: 1,
+          method: "publisher-label",
+        },
+        {
+          to: "Gen.1.2",
+          relation: "teaches",
+          confidence: 1,
+          method: "publisher-label",
+        },
+      ],
+      location: null,
+      publisher: { handle: "demo" },
+      release: {
+        work: "demo/creation-notes",
+        title: "Creation notes",
+        version: 1,
+        signatureStatus: "signed",
+      },
+      license: "CC-BY-4.0",
+      attribution: "A ministry",
+    },
+  ];
   /** A ministry's map feature published at Genesis 1:2 (and one at another chapter, never at this passage). */
   const features = [
     {
@@ -407,6 +455,40 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
       attribution: "A ministry",
     },
   ];
+
+  it("a note a publisher released about the verse comes with the passage: its words, its fields, its picture's URL and a citation", async () => {
+    const out = (await (
+      await app(gen1Env([])).get("Gen.1.2")
+    ).json()) as Answer;
+    const notes = out.items.filter((i) => i.kind === "teaching");
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatchObject({
+      source: "publishing",
+      kind: "teaching",
+      title: "The deep",
+      // Anchored at the asked verse of the verses it speaks about, not the whole run.
+      locus: { ref: "GEN.1.2" },
+      link: "https://publishing.faithnet.io/@demo/creation-notes/2#b3",
+      data: {
+        text: "What the deep was to the first readers.",
+        fields: { period: "before all days", sources: "an editor" },
+        image: `https://publishing.faithnet.io/api/public/asset/${"a".repeat(64)}`,
+        publisher: "demo",
+        licence: "CC-BY-4.0",
+        citation: {
+          work: "@demo/creation-notes@1",
+          part: 2,
+          block: 3,
+          commitment: "0xc0ffee",
+        },
+      },
+    });
+    // Genesis 2 asks the gateway for its own chapter: the note about chapter 1 is not there.
+    const two = (await (
+      await app(gen1Env([])).get("Gen.2.8")
+    ).json()) as Answer;
+    expect(two.items.filter((i) => i.kind === "teaching")).toHaveLength(0);
+  });
 
   it("a map feature a publisher released at the verse comes with the passage, anchored at that verse", async () => {
     const out = (await (
@@ -478,8 +560,8 @@ describe("/api/passage/<locus> — the publishing gateway", () => {
         },
       },
     });
-    // The line, and the map feature a publisher released at the verse.
-    expect(out.sources.publishing).toEqual({ ok: true, count: 2 });
+    // The line, the map feature and the note a publisher released at the verse.
+    expect(out.sources.publishing).toEqual({ ok: true, count: 3 });
   });
 
   it("a chapter names its scroll lines without reading their text (the verse is asked for that), and names an unpublished line too", async () => {

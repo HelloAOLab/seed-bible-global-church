@@ -11,7 +11,23 @@ import { publishingFetch, type PublishingEnv } from "../clients/publishing";
 
 /** One item of the publisher contract's envelope, as far as a map reads it. */
 export interface ContractItem {
-  item: { id: string; name: string; site?: string; url?: string };
+  item: {
+    id: string;
+    name: string;
+    site?: string;
+    url?: string;
+    /** A picture the publisher tied to the item, served by the gateway once its bytes hash to the signed name. */
+    image?: string;
+    /** What else the publisher said of a feature (summary, period, group), as signed. */
+    properties?: Record<string, string | number>;
+    /** A text block's words as signed (a note on Scripture, a scroll line), with its label and `¶` lines. */
+    text?: string | null;
+    sourceLabel?: string;
+    part?: number;
+    partTitle?: string;
+    block?: number;
+    commitment?: { value?: string } & Record<string, unknown>;
+  };
   references: Array<{
     to: string;
     relation: string;
@@ -24,7 +40,12 @@ export interface ContractItem {
     identification?: { confidence: number; method: string; basis?: string };
   } | null;
   publisher: { name?: string; handle?: string; address?: string | null };
-  release: { work: string; signatureStatus: string };
+  release: {
+    work: string;
+    signatureStatus: string;
+    title?: string;
+    version?: number;
+  };
   license: string;
   attribution: string;
 }
@@ -33,6 +54,12 @@ export interface ChapterPlace {
   id: string;
   name: string;
   site?: string;
+  /** What the publisher said of the place, when it said more than a name: a summary, a period, a group it belongs
+   *  to, a picture (a URL the gateway serves). */
+  summary?: string;
+  period?: string;
+  group?: string;
+  image?: string;
   geometry: { type: string; coordinates: unknown };
   /** The verses of this chapter that name the place, first first. */
   verses: number[];
@@ -76,6 +103,16 @@ export function placeOf(
     ...(it.item.site && it.item.site !== it.item.name
       ? { site: it.item.site }
       : {}),
+    ...(typeof it.item.properties?.["summary"] === "string"
+      ? { summary: it.item.properties["summary"] }
+      : {}),
+    ...(typeof it.item.properties?.["period"] === "string"
+      ? { period: it.item.properties["period"] }
+      : {}),
+    ...(typeof it.item.properties?.["group"] === "string"
+      ? { group: it.item.properties["group"] }
+      : {}),
+    ...(it.item.image ? { image: it.item.image } : {}),
     geometry: it.location.geometry,
     verses,
     identification: it.location.identification ?? {

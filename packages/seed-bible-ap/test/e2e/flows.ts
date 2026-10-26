@@ -606,6 +606,92 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X9",
+    rows: ["Content"],
+    section: "12. Extensions",
+    title: "A people group published at a verse",
+    checks:
+      "On Acts 6, tap verse 1 and Content: the pane shows the published note about the Hellenists (Greek-speaking Jewish Christians) with its picture and its fields, read from Source Publishing",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/6");
+      await c.selectVerse(1);
+      // By its label, not its text: the Copy button's icon ligature reads "content_copy".
+      const content = c.page.locator(".sb-verse-toolbar-action", {
+        has: c.page.locator(".sb-verse-toolbar-action-label", {
+          hasText: /^Content$/,
+        }),
+      });
+      await content.first().waitFor({ timeout: 40000 });
+      await content.first().click();
+      const item = c.page.locator(".sb-content-teaching-item", {
+        hasText: /Hellenists/,
+      });
+      await item.first().waitFor({ timeout: 30000 });
+      const img = item.first().locator("img.sb-content-teaching-image");
+      await img.waitFor({ timeout: 20000 });
+      const src = (await img.getAttribute("src")) ?? "";
+      if (!/\/public\/asset\/[0-9a-f]{64}$/.test(src))
+        throw new Error(`the picture is not a signed asset: ${src}`);
+      // The picture arrives after the pane: wait for it to have drawn, not just to be in the page.
+      await img
+        .evaluate(
+          (el) =>
+            new Promise<void>((res, rej) => {
+              const i = el as HTMLImageElement;
+              if (i.complete && i.naturalWidth > 0) return res();
+              i.addEventListener("load", () => res(), { once: true });
+              i.addEventListener("error", () => rej(new Error("error")), {
+                once: true,
+              });
+            })
+        )
+        .catch(() => {
+          throw new Error("the picture did not load");
+        });
+      const fields = await item
+        .first()
+        .locator(".sb-content-teaching-field dt")
+        .allInnerTexts();
+      const title = await item
+        .first()
+        .locator(".sb-content-teaching-title")
+        .innerText();
+      return `"${title}" with its picture and fields ${fields.join(", ")}`;
+    },
+  },
+  {
+    id: "X10",
+    rows: ["Places"],
+    section: "12. Extensions",
+    title: "A people group's region on the map",
+    checks:
+      "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/8");
+      await c
+        .pressToolbar("Places map")
+        .catch(async () => c.pressToolbar("Places"));
+      const canvas = c.page.locator(".sb-places-map-canvas");
+      await c.page.waitForFunction(
+        () =>
+          (
+            document.querySelector<HTMLElement>(".sb-places-map-canvas")
+              ?.dataset["drawn"] ?? ""
+          )
+            .split(",")
+            .includes("Samaritan believers"),
+        undefined,
+        { timeout: 60000 }
+      );
+      const drawn = (await canvas.getAttribute("data-drawn")) ?? "";
+      await c.page
+        .locator(".sb-places-list button", { hasText: /^Samaritan believers$/ })
+        .first()
+        .waitFor({ timeout: 10000 });
+      return `drew ${drawn.split(",").length} places including the Samaritan believers' region`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

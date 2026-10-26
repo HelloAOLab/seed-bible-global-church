@@ -28,11 +28,81 @@ export const contentVerses = signal<number[]>([]);
 
 /** The kinds of item that are a verse's content. */
 export const CONTENT_KINDS = new Set([
+  "teaching",
   "scroll-line",
   "scroll-quote",
   "parallel",
   "septuagint",
 ]);
+
+/** The fields a published note may carry beside its words, in the order they are shown; the key is the publisher's
+ *  own word for it (`¶ period: …`), shown with its first letter raised. */
+const NOTE_FIELDS = [
+  "where",
+  "period",
+  "writings",
+  "why these verses",
+  "example",
+  "sources",
+];
+const fieldLabel = (k: string) => k.charAt(0).toUpperCase() + k.slice(1);
+
+/** A note a publisher released about this verse (a people group, a place, a practice): its picture, its words as
+ *  signed, the fields beside them, and whose it is — with a link to the publisher's own page for it. */
+function Teaching({ it }: { it: PassageItem }) {
+  const { t } = useI18n();
+  const d = (it.data ?? {}) as Record<string, unknown>;
+  const fields = (d["fields"] ?? {}) as Record<string, string>;
+  const image = typeof d["image"] === "string" ? d["image"] : null;
+  const str = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
+  const shown = NOTE_FIELDS.filter((k) => fields[k]);
+  return (
+    <li className="sb-content-teaching-item">
+      {image && (
+        <img
+          className="sb-content-teaching-image"
+          src={image}
+          alt={it.title}
+          loading="lazy"
+        />
+      )}
+      <p className="sb-content-teaching-title">{it.title}</p>
+      <p className="sb-content-teaching-text">{str("text")}</p>
+      {shown.length > 0 && (
+        <dl className="sb-content-teaching-fields">
+          {shown.map((k) => (
+            <div key={k} className="sb-content-teaching-field">
+              <dt>{fieldLabel(k)}</dt>
+              <dd>{fields[k]}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <p className="sb-small sb-muted">
+        {[
+          str("workTitle") || str("work"),
+          str("publisher") ? `@${str("publisher")}` : "",
+          str("licence"),
+          str("signatureStatus") === "signed"
+            ? t("content-signed", { defaultValue: "signed by the publisher" })
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        {it.link && (
+          <>
+            {" "}
+            <a href={it.link} target="_blank" rel="noreferrer">
+              {t("scrolls-see-publisher", {
+                defaultValue: "See it at the publisher",
+              })}
+            </a>
+          </>
+        )}
+      </p>
+    </li>
+  );
+}
 
 function ScrollLine({
   it,
@@ -192,6 +262,10 @@ export function ContentPane({
   const quotes = of("scroll-quote");
   const parallels = of("parallel");
   const greek = of("septuagint")[0];
+  const teachings = of("teaching").sort(
+    (a, b) =>
+      a.locus.span[0] - b.locus.span[0] || a.title.localeCompare(b.title)
+  );
   const byRelation = (section: string) =>
     parallels.filter((p) => relationSection(p.data?.["relation"]) === section);
   const goTo = (p: PassageItem) => {
@@ -231,6 +305,15 @@ export function ContentPane({
           })}
         >
           {[
+            teachings.length
+              ? [
+                  "sb-content-teaching",
+                  t("content-n-published", {
+                    count: teachings.length,
+                    defaultValue: "{{count}} from publishers",
+                  }),
+                ]
+              : null,
             copies.length
               ? [
                   "sb-content-copies",
@@ -309,6 +392,26 @@ export function ContentPane({
             defaultValue: "Nothing more is known for this verse yet.",
           })}
         </p>
+      )}
+      {teachings.length > 0 && (
+        <Section
+          id="sb-content-teaching"
+          title={t("content-teaching", {
+            defaultValue: "Published about this verse",
+          })}
+        >
+          <p className="sb-small sb-muted">
+            {t("content-teaching-what", {
+              defaultValue:
+                "Notes publishers released about this verse — the people, places and practices it speaks of — each signed by its publisher and read here as published.",
+            })}
+          </p>
+          <ul className="sb-content-lines sb-content-teachings">
+            {teachings.map((it) => (
+              <Teaching key={`${it.title}:${it.locus.ref}`} it={it} />
+            ))}
+          </ul>
+        </Section>
       )}
       {copies.length > 0 && (
         <Section
@@ -445,6 +548,15 @@ export function ContentPane({
       {items.length > 0 && (
         <p className="sb-small sb-muted sb-content-credits">
           {[
+            ...[
+              ...new Set(
+                teachings.map((x) =>
+                  typeof x.data?.["attribution"] === "string"
+                    ? (x.data["attribution"] as string)
+                    : ""
+                )
+              ),
+            ].filter(Boolean),
             copies.length || quotes.length
               ? "Scroll transcriptions: ETCBC/dss; English first drafts: Open Dead Sea — CC BY-NC 4.0, for study only."
               : "",

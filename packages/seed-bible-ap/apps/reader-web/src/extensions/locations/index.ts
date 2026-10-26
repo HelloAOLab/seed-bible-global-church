@@ -11,6 +11,11 @@ export interface ChapterPlace {
   id: string;
   name: string;
   site?: string;
+  /** What the publisher said of the place beyond its name — a people group's summary, period and picture. */
+  summary?: string;
+  period?: string;
+  group?: string;
+  image?: string;
   geometry: { type: string; coordinates: unknown };
   verses: number[];
   identification: { confidence: number; method: string; basis?: string };

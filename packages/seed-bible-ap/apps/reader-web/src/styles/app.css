@@ -1010,6 +1010,20 @@ body {
 .sb-places-map .sb-places-map-canvas .leaflet-control-attribution a {
   color: var(--sb-link-color, var(--sb-primary-color, #0078a8));
 }
+/* What a publisher said of a place, opened on tap: its picture, name, period and summary. */
+.sb-places-popup {
+  max-width: 300px;
+}
+.sb-places-popup-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.4rem;
+  border-radius: 4px;
+}
+.sb-places-popup p {
+  margin: 0.3rem 0 0;
+}
 .sb-places-list {
   list-style: none;
   padding: 0;
