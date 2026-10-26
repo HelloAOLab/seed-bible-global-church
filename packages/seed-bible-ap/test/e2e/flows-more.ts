@@ -4510,6 +4510,112 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "PRF1",
+    timeoutMs: 360_000,
+    section: "2. Getting in",
+    title: "Your profile is your Home profile",
+    rows: ["Your Home profile"],
+    checks:
+      "Signed in as Seed Reader: Edit profile shows the first and last name from the Home (and says they are the Home profile); changing the last name and Save opens the Home's window — 'Update your Home profile?' with the old and new name — Save to my profile; the window closes and the reader says 'Saved to your Home profile' and shows the new name, read back from the Home",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      const shot = async (pg: import("playwright").Page, name: string) => {
+        if (dir)
+          await pg
+            .screenshot({ path: `${dir}/prf1-${name}.png` })
+            .catch(() => {});
+      };
+      await c.open("/read/BSB/JHN/3");
+      await c.signInAsSample();
+      await c.page.locator(".sb-sidebar-profile-button-in").first().click();
+      await c.page
+        .getByRole("button", { name: "Edit profile" })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-profile-card");
+      await c.waitText(
+        card,
+        /Your name and photo are your Home profile/,
+        30000
+      );
+      const first = card.getByLabel("First name");
+      const last = card.getByLabel("Last name");
+      // (the Home profile has loaded once its note shows; a person with no name saved has empty fields)
+      await c.page.waitForTimeout(1500);
+      const was = {
+        first: await first.inputValue(),
+        last: await last.inputValue(),
+      };
+      await shot(c.page, "edit");
+      // Alternate between two names, so each run changes something and the demo person stays sensible.
+      const next = was.last === "Reader" ? "Reader-Test" : "Reader";
+      await last.fill(next);
+      const opened = c.context.waitForEvent("page", { timeout: 15000 });
+      await card.getByRole("button", { name: "Save", exact: true }).click();
+      const home = await opened;
+      await home.waitForLoadState();
+      // The window may ask the person to confirm it is them at their Home first.
+      const ask = home.locator('[data-testid="profile-update"]');
+      if (!(await ask.isVisible().catch(() => false))) {
+        const demo = home.getByText(/demo people/i);
+        await demo.waitFor({ timeout: 30000 });
+        await shot(home, "home-signin");
+        await demo.click();
+        await home
+          .getByRole("button", { name: /seed ?reader/i })
+          .first()
+          .click();
+      }
+      await ask.waitFor({ timeout: 60000 });
+      await c.waitText(ask, new RegExp(next), 30000);
+      await shot(home, "home-window");
+      const closed = home.waitForEvent("close", { timeout: 60000 });
+      await home.getByTestId("profile-update-save").click();
+      await closed;
+      await c.waitText(card, /Saved to your Home profile/, 60000);
+      if ((await last.inputValue()) !== next)
+        throw new Error(`the field shows ${await last.inputValue()}`);
+      await shot(c.page, "saved");
+      return `${was.first} ${was.last} → ${was.first} ${next}: Home window, Save to my profile, read back`;
+    },
+  },
+  {
+    id: "SX2",
+    section: "2. Getting in",
+    title: "Stay signed in for days",
+    rows: ["Signing in and out"],
+    checks:
+      "Signed in, close the tab and open the reader in a new one: still signed in (the sign-in is kept on the device, not with the tab), and it lasts days — the Home's token for this app runs seven days",
+    run: async (c) => {
+      await c.open("/read/BSB/JHN/3");
+      await c.signInAsSample();
+      const days = await c.page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem("sbr.session") ?? "null") as {
+          token: string;
+        } | null;
+        const p = JSON.parse(
+          atob(
+            String(s?.token)
+              .split(".")[1]!
+              .replace(/-/g, "+")
+              .replace(/_/g, "/")
+          )
+        );
+        return (p.exp - p.iat) / 86400;
+      });
+      if (days < 6.9)
+        throw new Error(`the sign-in lasts ${days.toFixed(2)} days`);
+      await c.page.close();
+      const again = await c.context.newPage();
+      await again.goto(`${BASE}/read/BSB/JHN/3`);
+      await again
+        .locator(".sb-sidebar-profile-button-in")
+        .first()
+        .waitFor({ timeout: 30000 });
+      return `signed in after closing the tab; the sign-in lasts ${days.toFixed(0)} days`;
+    },
+  },
+  {
     id: "G19",
     timeoutMs: 240_000,
     section: "8. Today, Discover and publishing",
@@ -8213,7 +8319,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.open(CH);
       await c.signInAsSample();
       await c.page.evaluate(() => {
-        const s = JSON.parse(sessionStorage.getItem("sbr.session") ?? "null");
+        const s = JSON.parse(localStorage.getItem("sbr.session") ?? "null");
         const [h, p, sig] = String(s.token).split(".");
         const body = JSON.parse(atob(p!.replace(/-/g, "+").replace(/_/g, "/")));
         body.exp = Math.floor(Date.now() / 1000) - 3600;
@@ -8221,7 +8327,7 @@ export const MORE_FLOWS: Flow[] = [
           .replace(/\+/g, "-")
           .replace(/\//g, "_")
           .replace(/=+$/, "");
-        sessionStorage.setItem(
+        localStorage.setItem(
           "sbr.session",
           JSON.stringify({ ...s, token: `${h}.${enc}.${sig}` })
         );

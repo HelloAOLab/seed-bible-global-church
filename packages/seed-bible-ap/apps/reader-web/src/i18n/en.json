@@ -1112,5 +1112,13 @@
   "invite-as-send": "Send invitation",
   "invite-as-why": "Your invitation says who it is from. Your Home doesn't have a name for you yet.",
   "invite-welcome-lead-unnamed": "Read the Bible together. Friends see what each other share, and when the other is reading.",
-  "sending": "Sending…"
+  "sending": "Sending…",
+  "first-name": "First name",
+  "last-name": "Last name",
+  "profile-home-no-grant": "Sign in again to show your Home profile here — your name and photo come from your Home.",
+  "profile-home-not-saved": "Your name and photo were not changed — your Home's window was closed without saving.",
+  "profile-home-note": "Your name and photo are your Home profile: the same in every app you let read it. Changes are saved at your Home.",
+  "profile-home-saved": "✓ Saved to your Home profile",
+  "profile-home-waiting": "A small window opened from your Home. Tap “Save to my profile” there.",
+  "remove-photo": "Remove photo"
 }

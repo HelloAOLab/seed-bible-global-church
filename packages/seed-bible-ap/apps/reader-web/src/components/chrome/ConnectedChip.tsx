@@ -1,6 +1,8 @@
-// WHO YOU ARE, AS A PICTURE — the reader's avatar: their profile's picture, else the initial of their name. The
+// WHO YOU ARE, AS A PICTURE — the reader's avatar: their Home profile's photo (signed in), else the reader's own
+// profile picture, else the initial of their name. The
 // sidebar's profile circle, the phone's account button and Account settings carry it.
 import type { ReaderState } from "../../state";
+import { fullName } from "../../state/social/homeProfile";
 
 export function Avatar({
   state,
@@ -10,8 +12,11 @@ export function Avatar({
   size?: "s" | "m";
 }) {
   const s = state.session.value;
-  const picture = state.profile.mine.value?.picture;
-  const name = state.profile.mine.value?.displayName || s?.name || "";
+  // Signed in, your Home profile's photo and name are yours here; the reader's own copy is the fallback.
+  const home = s ? state.homeProfile.value.value : null;
+  const picture = home?.photo ?? state.profile.mine.value?.picture;
+  const name =
+    fullName(home) || state.profile.mine.value?.displayName || s?.name || "";
   const initial = (name.trim()[0] ?? "?").toUpperCase();
   return picture ? (
     <img className={`sb-avatar sb-avatar-${size}`} src={picture} alt="" />

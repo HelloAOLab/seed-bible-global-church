@@ -32,6 +32,7 @@ import {
 const INVITE_KEY = "sbr.invite";
 import { A2A_BASE } from "../api";
 import { createInvites, parseInviteLink } from "./social/invites";
+import { createHomeProfile } from "./social/homeProfile";
 import { estateById } from "../../../../estate/faithnet";
 import { createLiveSession } from "./sessions/live";
 import { browserPeerFactory, createVoice } from "./sessions/voice";
@@ -177,6 +178,19 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     if (!session.value) return;
     void invites.refresh();
     void invites.loadFindable();
+  });
+  // Your Home profile (name and photo) is yours in the reader: read at sign-in, and whenever the reader comes back.
+  const homeProfile = createHomeProfile({
+    base: A2A_BASE,
+    bearer: () => {
+      const s = session.value;
+      return s && s.via !== "dev-stub" ? s.token : null;
+    },
+    homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
+  });
+  effect(() => {
+    if (session.value) void homeProfile.load();
+    else homeProfile.value.value = null;
   });
   const profile = createProfile(backend, stores, identity);
   const audio = createChapterAudio({ api });
@@ -1055,6 +1069,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     profile,
     friendship,
     invites,
+    homeProfile,
     presence,
     live,
     /** The tab the live session lives in (its Shared tab); null when not in one. */

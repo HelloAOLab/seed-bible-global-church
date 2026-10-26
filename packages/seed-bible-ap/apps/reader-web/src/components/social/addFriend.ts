@@ -2,6 +2,7 @@
 // your own account, already friends, already asked; then the Home's signature). An email is an invitation the Home
 // mails; it reaches them whether or not they're here yet, and their link brings them back to this reader.
 import type { ReaderState } from "../../state";
+import { fullName } from "../../state/social/homeProfile";
 import type { useI18n } from "../../i18n";
 import { standingOf } from "../../state/social/friendship";
 import { isEmail } from "../../state/social/invites";
@@ -16,9 +17,11 @@ export function isPersonName(name: string | null | undefined): name is string {
   return !!n && /\p{L}/u.test(n) && !/^0x[0-9a-f]{4,}/i.test(n);
 }
 
-/** The name friends know this reader by: their profile's name, else the name their Home gave at sign-in — null when
+/** The name friends know this reader by: their Home profile's name, else the reader profile's, else the name their Home gave at sign-in — null when
  *  neither is a person's name, so the reader asks rather than sending an address. */
 export function myFriendlyName(state: ReaderState): string | null {
+  const home = fullName(state.homeProfile.value.value);
+  if (isPersonName(home)) return home;
   const own = state.profile.mine.value?.displayName;
   if (isPersonName(own)) return own.trim();
   const fromHome = state.session.value?.name;

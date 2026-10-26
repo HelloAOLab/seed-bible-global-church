@@ -1,8 +1,9 @@
 // CONNECT — Home sign-in for readers, on `@agenticprimitives/connect-client`, the same client every app on the
 // rail uses (pattern: verifiable-content-demo `apps/demo-bible-web/src/session.ts`, demo-openbook-reader).
 //
-// THE KEYS LIVE ONCE, AT THE HOME. This page holds no key, mints no identity, and keeps the id_token in
-// sessionStorage only. Three ways in, all the Home's:
+// THE KEYS LIVE ONCE, AT THE HOME. This page holds no key and mints no identity; it keeps the Home's id_token on the
+// device (localStorage) until it expires — seven days for this app, set at the Home — or Sign out drops it, so a
+// reader is not signed out by closing the tab. Three ways in, all the Home's:
 //   VIA HOME        the popup PKCE ceremony, else a full-page redirect when the popup is blocked.
 //   QUICK CONNECT   one of the Home's sample people (the seed demo reader among them).
 //   DEV READER      local dev only — the seed reader as a `dev:<handle>` token reader-a2a accepts with
@@ -60,19 +61,29 @@ export interface ReaderSession {
 
 type Wire = Record<string, unknown>;
 
+/** The sign-in is kept across closing the browser (localStorage), for as long as the Home's token lasts — days, for
+ *  this app — and dropped at its expiry (state's expiry watch) or on Sign out. A sign-in kept by an earlier version in
+ *  this tab's sessionStorage is carried over once. */
 export function loadSession(): ReaderSession | null {
   try {
-    return JSON.parse(
-      sessionStorage.getItem(KEY) || "null"
-    ) as ReaderSession | null;
+    const kept = localStorage.getItem(KEY);
+    if (kept) return JSON.parse(kept) as ReaderSession;
+    const older = sessionStorage.getItem(KEY);
+    if (!older) return null;
+    localStorage.setItem(KEY, older);
+    sessionStorage.removeItem(KEY);
+    return JSON.parse(older) as ReaderSession;
   } catch {
     return null;
   }
 }
 function save(s: ReaderSession | null): void {
   try {
-    if (s) sessionStorage.setItem(KEY, JSON.stringify(s));
-    else sessionStorage.removeItem(KEY);
+    if (s) localStorage.setItem(KEY, JSON.stringify(s));
+    else {
+      localStorage.removeItem(KEY);
+      sessionStorage.removeItem(KEY);
+    }
   } catch {
     /* storage blocked: the session lives for this page only */
   }

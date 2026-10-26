@@ -5,6 +5,7 @@
 // and Sign out. Signed out, the card asks you to sign in. Edit profile is its own pane with ← back to Profile.
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
+import { fullName } from "../../state/social/homeProfile";
 import { useI18n } from "../../i18n";
 import { AccountCard } from "./AccountPane";
 import {
@@ -334,8 +335,9 @@ export function ProfilePane({ state }: { state: ReaderState }) {
     );
 
   const mine = state.profile.mine.value;
-  const name = mine?.displayName || s.name || s.sub;
-  const picture = mine?.picture;
+  const home = state.homeProfile.value.value;
+  const name = fullName(home) || mine?.displayName || s.name || s.sub;
+  const picture = home?.photo ?? mine?.picture;
   const friends = state.today.friends.value.length;
   const requests = state.friendship.requests.value.length;
   const friendsLine =

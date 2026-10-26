@@ -264,6 +264,7 @@ export function PictureField({
   cropTitle,
   disabled,
   onPicked,
+  onCroppedFile,
 }: {
   state: ReaderState;
   target: CropTarget;
@@ -271,6 +272,9 @@ export function PictureField({
   cropTitle: string;
   disabled?: boolean;
   onPicked: (url: string) => Promise<unknown> | void;
+  /** Take the cropped picture itself instead of uploading it (the Home profile holds the image, not a link); there
+   *  are no earlier pictures to reuse then. */
+  onCroppedFile?: (f: File) => Promise<unknown>;
 }) {
   const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
@@ -347,14 +351,16 @@ export function PictureField({
             />
           </label>
         )}
-      <button
-        type="button"
-        className="sb-note-button sb-picture-earlier"
-        disabled={disabled}
-        onClick={() => setChoosing(true)}
-      >
-        {t("earlier-pictures", { defaultValue: "Earlier pictures" })}
-      </button>
+      {!onCroppedFile && (
+        <button
+          type="button"
+          className="sb-note-button sb-picture-earlier"
+          disabled={disabled}
+          onClick={() => setChoosing(true)}
+        >
+          {t("earlier-pictures", { defaultValue: "Earlier pictures" })}
+        </button>
+      )}
       {notPicture && (
         <span className="sb-small sb-pane-error">{notPicture}</span>
       )}
@@ -366,8 +372,11 @@ export function PictureField({
           confirmLabel={t("crop-use", { defaultValue: "Use picture" })}
           onCancel={() => setFile(null)}
           onCropped={async (f) => {
-            const img = await state.files.upload(f);
-            await onPicked(img.url);
+            if (onCroppedFile) await onCroppedFile(f);
+            else {
+              const img = await state.files.upload(f);
+              await onPicked(img.url);
+            }
             setFile(null);
           }}
         />

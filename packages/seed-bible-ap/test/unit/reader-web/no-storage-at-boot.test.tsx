@@ -60,7 +60,10 @@ describe("storage at boot", () => {
     expect(rec.accesses, "hydration touched storage").toEqual([]);
   });
 
-  it("the state's boot reads the session from sessionStorage and preferences from localStorage, never a session from localStorage", async () => {
+  // The sign-in is kept across closing the browser (2026-10-26: the reader is kept open for days — a sign-in in
+  // sessionStorage was lost with the tab), under one key, `sbr.session`, read at boot; a sign-in an earlier version
+  // kept in sessionStorage is carried over. Nothing else secret is kept, and boot writes no session.
+  it("the state's boot reads the session (localStorage, then an earlier sessionStorage copy) and preferences, and writes no session", async () => {
     const rec = recordStorage();
     const { initI18n } = await import("../../../apps/reader-web/src/i18n");
     const { createReaderState } =
@@ -77,7 +80,7 @@ describe("storage at boot", () => {
     expect(local.every((k) => /^sbr\./.test(k))).toBe(true);
     expect(
       local.filter((k) => /session|token|wire|secret|key/i.test(k))
-    ).toEqual([]);
+    ).toEqual(["sbr.session"]);
     // Writes at boot are preferences only (the settings manager keeps its defaults): never the session.
     const written = rec.accesses
       .filter((a) => a.store === "localStorage" && a.op === "setItem")

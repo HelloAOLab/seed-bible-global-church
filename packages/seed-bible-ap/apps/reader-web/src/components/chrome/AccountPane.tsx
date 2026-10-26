@@ -11,7 +11,8 @@ import {
   type TextStyle,
 } from "../../state/chrome/textStyle";
 import { PictureField } from "../library/PictureField";
-import { PROFILE_PICTURE } from "../../state/library/crop";
+import { PROFILE_PICTURE, type CropTarget } from "../../state/library/crop";
+import type { HomeProfileChange } from "../../state/social/homeProfile";
 import { toolbarActions } from "../reader/ReaderToolbar";
 import { ordered } from "../../state/chrome/toolbarLayout";
 import { wakeLockSupported } from "../../state/chrome/wakeLock";
@@ -71,18 +72,59 @@ export function NeedsHomeHint({ error }: { error: string | null | undefined }) {
 }
 
 /** The reader's profile: a name, a line, a picture from the gallery; published to the public shelf for friends. */
+/** The Home profile takes the photo itself: a 256-px JPEG (well under its 200 KB) of the same round crop. */
+const HOME_PICTURE: CropTarget = {
+  ...PROFILE_PICTURE,
+  mimeType: "image/jpeg",
+  fileName: "profile-picture.jpg",
+  quality: 0.85,
+};
+
+const asDataUrl = (f: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
+
 export function ProfileCard({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const p = state.profile.mine.value;
+  // Signed in, your name and photo are your HOME profile's: shown from it, and a change goes to your Home to save.
+  const home = state.session.value ? state.homeProfile.value.value : null;
+  const homeStatus = state.homeProfile.status.value;
+  const fromHome = !!state.session.value;
   const [name, setName] = useState(p?.displayName ?? "");
+  const [first, setFirst] = useState(home?.firstName ?? "");
+  const [last, setLast] = useState(home?.lastName ?? "");
+  const [photo, setPhoto] = useState<string | null | undefined>(undefined);
   const [about, setAbout] = useState(p?.about ?? "");
   const [dirty, setDirty] = useState(false);
   useEffect(() => {
     if (!dirty) {
       setName(p?.displayName ?? "");
       setAbout(p?.about ?? "");
+      setFirst(home?.firstName ?? "");
+      setLast(home?.lastName ?? "");
+      setPhoto(undefined);
     }
-  }, [p?.displayName, p?.about]);
+  }, [p?.displayName, p?.about, home?.firstName, home?.lastName, home?.photo]);
+  const shownPhoto = fromHome
+    ? photo !== undefined
+      ? photo
+      : (home?.photo ?? null)
+    : (p?.picture ?? null);
+  const homeChange = state.homeProfile.change.value;
+  /** What of the name and photo differs from what the Home holds — the change to propose. */
+  const homeDiff = (): HomeProfileChange | null => {
+    if (!fromHome) return null;
+    const d: HomeProfileChange = {};
+    if (first.trim() !== (home?.firstName ?? "")) d.firstName = first.trim();
+    if (last.trim() !== (home?.lastName ?? "")) d.lastName = last.trim();
+    if (photo !== undefined && photo !== (home?.photo ?? null)) d.photo = photo;
+    return Object.keys(d).length ? d : null;
+  };
   const published = !!p && state.publishing.isPublished(p["@id"]);
   const canPublish = !!state.session.value?.wire;
   // What became of the last save: the device copy is at once, the Library's takes a few seconds (or fails).
@@ -103,9 +145,22 @@ export function ProfileCard({ state }: { state: ReaderState }) {
       <p className="sb-small">
         <strong>{t("your-profile", { defaultValue: "Your profile" })}</strong>
       </p>
+      {fromHome && (
+        <p className="sb-small sb-muted sb-profile-home-note">
+          {homeStatus === "no_grant"
+            ? t("profile-home-no-grant", {
+                defaultValue:
+                  "Sign in again to show your Home profile here — your name and photo come from your Home.",
+              })
+            : t("profile-home-note", {
+                defaultValue:
+                  "Your name and photo are your Home profile: the same in every app you let read it. Changes are saved at your Home.",
+              })}
+        </p>
+      )}
       <div className="sb-profile-row">
-        {p?.picture ? (
-          <img className="sb-profile-picture" src={p.picture} alt="" />
+        {shownPhoto ? (
+          <img className="sb-profile-picture" src={shownPhoto} alt="" />
         ) : (
           <span className="sb-profile-picture sb-profile-picture-empty material-symbols-outlined">
             person
@@ -113,30 +168,92 @@ export function ProfileCard({ state }: { state: ReaderState }) {
         )}
         <PictureField
           state={state}
-          target={PROFILE_PICTURE}
+          target={fromHome ? HOME_PICTURE : PROFILE_PICTURE}
           label={t("profile-picture", { defaultValue: "Picture" })}
           cropTitle={t("crop-your-photo", { defaultValue: "Crop your photo" })}
           onPicked={(url) => save({ picture: url })}
+          {...(fromHome
+            ? {
+                onCroppedFile: async (f: File) => {
+                  setPhoto(await asDataUrl(f));
+                  setDirty(true);
+                },
+              }
+            : {})}
         />
+        {fromHome && shownPhoto && (
+          <button
+            type="button"
+            className="sb-discover-create-link"
+            onClick={() => {
+              setPhoto(null);
+              setDirty(true);
+            }}
+          >
+            {t("remove-photo", { defaultValue: "Remove photo" })}
+          </button>
+        )}
       </div>
       <form
         className="sb-item-editor"
         onSubmit={(e) => {
           e.preventDefault();
-          void save({ displayName: name, about }).then(
-            (ok) => ok && setDirty(false)
-          );
+          void (async () => {
+            const change = homeDiff();
+            if (change) {
+              const r = await state.homeProfile.propose(change);
+              if (!r.ok) {
+                setStatus("failed");
+                return;
+              }
+            }
+            const display = fromHome
+              ? [first, last]
+                  .map((x) => x.trim())
+                  .filter(Boolean)
+                  .join(" ")
+              : name;
+            const ok = await save({ displayName: display, about });
+            if (ok) setDirty(false);
+          })();
         }}
       >
-        <input
-          className="sb-note-editor"
-          placeholder={t("profile-name", { defaultValue: "Display name" })}
-          value={name}
-          onInput={(e) => {
-            setName((e.target as HTMLInputElement).value);
-            setDirty(true);
-          }}
-        />
+        {fromHome ? (
+          <div className="sb-profile-name-row">
+            <input
+              className="sb-note-editor"
+              autoComplete="given-name"
+              aria-label={t("first-name", { defaultValue: "First name" })}
+              placeholder={t("first-name", { defaultValue: "First name" })}
+              value={first}
+              onInput={(e) => {
+                setFirst((e.target as HTMLInputElement).value);
+                setDirty(true);
+              }}
+            />
+            <input
+              className="sb-note-editor"
+              autoComplete="family-name"
+              aria-label={t("last-name", { defaultValue: "Last name" })}
+              placeholder={t("last-name", { defaultValue: "Last name" })}
+              value={last}
+              onInput={(e) => {
+                setLast((e.target as HTMLInputElement).value);
+                setDirty(true);
+              }}
+            />
+          </div>
+        ) : (
+          <input
+            className="sb-note-editor"
+            placeholder={t("profile-name", { defaultValue: "Display name" })}
+            value={name}
+            onInput={(e) => {
+              setName((e.target as HTMLInputElement).value);
+              setDirty(true);
+            }}
+          />
+        )}
         {/* The old reader's Description: up to 300 characters, counted. */}
         <textarea
           className="sb-note-editor"
@@ -207,6 +324,20 @@ export function ProfileCard({ state }: { state: ReaderState }) {
                 defaultValue:
                   "✓ Saved on this device — sign in to keep it in your Library",
               }))}
+        {homeChange?.state === "waiting" &&
+          t("profile-home-waiting", {
+            defaultValue:
+              "A small window opened from your Home. Tap “Save to my profile” there.",
+          })}
+        {homeChange?.state === "saved" &&
+          t("profile-home-saved", {
+            defaultValue: "✓ Saved to your Home profile",
+          })}
+        {homeChange?.state === "not-saved" &&
+          t("profile-home-not-saved", {
+            defaultValue:
+              "Your name and photo were not changed — your Home's window was closed without saving.",
+          })}{" "}
         {state.publishing.busy.value === p?.["@id"] &&
           t("profile-publishing", {
             defaultValue: "Publishing to your shelf…",

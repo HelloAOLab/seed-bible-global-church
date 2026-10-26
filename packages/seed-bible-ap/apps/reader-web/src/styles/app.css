@@ -2295,3 +2295,16 @@ html[data-sb-line="loose"] .sb-bible-reader {
   margin: 0.25rem 0 0;
   text-align: center;
 }
+
+/* Your Home profile in the reader: first and last name side by side, a line saying where they are kept. */
+.sb-profile-name-row {
+  display: flex;
+  gap: 8px;
+}
+.sb-profile-name-row > input {
+  flex: 1;
+  min-width: 0;
+}
+.sb-profile-home-note {
+  margin: 0 0 6px;
+}

@@ -338,6 +338,78 @@ app.get("/api/public-name", async (c) => {
     { signedOut: true }
   );
 });
+/**
+ * THE READER'S HOME PROFILE — the person's first and last name and photo as their Home holds them (the vault's
+ * `impact-profile`), read under the reader's own read grant (minted at sign-in; the interactions DO checks it is for
+ * this app and covers that record) and handed to the browser as those three fields only — the record also holds
+ * contact details the reader has no use for. A change is never written from here (an app may not write a vault
+ * record): it is proposed to the Home (`/connect/profile-proposal`), which saves it on the person's yes.
+ */
+app.get("/api/home-profile", async (c) => {
+  const bearer = bearerOf(c.req.raw);
+  const reader = await readerFromToken(c.env, bearer);
+  if (!reader || !bearer || bearer.startsWith("dev:"))
+    return c.json(
+      { ok: false, error: "sign in to see your Home profile" },
+      401
+    );
+  if (!c.env.A2A_URL)
+    return c.json({ ok: false, error: "A2A_URL is not configured" }, 503);
+  const res = await fetch(
+    `${c.env.A2A_URL.replace(/\/+$/, "")}/interactions/${reader.agent.toLowerCase()}/record.get`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ session: bearer, recordType: "impact-profile" }),
+    }
+  );
+  const out = (await res.json().catch(() => null)) as {
+    ok?: boolean;
+    record?: { contact?: Record<string, unknown> } | null;
+    error?: string;
+    code?: string;
+  } | null;
+  if (!res.ok || !out?.ok) {
+    // No read grant yet (signed in before the reader asked for one): sign in again and the Home mints it.
+    const noGrant =
+      out?.code === "read_grant_absent" || out?.code === "read_grant_revoked";
+    return c.json(
+      {
+        ok: false,
+        code: noGrant ? "no_grant" : "unreadable",
+        error: noGrant
+          ? "Sign in again to let the reader show your Home profile."
+          : (out?.error ??
+            `your Home profile could not be read (${res.status})`),
+      },
+      noGrant ? 409 : 502
+    );
+  }
+  const contact = out.record?.contact ?? {};
+  const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const photo =
+    typeof contact["photo"] === "string" &&
+    /^data:image\/(jpeg|png|webp);base64,/.test(contact["photo"] as string)
+      ? (contact["photo"] as string)
+      : null;
+  return c.json(
+    {
+      ok: true,
+      firstName: text(contact["firstName"]),
+      lastName: text(contact["lastName"]),
+      photo,
+    },
+    200,
+    { "cache-control": "private, no-store" }
+  );
+});
+app.post("/api/home-profile/propose", async (c) =>
+  homeForward(c, "/connect/profile-proposal", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: await c.req.text(),
+  })
+);
 app.get("/api/findable", async (c) =>
   homeForward(c, "/connect/findable", { method: "GET" })
 );
