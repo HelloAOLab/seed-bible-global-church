@@ -4408,7 +4408,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "A verse's content from the verse bar",
     rows: ["Content for a verse"],
     checks:
-      "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 a scroll line that runs on from verse 2 says 'This line holds Genesis 1:2–3', after the lines that start at verse 3; on John 11, verse 35 has none and the bar does not offer Content",
+      "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 each scroll line says which verses it holds ('This line holds Genesis 1:3–4'), the lines that start at verse 3 before any that run on from verse 2; on John 11, verse 35 has none and the bar does not offer Content",
     run: async (c) => {
       const dir = process.env["E2E_SHOTS"];
       await c.open("/read/BSB/ISA/40");
@@ -4452,7 +4452,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.selectVerse(3);
       await bar.getByRole("button", { name: "Content" }).click();
       await c.waitText(pane, /Content for Genesis 1:3/, 20000);
-      await c.waitText(pane, /This line holds Genesis 1:2–3/, 30000);
+      await c.waitText(pane, /This line holds Genesis 1:3–4/, 30000);
       const first = (
         await pane.locator(".sb-content-line").first().innerText()
       ).replace(/\s+/g, " ");
@@ -4467,6 +4467,46 @@ export const MORE_FLOWS: Flow[] = [
       if (await bar.getByRole("button", { name: "Content" }).count())
         throw new Error("Content offered on John 11:35, which has none");
       return `Isaiah 40:3: ${copies} scroll lines (Hebrew "${he.slice(0, 16)}…"), Community Rule, Matthew 3:3 opened, Greek; John 11:35: not offered`;
+    },
+  },
+  {
+    id: "INT3",
+    section: "12. Extensions",
+    title: "New Testament interpretations at a verse",
+    rows: ["Interpretations at a verse"],
+    checks:
+      "On Philemon 1, tap verse 6 → Interpretations on the verse bar → 'How Philemon 1:6 is read': 'How do the words relate?' with the Greek and both readings, 'No reviewer has decided this yet', 'This translation reads it as: …' with how it was read, the notes credited to unfoldingWord; 'Which words are original?' with each reading's editions and 'translates the Greek text it is based on' — never 'has recorded a decision' for these; the full record still opens under Details for scholars",
+    run: async (c) => {
+      const dir = process.env["E2E_SHOTS"];
+      await c.open("/read/BSB/PHM/1");
+      await c.selectVerse(6);
+      const bar = c.page.locator(".sb-verse-toolbar").first();
+      await bar
+        .getByRole("button", { name: "Interpretations" })
+        .click({ timeout: 30000 });
+      const pane = c.page.locator(".sb-interp-pane");
+      await c.waitText(pane, /How Philemon 1:6 is read/, 20000);
+      await c.waitText(pane, /How do the words relate\?/, 10000);
+      await c.waitText(pane, /No reviewer has decided this yet/, 5000);
+      await c.waitText(pane, /This translation reads it as:/, 5000);
+      await c.waitText(pane, /unfoldingWord/, 5000);
+      await c.waitText(pane, /Which words are original\?/, 5000);
+      await c.waitText(pane, /translates the Greek text it is based on/, 5000);
+      await c.waitText(pane, /Textus Receptus/, 5000);
+      const plain = await pane.locator(".sb-interp-plain").evaluate((el) => {
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.querySelector("details")?.remove();
+        return clone.innerText;
+      });
+      if (/has recorded a decision/.test(plain))
+        throw new Error("an observation is said as a decision");
+      if (dir) await c.page.screenshot({ path: `${dir}/int3-phlm-1-6.png` });
+      await pane.locator("details > summary").click();
+      await pane
+        .locator("details[open] .sb-interp-question")
+        .first()
+        .waitFor({ timeout: 5000 });
+      return "Philemon 1:6: How do the words relate? · not yet decided · reads it as … · Which words are original? (Textus Receptus …) · details open";
     },
   },
   {

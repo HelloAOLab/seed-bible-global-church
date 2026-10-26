@@ -325,3 +325,13 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   padding: 6px 0;
 }
+.sb-interp-plain-q--policy {
+  border-left-color: #5b7fb0;
+}
+.sb-interp-plain-reads p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+.sb-interp-plain-credit {
+  margin: 6px 0 0;
+}

@@ -3,6 +3,7 @@
 // writings consulted (by work, with the cited quotes where the edition allows one) and the story paths. The selected verses come
 // first. Each verse links to the translation workbench, where the evidence is read in full and a reviewer proposes.
 import { useEffect, useState } from "preact/hooks";
+import { signal } from "@preact/signals";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import {
@@ -320,10 +321,20 @@ function PlainVerse({
                     "{{edition}} has recorded a decision for one reading.",
                 })}
               {pq.state === "open" &&
-                t("interp-open", {
+                (pq.reads
+                  ? t("interp-undecided", {
+                      defaultValue: "No reviewer has decided this yet.",
+                    })
+                  : t("interp-open", {
+                      edition: ed,
+                      defaultValue:
+                        "Left open: the evidence does not settle it, so {{edition}} does not choose.",
+                    }))}
+              {pq.state === "policy" &&
+                t("interp-policy", {
                   edition: ed,
                   defaultValue:
-                    "Left open: the evidence does not settle it, so {{edition}} does not choose.",
+                    "{{edition}} translates the Greek text it is based on.",
                 })}
               {pq.state === "belief" &&
                 t("interp-belief", {
@@ -331,6 +342,31 @@ function PlainVerse({
                     "Not part of the translation: a later belief about the verse, shown so you know it exists.",
                 })}
             </p>
+            {pq.reads && (
+              <div className="sb-interp-plain-reads">
+                <p>
+                  {pq.reads.open
+                    ? t("interp-reads-open", {
+                        defaultValue: "This translation leaves it open.",
+                      })
+                    : t("interp-reads", {
+                        defaultValue: "This translation reads it as:",
+                      })}{" "}
+                  {pq.reads.reading && <strong>{pq.reads.reading}</strong>}
+                </p>
+                {pq.reads.how && (
+                  <p className="sb-small sb-muted">{pq.reads.how}</p>
+                )}
+              </div>
+            )}
+            {pq.credit && (
+              <p className="sb-small sb-muted sb-interp-plain-credit">
+                {t("interp-notes-from", {
+                  credit: pq.credit,
+                  defaultValue: "Readings from {{credit}}",
+                })}
+              </p>
+            )}
             {pq.other && (
               <p className="sb-interp-plain-other">
                 {t("interp-other", {
@@ -372,6 +408,12 @@ function PlainVerse({
   );
 }
 
+/** The verse the pane was opened for (the verse bar's Interpretations, a Discover card) — kept here because using a
+ *  verse-bar tool clears the selection. */
+export const interpVerse = signal<{ chapterRef: string; verse: number } | null>(
+  null
+);
+
 export function InterpretationsPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { reading } = state;
@@ -409,7 +451,11 @@ export function InterpretationsPane({ state }: { state: ReaderState }) {
   const verses = data?.verses ?? [];
   // A selected verse that carries a record is the only one shown (the verse bar's Interpretations, a Discover card);
   // with none selected, the chapter's verses can be switched between.
-  const atSelected = verses.find((v) => selected.includes(v.verse));
+  const focus = interpVerse.value;
+  const atSelected =
+    (focus && focus.chapterRef === chapterRef
+      ? verses.find((v) => v.verse === focus.verse)
+      : undefined) ?? verses.find((v) => selected.includes(v.verse));
   const current =
     atSelected ?? verses.find((v) => v.verse === shown) ?? verses[0];
   const chapterLabel = `${reading.bookName.value} ${reading.chapterNumber.value}`;

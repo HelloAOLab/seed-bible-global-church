@@ -21,6 +21,7 @@ import {
 } from "../scrolls";
 import { relationSection } from ".";
 import { interpretationsFor } from "../interpretations";
+import { interpVerse } from "../interpretations/InterpretationsPane";
 
 /** The verses Content was opened for (the selection at that moment). */
 export const contentVerses = signal<number[]>([]);
@@ -419,7 +420,7 @@ export function ContentPane({
                 type="button"
                 className="sb-discover-create-link"
                 onClick={() => {
-                  state.selection.select(verse, verse);
+                  interpVerse.value = { chapterRef, verse };
                   openPane("interpretations");
                 }}
               >

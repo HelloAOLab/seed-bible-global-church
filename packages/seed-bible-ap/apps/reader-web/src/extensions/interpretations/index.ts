@@ -10,7 +10,7 @@ import { signal } from "@preact/signals";
 import type { DiscoverItem, ExtensionRegistration } from "../host";
 import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 import type { ReaderState } from "../../state";
-import { InterpretationsPane } from "./InterpretationsPane";
+import { InterpretationsPane, interpVerse } from "./InterpretationsPane";
 import { WritingsPane } from "./WritingsPane";
 import { verseSummary } from "./plain";
 import "./interpretations.css";
@@ -33,7 +33,7 @@ export interface InterpretationQuestion {
     status: string;
     rationale: string | null;
     footnote: string | null;
-    policyUse: unknown;
+    policyUse: string | null;
     circularityFlag: boolean;
   } | null;
   candidates: Array<{
@@ -42,7 +42,19 @@ export interface InterpretationQuestion {
     origin: string;
     role: string;
     registerEntry?: string;
+    /** A textual reading: the printed editions it is found in. */
+    editions?: string[] | null;
   }>;
+  /** What the published English expresses — an observation of the text, not the edition's decision. */
+  observed?: {
+    candidate: string;
+    reading: string | null;
+    method: string;
+    how: string | null;
+    reason?: string | null;
+    model?: string;
+    note?: string;
+  } | null;
   writings: {
     consulted: Array<{
       work: string;
@@ -210,6 +222,39 @@ type Cache = {
   set: (k: string, v: unknown) => Promise<void>;
 };
 
+/** A record as every part of the reader can read it: the lists a record may leave out (the New Testament records have
+ *  no story paths, register entries, compatibility or cited writings) are empty rather than missing. */
+export function normalizeChapter(
+  data: ChapterInterpretations
+): ChapterInterpretations {
+  return {
+    ...data,
+    verses: (data.verses ?? []).map((v) => ({
+      ...v,
+      interpretation: {
+        ...v.interpretation,
+        paths: v.interpretation?.paths ?? [],
+        questions: (v.interpretation?.questions ?? []).map((q) => ({
+          ...q,
+          candidates: (q.candidates ?? []).map((c) => ({
+            ...c,
+            origin: c.origin ?? "",
+            role: c.role ?? "",
+          })),
+          registerEntries: q.registerEntries ?? [],
+          compatibility: q.compatibility ?? [],
+          writings: {
+            ...q.writings,
+            consulted: q.writings?.consulted ?? [],
+            cited: q.writings?.cited ?? [],
+            total: q.writings?.total ?? q.writings?.consulted?.length ?? 0,
+          },
+        })),
+      },
+    })),
+  };
+}
+
 /** The chapter's interpretation records, from the device when it has them (a chapter with none is kept as an empty answer). */
 export async function loadChapterInterpretations(
   translationId: string,
@@ -220,7 +265,7 @@ export async function loadChapterInterpretations(
 ): Promise<ChapterInterpretations | null> {
   const key = `interp1:${translationId}/${bookId}/${chapter}`;
   const hit = (await cache.get(key)) as ChapterInterpretations | undefined;
-  if (hit) return hit;
+  if (hit) return normalizeChapter(hit);
   const res = await fetchImpl(
     `${INTERPRETATIONS_BASE_URL}/${translationId}/${bookId}/${chapter}/interpretations.json`
   );
@@ -228,7 +273,7 @@ export async function loadChapterInterpretations(
   const data = (await res.json()) as ChapterInterpretations;
   if (!Array.isArray(data.verses)) return null;
   await cache.set(key, data);
-  return data;
+  return normalizeChapter(data);
 }
 
 /** The edition that carries interpretation records today (the Scripture Agent's RBS pilot). */
@@ -476,7 +521,7 @@ const interpretations: ExtensionRegistration = {
       onSelect: (v) => {
         // Just this verse: the one tapped (the first of a selection that carries a record).
         const n = v.verses.find((x) => withRecords.value.verses.has(x))!;
-        state.selection.select(n, n);
+        interpVerse.value = { chapterRef: v.chapterRef, verse: n };
         ctx.panes.open("interpretations");
       },
     });
@@ -512,7 +557,7 @@ const interpretations: ExtensionRegistration = {
                 }
               : {}),
             onOpen: () => {
-              state.selection.select(it.verse, it.verse);
+              interpVerse.value = { chapterRef: d.chapterRef, verse: it.verse };
               ctx.panes.open("interpretations");
             },
           })

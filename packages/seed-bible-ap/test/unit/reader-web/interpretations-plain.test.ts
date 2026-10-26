@@ -42,6 +42,8 @@ describe("an interpretation record in plain words", () => {
       readings: ["divine beings", "Seth's line", "human rulers"],
       state: "open",
       other: null,
+      reads: null,
+      credit: null,
     });
   });
 
@@ -57,7 +59,7 @@ describe("an interpretation record in plain words", () => {
         } as InterpretationQuestion["decided"],
       })
     );
-    expect(p.ask).toBe("Which wording do the oldest copies have?");
+    expect(p.ask).toBe("Which words are original?");
     expect(p.readings).toEqual([
       "sons of israel (MT, the base)",
       "sons of god (4QDeut^j, LXX)",
@@ -105,7 +107,7 @@ describe("an interpretation record in plain words", () => {
       },
     } as unknown as InterpretedVerse;
     expect(translatorsNote(v)).toBe("Bərēʾšît has no article.");
-    expect(verseSummary(v)).toBe("2 questions · 1 decided · 1 left open");
+    expect(verseSummary(v)).toBe("2 questions · 1 decided · 1 not yet decided");
     expect(
       namedReaders([
         { attributedTo: "Rashi (through bx:gen-1-1-3-cl-rashi-1-1)" },
@@ -113,5 +115,144 @@ describe("an interpretation record in plain words", () => {
         { attributedTo: "Julius Africanus (register D18)" },
       ] as InterpretationPath[])
     ).toEqual(["Rashi", "Julius Africanus"]);
+  });
+});
+
+// THE NEW TESTAMENT RECORDS (2026-10-26): what the published English reads is an OBSERVATION, never a decision — said as
+// "this translation reads it as", with how it was read; a textual question follows the base text by policy, its readings
+// with the editions that print them; the notes' source is credited (Philemon 1:6's live shapes).
+describe("New Testament records in plain words", () => {
+  const observed = (
+    over: Partial<NonNullable<InterpretationQuestion["observed"]>>
+  ) => ({
+    candidate: "k1",
+    reading: "that Philemon shares the same faith in Christ as Paul and others",
+    method: "judge",
+    how: "read by a model (Claude Haiku 5.5) from the English alone, in the candidates' terms",
+    reason: "…",
+    ...over,
+  });
+  it("an undecided question: how the words relate, the Greek, the readings, and what the English reads — not a decision", () => {
+    const p = plainQuestion(
+      q({
+        kind: "grammatical-relation",
+        status: "open",
+        text: "How the words relate — ἡ κοινωνία τῆς πίστεώς σου: that Philemon shares the same faith in Christ as Paul and others · that Philemon is a partner with Paul and others in working for Christ",
+        observed: observed({}),
+        writings: {
+          consulted: [
+            { attribution: "unfoldingWord® Translation Notes, CC BY-SA 4.0" },
+          ],
+          cited: [],
+          total: 1,
+        } as unknown as InterpretationQuestion["writings"],
+      })
+    );
+    expect(p.ask).toBe("How do the words relate?");
+    expect(p.term).toBe("ἡ κοινωνία τῆς πίστεώς σου");
+    expect(p.readings).toHaveLength(2);
+    expect(p.state).toBe("open");
+    expect(p.reads).toEqual({
+      reading:
+        "that Philemon shares the same faith in Christ as Paul and others",
+      open: false,
+      how: "read by a model (Claude Haiku 5.5) from the English alone, in the candidates' terms",
+    });
+    expect(p.credit).toBe("unfoldingWord® Translation Notes, CC BY-SA 4.0");
+    expect(
+      plainQuestion(q({ observed: observed({ candidate: "both" }) })).reads
+    ).toMatchObject({ open: true, reading: null });
+    expect(
+      plainQuestion(q({ observed: observed({ candidate: "unknown" }) })).reads
+    ).toBeNull();
+  });
+
+  it("a textual question follows the base text by policy, its readings with the editions that print them", () => {
+    const p = plainQuestion(
+      q({
+        kind: "textual-reading",
+        status: "unresolved-by-policy",
+        text: "Which words are original — the words at 15: ἡμῖν · ὑμῖν",
+        decided: {
+          candidate: "k-base",
+          policyUse: "textual-basis",
+          footnote: null,
+        } as unknown as InterpretationQuestion["decided"],
+        candidates: [
+          {
+            id: "k-base",
+            reading: "ἡμῖν",
+            editions: [
+              "NE1904",
+              "NA28",
+              "NA27",
+              "SBL",
+              "Tyn",
+              "WH",
+              "Treg",
+              "Byz",
+            ],
+          },
+          { id: "k-alt-1", reading: "ὑμῖν", editions: ["TR"] },
+        ] as unknown as InterpretationQuestion["candidates"],
+        observed: observed({
+          candidate: "k-base",
+          reading: "ἡμῖν",
+          method: "base-text",
+          how: "the edition translates its declared base text",
+          reason: "the edition translates its declared base text (Nestle 1904)",
+        }),
+      })
+    );
+    expect(p.ask).toBe("Which words are original?");
+    expect(p.state).toBe("policy");
+    expect(p.readings).toEqual([
+      "ἡμῖν — in Nestle-Aland 28 and 7 other editions",
+      "ὑμῖν — in the Textus Receptus (the King James Version's Greek)",
+    ]);
+    expect(p.reads).toEqual({
+      reading: "ἡμῖν",
+      open: false,
+      how: "the edition translates its declared base text (Nestle 1904)",
+    });
+  });
+});
+
+// A New Testament record leaves out the lists the pilot's records carry (story paths, register entries, compatibility,
+// cited writings) — the pane crashed on it (2026-10-26, Philemon 1:6). Normalized, every list is there and empty.
+describe("a record with lists left out", () => {
+  it("is read with those lists empty, not missing", async () => {
+    const { normalizeChapter } =
+      await import("../../../apps/reader-web/src/extensions/interpretations");
+    const out = normalizeChapter({
+      edition: "rbs",
+      book: "PHM",
+      chapter: 1,
+      count: 1,
+      verses: [
+        {
+          osis: "Phlm.1.6",
+          verse: 6,
+          interpretation: {
+            questions: [
+              {
+                id: "q",
+                kind: "grammatical-relation",
+                text: "",
+                candidates: [{ id: "k1", reading: "a" }],
+                writings: { consulted: [{ work: "uW" }] },
+              },
+            ],
+          },
+        },
+      ],
+    } as never);
+    const v = out.verses[0]!;
+    expect(v.interpretation.paths).toEqual([]);
+    const q = v.interpretation.questions[0]!;
+    expect(q.registerEntries).toEqual([]);
+    expect(q.compatibility).toEqual([]);
+    expect(q.writings).toMatchObject({ cited: [], total: 1 });
+    expect(q.candidates[0]).toMatchObject({ role: "", origin: "" });
   });
 });

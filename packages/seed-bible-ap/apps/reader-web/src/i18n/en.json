@@ -1099,5 +1099,10 @@
   "content-n-parallels": "{{count}} parallel passages",
   "content-n-quoted": "{{count}} quoted in other writings",
   "content-on-this-verse": "On this verse",
-  "content-line-holds": "This line holds {{verses}}"
+  "content-line-holds": "This line holds {{verses}}",
+  "interp-notes-from": "Readings from {{credit}}",
+  "interp-policy": "{{edition}} translates the Greek text it is based on.",
+  "interp-reads": "This translation reads it as:",
+  "interp-reads-open": "This translation leaves it open.",
+  "interp-undecided": "No reviewer has decided this yet."
 }
