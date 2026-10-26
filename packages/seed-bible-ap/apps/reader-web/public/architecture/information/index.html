@@ -34,23 +34,151 @@
       <h1>Information Architecture</h1>
       <p class="lede">
         Every piece of data the reader shows or keeps, sorted by where it lives
-        and who owns it. There are five places. Two belong to you (your Home and
-        your Library), one belongs to the Bible publishers (the Scripture
-        agent), one is everything people chose to make public, and one is a
-        public archive of complete works.
+        and who owns it. The meaning of every record is defined in the
+        <a href="/architecture/ontology/">ontology →</a>
       </p>
 
-      <a class="card" href="/architecture/ontology/" style="max-width: 760px">
-        <div class="kicker">What the records mean</div>
-        <h3>Ontology</h3>
-        <p>
-          Each record on this page has a type (<code>seed:Highlight</code>,
-          <code>scr:ScriptureEdition</code>, …). The Ontology page explains the
-          layers those types come from: PROV-O, P-Plan, DOLCE+DnS,
-          agentic-primitives, faith and scripture.
-        </p>
-        <span class="go">Read the ontology →</span>
-      </a>
+      <section class="ia" aria-labelledby="ia-title">
+        <div class="ia-head">
+          <div class="ia-eyebrow">Information architecture</div>
+          <h2 id="ia-title">
+            One person. Five places.<br />Every record anchored to the Word.
+          </h2>
+          <p>
+            You own what you make. What you share stays yours. Every source you
+            read is signed, so it can be checked on your own device.
+          </p>
+        </div>
+
+        <div class="ia-you">
+          <span class="ia-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <circle cx="12" cy="8" r="4" fill="currentColor" />
+              <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor" />
+            </svg>
+          </span>
+          <div>
+            <strong>You</strong> · <code>you.me</code>
+            <small
+              >Your own agent writes your data, only with your permission</small
+            >
+          </div>
+        </div>
+
+        <div class="ia-groups">
+          <div class="ia-group g-private">
+            <div class="ia-group-label">
+              <span class="ia-badge">Private</span> Yours
+            </div>
+            <a class="ia-node" href="#home">
+              <h3>Home</h3>
+              <code>www.faithnet.me</code>
+              <ul>
+                <li>Profile and photo</li>
+                <li><code>.me</code> name and identity</li>
+                <li>Contacts and friends</li>
+                <li>Who is reading now</li>
+                <li>Statements of faith: WEA, Lausanne</li>
+                <li>Churches and roles</li>
+                <li>App permissions</li>
+              </ul>
+            </a>
+            <a class="ia-node" href="#personal">
+              <h3>Your Library</h3>
+              <code>seed-bible/</code>
+              <ul>
+                <li>Highlights · Notes</li>
+                <li>Bookmarks · Saves</li>
+                <li>Reading history</li>
+                <li>Plan progress</li>
+                <li>Playlists · Reading plans</li>
+                <li>Pictures · Church themes</li>
+              </ul>
+            </a>
+          </div>
+
+          <div class="ia-group g-shared">
+            <div class="ia-group-label">
+              <span class="ia-badge">Public</span> Shared by you
+            </div>
+            <a class="ia-node" href="#published">
+              <h3>Public shelf</h3>
+              <code>seed-bible/public/</code>
+              <ul>
+                <li>Published notes</li>
+                <li>Playlists · Reading plans</li>
+                <li>Church themes</li>
+                <li>Videos, articles, studies</li>
+              </ul>
+              <div class="ia-foot">A signed release, still yours</div>
+            </a>
+            <a class="ia-node" href="#published">
+              <h3>Serving plane</h3>
+              <code>seed-bible.svc</code>
+              <ul>
+                <li>Index by passage</li>
+                <li>Re-crawled every 15 min</li>
+                <li>Previews · Map tiles</li>
+                <li>Study companion</li>
+              </ul>
+              <div class="ia-foot">Only an index: rebuildable</div>
+            </a>
+          </div>
+
+          <div class="ia-group g-signed">
+            <div class="ia-group-label">
+              <span class="ia-badge">Signed</span> Trusted sources
+            </div>
+            <a class="ia-node" href="#scripture">
+              <h3>Scripture agent</h3>
+              <code>scripture.faithnet.io</code>
+              <div class="ia-stats">
+                <div><b>10</b><span>editions</span></div>
+                <div><b>344,799</b><span>cross-refs</span></div>
+                <div><b>3,067</b><span>people</span></div>
+              </div>
+              <ul>
+                <li>Audio with word timings</li>
+                <li>Interpretations</li>
+                <li>Scrolls · Septuagint · parallels</li>
+              </ul>
+            </a>
+            <a class="ia-node" href="#publishing">
+              <h3>Publishing agent</h3>
+              <code>publishing.faithnet.io</code>
+              <ul>
+                <li>Complete works, signed part by part</li>
+                <li>Dead Sea Scroll lines by verse</li>
+                <li>Quote checks</li>
+                <li>The Lausanne Covenant</li>
+              </ul>
+            </a>
+          </div>
+        </div>
+
+        <div class="ia-flows" aria-hidden="true">
+          <span
+            >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Serving
+            plane</span
+          >
+          <span>Publishing agent <b>→ affirm →</b> Home</span>
+        </div>
+
+        <div class="ia-anchor">
+          <div class="ia-anchor-verse">
+            <small>Everything meets at a verse</small>
+            <strong>John 3:16</strong>
+          </div>
+          <ul>
+            <li class="c-private">your highlight</li>
+            <li class="c-private">your note</li>
+            <li class="c-shared">friends' published notes</li>
+            <li class="c-signed">its wording in 10 editions</li>
+            <li class="c-signed">cross-references</li>
+            <li class="c-signed">Dead Sea Scroll copies</li>
+          </ul>
+        </div>
+      </section>
 
       <p class="toc" style="margin-top: 24px">
         <a href="#home">1. Home</a>
@@ -60,50 +188,6 @@
         <a href="#publishing">5. Publishing agent</a>
         <a href="#device">On the device only</a>
       </p>
-
-      <h2>The five places at a glance</h2>
-      <div class="cards">
-        <a class="card" href="#home">
-          <div class="kicker">1 · Yours · private</div>
-          <h3><span class="chip home">Home</span></h3>
-          <p>
-            Who you are: profile, name, friends, statements of faith you
-            affirmed, the permissions you gave apps.
-          </p>
-        </a>
-        <a class="card" href="#personal">
-          <div class="kicker">2 · Yours · private by default</div>
-          <h3><span class="chip seed">Workspace · personal</span></h3>
-          <p>
-            What you do in the reader: highlights, notes, bookmarks, saves,
-            history, playlists and plans. Kept in your Library.
-          </p>
-        </a>
-        <a class="card" href="#scripture">
-          <div class="kicker">3 · Publishers' · public</div>
-          <h3><span class="chip domain">Scripture agent</span></h3>
-          <p>
-            The Bible itself: signed editions, audio, cross-references, people
-            and places, interpretations, scroll and Greek readings.
-          </p>
-        </a>
-        <a class="card" href="#published">
-          <div class="kicker">4 · Owners' · public</div>
-          <h3><span class="chip agent">Workspace · published</span></h3>
-          <p>
-            What people and churches chose to publish, and the serving plane's
-            index of it for Discover and Today.
-          </p>
-        </a>
-        <a class="card" href="#publishing">
-          <div class="kicker">5 · Stewards' · public or paid</div>
-          <h3><span class="chip found">Publishing agent</span></h3>
-          <p>
-            Complete works with signed manifests: the Dead Sea Scrolls by verse,
-            covenants and confessions, books and series.
-          </p>
-        </a>
-      </div>
 
       <div class="note">
         <p>
