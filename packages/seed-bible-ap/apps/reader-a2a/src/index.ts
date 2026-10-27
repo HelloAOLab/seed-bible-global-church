@@ -29,6 +29,7 @@ import { agentFor, readBucket } from "./skills/vault";
 // itself is exported from worker.ts, the deploy entry.
 import { askingKeyAddress, type WireEnv } from "./wires";
 import { platformSend, type PlatformEnv } from "./clients/platform";
+import { askCompanion, type CompanionAsk } from "./routes/companion";
 export { ReaderRunDO };
 
 export interface Env
@@ -190,39 +191,14 @@ app.all(
     c.json({ ok: false, error: "no such route" }, 404)
 );
 
-/** The study companion: a signed-in reader's question, streamed from the serving plane (hard-problems §9). */
+/** The study companion: a signed-in reader's question about the verse they have open, answered by the scripture agent's
+ *  ask-verse skill over A2A and streamed through (routes/companion.ts); the slow path (`mode: "writings"`) only when pressed. */
 app.post("/companion/ask", async (c) => {
   const reader = await readerFromToken(c.env, bearerOf(c.req.raw));
   if (!reader)
     return c.json({ ok: false, error: "sign in to ask the companion" }, 401);
-  const body = await c.req.text();
-  const res = await platformSend(c.env, "/companion", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-sb-upload-token": c.env.PLATFORM_UPLOAD_TOKEN ?? "",
-    },
-    body,
-  });
-  if (!res.ok || !res.body) {
-    const j = (await res.json().catch(() => null)) as { error?: string } | null;
-    return c.json(
-      {
-        ok: false,
-        error: j?.error ?? `the serving plane answered ${res.status}`,
-      },
-      res.status === 403 ? 502 : (res.status as 400)
-    );
-  }
-  return new Response(res.body, {
-    headers: {
-      "content-type": "text/event-stream",
-      "cache-control": "no-cache",
-      ...(res.headers.get("x-sb-who")
-        ? { "x-sb-who": res.headers.get("x-sb-who")! }
-        : {}),
-    },
-  });
+  const body = (await c.req.json().catch(() => ({}))) as CompanionAsk;
+  return askCompanion(c.env, body);
 });
 
 /**

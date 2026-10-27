@@ -2474,3 +2474,25 @@ html[data-sb-line="loose"] .sb-bible-reader {
   font-size: 0.95em;
   vertical-align: middle;
 }
+
+/* The study companion's answer: source numbers, the sources list, and what the agent's check struck (with its reason on hover). */
+.sb-companion-cite {
+  font-size: 0.7em;
+  color: var(--sb-muted, #6b7280);
+  margin-left: 1px;
+}
+.sb-companion-struck {
+  color: var(--sb-muted, #6b7280);
+  text-decoration-thickness: 1px;
+  cursor: help;
+}
+.sb-companion-sources {
+  margin: 6px 0 2px 18px;
+  padding: 0;
+}
+.sb-companion-sources li {
+  margin: 1px 0;
+}
+.sb-companion-layer {
+  opacity: 0.8;
+}
