@@ -965,6 +965,78 @@ and revised against the original by the model; not yet reviewed by a person</cod
           draft by hand.
         </p>
       </div>
+      <h3>What the outside reviews added (October 2026)</h3>
+      <p>
+        Two outside reviews of the published drafts (Sifra on Leviticus 1 and 2;
+        the Testament of Solomon against Conybeare's 1898 English) found that
+        what passed every step above was not vocabulary. It was grammar and
+        direction: a feminine demon made male where a chunk ended, a boast made
+        a prohibition, a possessor the Greek never attaches ("my liver"), a
+        condition dropped, the addressee made the speaker, and an argument whose
+        every term was right run backwards. Three things were added, none of
+        them a stronger model.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>A knowledge sheet, cut to the passage.</strong> For each work
+          a file of terms of art in the sense they have in that domain (the
+          source spellings, the context words that must also occur, the
+          rendering, the renderings that flatten it), the hermeneutic formulae
+          with the move each makes ("Scripture says" settles a question; "one
+          might think" raises a reading to be rejected), and the persons named
+          (a name, never a kinship word). Code filters the sheet to the words a
+          passage actually contains, the drafter and the critic read that slice,
+          and deterministic checks hold the English to it. In the ontology these
+          are <code>wrt:KnowledgeSheet</code>, <code>wrt:SheetTerm</code>,
+          <code>wrt:HermeneuticFormula</code> and <code>wrt:NamedPerson</code>;
+          the sheets are projected to a graph (<code>writings.kb.ttl</code>)
+          beside the held units.
+        </li>
+        <li>
+          <strong>Two blind readings, compared by code.</strong> The draft's
+          clauses are numbered and read twice by the same cheap model: the
+          original's clauses with no English in sight, the English's clauses
+          with no original in sight. Each reading gives every clause its actor,
+          the actor's gender and person, action, object, possessor, whether it
+          is negated or conditional, and its modality (statement, question,
+          command, wish, boast), and then the argument's steps with the effect
+          each has on the step before (reverses, limits, upholds). Code aligns
+          the two by clause number; a disagreement is a finding the reviser must
+          settle, and after the revision the revised clauses are read and
+          compared again. A formula on the sheet also predicts what the reading
+          must show ("one might think" opens a proposal the next step reverses;
+          "from where?" is a question), so the sheet's own knowledge catches a
+          reversed argument. The classes are <code>wrt:ClauseRelation</code> and
+          <code>wrt:ArgumentStep</code>; a note that settles a reading carries a
+          <code>wrt:TextualDecision</code> (the base reading, the reading
+          rendered, whose it is: the transcription's, an editor's, a
+          conjecture).
+        </li>
+        <li>
+          <strong>A gate, and gaps shown where they are.</strong> At assembly a
+          unit is held back when the fidelity judge reads a meaning change, a
+          major check fails (a sheet term, a formula, a speaker, a citation, a
+          relation, an argument's direction, a reading without its decision), or
+          the English is unintelligible. A held unit is printed in its place in
+          the original with a marker, so the reader meets the gap where it is,
+          and the edition counts coverage apart from accuracy. Held units are
+          revised once against the judge's own findings and judged again; what
+          passes is released and labelled a judge-guided revision, counted apart
+          from the blind arms.
+        </li>
+      </ol>
+      <div class="note">
+        <p>
+          <strong>Why this, and not a bigger model.</strong> A cheap model
+          cannot be trusted to notice that its English reversed a relation, but
+          two cheap readings made blind of each other can be compared by code,
+          and code does not tire. The structure a step must emit is what makes
+          its reading comparable; the ontology names that structure so every
+          step, check and held unit is the same kind of record. A model trained
+          on these languages can later take the drafter's seat without changing
+          any of this.
+        </p>
+      </div>
 
       <h2 id="measure">How it is measured</h2>
       <p>
