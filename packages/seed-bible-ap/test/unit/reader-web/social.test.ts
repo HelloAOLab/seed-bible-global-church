@@ -261,6 +261,35 @@ describe("connectors", () => {
 // contacts in it — "your agent's reply carried no result for person.contact.list" stood in the Friends pane): when the
 // friends read answers, the contacts read is not asked, and no error shows.
 describe("friends without the contacts read", () => {
+  it("asks made while a friends read is under way share it, and a read that fails keeps the list shown", async () => {
+    const backend = createDevBackend(SEED);
+    backend.friendsView = {
+      friends: [{ agent: RUTH.agent, name: "Ruth" }],
+      requests: [],
+      requested: [],
+    };
+    let reads = 0;
+    const real = backend.friends.bind(backend);
+    backend.friends = async () => {
+      reads++;
+      await new Promise((r) => setTimeout(r, 20));
+      return real();
+    };
+    const today = createToday(backend, memoryStores());
+    await Promise.all([
+      today.refreshContacts(),
+      today.refreshContacts(),
+      today.refreshContacts(),
+    ]);
+    expect(reads).toBe(1);
+    backend.friends = async () => {
+      throw new Error("the agent did not answer");
+    };
+    await today.refreshContacts();
+    expect(today.friends.value.map((f) => f.name)).toEqual(["Ruth"]);
+    expect(today.contactsError.value).toMatch(/did not answer/);
+  });
+
   it("does not ask for contacts once the friends read has answered", async () => {
     const backend = createDevBackend(SEED);
     backend.friendsView = {

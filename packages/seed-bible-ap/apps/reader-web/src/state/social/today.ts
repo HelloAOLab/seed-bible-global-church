@@ -100,9 +100,20 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
     feed.value.filter((o) => o.kind !== "profile")
   );
 
-  async function refreshContacts() {
+  /** The read in flight: a read takes 10–20 s and a watch asks every few seconds, so asks share one read instead of
+   *  piling up behind each other (seen live: a pile that never let the list show). */
+  let inFlight: Promise<void> | null = null;
+  function refreshContacts(): Promise<void> {
+    if (!inFlight)
+      inFlight = readContacts().finally(() => {
+        inFlight = null;
+      });
+    return inFlight;
+  }
+  async function readContacts() {
     if (!backend.identity()) {
       contacts.value = [];
+      friendsView.value = null; // signed out: nobody's friends stay on the device's screen
       return;
     }
     contactsLoading.value = true;
@@ -115,8 +126,13 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
         friendsView.value = await backend.friends();
         await stores.prefs.set(FRIENDS_KEY, friendsView.value);
         return;
-      } catch {
-        friendsView.value = null;
+      } catch (e) {
+        // A read that fails after one that answered keeps what was shown, and says so; only an agent that never
+        // answered the friends read falls back to its contacts.
+        if (friendsView.value) {
+          contactsError.value = e instanceof Error ? e.message : String(e);
+          return;
+        }
       }
       contacts.value = await backend.contacts();
       await stores.prefs.set(KEY, contacts.value);
