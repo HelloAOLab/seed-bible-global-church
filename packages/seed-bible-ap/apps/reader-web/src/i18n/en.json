@@ -223,7 +223,6 @@
   "friend-here-now": "Here now",
   "friend-open-where": "Open the same chapter",
   "today-how": "Friends see only what you publish. Your private marks never leave your Library.",
-  "companion-blurb": "Ask about the verse you selected (or the chapter's first verse). The Scripture agent answers from what it holds about that verse — the text, its story, its words, the scrolls and later readers — and cites each claim. It is a model, not a person.",
   "companion": "Companion",
   "companion-ask": "What should I notice here?",
   "companion-sign-in": "Sign in to ask",
@@ -1149,6 +1148,8 @@
   "take-down": "Take down",
   "taking-down": "Taking down…",
   "companion-searching": "Searching every writing the agent holds (about a minute)…",
-  "companion-struck": "The check struck {{count}} sentence(s); hover for why.",
-  "companion-search-writings": "Search all the writings (about a minute)"
+  "companion-struck": "{{count}} sentence(s) struck by the check; hover for why.",
+  "companion-search-writings": "Search all the writings (about a minute)",
+  "companion-read-next": "Read next:",
+  "companion-sources": "Sources ({{count}})"
 }

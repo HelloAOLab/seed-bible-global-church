@@ -2496,3 +2496,15 @@ html[data-sb-line="loose"] .sb-bible-reader {
 .sb-companion-layer {
   opacity: 0.8;
 }
+.sb-companion-xrefs {
+  margin: 6px 0 2px;
+}
+.sb-companion-sources-wrap summary {
+  cursor: pointer;
+}
+.sb-companion-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}

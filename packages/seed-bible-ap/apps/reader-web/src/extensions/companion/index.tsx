@@ -27,6 +27,15 @@ export interface Turn {
   tags?: Record<string, string>;
   struck?: number;
   nextStep?: { label: string } | null;
+  /** the verse's cross-references (OpenBible, strongest first), listed by code under the answer */
+  crossRefs?: Array<{
+    label: string;
+    book?: string;
+    chapter?: number;
+    verse?: number;
+  }>;
+  /** follow-up questions the verse's evidence can answer */
+  suggestions?: string[];
   question?: string;
   slow?: boolean;
 }
@@ -153,6 +162,8 @@ export async function ask(
             tags: (e.citeTags as Record<string, string>) ?? {},
             struck: ((e.struck as unknown[]) ?? []).length,
             nextStep: (e.nextStep as { label: string } | undefined) ?? null,
+            crossRefs: (e.crossReferences as Turn["crossRefs"]) ?? [],
+            suggestions: (e.suggestions as string[]) ?? [],
           });
         } else if (e.event === "error")
           throw new Error(String(e.message ?? "the agent could not answer"));
@@ -173,6 +184,12 @@ export function renderAnswer(
 ) {
   const order = new Map(cited.map((c, i) => [c.id, i + 1]));
   const out: preact.ComponentChildren[] = [];
+  text = text.replace(/\[(E\d+(?:\s*[,;]\s*E\d+)+)\]/g, (_m, l: string) =>
+    l
+      .split(/\s*[,;]\s*/)
+      .map((t) => `[${t}]`)
+      .join("")
+  );
   const re = /~~([\s\S]+?)~~(?:\s*\*\(struck: ([^)]*)\)\*)?|\[(E\d+)\]/g;
   let at = 0;
   for (const m of text.matchAll(re)) {
@@ -201,12 +218,6 @@ function Pane({ state }: { state: ReaderState }) {
   const [q, setQ] = useState("");
   return (
     <div className="sb-companion">
-      <p className="sb-small sb-muted">
-        {t("companion-blurb", {
-          defaultValue:
-            "Ask about the verse you selected (or the chapter's first verse). The Scripture agent answers from what it holds about that verse — the text, its story, its words, the scrolls and later readers — and cites each claim. It is a model, not a person.",
-        })}
-      </p>
       <div className="sb-session-chat sb-companion-log">
         {turns.value.map((m, i) => (
           <div
@@ -231,27 +242,82 @@ function Pane({ state }: { state: ReaderState }) {
                   : "…"
                 : ""}
             </span>
-            {m.cited && m.cited.length > 0 && (
-              <ol className="sb-companion-sources sb-small sb-muted">
-                {m.cited.map((c) => (
-                  <li key={c.id}>
-                    {c.url ? (
-                      <a href={c.url} target="_blank" rel="noreferrer">
-                        {c.title}
-                      </a>
-                    ) : (
-                      c.title
-                    )}{" "}
-                    <span className="sb-companion-layer">({c.layer})</span>
-                  </li>
+            {m.crossRefs && m.crossRefs.length > 0 && (
+              <p className="sb-small sb-companion-xrefs">
+                {t("companion-read-next", { defaultValue: "Read next:" })}{" "}
+                {m.crossRefs.map((x, k) => (
+                  <span key={x.label}>
+                    {k > 0 && " · "}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!x.book || !x.chapter) return;
+                        void state.reading
+                          .goTo(
+                            state.reading.translationId.value,
+                            x.book,
+                            x.chapter
+                          )
+                          .then(
+                            () =>
+                              x.verse &&
+                              state.selection.select(x.verse, x.verse)
+                          );
+                      }}
+                    >
+                      {x.label}
+                    </a>
+                  </span>
                 ))}
-              </ol>
+              </p>
             )}
+            {m.cited && m.cited.length > 0 && (
+              <details className="sb-small sb-muted sb-companion-sources-wrap">
+                <summary>
+                  {t("companion-sources", {
+                    count: m.cited.length,
+                    defaultValue: `Sources (${m.cited.length})`,
+                  })}
+                </summary>
+                <ol className="sb-companion-sources">
+                  {m.cited.map((c) => (
+                    <li key={c.id}>
+                      {c.url ? (
+                        <a href={c.url} target="_blank" rel="noreferrer">
+                          {c.title}
+                        </a>
+                      ) : (
+                        c.title
+                      )}{" "}
+                      <span className="sb-companion-layer">({c.layer})</span>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+            {m.suggestions &&
+              m.suggestions.length > 0 &&
+              i === turns.value.length - 1 &&
+              !streaming.value && (
+                <div className="sb-companion-suggestions">
+                  {m.suggestions.map((sq) => (
+                    <button
+                      key={sq}
+                      type="button"
+                      className="sb-note-button sb-small"
+                      onClick={() => void ask(state, sq)}
+                    >
+                      {sq}
+                    </button>
+                  ))}
+                </div>
+              )}
             {m.struck ? (
               <p className="sb-small sb-muted">
                 {t("companion-struck", {
                   count: m.struck,
-                  defaultValue: `The check struck ${m.struck} sentence(s); hover for why.`,
+                  defaultValue: `${m.struck} sentence(s) struck by the check; hover for why.`,
                 })}
               </p>
             ) : null}
