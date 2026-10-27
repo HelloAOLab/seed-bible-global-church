@@ -79,3 +79,83 @@ describe("presence", () => {
     expect(again.share.value).toBe(false);
   });
 });
+
+describe("a friend sharing a live session", () => {
+  it("a host's session is told beside where they read, and ends with it; a friend sees it until they put it aside", async () => {
+    const backend = createDevBackend(SEED);
+    let hosting: { scope: string; label: string } | null = {
+      scope: "session:s-1:ABCD",
+      label: "John 3",
+    };
+    const host = createPresence({
+      backend,
+      stores: memoryStores(),
+      here: () => ({ scope: "JHN.3", label: "reading John 3 · BSB" }),
+      sharing: () => hosting,
+      isVisible: () => true,
+    });
+    await host.beat();
+    expect(
+      backend.presence.get(SEED.agent)!.map((e) => `${e.app} ${e.scope}`)
+    ).toEqual([
+      "seed-bible-reader:session session:s-1:ABCD",
+      "seed-bible-reader JHN.3",
+    ]);
+    // Ruth, a mutual friend, looks
+    backend.setIdentity({ agent: RUTH, name: "Ruth", wire: true });
+    backend.friendsView = {
+      friends: [
+        {
+          agent: SEED.agent,
+          name: "seedreader.me",
+          profileName: "Seed Reader",
+        },
+      ],
+      requests: [],
+      requested: [],
+    };
+    const ruth = createPresence({
+      backend,
+      stores: memoryStores(),
+      here: () => null,
+      isVisible: () => true,
+    });
+    await ruth.refresh();
+    expect(ruth.sharingNow.value).toEqual([
+      {
+        agent: SEED.agent,
+        name: "Seed Reader",
+        sessionId: "s-1",
+        code: "ABCD",
+        label: "John 3",
+      },
+    ]);
+    ruth.dismiss("s-1");
+    expect(ruth.sharingNow.value).toEqual([]);
+    // the host's session ends: told at the next beat
+    backend.setIdentity(SEED);
+    hosting = null;
+    await host.beat();
+    expect(backend.presence.get(SEED.agent)!.map((e) => e.app)).toEqual([
+      "seed-bible-reader",
+    ]);
+  });
+
+  it("turning sharing off asks for where the reader was this week to be forgotten too", async () => {
+    const backend = createDevBackend(SEED);
+    const sent: unknown[] = [];
+    const real = backend.presenceBeat.bind(backend);
+    backend.presenceBeat = async (b) => {
+      sent.push(b);
+      return real(b);
+    };
+    const p = createPresence({
+      backend,
+      stores: memoryStores(),
+      here: () => ({ scope: "JHN.3", label: "reading John 3" }),
+      isVisible: () => true,
+    });
+    await p.setShare(false);
+    expect(sent).toContainEqual({ gone: true, forget: true });
+  });
+});

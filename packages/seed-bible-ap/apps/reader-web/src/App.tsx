@@ -4,6 +4,7 @@ import { EditProfilePane, ProfilePane } from "./components/chrome/ProfilePane";
 import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { ActivityBar } from "./components/chrome/ActivityBar";
 import { Toast } from "./components/chrome/Toast";
+import { FriendSharing } from "./components/social/FriendSharing";
 import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
@@ -260,6 +261,7 @@ export function App({ state }: { state: ReaderState }) {
       <FullScreenHelp state={state} />
       <ActivityBar />
       <Toast state={state} />
+      <FriendSharing state={state} />
       <FriendInviteDialog state={state} />
       <Onboarding state={state} />
     </div>

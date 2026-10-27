@@ -223,6 +223,9 @@ export interface ChapterContentOptions {
   verseCheckTitle?: (status: VerseCheck) => string;
   /** Verses someone in the live session just tapped: their numbers flare in that person's colour. */
   flares?: Array<{ id: string; verse: number; color: string }>;
+  /** Verses a friend's published note starts at, with how to name them (state/social/friendNotes.ts). */
+  friendNotes?: Map<number, string>;
+  onFriendNoteClick?: (verseNumber: number) => void;
 }
 
 export function renderChapterContent(
@@ -262,7 +265,33 @@ export function renderChapterContent(
   const hasNote = (verseNumber: number) =>
     notes.some((n) => n.start === verseNumber);
 
-  const renderVerseNumberOrIcon = (verseNumber: number) => {
+  // A friend's note at this verse: its own small mark after the verse's number or icon.
+  const friendMark = (verseNumber: number) => {
+    const who = opts.friendNotes?.get(verseNumber);
+    if (!who) return null;
+    return (
+      <sup
+        className="sb-verse-friend-note"
+        role="button"
+        tabIndex={0}
+        title={who}
+        aria-label={who}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          opts.onFriendNoteClick?.(verseNumber);
+        }}
+      >
+        <span className="material-symbols-outlined">group</span>
+      </sup>
+    );
+  };
+  const renderVerseNumberOrIcon = (verseNumber: number) => (
+    <>
+      {verseMark(verseNumber)}
+      {friendMark(verseNumber)}
+    </>
+  );
+  const verseMark = (verseNumber: number) => {
     const annotated = hasNote(verseNumber);
     const handle = (event: MouseEvent) =>
       opts.onAnnotationVerseClick(verseNumber, event);

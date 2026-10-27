@@ -1137,5 +1137,14 @@
   "friend-joined-dismiss-user": "Remove {{name}} from this list",
   "friend-invite-sent-window-blocked": "Invitation sent to {{email}}. Your browser blocked your Home's window, so when they join you'll see their request here — add them back to be friends.",
   "friend-ended-line": "removed you — remove them too to stop sharing your profile",
-  "friends-ended-heading": "Removed you as a friend"
+  "friends-ended-heading": "Removed you as a friend",
+  "friend-sharing": "{{name}} is sharing",
+  "friend-sharing-at": "{{name}} is sharing {{where}}",
+  "friends-playlists": "Playlists from your friends",
+  "friends-reading-plans": "Reading plans from your friends",
+  "from-your-friends": "From your friends",
+  "join": "Join",
+  "open-from-friend": "Open {{title}} from {{name}}",
+  "friend-note-at": "A note from {{names}}",
+  "offering-from-friend": "{{name}} · friend"
 }

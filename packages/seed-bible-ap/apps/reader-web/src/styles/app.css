@@ -2107,6 +2107,29 @@ html[data-sb-line="loose"] .sb-bible-reader {
 }
 
 /* A short line that goes by itself, above the foot of the screen and clear of the home bar. */
+/* A friend is sharing a live session: one line at the top, with Join and Not now. */
+.sb-friend-sharing {
+  position: fixed;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: calc(100vw - 2rem);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 12px;
+  background: var(--sb-reader-background, #fff);
+  color: var(--sb-font-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.sb-friend-sharing-text {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
 .sb-toast {
   position: fixed;
   left: 50%;
@@ -2403,4 +2426,51 @@ html[data-sb-line="loose"] .sb-bible-reader {
 }
 .sb-profile-home-note {
   margin: 0 0 6px;
+}
+
+/* From your friends — what friends released, grouped by friend (Discover; Library's playlists and plans). */
+.sb-from-friends {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--sb-border-color, rgba(0, 0, 0, 0.1));
+}
+.sb-from-friends-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+.sb-from-friends-who {
+  margin: 0.5rem 0 0.25rem;
+}
+.sb-from-friends-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sb-from-friends-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.25rem;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.sb-from-friends-item:hover {
+  background: var(--sb-hover-background, rgba(0, 0, 0, 0.05));
+}
+
+/* A friend's note at a verse: a small mark after the verse number (state/social/friendNotes.ts). */
+.sb-verse-friend-note {
+  cursor: pointer;
+  color: var(--sb-accent-color, #e07a3f);
+  margin-left: 0.1em;
+}
+.sb-verse-friend-note .material-symbols-outlined {
+  font-size: 0.95em;
+  vertical-align: middle;
 }

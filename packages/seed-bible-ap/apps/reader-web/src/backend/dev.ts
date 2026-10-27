@@ -223,19 +223,23 @@ export function createDevBackend(
       guard();
       const me = who!.agent.toLowerCase();
       calls.push({ op: "beat", key: me });
+      // as the runtime does: a `session` channel is a line of its own beside "where I am"
+      const app =
+        beat.channel === "session"
+          ? "seed-bible-reader:session"
+          : "seed-bible-reader";
       if ("gone" in beat) {
         presence.set(
           me,
-          (presence.get(me) ?? []).filter((e) => e.app !== "seed-bible-reader")
+          (presence.get(me) ?? []).filter((e) => e.app !== app)
         );
         return;
       }
+      const { channel: _channel, ...said } = beat;
       const now = Date.now();
       presence.set(me, [
-        ...(presence.get(me) ?? []).filter(
-          (e) => e.app !== "seed-bible-reader"
-        ),
-        { app: "seed-bible-reader", ...beat, at: now, until: now + 90_000 },
+        ...(presence.get(me) ?? []).filter((e) => e.app !== app),
+        { app, ...said, at: now, until: now + 90_000 },
       ]);
     },
     async presenceFriends() {

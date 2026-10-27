@@ -6,6 +6,7 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
 import { ContentCards, byAuthor } from "./ContentCards";
+import { FromFriends } from "./FromFriends";
 import { ChapterNotes, createNote, SectionedRows } from "./DiscoverPanel";
 import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
 
@@ -19,6 +20,23 @@ const KIND_ICON: Record<string, string> = {
   plan: "event_note",
   image: "image",
 };
+
+/** "Ruth Bankole · friend" for a friend's offering (their own name), null for anyone else's. */
+function friendLabel(
+  state: ReaderState,
+  o: Offering,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
+  const a = (o.owner || o.shelf).toLowerCase();
+  const f = state.today.friends.value.find(
+    (c) => c.contact.toLowerCase() === a
+  );
+  if (!f) return null;
+  return t("offering-from-friend", {
+    name: state.today.profiles.value[a]?.displayName ?? f.name ?? o.shelf,
+    defaultValue: "{{name}} · friend",
+  });
+}
 
 export function OfferingItem({
   state,
@@ -62,7 +80,7 @@ export function OfferingItem({
         <span className="sb-discover-item-content">
           <span className="sb-discover-item-title">{o.title}</span>
           <span className="sb-discover-item-description">
-            {o.shelf}
+            {friendLabel(state, o, t) ?? o.shelf}
             {mine
               ? ` · ${t("discover-yours", { defaultValue: "yours" })}`
               : ""}{" "}
@@ -378,6 +396,15 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
           }
         />
       ))}
+      {picked === "all" && (
+        <FromFriends
+          state={state}
+          kinds={["playlist", "plan", "customization"]}
+          heading={t("from-your-friends", {
+            defaultValue: "From your friends",
+          })}
+        />
+      )}
     </section>
   );
 }

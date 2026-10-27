@@ -188,7 +188,15 @@ export function ChapterNotes({
   const { reading, ui } = state;
   const chapterRef = reading.chapterRef.value;
   const notes = state.annotations.forChapter(chapterRef).value;
-  const released = state.discover.forChapter(chapterRef).value?.offerings ?? [];
+  // friends' notes first (the old reader mixed them into the reader's own); everyone else's after
+  const friendSet = new Set(
+    state.today.friends.value.map((f) => f.contact.toLowerCase())
+  );
+  const isFriends = (o: { owner: string; shelf: string }) =>
+    friendSet.has((o.owner || o.shelf).toLowerCase());
+  const released = [
+    ...(state.discover.forChapter(chapterRef).value?.offerings ?? []),
+  ].sort((a, b) => Number(isFriends(b)) - Number(isFriends(a)));
   if (!notes.length && !released.length && !empty) return null;
   const ref = (start: number, end: number) =>
     `${reading.bookName.value} ${reading.chapterNumber.value}:${start === end ? start : `${start}-${end}`}`;

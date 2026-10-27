@@ -361,6 +361,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         label: `reading ${r.bookName.value} ${r.chapterNumber.value} · ${edition}`,
       };
     },
+    sharing: () => {
+      // a session this reader hosts is told to their friends, with what they need to join it
+      if (!live.isHost.value || !live.sessionId.value || !live.code.value)
+        return null;
+      const r = sessionReading();
+      return {
+        scope: `session:${live.sessionId.value}:${live.code.value}`,
+        label: `${r.bookName.value} ${r.chapterNumber.value}`,
+      };
+    },
     ...(opts.presenceBeatMs ? { beatMs: opts.presenceBeatMs } : {}),
   });
   // A church theme's recommended extensions are turned on when the theme is picked (a reader can turn them off).
@@ -389,6 +399,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     reading: sessionReading,
     identity: () => backend.identity(),
     selectionEffects: () => settings.selectionEffects.value,
+  });
+  // Starting or ending a session tells friends at once ("Ruth is sharing — Join"), not at the next beat.
+  effect(() => {
+    live.sessionId.value;
+    live.isHost.value;
+    live.code.value;
+    if (session.value) void presence.beat();
   });
   effect(() => {
     const id = live.sessionId.value;
