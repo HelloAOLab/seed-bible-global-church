@@ -6,7 +6,7 @@
     <title>Period writings</title>
     <meta
       name="description"
-      content="How the writings around Scripture reach the reader: open-licence editions published as signed works and indexed, the scripture-writings ontology that describes them, and the programme that drafts English for writings that have none, with the translation approach in detail."
+      content="How the writings around Scripture reach the reader: open-licence editions published as signed works and indexed, the textual-sources and writings ontologies that describe them, and the programme that drafts English for writings that have none, with the translation approach in detail."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -521,15 +521,25 @@
         ever given to the Bible translation's drafter.
       </p>
 
-      <h2 id="ontology">The ontology: scripture-writings</h2>
+      <h2 id="ontology">The ontology: textual sources and writings</h2>
       <p>
-        The writings are described by their own bounded context,
-        <code>scripture-writings</code> (prefix <code>swr:</code>, version
-        1.1.0), authored as Turtle in the skills repository and mirrored in
-        GraphDB. Like every domain there, it inherits from the
-        <a href="/architecture/ontology/">agentic-trust upper ontology</a>,
-        which grounds on DOLCE, PROV-O and the Web Annotation model. It
-        separates five things that are easy to merge by mistake:
+        The writings are described by two bounded contexts, authored as Turtle
+        in the skills repository and mirrored in GraphDB. Until 27 October 2026
+        one domain, <em>scripture-writings</em>, held both the Bible's own
+        copies and every other text; it was
+        <a href="/architecture/ontology/domains/">split</a> that day.
+        <strong>Textual sources</strong> (<code>txt:</code>,
+        <code>https://skills.demo/textual-sources#</code>) is the upper domain:
+        the classes below, which any text shares.
+        <strong>Writings</strong> (<code>wrt:</code>,
+        <code>https://skills.demo/writings#</code>) holds everything that is not
+        the Bible — its records in the A-box namespace <code>wrtx:</code> and
+        the scroll compositions in <code>wrtd:</code>. The Bible's own witnesses
+        stay in the Scripture domain: the canon's A-box is <code>scrc:</code>,
+        the biblical scroll lines <code>scrd:</code>. All of it inherits from
+        the <a href="/architecture/ontology/">agentic-trust upper ontology</a>,
+        which grounds on DOLCE, PROV-O and the Web Annotation model. The upper
+        domain separates five things that are easy to merge by mistake:
       </p>
       <div class="table-wrap">
         <table>
@@ -543,7 +553,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>swr:SourceWork</code></td>
+              <td><code>txt:SourceWork</code></td>
               <td>
                 The work as composed: author, language, group, composition date
                 range with its argument, attribution certainty, the register
@@ -555,20 +565,21 @@
               <td>1 Enoch; Seder Olam Rabbah</td>
             </tr>
             <tr>
-              <td><code>swr:TextEdition</code></td>
+              <td><code>txt:TextEdition</code></td>
               <td>
                 One edition of a work: editor, translator, language, where it
                 was published, the licence and its evidence, the allowed
                 operations, the export partition, when and from where it was
-                acquired, the snapshot hash, and
-                <code>swr:publishedAs</code> (the work and label on Source
-                Publishing).
+                acquired, the snapshot hash, and its published form (a
+                <code>wrt:PublishedWriting</code>: the work's address, version
+                and parts on Source Publishing, recorded only after every part
+                was read back).
               </td>
               <td><code>at:InformationArtifact</code></td>
               <td>Whiston's <em>Antiquities</em> (1737, public domain)</td>
             </tr>
             <tr>
-              <td><code>swr:TextualWitness</code></td>
+              <td><code>txt:TextualWitness</code></td>
               <td>
                 A physical carrier of a text: date, where it is held, its
                 preservation. A witness date is never guessed.
@@ -577,7 +588,7 @@
               <td>the Great Isaiah Scroll, 1QIsaᵃ</td>
             </tr>
             <tr>
-              <td><code>swr:SourceSpan</code></td>
+              <td><code>txt:SourceSpan</code></td>
               <td>
                 A located piece of an edition or a witness. It stores text only
                 where the edition allows <code>store</code>; otherwise it says
@@ -589,7 +600,7 @@
               <td>1QIsaᵃ 33:2</td>
             </tr>
             <tr>
-              <td><code>swr:PassageAlignment</code></td>
+              <td><code>txt:PassageAlignment</code></td>
               <td>
                 The claim that a span bears on a passage: the relation (cites ·
                 quotes · comments-on · retells · parallels · witness), the
@@ -599,7 +610,7 @@
               <td>Jubilees 5 retells Gen 6, by Charles's margin</td>
             </tr>
             <tr>
-              <td><code>swr:CanonClassification</code></td>
+              <td><code>txt:CanonClassification</code></td>
               <td>
                 Which community counts a work as canonical, and since when. It
                 is a classification of the work, never a property of it.
@@ -611,10 +622,10 @@
         </table>
       </div>
       <p>
-        The rights vocabularies (<code>swr:AllowedOperation</code>: read · quote
+        The rights vocabularies (<code>txt:AllowedOperation</code>: read · quote
         · store · export-by · export-sa · reference-only;
-        <code>swr:ExportPartition</code>: by · sa · licensed · restricted) are
-        SKOS concept schemes in the same context. They are the same values the
+        <code>txt:ExportPartition</code>: by · sa · licensed · restricted) are
+        SKOS concept schemes in the upper domain. They are the same values the
         indexer filters on, so a paid lane can never retrieve a non-commercial
         text.
       </p>
@@ -637,27 +648,43 @@
         <dl>
           <dt>Source</dt>
           <dd>
-            <code>ontology/scripture-writings.ttl</code> (T-box and shapes),
-            <code>.data.ttl</code> (vocabularies, plus the work records
-            projected from the chronology), <code>.dss/</code> (the scrolls)
+            <code>ontology/textual-sources.ttl</code> (the upper T-box and
+            shapes); <code>ontology/writings.ttl</code> with
+            <code>writings.data.ttl</code> (vocabularies and the work records
+            projected from the chronology), <code>writings.dss/</code> (the
+            scroll compositions), <code>writings.sa.ttl</code> (the share-alike
+            partition) and <code>writings.published.ttl</code> (the published
+            works and the programme's translations);
+            <code>ontology/scripture.canon.ttl</code> for the canon's own copies
           </dd>
           <dt>Generated</dt>
           <dd>
-            the work A-box by <code>build-writings-abox.py</code> from the
-            reference chronology (603 works with class, group and date range),
-            the scroll A-box by <code>build-dss-abox.py</code>
+            the work A-box and the canon A-box by
+            <code>build-writings-abox.py</code> from the reference chronology,
+            the scroll A-boxes by <code>build-dss-abox.py</code>, the published
+            records by <code>receipt.py</code> after every read-back
           </dd>
           <dt>Gate</dt>
           <dd>
             preflight holds the A-boxes to a fresh build and to their SHACL
-            shapes before anything is pushed
+            shapes before anything is pushed, and <code>preflight --live</code>
+            confirms the store serves the same source
           </dd>
-          <dt>Next</dt>
+          <dt>In the store (27 October 2026)</dt>
           <dd>
-            an edition record for each of the 89 published editions, with
-            <code>swr:publishedAs</code>, and the status of a drafted English
-            (below) as a controlled value on the edition, not only a string on
-            its translator line
+            textual-sources 530 triples; writings 135, its data 20,365, the
+            scroll compositions 225,024, the share-alike partition 3,284, the
+            published records 3,917 (179 published works, 26 of them the
+            programme's own translations); the Scripture canon 1,450 and the
+            biblical scroll lines 191,677
+          </dd>
+          <dt>Done</dt>
+          <dd>
+            an edition record for every published edition, its published form as
+            a <code>wrt:PublishedWriting</code>, and the status of a drafted
+            English (below) as a controlled value on a
+            <code>wrt:ProgrammeTranslation</code> (machine draft, model-revised,
+            or reviewed), not only a string on its translator line
           </dd>
         </dl>
       </div>
@@ -1174,7 +1201,9 @@ and revised against the original by the model; not yet reviewed by a person</cod
             <tr>
               <td>Ontology</td>
               <td>
-                <code>ontology/scripture-writings.*</code> in the skills
+                <code>ontology/textual-sources.ttl</code>,
+                <code>ontology/writings.*</code> and
+                <code>ontology/scripture.canon.ttl</code> in the skills
                 repository, mirrored in GraphDB
               </td>
             </tr>
