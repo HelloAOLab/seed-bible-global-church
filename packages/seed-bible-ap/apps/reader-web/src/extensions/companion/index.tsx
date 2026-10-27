@@ -34,6 +34,13 @@ export interface Turn {
     chapter?: number;
     verse?: number;
   }>;
+  /** writings placed on the verse (period first, later readers after), with their dates and published links */
+  writings?: Array<{
+    title: string;
+    layer: string;
+    date: string | null;
+    url: string | null;
+  }>;
   /** follow-up questions the verse's evidence can answer */
   suggestions?: string[];
   question?: string;
@@ -163,6 +170,7 @@ export async function ask(
             struck: ((e.struck as unknown[]) ?? []).length,
             nextStep: (e.nextStep as { label: string } | undefined) ?? null,
             crossRefs: (e.crossReferences as Turn["crossRefs"]) ?? [],
+            writings: (e.writings as Turn["writings"]) ?? [],
             suggestions: (e.suggestions as string[]) ?? [],
           });
         } else if (e.event === "error")
@@ -268,6 +276,26 @@ function Pane({ state }: { state: ReaderState }) {
                     >
                       {x.label}
                     </a>
+                  </span>
+                ))}
+              </p>
+            )}
+            {m.writings && m.writings.length > 0 && (
+              <p className="sb-small sb-companion-xrefs">
+                {t("companion-writings", { defaultValue: "Writings:" })}{" "}
+                {m.writings.map((w, k) => (
+                  <span key={w.title}>
+                    {k > 0 && " · "}
+                    {w.url ? (
+                      <a href={w.url} target="_blank" rel="noreferrer">
+                        {w.title}
+                      </a>
+                    ) : (
+                      w.title
+                    )}
+                    {w.date ? (
+                      <span className="sb-muted"> ({w.date})</span>
+                    ) : null}
                   </span>
                 ))}
               </p>
@@ -405,6 +433,9 @@ const companion: ExtensionRegistration = {
       isVisible: () => !!state.session.value,
       onSelect: (c) => {
         ctx.panes.open("companion");
+        // a new verse from the toolbar is a new conversation: the thread is cleared and the agent is asked afresh
+        turns.value = [];
+        error.value = null;
         void ask(
           state,
           `What should I notice in verse${c.end !== c.start ? `s ${c.start}–${c.end}` : ` ${c.start}`}?`

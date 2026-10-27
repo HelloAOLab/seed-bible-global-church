@@ -1151,5 +1151,6 @@
   "companion-struck": "{{count}} sentence(s) struck by the check; hover for why.",
   "companion-search-writings": "Search all the writings (about a minute)",
   "companion-read-next": "Read next:",
-  "companion-sources": "Sources ({{count}})"
+  "companion-sources": "Sources ({{count}})",
+  "companion-writings": "Writings:"
 }
