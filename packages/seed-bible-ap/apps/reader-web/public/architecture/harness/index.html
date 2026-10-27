@@ -1292,6 +1292,17 @@
               </td>
             </tr>
             <tr>
+              <td>ask-verse after the leak fix, 1 repeat</td>
+              <td>the same 36</td>
+              <td><strong>0.971</strong></td>
+              <td>0.769</td>
+              <td>first words 0.71 s; done 2.9 s (p95 3.8 s)</td>
+              <td>
+                struck 1.6% of sentences (was 4.1%); a leak struck in 2 of 36
+                answers
+              </td>
+            </tr>
+            <tr>
               <td>ask-writings on the same verse questions, 1 repeat</td>
               <td>the same 36</td>
               <td>0.632</td>
@@ -1333,6 +1344,17 @@
               <td>median 42 s</td>
               <td>the baseline: it holds no writings and no edition record</td>
             </tr>
+            <tr>
+              <td>ask-writings, the first set (regression), 1 repeat</td>
+              <td>20 questions on passages, words, writings and readings</td>
+              <td><strong>0.767</strong></td>
+              <td>0.475</td>
+              <td>median 94 s</td>
+              <td>
+                was 0.658 / 0.375 before linking, the edition layer and the
+                wider index; every claim cited, every date carried
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -1341,11 +1363,10 @@
         done within 10 s at the 95th percentile, at most 5% of sentences struck)
         is met. Its check was then loosened in one respect the transcripts
         showed: a writing in the dossier that quotes the verse in its own older
-        English was being struck as a leak, and now is not. The regression run
-        of the first open-ask set (20 cases, 0.658 before) was cut short when
-        the model account's credit ran out; it is the next number to take. Sets
-        are drafts for the owner's adjudication, so these are diagnostics, not
-        quality claims.
+        English was being struck as a leak, and now is not. The first open-ask
+        set, re-run as a regression check, rose from 0.658 to 0.767 (one
+        repeat). Sets are drafts for the owner's adjudication, so these are
+        diagnostics, not quality claims.
       </p>
 
       <h2 id="runs">Where it runs</h2>
