@@ -9056,6 +9056,11 @@ export const MORE_FLOWS: Flow[] = [
       "Who is reading now",
       "Friends' notes in Today",
       "Today's community feed",
+      "Friends' notes in the passage",
+      "From your friends",
+      "A friend is sharing a live session",
+      "Where friends were this week",
+      "Take down a public copy",
     ],
     checks:
       "Seed Reader and Ruth Bankole on two browsers become friends the real way. Seed Reader reads John 3: Ruth's Today shows the green dot 'reading John 3' (a tap opens it). He moves to Genesis 1: her Community says he read John 3. He publishes a note on John 3:16: her Community quotes its words; in her John 3 a friend mark sits at verse 16 and opens his note; her Discover lists it as a friend's. He publishes a playlist: her Library's 'Playlists from your friends' lists it. He starts a live session: Ruth is told '… is sharing — Join', and Join puts her in it. Everything is withdrawn, ended and unfriended after, whatever happens.",
