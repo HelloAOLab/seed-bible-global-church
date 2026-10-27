@@ -116,4 +116,31 @@ describe("the reader state", () => {
     ).toEqual(["JHN.5", "JHN.1"]);
     stop2();
   });
+
+  it("deleting a published note takes it off the shelf first — never left readable by its link", async () => {
+    const SEED = {
+      agent: "0x" + "22".repeat(20),
+      name: "Seed Reader",
+      wire: true,
+    };
+    const backend = createDevBackend(SEED);
+    const state = createReaderState({
+      backend,
+      stores: memoryStores(),
+      api,
+      session: null,
+      isOnline: () => true,
+    });
+    const stop = await state.start();
+    const id = await state.annotations.add("JHN.3", 16, 16, "loved, and given");
+    const note = state.annotations
+      .forChapter("JHN.3")
+      .value.find((n) => n.id === id)!;
+    await state.publishing.publishNote("JHN.3", note, "John 3:16 — Seed");
+    expect(await backend.discover({ passage: "JHN.3" })).toHaveLength(1);
+    await state.annotations.remove("JHN.3", id);
+    expect(state.publishing.isPublished(id)).toBe(false);
+    expect(await backend.discover({ passage: "JHN.3" })).toHaveLength(0);
+    stop();
+  });
 });

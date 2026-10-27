@@ -108,7 +108,22 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
     }
   }
 
-  async function withdrawNote(note: Note) {
+  /** Take one of the reader's public releases down by what the registry lists — also a copy whose note is gone (a
+   *  note deleted while published, before deleting took it down). */
+  async function withdrawOffering(o: { kind: string; descriptorId: string }) {
+    const slug = o.descriptorId.split(":").pop() ?? "";
+    if (!slug) return;
+    await backend.withdrawSlice(o.kind, slug, publishAs.value?.agent);
+    const next = Object.fromEntries(
+      Object.entries(published.value).filter(([, p]) => p.slug !== slug)
+    );
+    if (Object.keys(next).length !== Object.keys(published.value).length) {
+      published.value = next;
+      await save();
+    }
+  }
+
+  async function withdrawNote(note: Pick<Note, "id">) {
     const p = published.value[note.id];
     if (!p) return;
     busy.value = note.id;
@@ -245,6 +260,7 @@ export function createPublishing(backend: ReaderBackend, stores: ReaderStores) {
   }
 
   return {
+    withdrawOffering,
     recordOf,
     publishAs,
     setPublishAs,

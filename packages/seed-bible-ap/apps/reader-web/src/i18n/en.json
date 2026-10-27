@@ -1146,5 +1146,7 @@
   "join": "Join",
   "open-from-friend": "Open {{title}} from {{name}}",
   "friend-note-at": "A note from {{names}}",
-  "offering-from-friend": "{{name}} · friend"
+  "offering-from-friend": "{{name}} · friend",
+  "take-down": "Take down",
+  "taking-down": "Taking down…"
 }

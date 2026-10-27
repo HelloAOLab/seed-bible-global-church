@@ -231,6 +231,18 @@ describe("profiles", () => {
   });
 });
 
+describe("taking down a public copy", () => {
+  it("one of my releases is taken down by what the registry lists, even when its note is gone", async () => {
+    const backend = createDevBackend(RUTH);
+    const publishing = createPublishing(backend, memoryStores());
+    await publishing.publishNote("JHN.3", note, "Ruth on John 3");
+    const [listed] = await backend.discover({ passage: "JHN.3" });
+    await publishing.withdrawOffering(listed!);
+    expect(await backend.discover({ passage: "JHN.3" })).toHaveLength(0);
+    expect(publishing.isPublished(note.id)).toBe(false);
+  });
+});
+
 describe("connectors", () => {
   it("are listed from the Home, read-only", async () => {
     const backend = createDevBackend(SEED);

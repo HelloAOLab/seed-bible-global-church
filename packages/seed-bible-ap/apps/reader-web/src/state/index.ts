@@ -164,6 +164,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
+  // Deleting a note takes its public copy down first: a deleted note is not left readable by anyone with its link
+  // (seen live: a note deleted while published stayed on the shelf, listed at its verse for every reader).
+  const removeNote = annotations.remove;
+  annotations.remove = async (chapterRef, id) => {
+    if (publishing.isPublished(id)) await publishing.withdrawNote({ id });
+    return removeNote(chapterRef, id);
+  };
   const today = createToday(backend, stores);
   const friendship = createFriendship({
     prefs: stores.prefs,

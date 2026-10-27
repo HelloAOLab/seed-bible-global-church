@@ -63,6 +63,7 @@ export function OfferingItem({
   const mine = state.backend.identity()?.agent === o.owner;
   const page = sharedRefOf(o);
   const [copied, setCopied] = useState(false);
+  const [takingDown, setTakingDown] = useState(false);
   return (
     <li
       ref={item}
@@ -103,24 +104,46 @@ export function OfferingItem({
           ) : (
             <pre className="sb-discover-markdown">{body}</pre>
           )}
-          {page && (
+          {(page || mine) && (
             <div className="sb-note-card-actions">
-              <button
-                type="button"
-                className="sb-note-button sb-discover-copy-page"
-                onClick={() =>
-                  void navigator.clipboard
-                    .writeText(`${location.origin}${sharedPathOf(page)}`)
-                    .then(() => setCopied(true))
-                    .catch(() => undefined)
-                }
-              >
-                {copied
-                  ? t("shared-page-copied", {
-                      defaultValue: "Page link copied",
-                    })
-                  : t("shared-copy-page", { defaultValue: "Copy page link" })}
-              </button>
+              {mine && (
+                <button
+                  type="button"
+                  className="sb-note-button"
+                  disabled={takingDown}
+                  onClick={() => {
+                    setTakingDown(true);
+                    void state.publishing
+                      .withdrawOffering(o)
+                      .then(() =>
+                        state.discover.refresh(state.reading.chapterRef.value)
+                      )
+                      .catch(() => setTakingDown(false));
+                  }}
+                >
+                  {takingDown
+                    ? t("taking-down", { defaultValue: "Taking down…" })
+                    : t("take-down", { defaultValue: "Take down" })}
+                </button>
+              )}
+              {page && (
+                <button
+                  type="button"
+                  className="sb-note-button sb-discover-copy-page"
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText(`${location.origin}${sharedPathOf(page)}`)
+                      .then(() => setCopied(true))
+                      .catch(() => undefined)
+                  }
+                >
+                  {copied
+                    ? t("shared-page-copied", {
+                        defaultValue: "Page link copied",
+                      })
+                    : t("shared-copy-page", { defaultValue: "Copy page link" })}
+                </button>
+              )}
             </div>
           )}
         </div>
