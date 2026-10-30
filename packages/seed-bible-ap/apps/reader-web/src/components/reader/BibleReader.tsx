@@ -234,19 +234,55 @@ export function BibleReader({
     }
     selection.toggle(verseNumber, event.shiftKey);
   };
-  /** A heading tapped chooses its section (tapped again, lets it go) — only while some extension offers a heading tool. */
+  /** The first of a registry by priority — what a tap on a heading or the title runs. */
+  const first = <T extends { priority?: number }>(xs: T[]) =>
+    [...xs].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))[0];
+  /** A heading tapped chooses its section and opens what an extension offers for it — only while one offers something. */
+  const headingTool = first(state.extensions.headingTools.value);
   const onHeadingClick =
-    active && state.extensions.headingTools.value.length
+    active && headingTool
       ? (
           section: { heading: string; start: number; end: number },
           event: MouseEvent
         ) => {
           event.stopPropagation();
-          if (selection.heading.value?.start === section.start)
-            selection.clearHeading();
-          else selection.chooseHeading(section);
+          selection.chooseHeading(section);
+          headingTool.onSelect({
+            chapterRef: reading.chapterRef.value,
+            ...section,
+          });
         }
       : undefined;
+  /** The chapter title opens what an extension offers for the book; with none, the book picker as before. */
+  const onTitleClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    const tool = first(state.extensions.bookTools.value);
+    if (!tool || !active) {
+      ui.selector.value = "books";
+      return;
+    }
+    selection.clear();
+    selection.clearHeading();
+    tool.onSelect({
+      chapterRef: reading.chapterRef.value,
+      bookId: reading.bookId.value,
+      bookName: reading.bookName.value,
+    });
+  };
+  const bookPicker = (className: string) => (
+    <button
+      type="button"
+      className={className}
+      aria-label={t("change-book", { defaultValue: "Change book" })}
+      title={t("change-book", { defaultValue: "Change book" })}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        ui.selector.value = ui.selector.value === "books" ? null : "books";
+      }}
+    >
+      <span className="material-symbols-outlined">menu_book</span>
+    </button>
+  );
 
   /** Others' marks in the live session, verse by verse, for the off-screen cues. */
   const sessionCues = (): CueMark[] => {
@@ -810,13 +846,7 @@ export function BibleReader({
         </div>
         <div className="sb-bible-reader-header">
           <div className="sb-bible-reader-heading">
-            <h2
-              className="sb-bible-reader-title"
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.selector.value = "books";
-              }}
-            >
+            <h2 className="sb-bible-reader-title" onClick={onTitleClick}>
               <span className="sb-bible-reader-book">
                 {reading.bookName.value}
               </span>
@@ -827,6 +857,7 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
+            {bookPicker("sb-bible-reader-book-picker")}
             <button
               type="button"
               className="sb-bible-reader-translation"
@@ -911,10 +942,7 @@ export function BibleReader({
           <div className="sb-bible-reader-main-content">
             <h2
               className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.selector.value = "books";
-              }}
+              onClick={onTitleClick}
             >
               <span className="sb-bible-reader-book">
                 {reading.bookName.value}
@@ -923,6 +951,9 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
+            {bookPicker(
+              "sb-bible-reader-book-picker sb-bible-reader-book-picker-mobile"
+            )}
             {body()}
           </div>
           {/* The old reader's Discover card in the chapter — not while a side pane is open: it would repeat the pane

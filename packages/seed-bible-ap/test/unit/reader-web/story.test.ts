@@ -258,22 +258,30 @@ describe("the story dataset", () => {
   });
 });
 
-describe("the story's heading tools", () => {
-  it("appear with the extension and go with it", async () => {
+describe("what a heading or the title opens", () => {
+  it("is the Story pane, titled by the heading or the book, and it goes with the extension", async () => {
     const host = createExtensionHost(memoryStores());
     host.register(story);
-    await host.bind({
-      ui: { pane: { value: "none" } },
-    } as unknown as ReaderState);
-    expect(host.headingTools.value.map((t) => t.label)).toEqual([
-      "Scene",
-      "Cast",
-      "Setting",
-      "Communication",
-      "Events",
-      "Communities",
-    ]);
+    const state = { ui: { pane: { value: "none" } } } as unknown as ReaderState;
+    await host.bind(state);
+    host.headingTools.value[0]!.onSelect({
+      chapterRef: "GEN.1",
+      heading: "The Creation",
+      start: 1,
+      end: 2,
+    });
+    expect(state.ui.pane.value).toBe("ext:story");
+    const pane = host.panes.value.find((p) => p.id === "story")!;
+    const title = () =>
+      typeof pane.title === "function" ? pane.title() : pane.title;
+    expect(title()).toBe("The Creation");
+    host.bookTools.value[0]!.onSelect({
+      chapterRef: "GEN.1",
+      bookId: "GEN",
+      bookName: "Genesis",
+    });
+    expect(title()).toBe("Genesis");
     await host.setEnabled("story", false);
-    expect(host.headingTools.value).toEqual([]);
+    expect([host.headingTools.value, host.bookTools.value]).toEqual([[], []]);
   });
 });

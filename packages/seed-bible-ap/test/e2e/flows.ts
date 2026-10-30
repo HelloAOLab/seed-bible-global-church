@@ -920,9 +920,9 @@ const BASE_FLOWS: Flow[] = [
     id: "X16",
     rows: ["Section stories"],
     section: "12. Extensions",
-    title: "A section heading's toolbar opens its scene",
+    title: "A section heading opens its pane, published content first",
     checks:
-      "On Genesis 1 tap the heading 'The First Day': the heading toolbar shows the heading, Genesis 1:3–5 and Scene, Cast, Setting, Communication, Events, Communities; Scene opens the Story pane on the scene the story layer holds for 1:3–5 (God speaks light into being), with God on stage; Cast lists God under deity",
+      "On Genesis 1 tap the heading 'The First Day': the pane at the right is titled 'The First Day' and opens on Published, listing BibleProject's 'Genesis 1-11' section from the publishing app (signed); Overview shows what the story layer holds for 1:3–5 (God speaks light into being) with God on stage; Cast lists God under deity",
     run: async (c) => {
       await c.open("/read/BSB/GEN/1");
       await c.page
@@ -930,43 +930,41 @@ const BASE_FLOWS: Flow[] = [
           hasText: "The First Day",
         })
         .click();
-      const bar = c.page.locator(".sb-heading-toolbar");
-      await bar.waitFor({ timeout: 10000 });
-      const said = (await bar.innerText()).replace(/\s+/g, " ");
-      for (const want of [
-        "The First Day",
-        "1:3–5",
-        "Scene",
-        "Cast",
-        "Setting",
-        "Communication",
-        "Events",
-        "Communities",
-      ])
-        if (!said.includes(want))
-          throw new Error(`toolbar lacks '${want}': ${said}`);
-      await bar.getByRole("button", { name: "Scene" }).click();
-      const pane = c.page.locator(".sb-story");
+      const pane = c.page.locator(".sb-app-pane .sb-pane").first();
       await pane
-        .locator(".sb-story-scene h4")
-        .first()
+        .locator(".sb-pane-header h2", { hasText: "The First Day" })
+        .waitFor({ timeout: 20000 });
+      if (await c.page.locator(".sb-heading-toolbar").count())
+        throw new Error("a toolbar opened");
+      const story = pane.locator(".sb-story");
+      await story
+        .getByRole("tab", { name: /^Published/, selected: true })
         .waitFor({ timeout: 30000 });
-      const scene = await pane
+      const published = (
+        await story.locator(".sb-published-media").innerText()
+      ).replace(/\s+/g, " ");
+      if (!/Genesis 1-11/.test(published))
+        throw new Error(`published: ${published.slice(0, 200)}`);
+      const work = await story
+        .locator("a", { hasText: "Videos and articles about the Bible" })
+        .first()
+        .getAttribute("href");
+      if (!/publishing\.faithnet\.io/.test(work ?? ""))
+        throw new Error(`not from the publishing app: ${work}`);
+      await story.getByRole("tab", { name: /^Overview/ }).click();
+      const scene = await story
         .locator(".sb-story-scene h4")
         .first()
         .innerText();
-      if (!/light/i.test(scene)) throw new Error(`scene is '${scene}'`);
-      const onStage = await pane.locator(".sb-story-scene").first().innerText();
-      if (!/God/.test(onStage))
-        throw new Error(`God not on stage: ${onStage.slice(0, 200)}`);
-      await pane.getByRole("tab", { name: /^Cast/ }).click();
-      const cast = (await pane.locator(".sb-story-cast").innerText()).replace(
+      if (!/light/i.test(scene)) throw new Error(`overview is '${scene}'`);
+      await story.getByRole("tab", { name: /^Cast/ }).click();
+      const cast = (await story.locator(".sb-story-cast").innerText()).replace(
         /\s+/g,
         " "
       );
       if (!/deity.*God/i.test(cast))
         throw new Error(`cast: ${cast.slice(0, 200)}`);
-      return `toolbar over 'The First Day' (1:3–5); Scene: '${scene}'; Cast: ${cast.slice(0, 80)}`;
+      return `pane 'The First Day'; Published: ${published.slice(0, 70)}…; Overview: '${scene}'`;
     },
   },
   {
@@ -976,19 +974,19 @@ const BASE_FLOWS: Flow[] = [
     title:
       "Drill from a section into a place, a person's oikos and generations",
     checks:
-      "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; open Paul from 'Paul’s Vision of the Macedonian' → Cast: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
+      "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
     run: async (c) => {
       await c.open("/read/BSB/ACT/16");
       const heading = (text: RegExp) =>
         c.page.locator(".sb-bible-reader-active .sb-chapter-heading", {
           hasText: text,
         });
+      const story = c.page.locator(".sb-story");
       await heading(/Lydia/).click();
-      const bar = c.page.locator(".sb-heading-toolbar");
-      await bar.getByRole("button", { name: "Setting" }).click();
-      const pane = c.page.locator(".sb-story");
-      const map = pane.locator(".sb-story-map");
-      await map.waitFor({ timeout: 30000 });
+      await story
+        .getByRole("tab", { name: /^Setting/ })
+        .click({ timeout: 30000 });
+      await story.locator(".sb-story-map").waitFor({ timeout: 30000 });
       await c.page.waitForFunction(
         () =>
           /Philippi/.test(
@@ -999,8 +997,8 @@ const BASE_FLOWS: Flow[] = [
         null,
         { timeout: 20000 }
       );
-      await pane.getByRole("tab", { name: /^Cast/ }).click();
-      await pane
+      await story.getByRole("tab", { name: /^Cast/ }).click();
+      await story
         .getByRole("button", { name: /^Lydia/ })
         .first()
         .click();
@@ -1010,9 +1008,9 @@ const BASE_FLOWS: Flow[] = [
         .waitFor({ timeout: 20000 });
       await card.getByRole("button", { name: "Back" }).click();
       await heading(/Macedonian/).click();
-      await bar.getByRole("button", { name: "Cast" }).click();
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
       // The story layer names him as the book does: 'Saul, later called Paul'.
-      await pane
+      await story
         .getByRole("button", { name: /called Paul/ })
         .first()
         .click();
@@ -1031,6 +1029,90 @@ const BASE_FLOWS: Flow[] = [
           .locator(".sb-story-generations svg")
           .getAttribute("aria-label")) ?? "";
       return `Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (${label})`;
+    },
+  },
+  {
+    id: "X18",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title:
+      "The chapter's title opens the book's pane; the book icon opens the book picker",
+    checks:
+      "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.page
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-title:visible, .sb-bible-reader-active .sb-bible-reader-mobile-content-title:visible"
+        )
+        .first()
+        .click();
+      const pane = c.page.locator(".sb-app-pane .sb-pane").first();
+      await pane
+        .locator(".sb-pane-header h2", { hasText: /^Genesis$/ })
+        .waitFor({ timeout: 20000 });
+      const story = pane.locator(".sb-story-book");
+      await story
+        .getByRole("tab", { name: /^Published/, selected: true })
+        .waitFor({ timeout: 30000 });
+      const published = (
+        await story.locator(".sb-published-media").innerText()
+      ).replace(/\s+/g, " ");
+      for (const v of ["Genesis 1-11", "Genesis 12-50"])
+        if (!published.includes(v))
+          throw new Error(`published lacks ${v}: ${published.slice(0, 200)}`);
+      await story.getByRole("tab", { name: /^About/ }).click();
+      const about = (
+        await story.locator(".sb-story-about").innerText()
+      ).replace(/\s+/g, " ");
+      if (
+        !/Old Testament/.test(about) ||
+        !/Hebrew/.test(about) ||
+        !/authorship/i.test(about)
+      )
+        throw new Error(`about: ${about.slice(0, 200)}`);
+      await story.getByRole("tab", { name: /^References/ }).click();
+      const refs = (
+        await story.locator(".sb-story-xbooks").first().innerText()
+      ).replace(/\s+/g, " ");
+      if (!/points to/i.test(refs))
+        throw new Error(`references: ${refs.slice(0, 200)}`);
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-book-picker:visible")
+        .first()
+        .click();
+      await c.page
+        .getByPlaceholder(/Search books/i)
+        .waitFor({ timeout: 10000 });
+      await c.page.keyboard.press("Escape");
+      return `pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: ${about.slice(0, 60)}…; References: ${refs.slice(0, 60)}…; the book icon opens the picker`;
+    },
+  },
+  {
+    id: "X19",
+    rows: ["Content"],
+    section: "12. Extensions",
+    title: "A verse's videos and articles come from the publishing app",
+    checks:
+      "On Matthew 26, tap verse 26 and Content: under 'Videos and articles about this verse' the pane lists Expedition Bible's 'The Last Supper and Pentecost' and BibleProject's section of Matthew 14-28, from the work 'Videos and articles about the Bible' on the publishing app",
+    run: async (c) => {
+      await c.open("/read/BSB/MAT/26");
+      await c.selectVerse(26);
+      await c.page
+        .locator(".sb-verse-toolbar-action", {
+          has: c.page.locator(".sb-verse-toolbar-action-label", {
+            hasText: /^Content$/,
+          }),
+        })
+        .first()
+        .click();
+      const list = c.page.locator("#sb-content-media .sb-published-media");
+      await list.waitFor({ timeout: 30000 });
+      const said = (await list.innerText()).replace(/\s+/g, " ");
+      for (const v of ["The Last Supper and Pentecost", "Matthew 14-28"])
+        if (!said.includes(v))
+          throw new Error(`lacks ${v}: ${said.slice(0, 200)}`);
+      return said.slice(0, 160);
     },
   },
   {

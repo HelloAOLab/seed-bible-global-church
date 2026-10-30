@@ -1,5 +1,5 @@
-# Flow results — 2026-10-30 22:35 UTC — https://seed-reader.faithnet.io
+# Flow results — 2026-10-30 23:09 UTC — https://seed-reader.faithnet.io
 
 | Flow | Feature | Mark | What was checked | Result |
 | --- | --- | --- | --- | --- |
-| X17 | Drill from a section into a place, a person's oikos and generations | ✅ | On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; open Paul from 'Paul’s Vision of the Macedonian' → Cast: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further | Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (What grew out of Paul: 2 generations) |
+| X18 | The chapter's title opens the book's pane; the book icon opens the book picker | ✅ | On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker | pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: Old Testament · Hebrew · genealogy, narrative the origins of…; References: GENESIS POINTS TO Psalms 1004 links Strongest: Gen 50:20 ↔ P…; the book icon opens the picker |

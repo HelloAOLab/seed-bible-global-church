@@ -45,7 +45,7 @@ export interface HeadingToolContext {
   start: number;
   end: number;
 }
-/** A tool on the heading toolbar — what the verse toolbar is to verses, for a section heading. */
+/** What a tap on a section heading opens (the first registered, by priority, is run). */
 export interface HeadingTool {
   id: string;
   label: string;
@@ -54,6 +54,22 @@ export interface HeadingTool {
   priority?: number;
   isVisible?: (ctx: HeadingToolContext) => boolean;
   onSelect: (ctx: HeadingToolContext) => void;
+}
+
+/** The book on screen, for what a tap on the chapter title opens. */
+export interface BookToolContext {
+  chapterRef: string;
+  /** USFM, e.g. `GEN`. */
+  bookId: string;
+  bookName: string;
+}
+/** What a tap on the chapter title opens (the first registered, by priority, is run); with none, the title opens the
+ *  book picker as it always has. */
+export interface BookTool {
+  id: string;
+  label: string;
+  priority?: number;
+  onSelect: (ctx: BookToolContext) => void;
 }
 
 export interface DiscoverItem {
@@ -106,7 +122,8 @@ export interface HeaderButton {
 
 export interface ExtensionPane {
   id: string;
-  title: string;
+  /** Read each time the pane is drawn, so a pane can be titled by what it shows. */
+  title: string | (() => string);
   render: () => ComponentChildren;
 }
 
@@ -115,6 +132,7 @@ export interface ExtensionContext {
   tools: {
     registerVerseTool: (tool: VerseTool) => () => void;
     registerHeadingTool: (tool: HeadingTool) => () => void;
+    registerBookTool: (tool: BookTool) => () => void;
   };
   discover: { registerProvider: (p: DiscoverProvider) => () => void };
   toolbar: { add: (item: ToolbarItem) => () => void };
@@ -173,6 +191,7 @@ export function createExtensionHost(stores: ReaderStores) {
   const enabled = signal<Set<string>>(new Set());
   const verseTools = registry<VerseTool>();
   const headingTools = registry<HeadingTool>();
+  const bookTools = registry<BookTool>();
   const providers = registry<DiscoverProvider>();
   const toolbarItems = registry<ToolbarItem>();
   const headerButtons = registry<HeaderButton>();
@@ -257,6 +276,7 @@ export function createExtensionHost(stores: ReaderStores) {
       tools: {
         registerVerseTool: verseTools.add,
         registerHeadingTool: headingTools.add,
+        registerBookTool: bookTools.add,
       },
       discover: { registerProvider: providers.add },
       toolbar: { add: toolbarItems.add },
@@ -332,6 +352,7 @@ export function createExtensionHost(stores: ReaderStores) {
     errors,
     verseTools: verseTools.items,
     headingTools: headingTools.items,
+    bookTools: bookTools.items,
     providers: providers.items,
     toolbarItems: toolbarItems.items,
     headerButtons: headerButtons.items,

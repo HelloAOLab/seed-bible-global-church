@@ -4,6 +4,7 @@
 // or community — its oikos (household, companions, disciples) and its generations (scr:plantedBody → scr:gaveRiseTo …).
 // Read under the reader's `/bible/` route like every dataset; records are kept on the device once read.
 import { CANON_66 } from "@seed/locus";
+export { loadPublished, type PublishedMedia } from "../../state/published";
 import { BIBLE_API_ENDPOINT } from "../../backend/bible";
 
 const ORIGIN = BIBLE_API_ENDPOINT.replace(/\/$/, "");
@@ -213,3 +214,79 @@ export function gatherSection(scenes: Scene[]) {
     communication: scenes.flatMap((s) => s.communication),
   };
 }
+
+export interface Tallied extends EntityRef {
+  scenes: number;
+  firstAt: string;
+  roles: string[];
+  brief?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+}
+export interface BookClaim {
+  /** authorship · date · audience … (scr:contextKind) */
+  kind: string | null;
+  /** traditional · modern … (scr:contextView) */
+  view: string | null;
+  content: string | null;
+  source: string | null;
+  sourceDate: string | null;
+  status: string | null;
+  by: string | null;
+}
+export interface CrossReferenceBook {
+  /** USFM */
+  book: string;
+  osis: string;
+  count: number;
+  score: number;
+  top: Array<{ from: string; to: string; toEnd: string | null; score: number }>;
+}
+/** A book as a whole (scr:Book): its facts, the claims made about it, its scenes by chapter, who and where across it,
+ *  and the books its cross-references point to and from. */
+export interface BookCard {
+  usfm: string;
+  osis: string;
+  name?: string;
+  testament?: string;
+  languages?: string[];
+  genres?: string[];
+  audience?: string | null;
+  setting?: string | null;
+  purpose?: string | null;
+  divisions?: string[];
+  claims: BookClaim[];
+  outline: Array<{
+    chapter: number;
+    scenes: Array<{ label: string; from: string; to: string }>;
+  }>;
+  people: Tallied[];
+  places: Tallied[];
+  events: Array<StoryEvent & { firstAt: string }>;
+  communities: Tallied[];
+  references: {
+    out: CrossReferenceBook[];
+    in: CrossReferenceBook[];
+    within: number;
+  } | null;
+}
+
+/** A book's card (`GEN`); null when not held. */
+export async function readBook(
+  usfm: string,
+  cache: Cache,
+  fetchImpl: typeof fetch = fetch
+): Promise<BookCard | null> {
+  const raw = (await read(
+    `book-${usfm}/${usfm}`,
+    cache,
+    fetchImpl
+  )) as BookCard | null;
+  return raw && typeof raw === "object" && "outline" in raw ? raw : null;
+}
+
+/** A verse span as the reader's record form, for the passage answer: `GEN.1.3-GEN.1.5`. */
+export const passageRef = (chapterRef: string, start: number, end: number) =>
+  start === end
+    ? `${chapterRef}.${start}`
+    : `${chapterRef}.${start}-${chapterRef}.${end}`;

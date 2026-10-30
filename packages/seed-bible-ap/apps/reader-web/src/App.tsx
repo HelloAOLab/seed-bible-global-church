@@ -17,7 +17,6 @@ import { TabsSidebar } from "./components/reader/TabsSidebar";
 import { PanesLayout } from "./components/reader/PanesLayout";
 import { BibleSelector } from "./components/reader/BibleSelector";
 import { VerseToolbar } from "./components/reader/VerseToolbar";
-import { HeadingToolbar } from "./components/reader/HeadingToolbar";
 import { ReaderToolbar } from "./components/reader/ReaderToolbar";
 import { NotesPane } from "./components/records/NotesPane";
 import { AccountPane } from "./components/chrome/AccountPane";
@@ -175,10 +174,13 @@ export function App({ state }: { state: ReaderState }) {
             const p = state.extensions.panes.value.find(
               (x) => `ext:${x.id}` === pane
             );
+            const title =
+              (typeof p?.title === "function" ? p.title() : p?.title) ??
+              "Extension";
             return (
-              <section className="sb-pane" aria-label={p?.title ?? "Extension"}>
+              <section className="sb-pane" aria-label={title}>
                 <header className="sb-pane-header">
-                  <h2>{p?.title ?? "Extension"}</h2>
+                  <h2>{title}</h2>
                   <span className="sb-pane-header-actions">
                     <button
                       className="sb-pane-close sb-pane-expand"
@@ -239,7 +241,6 @@ export function App({ state }: { state: ReaderState }) {
         </aside>
       )}
       <VerseToolbar state={state} />
-      <HeadingToolbar state={state} />
       <ReaderToolbar state={state} />
       <PhoneNav state={state} />
       <FloatingSearch state={state} />
