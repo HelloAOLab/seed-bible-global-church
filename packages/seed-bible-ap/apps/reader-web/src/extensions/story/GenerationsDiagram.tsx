@@ -25,7 +25,11 @@ interface Placed {
 export function layoutGenerations(root: GenerationNode): Placed[] {
   const out: Placed[] = [];
   let row = 0;
-  const place = (n: GenerationNode, depth: number, parent: Placed | null): Placed => {
+  const place = (
+    n: GenerationNode,
+    depth: number,
+    parent: Placed | null
+  ): Placed => {
     const p: Placed = { node: n, x: 16 + depth * COL, y: 0, depth, parent };
     out.push(p);
     if (!n.children.length) p.y = 20 + row++ * ROW;
@@ -77,14 +81,22 @@ export function GenerationsDiagram(props: {
               const q = p.parent!;
               const mid = (q.x + p.x) / 2;
               return (
-                <g key={`e-${p.node.id}-${q.node.id}`} className={`sb-story-gen-edge sb-story-gen-${p.node.via ?? ""}`}>
-                  <path d={`M${q.x + 9},${q.y} C${mid},${q.y} ${mid},${p.y} ${p.x - 9},${p.y}`} />
+                <g
+                  key={`e-${p.node.id}-${q.node.id}`}
+                  className={`sb-story-gen-edge sb-story-gen-${p.node.via ?? ""}`}
+                >
+                  <path
+                    d={`M${q.x + 9},${q.y} C${mid},${q.y} ${mid},${p.y} ${p.x - 9},${p.y}`}
+                  />
                   <title>{`${q.node.label} ${VIA[p.node.via ?? ""] ?? ""} ${p.node.label}`}</title>
                 </g>
               );
             })}
           {placed.map((p) => {
-            const open = p.node.path && p.parent ? () => props.onOpen(p.node.path!) : undefined;
+            const open =
+              p.node.path && p.parent
+                ? () => props.onOpen(p.node.path!)
+                : undefined;
             const church = p.node.kind === "community";
             return (
               <g
@@ -94,16 +106,29 @@ export function GenerationsDiagram(props: {
                 tabIndex={open ? 0 : undefined}
                 onClick={open}
                 onKeyDown={(e) => {
-                  if (open && ((e as KeyboardEvent).key === "Enter" || (e as KeyboardEvent).key === " ")) {
+                  if (
+                    open &&
+                    ((e as KeyboardEvent).key === "Enter" ||
+                      (e as KeyboardEvent).key === " ")
+                  ) {
                     e.preventDefault();
                     open();
                   }
                 }}
               >
-                {church ? <circle cx={p.x} cy={p.y} r={9} /> : <circle cx={p.x} cy={p.y} r={5} />}
+                {church ? (
+                  <circle cx={p.x} cy={p.y} r={9} />
+                ) : (
+                  <circle cx={p.x} cy={p.y} r={5} />
+                )}
                 {/* The root's lines fan out to its right, so its name sits above it. */}
-                <text x={p.parent ? p.x + 14 : p.x - 4} y={p.parent ? p.y + 4 : p.y - 12}>
-                  {p.node.label.length > 16 ? `${p.node.label.slice(0, 15)}…` : p.node.label}
+                <text
+                  x={p.parent ? p.x + 14 : p.x - 4}
+                  y={p.parent ? p.y + 4 : p.y - 12}
+                >
+                  {p.node.label.length > 16
+                    ? `${p.node.label.slice(0, 15)}…`
+                    : p.node.label}
                 </text>
               </g>
             );
@@ -113,7 +138,8 @@ export function GenerationsDiagram(props: {
       <figcaption className="sb-small sb-muted">
         {t("story-generations-legend", {
           count: generations,
-          defaultValue: "{{count}} generations · a ring is a church, a dot a person",
+          defaultValue:
+            "{{count}} generations · a ring is a church, a dot a person",
         })}{" "}
         ·{" "}
         <span className="sb-story-gen-key sb-story-gen-plantedBody">

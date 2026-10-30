@@ -20,7 +20,12 @@ import story from "../../../apps/reader-web/src/extensions/story";
 import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
 import type { ReaderState } from "../../../apps/reader-web/src/state";
 
-const scene = (id: string, from: string, to: string, over: Partial<Scene> = {}): Scene => ({
+const scene = (
+  id: string,
+  from: string,
+  to: string,
+  over: Partial<Scene> = {}
+): Scene => ({
   id,
   order: Number(id.replace(/\D/g, "")),
   label: id,
@@ -67,7 +72,11 @@ describe("the scenes of a section", () => {
   ];
   it("are those its verses overlap, in story order", () => {
     expect(scenesOfSection(scenes, 1, 3, 5).map((s) => s.id)).toEqual(["s2"]);
-    expect(scenesOfSection(scenes, 1, 2, 6).map((s) => s.id)).toEqual(["s1", "s2", "s3"]);
+    expect(scenesOfSection(scenes, 1, 2, 6).map((s) => s.id)).toEqual([
+      "s1",
+      "s2",
+      "s3",
+    ]);
   });
   it("include a scene that runs on into the next chapter, seen from either chapter", () => {
     expect(scenesOfSection(scenes, 1, 31, 31).map((s) => s.id)).toEqual(["s9"]);
@@ -78,10 +87,22 @@ describe("the scenes of a section", () => {
   });
   it("gather each person, place and community once across scenes", () => {
     const god = { id: "skb:god", label: "God", kind: "divine", path: null };
-    const philippi = { id: "skb:philippi", label: "Philippi", kind: "place", path: "place-p/x" };
+    const philippi = {
+      id: "skb:philippi",
+      label: "Philippi",
+      kind: "place",
+      path: "place-p/x",
+    };
     const g = gatherSection([
-      scene("s1", "Acts.16.12", "Acts.16.12", { cast: [god], setting: philippi }),
-      scene("s2", "Acts.16.13", "Acts.16.13", { cast: [god], setting: philippi, places: [philippi] }),
+      scene("s1", "Acts.16.12", "Acts.16.12", {
+        cast: [god],
+        setting: philippi,
+      }),
+      scene("s2", "Acts.16.13", "Acts.16.13", {
+        cast: [god],
+        setting: philippi,
+        places: [philippi],
+      }),
     ]);
     expect(g.cast.map((c) => c.label)).toEqual(["God"]);
     expect(g.places.map((p) => p.label)).toEqual(["Philippi"]);
@@ -90,8 +111,16 @@ describe("the scenes of a section", () => {
 
 describe("a verse's place in the reader", () => {
   it("reads OSIS as the reader's USFM book, chapter and verse", () => {
-    expect(placeOf("Acts.16.13")).toEqual({ book: "ACT", chapter: 16, verse: 13 });
-    expect(placeOf("1Sam.3.10")).toEqual({ book: "1SA", chapter: 3, verse: 10 });
+    expect(placeOf("Acts.16.13")).toEqual({
+      book: "ACT",
+      chapter: 16,
+      verse: 13,
+    });
+    expect(placeOf("1Sam.3.10")).toEqual({
+      book: "1SA",
+      chapter: 3,
+      verse: 10,
+    });
     expect(placeOf("Nope.1.1")).toBeNull();
   });
   it("says a span shortly, across a chapter break too", () => {
@@ -102,10 +131,30 @@ describe("a verse's place in the reader", () => {
 });
 
 describe("a person's oikos", () => {
-  const ref = (n: string, kind = "person") => ({ id: n, label: n, kind, path: null });
-  const none = { parents: [], partners: [], children: [], siblings: [], companions: [], discipled: [], discipledBy: [], tribe: [], planted: [] };
+  const ref = (n: string, kind = "person") => ({
+    id: n,
+    label: n,
+    kind,
+    path: null,
+  });
+  const none = {
+    parents: [],
+    partners: [],
+    children: [],
+    siblings: [],
+    companions: [],
+    discipled: [],
+    discipledBy: [],
+    tribe: [],
+    planted: [],
+  };
   it("puts the household nearest, then who they walked with, then their bodies; empty rings are left out", () => {
-    const rings = oikosRings({ ...none, parents: [ref("Jesse")], discipled: [ref("Timothy")], planted: [ref("Church at Philippi", "community")] });
+    const rings = oikosRings({
+      ...none,
+      parents: [ref("Jesse")],
+      discipled: [ref("Timothy")],
+      planted: [ref("Church at Philippi", "community")],
+    });
     expect(rings.map((r) => [r.key, r.shown.map((m) => m.label)])).toEqual([
       ["household", ["Jesse"]],
       ["walked-with", ["Timothy"]],
@@ -115,7 +164,11 @@ describe("a person's oikos", () => {
   });
   it("shows one person once in a ring though they are companion and disciple both, and counts beyond twelve", () => {
     const many = Array.from({ length: 15 }, (_, i) => ref(`p${i}`));
-    const rings = oikosRings({ ...none, companions: [ref("Silas"), ...many], discipled: [ref("Silas")] });
+    const rings = oikosRings({
+      ...none,
+      companions: [ref("Silas"), ...many],
+      discipled: [ref("Silas")],
+    });
     expect(rings[0]!.shown.filter((m) => m.label === "Silas")).toHaveLength(1);
     expect(rings[0]!.shown).toHaveLength(12);
     expect(rings[0]!.more).toBe(4);
@@ -124,16 +177,37 @@ describe("a person's oikos", () => {
 
 describe("the generations tree", () => {
   it("gives each generation a column and sets a parent level with the middle of its children", () => {
-    const leaf = (id: string) => ({ id, label: id, kind: "community", path: null, children: [] });
+    const leaf = (id: string) => ({
+      id,
+      label: id,
+      kind: "community",
+      path: null,
+      children: [],
+    });
     const placed = layoutGenerations({
-      id: "paul", label: "Paul", kind: "person", path: null,
+      id: "paul",
+      label: "Paul",
+      kind: "person",
+      path: null,
       children: [
         { ...leaf("Philippi"), via: "plantedBody" },
-        { id: "epaphras", label: "Epaphras", kind: "person", path: null, via: "discipled", children: [{ ...leaf("Colossae"), via: "plantedBody" }] },
+        {
+          id: "epaphras",
+          label: "Epaphras",
+          kind: "person",
+          path: null,
+          via: "discipled",
+          children: [{ ...leaf("Colossae"), via: "plantedBody" }],
+        },
       ],
     });
     const at = (id: string) => placed.find((p) => p.node.id === id)!;
-    expect([at("paul").depth, at("Philippi").depth, at("epaphras").depth, at("Colossae").depth]).toEqual([0, 1, 1, 2]);
+    expect([
+      at("paul").depth,
+      at("Philippi").depth,
+      at("epaphras").depth,
+      at("Colossae").depth,
+    ]).toEqual([0, 1, 1, 2]);
     expect(at("Colossae").x).toBeGreaterThan(at("epaphras").x);
     expect(at("paul").y).toBe((at("Philippi").y + at("Colossae").y) / 2);
   });
@@ -142,29 +216,43 @@ describe("the generations tree", () => {
 describe("the story dataset", () => {
   const cache = () => {
     const m = new Map<string, unknown>();
-    return { m, get: async (k: string) => m.get(k), set: async (k: string, v: unknown) => void m.set(k, v) };
+    return {
+      m,
+      get: async (k: string) => m.get(k),
+      set: async (k: string, v: unknown) => void m.set(k, v),
+    };
   };
   it("reads a chapter's scenes under the /bible/ route and keeps them on the device", async () => {
     const asked: string[] = [];
     const c = cache();
     const fetchImpl = (async (url: string) => {
       asked.push(url);
-      return new Response(JSON.stringify({ scenes: [scene("s2", "Gen.1.3", "Gen.1.5")] }));
+      return new Response(
+        JSON.stringify({ scenes: [scene("s2", "Gen.1.3", "Gen.1.5")] })
+      );
     }) as unknown as typeof fetch;
-    expect((await readChapterScenes("GEN", 1, c, fetchImpl)).map((s) => s.id)).toEqual(["s2"]);
+    expect(
+      (await readChapterScenes("GEN", 1, c, fetchImpl)).map((s) => s.id)
+    ).toEqual(["s2"]);
     expect(asked[0]).toMatch(/\/api\/d\/story\/GEN\/1\.json$/);
     await readChapterScenes("GEN", 1, c, fetchImpl);
     expect(asked).toHaveLength(1);
   });
   it("answers a chapter the story layer lacks as no scenes, and keeps nothing", async () => {
     const c = cache();
-    const fetchImpl = (async () => new Response(JSON.stringify({ error: "story GEN/99 is not held" }), { status: 404 })) as unknown as typeof fetch;
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ error: "story GEN/99 is not held" }), {
+        status: 404,
+      })) as unknown as typeof fetch;
     expect(await readChapterScenes("GEN", 99, c, fetchImpl)).toEqual([]);
     expect(c.m.size).toBe(0);
   });
   it("refuses a card path that climbs out of the dataset, without asking", async () => {
     let asked = false;
-    const fetchImpl = (async () => ((asked = true), new Response("{}"))) as unknown as typeof fetch;
+    const fetchImpl = (async () => (
+      (asked = true),
+      new Response("{}")
+    )) as unknown as typeof fetch;
     expect(await readEntity("../../t/BSB/meta", cache(), fetchImpl)).toBeNull();
     expect(asked).toBe(false);
   });
@@ -174,9 +262,16 @@ describe("the story's heading tools", () => {
   it("appear with the extension and go with it", async () => {
     const host = createExtensionHost(memoryStores());
     host.register(story);
-    await host.bind({ ui: { pane: { value: "none" } } } as unknown as ReaderState);
+    await host.bind({
+      ui: { pane: { value: "none" } },
+    } as unknown as ReaderState);
     expect(host.headingTools.value.map((t) => t.label)).toEqual([
-      "Scene", "Cast", "Setting", "Communication", "Events", "Communities",
+      "Scene",
+      "Cast",
+      "Setting",
+      "Communication",
+      "Events",
+      "Communities",
     ]);
     await host.setEnabled("story", false);
     expect(host.headingTools.value).toEqual([]);

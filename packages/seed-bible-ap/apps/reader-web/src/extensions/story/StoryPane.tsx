@@ -87,7 +87,8 @@ export function StoryPane({ state }: { state: ReaderState }) {
         state.reading.scrollToVerse.value = p.verse;
       });
   };
-  const open = (path: string) => (storyTrail.value = [...storyTrail.value, path]);
+  const open = (path: string) =>
+    (storyTrail.value = [...storyTrail.value, path]);
   const dark = state.settings.resolvedTheme().id === "dark";
 
   if (storyTrail.value.length)
@@ -112,7 +113,11 @@ export function StoryPane({ state }: { state: ReaderState }) {
       </p>
     );
   if (scenes === null)
-    return <p className="sb-muted sb-small">{t("loading", { defaultValue: "Loading…" })}</p>;
+    return (
+      <p className="sb-muted sb-small">
+        {t("loading", { defaultValue: "Loading…" })}
+      </p>
+    );
   const mine = scenesOfSection(
     scenes,
     state.reading.chapterNumber.value,
@@ -124,7 +129,9 @@ export function StoryPane({ state }: { state: ReaderState }) {
     scene: t("story-tab-scene", { defaultValue: "Scene" }),
     cast: t("story-tab-cast", { defaultValue: "Cast" }),
     setting: t("story-tab-setting", { defaultValue: "Setting" }),
-    communication: t("story-tab-communication", { defaultValue: "Communication" }),
+    communication: t("story-tab-communication", {
+      defaultValue: "Communication",
+    }),
     events: t("story-tab-events", { defaultValue: "Events" }),
     communities: t("story-tab-communities", { defaultValue: "Communities" }),
   };
@@ -139,14 +146,22 @@ export function StoryPane({ state }: { state: ReaderState }) {
   const tab = focus.tab;
   const Name = ({ x }: { x: EntityRef }) =>
     x.path ? (
-      <button type="button" className="sb-note-button sb-story-name" onClick={() => open(x.path!)}>
+      <button
+        type="button"
+        className="sb-note-button sb-story-name"
+        onClick={() => open(x.path!)}
+      >
         {x.label}
       </button>
     ) : (
       <span className="sb-story-name sb-story-name-plain">{x.label}</span>
     );
   const VerseLink = ({ from, to }: { from: string; to: string }) => (
-    <button type="button" className="sb-note-button sb-story-ref" onClick={() => goTo(from)}>
+    <button
+      type="button"
+      className="sb-note-button sb-story-ref"
+      onClick={() => goTo(from)}
+    >
       {spanLabel(from, to)}
     </button>
   );
@@ -157,7 +172,9 @@ export function StoryPane({ state }: { state: ReaderState }) {
         <h3 className="sb-story-heading">{focus.heading}</h3>
         <span className="sb-small sb-muted">
           {state.reading.bookName.value} {state.reading.chapterNumber.value}:
-          {focus.start === focus.end ? focus.start : `${focus.start}–${focus.end}`}
+          {focus.start === focus.end
+            ? focus.start
+            : `${focus.start}–${focus.end}`}
         </span>
       </div>
       <div className="sb-dcp-filters sb-story-tabs" role="tablist">
@@ -189,11 +206,16 @@ export function StoryPane({ state }: { state: ReaderState }) {
               <h4>{s.label}</h4>
               <p className="sb-small sb-muted">
                 <VerseLink from={s.from} to={s.to} />
-                {s.sceneBoundary ? ` · ${t(`story-boundary-${s.sceneBoundary}`, { defaultValue: BOUNDARY[s.sceneBoundary] ?? s.sceneBoundary })}` : ""}
+                {s.sceneBoundary
+                  ? ` · ${t(`story-boundary-${s.sceneBoundary}`, { defaultValue: BOUNDARY[s.sceneBoundary] ?? s.sceneBoundary })}`
+                  : ""}
               </p>
               {s.narrativeTime && (
                 <p className="sb-small">
-                  <span className="sb-rp-section-label">{t("story-time", { defaultValue: "When" })}</span> {s.narrativeTime}
+                  <span className="sb-rp-section-label">
+                    {t("story-time", { defaultValue: "When" })}
+                  </span>{" "}
+                  {s.narrativeTime}
                   {s.temporalRelation && s.temporalRelation !== "sequence"
                     ? ` (${s.temporalRelation})`
                     : ""}
@@ -201,13 +223,17 @@ export function StoryPane({ state }: { state: ReaderState }) {
               )}
               {s.setting && (
                 <p className="sb-small">
-                  <span className="sb-rp-section-label">{t("story-where", { defaultValue: "Where" })}</span>{" "}
+                  <span className="sb-rp-section-label">
+                    {t("story-where", { defaultValue: "Where" })}
+                  </span>{" "}
                   <Name x={s.setting} />
                   {s.setting.brief ? ` — ${s.setting.brief}` : ""}
                 </p>
               )}
               <p className="sb-small">
-                <span className="sb-rp-section-label">{t("story-on-stage", { defaultValue: "On stage" })}</span>{" "}
+                <span className="sb-rp-section-label">
+                  {t("story-on-stage", { defaultValue: "On stage" })}
+                </span>{" "}
                 {s.cast.map((c, i) => (
                   <span key={c.id}>
                     {i ? ", " : ""}
@@ -218,12 +244,22 @@ export function StoryPane({ state }: { state: ReaderState }) {
               <ModeBar modes={s.narrativeModes} />
               <div className="sb-story-nav">
                 {s.previous && (
-                  <button type="button" className="sb-note-button" onClick={() => goTo(s.previous!.from)} title={s.previous.label}>
+                  <button
+                    type="button"
+                    className="sb-note-button"
+                    onClick={() => goTo(s.previous!.from)}
+                    title={s.previous.label}
+                  >
                     ‹ {s.previous.label}
                   </button>
                 )}
                 {s.next && (
-                  <button type="button" className="sb-note-button" onClick={() => goTo(s.next!.from)} title={s.next.label}>
+                  <button
+                    type="button"
+                    className="sb-note-button"
+                    onClick={() => goTo(s.next!.from)}
+                    title={s.next.label}
+                  >
                     {s.next.label} ›
                   </button>
                 )}
@@ -234,7 +270,10 @@ export function StoryPane({ state }: { state: ReaderState }) {
         {tab === "setting" && (
           <>
             <SceneMap
-              places={all.places.map((p) => ({ ...p, setting: mine.some((s) => s.setting?.id === p.id) }))}
+              places={all.places.map((p) => ({
+                ...p,
+                setting: mine.some((s) => s.setting?.id === p.id),
+              }))}
               dark={dark}
               lang={language}
               onOpen={open}
@@ -243,13 +282,21 @@ export function StoryPane({ state }: { state: ReaderState }) {
               {all.places.map((p) => (
                 <li key={p.id}>
                   <Name x={p} />
-                  {p.modernName && p.modernName !== p.label ? ` (${p.modernName})` : ""}
-                  {p.brief ? <div className="sb-small sb-muted">{p.brief}</div> : null}
+                  {p.modernName && p.modernName !== p.label
+                    ? ` (${p.modernName})`
+                    : ""}
+                  {p.brief ? (
+                    <div className="sb-small sb-muted">{p.brief}</div>
+                  ) : null}
                 </li>
               ))}
             </ul>
             {!all.places.length && (
-              <p className="sb-muted sb-small">{t("story-no-setting", { defaultValue: "No place is named as the setting here." })}</p>
+              <p className="sb-muted sb-small">
+                {t("story-no-setting", {
+                  defaultValue: "No place is named as the setting here.",
+                })}
+              </p>
             )}
           </>
         )}
@@ -257,18 +304,34 @@ export function StoryPane({ state }: { state: ReaderState }) {
           <ul className="sb-story-list">
             {all.communication.map((c, i) => (
               <li key={i} className="sb-story-act">
-                <span className="sb-story-act-who">{c.communicator.join(", ")}</span>
-                <span className="material-symbols-outlined sb-story-act-arrow" aria-hidden="true">arrow_forward</span>
                 <span className="sb-story-act-who">
-                  {c.audience.length ? c.audience.join(", ") : t("story-no-audience", { defaultValue: "(no one named)" })}
+                  {c.communicator.join(", ")}
+                </span>
+                <span
+                  className="material-symbols-outlined sb-story-act-arrow"
+                  aria-hidden="true"
+                >
+                  arrow_forward
+                </span>
+                <span className="sb-story-act-who">
+                  {c.audience.length
+                    ? c.audience.join(", ")
+                    : t("story-no-audience", {
+                        defaultValue: "(no one named)",
+                      })}
                 </span>
                 <div className="sb-small sb-muted">
-                  {c.mode.join(", ")} · <VerseLink from={c.verses[0]} to={c.verses[1]} />
+                  {c.mode.join(", ")} ·{" "}
+                  <VerseLink from={c.verses[0]} to={c.verses[1]} />
                 </div>
               </li>
             ))}
             {!all.communication.length && (
-              <li className="sb-muted sb-small">{t("story-no-speech", { defaultValue: "No one speaks in these verses; it is told." })}</li>
+              <li className="sb-muted sb-small">
+                {t("story-no-speech", {
+                  defaultValue: "No one speaks in these verses; it is told.",
+                })}
+              </li>
             )}
           </ul>
         )}
@@ -284,7 +347,11 @@ export function StoryPane({ state }: { state: ReaderState }) {
               </li>
             ))}
             {!all.events.length && (
-              <li className="sb-muted sb-small">{t("story-no-events", { defaultValue: "No event is recorded for these verses." })}</li>
+              <li className="sb-muted sb-small">
+                {t("story-no-events", {
+                  defaultValue: "No event is recorded for these verses.",
+                })}
+              </li>
             )}
           </ul>
         )}
@@ -298,7 +365,8 @@ export function StoryPane({ state }: { state: ReaderState }) {
             {!all.communities.length && (
               <li className="sb-muted sb-small">
                 {t("story-no-communities", {
-                  defaultValue: "No church, nation or tribe is attested in these verses.",
+                  defaultValue:
+                    "No church, nation or tribe is attested in these verses.",
                 })}
               </li>
             )}
@@ -328,7 +396,12 @@ function ModeBar({ modes }: { modes: Record<string, number> }) {
       {Object.entries(modes)
         .sort((a, b) => b[1] - a[1])
         .map(([m, n]) => (
-          <span key={m} className={`sb-story-mode sb-story-mode-${m}`} style={{ flexGrow: n }} title={`${m}: ${n}`}>
+          <span
+            key={m}
+            className={`sb-story-mode sb-story-mode-${m}`}
+            style={{ flexGrow: n }}
+            title={`${m}: ${n}`}
+          >
             {m}
           </span>
         ))}
@@ -355,18 +428,34 @@ function CastList(props: {
             {members.map((c) => (
               <li key={c.id}>
                 {c.path ? (
-                  <button type="button" className="sb-note-button sb-story-name" onClick={() => props.open(c.path!)}>
+                  <button
+                    type="button"
+                    className="sb-note-button sb-story-name"
+                    onClick={() => props.open(c.path!)}
+                  >
                     {c.label}
                   </button>
                 ) : (
-                  <span className="sb-story-name sb-story-name-plain">{c.label}</span>
+                  <span className="sb-story-name sb-story-name-plain">
+                    {c.label}
+                  </span>
                 )}
                 <div className="sb-small sb-muted">
-                  {[c.naturalGender, c.naturalNumber === "many" ? "a group" : null, c.brief].filter(Boolean).join(" · ")}
+                  {[
+                    c.naturalGender,
+                    c.naturalNumber === "many" ? "a group" : null,
+                    c.brief,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                   {c.introducedAt && (
                     <>
                       {" · first in "}
-                      <button type="button" className="sb-note-button sb-story-ref" onClick={() => props.goTo(c.introducedAt!)}>
+                      <button
+                        type="button"
+                        className="sb-note-button sb-story-ref"
+                        onClick={() => props.goTo(c.introducedAt!)}
+                      >
                         {c.introducedAt.replace(/\./, " ").replace(/\./, ":")}
                       </button>
                     </>
@@ -393,7 +482,9 @@ function Card(props: {
 }) {
   const { t } = useI18n();
   const [card, setCard] = useState<EntityCard | null | undefined>(undefined);
-  const [view, setView] = useState<"oikos" | "generations" | "scenes" | "map">("scenes");
+  const [view, setView] = useState<"oikos" | "generations" | "scenes" | "map">(
+    "scenes"
+  );
   useEffect(() => {
     let live = true;
     setCard(undefined);
@@ -401,7 +492,15 @@ function Card(props: {
       .then((c) => {
         if (!live) return;
         setCard(c);
-        setView(c?.oikos ? "oikos" : c?.generations ? "generations" : typeof c?.lat === "number" ? "map" : "scenes");
+        setView(
+          c?.oikos
+            ? "oikos"
+            : c?.generations
+              ? "generations"
+              : typeof c?.lat === "number"
+                ? "map"
+                : "scenes"
+        );
       })
       .catch(() => live && setCard(null));
     return () => {
@@ -409,7 +508,11 @@ function Card(props: {
     };
   }, [props.path]);
   const back = (
-    <button type="button" className="sb-note-button sb-theo-back" onClick={props.onBack}>
+    <button
+      type="button"
+      className="sb-note-button sb-theo-back"
+      onClick={props.onBack}
+    >
       {t("back", { defaultValue: "Back" })}
     </button>
   );
@@ -417,22 +520,39 @@ function Card(props: {
     return (
       <div className="sb-story-card">
         {back}
-        <p className="sb-muted sb-small">{t("loading", { defaultValue: "Loading…" })}</p>
+        <p className="sb-muted sb-small">
+          {t("loading", { defaultValue: "Loading…" })}
+        </p>
       </div>
     );
   if (card === null)
     return (
       <div className="sb-story-card">
         {back}
-        <p className="sb-muted sb-small">{t("story-card-unreadable", { defaultValue: "This record could not be read." })}</p>
+        <p className="sb-muted sb-small">
+          {t("story-card-unreadable", {
+            defaultValue: "This record could not be read.",
+          })}
+        </p>
       </div>
     );
   const views = [
-    card.oikos ? (["oikos", t("story-view-oikos", { defaultValue: "Oikos" })] as const) : null,
-    card.generations ? (["generations", t("story-view-generations", { defaultValue: "Generations" })] as const) : null,
-    typeof card.lat === "number" ? (["map", t("story-view-map", { defaultValue: "Map" })] as const) : null,
+    card.oikos
+      ? (["oikos", t("story-view-oikos", { defaultValue: "Oikos" })] as const)
+      : null,
+    card.generations
+      ? ([
+          "generations",
+          t("story-view-generations", { defaultValue: "Generations" }),
+        ] as const)
+      : null,
+    typeof card.lat === "number"
+      ? (["map", t("story-view-map", { defaultValue: "Map" })] as const)
+      : null,
     ["scenes", t("story-view-scenes", { defaultValue: "Scenes" })] as const,
-  ].filter(Boolean) as Array<readonly ["oikos" | "generations" | "scenes" | "map", string]>;
+  ].filter(Boolean) as Array<
+    readonly ["oikos" | "generations" | "scenes" | "map", string]
+  >;
   const Refs = ({ label, xs }: { label: string; xs?: EntityRef[] }) =>
     xs?.length ? (
       <p className="sb-small">
@@ -441,7 +561,11 @@ function Card(props: {
           <span key={x.id}>
             {i ? ", " : ""}
             {x.path ? (
-              <button type="button" className="sb-note-button sb-story-name" onClick={() => props.onOpen(x.path!)}>
+              <button
+                type="button"
+                className="sb-note-button sb-story-name"
+                onClick={() => props.onOpen(x.path!)}
+              >
                 {x.label}
               </button>
             ) : (
@@ -457,19 +581,36 @@ function Card(props: {
       <h3 className="sb-theo-name">{card.label}</h3>
       <p className="sb-small sb-muted">
         {[
-          card.kind === "community" ? (card.type === "Community" ? "community" : card.type?.toLowerCase()) : card.kind,
+          card.kind === "community"
+            ? card.type === "Community"
+              ? "community"
+              : card.type?.toLowerCase()
+            : card.kind,
           card.gender,
           card.period,
-          card.modernName && card.modernName !== card.label ? `today ${card.modernName}` : null,
+          card.modernName && card.modernName !== card.label
+            ? `today ${card.modernName}`
+            : null,
           card.occurrences ? `named ${card.occurrences} times` : null,
         ]
           .filter(Boolean)
           .join(" · ")}
       </p>
       {card.brief && <p>{card.brief}</p>}
-      <Refs label={t("story-planted-by", { defaultValue: "Planted by" })} xs={card.plantedBy} />
-      <Refs label={t("story-grew-out-of", { defaultValue: "Grew out of" })} xs={card.grewOutOf?.filter((x) => !card.plantedBy?.some((p) => p.id === x.id))} />
-      <Refs label={t("story-gave-rise-to", { defaultValue: "Gave rise to" })} xs={card.gaveRiseTo} />
+      <Refs
+        label={t("story-planted-by", { defaultValue: "Planted by" })}
+        xs={card.plantedBy}
+      />
+      <Refs
+        label={t("story-grew-out-of", { defaultValue: "Grew out of" })}
+        xs={card.grewOutOf?.filter(
+          (x) => !card.plantedBy?.some((p) => p.id === x.id)
+        )}
+      />
+      <Refs
+        label={t("story-gave-rise-to", { defaultValue: "Gave rise to" })}
+        xs={card.gaveRiseTo}
+      />
       <div className="sb-dcp-filters sb-story-tabs" role="tablist">
         {views.map(([k, label]) => (
           <button
@@ -485,14 +626,29 @@ function Card(props: {
         ))}
       </div>
       {view === "oikos" && card.oikos && (
-        <OikosDiagram name={card.label} oikos={card.oikos} onOpen={props.onOpen} />
+        <OikosDiagram
+          name={card.label}
+          oikos={card.oikos}
+          onOpen={props.onOpen}
+        />
       )}
       {view === "generations" && card.generations && (
         <GenerationsDiagram root={card.generations} onOpen={props.onOpen} />
       )}
       {view === "map" && (
         <SceneMap
-          places={[{ id: card.id, label: card.label, kind: card.kind, path: null, lat: card.lat, lon: card.lon, modernName: card.modernName, setting: true }]}
+          places={[
+            {
+              id: card.id,
+              label: card.label,
+              kind: card.kind,
+              path: null,
+              lat: card.lat,
+              lon: card.lon,
+              modernName: card.modernName,
+              setting: true,
+            },
+          ]}
           dark={props.dark}
           lang={props.lang}
           onOpen={props.onOpen}
@@ -505,26 +661,40 @@ function Card(props: {
               count: card.sceneCount,
               defaultValue: "In {{count}} scenes",
             })}
-            {card.sceneCount > card.scenes.length ? ` (${card.scenes.length} shown)` : ""}
+            {card.sceneCount > card.scenes.length
+              ? ` (${card.scenes.length} shown)`
+              : ""}
           </p>
           <ul className="sb-story-list">
             {card.scenes.map((s, i) => (
               <li key={i}>
-                <button type="button" className="sb-note-button sb-story-ref" onClick={() => props.goTo(s.from)}>
+                <button
+                  type="button"
+                  className="sb-note-button sb-story-ref"
+                  onClick={() => props.goTo(s.from)}
+                >
                   {s.from.split(".")[0]} {spanLabel(s.from, s.to)}
                 </button>{" "}
                 {s.label}
-                {s.storyRole && s.storyRole !== "setting" ? <span className="sb-small sb-muted"> · {s.storyRole}</span> : null}
+                {s.storyRole && s.storyRole !== "setting" ? (
+                  <span className="sb-small sb-muted"> · {s.storyRole}</span>
+                ) : null}
               </li>
             ))}
           </ul>
           {card.attestedAt?.length ? (
             <p className="sb-small">
-              <span className="sb-rp-section-label">{t("story-attested-at", { defaultValue: "Attested at" })}</span>{" "}
+              <span className="sb-rp-section-label">
+                {t("story-attested-at", { defaultValue: "Attested at" })}
+              </span>{" "}
               {card.attestedAt.map((r, i) => (
                 <span key={r}>
                   {i ? ", " : ""}
-                  <button type="button" className="sb-note-button sb-story-ref" onClick={() => props.goTo(r)}>
+                  <button
+                    type="button"
+                    className="sb-note-button sb-story-ref"
+                    onClick={() => props.goTo(r)}
+                  >
                     {r.replace(/\./, " ").replace(/\./, ":")}
                   </button>
                 </span>

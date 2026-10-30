@@ -35,7 +35,11 @@ export function SceneMap(props: {
           fillOpacity: p.setting ? 0.9 : 0.5,
           weight: 2,
         }).addTo(map);
-        m.bindTooltip(p.modernName && p.modernName !== p.label ? `${p.label} (${p.modernName})` : p.label);
+        m.bindTooltip(
+          p.modernName && p.modernName !== p.label
+            ? `${p.label} (${p.modernName})`
+            : p.label
+        );
         if (p.path) m.on("click", () => props.onOpen(p.path!));
         bounds.extend([p.lat!, p.lon!]);
       }

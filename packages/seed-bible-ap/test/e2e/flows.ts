@@ -926,23 +926,46 @@ const BASE_FLOWS: Flow[] = [
     run: async (c) => {
       await c.open("/read/BSB/GEN/1");
       await c.page
-        .locator(".sb-bible-reader-active .sb-chapter-heading", { hasText: "The First Day" })
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: "The First Day",
+        })
         .click();
       const bar = c.page.locator(".sb-heading-toolbar");
       await bar.waitFor({ timeout: 10000 });
       const said = (await bar.innerText()).replace(/\s+/g, " ");
-      for (const want of ["The First Day", "1:3–5", "Scene", "Cast", "Setting", "Communication", "Events", "Communities"])
-        if (!said.includes(want)) throw new Error(`toolbar lacks '${want}': ${said}`);
+      for (const want of [
+        "The First Day",
+        "1:3–5",
+        "Scene",
+        "Cast",
+        "Setting",
+        "Communication",
+        "Events",
+        "Communities",
+      ])
+        if (!said.includes(want))
+          throw new Error(`toolbar lacks '${want}': ${said}`);
       await bar.getByRole("button", { name: "Scene" }).click();
       const pane = c.page.locator(".sb-story");
-      await pane.locator(".sb-story-scene h4").first().waitFor({ timeout: 30000 });
-      const scene = await pane.locator(".sb-story-scene h4").first().innerText();
+      await pane
+        .locator(".sb-story-scene h4")
+        .first()
+        .waitFor({ timeout: 30000 });
+      const scene = await pane
+        .locator(".sb-story-scene h4")
+        .first()
+        .innerText();
       if (!/light/i.test(scene)) throw new Error(`scene is '${scene}'`);
       const onStage = await pane.locator(".sb-story-scene").first().innerText();
-      if (!/God/.test(onStage)) throw new Error(`God not on stage: ${onStage.slice(0, 200)}`);
+      if (!/God/.test(onStage))
+        throw new Error(`God not on stage: ${onStage.slice(0, 200)}`);
       await pane.getByRole("tab", { name: /^Cast/ }).click();
-      const cast = (await pane.locator(".sb-story-cast").innerText()).replace(/\s+/g, " ");
-      if (!/deity.*God/i.test(cast)) throw new Error(`cast: ${cast.slice(0, 200)}`);
+      const cast = (await pane.locator(".sb-story-cast").innerText()).replace(
+        /\s+/g,
+        " "
+      );
+      if (!/deity.*God/i.test(cast))
+        throw new Error(`cast: ${cast.slice(0, 200)}`);
       return `toolbar over 'The First Day' (1:3–5); Scene: '${scene}'; Cast: ${cast.slice(0, 80)}`;
     },
   },
@@ -950,30 +973,52 @@ const BASE_FLOWS: Flow[] = [
     id: "X17",
     rows: ["Section stories"],
     section: "12. Extensions",
-    title: "Drill from a section into a place, a person's oikos and generations",
+    title:
+      "Drill from a section into a place, a person's oikos and generations",
     checks:
       "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; open Paul from 'Paul’s Vision of the Macedonian' → Cast: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
     run: async (c) => {
       await c.open("/read/BSB/ACT/16");
       const heading = (text: RegExp) =>
-        c.page.locator(".sb-bible-reader-active .sb-chapter-heading", { hasText: text });
+        c.page.locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: text,
+        });
       await heading(/Lydia/).click();
       const bar = c.page.locator(".sb-heading-toolbar");
       await bar.getByRole("button", { name: "Setting" }).click();
       const pane = c.page.locator(".sb-story");
       const map = pane.locator(".sb-story-map");
       await map.waitFor({ timeout: 30000 });
-      await c.page.waitForFunction(() => /Philippi/.test(document.querySelector(".sb-story-map")?.getAttribute("data-drawn") ?? ""), null, { timeout: 20000 });
+      await c.page.waitForFunction(
+        () =>
+          /Philippi/.test(
+            document
+              .querySelector(".sb-story-map")
+              ?.getAttribute("data-drawn") ?? ""
+          ),
+        null,
+        { timeout: 20000 }
+      );
       await pane.getByRole("tab", { name: /^Cast/ }).click();
-      await pane.getByRole("button", { name: /^Lydia/ }).first().click();
+      await pane
+        .getByRole("button", { name: /^Lydia/ })
+        .first()
+        .click();
       const card = c.page.locator(".sb-story-card");
-      await card.locator(".sb-theo-name", { hasText: "Lydia" }).waitFor({ timeout: 20000 });
+      await card
+        .locator(".sb-theo-name", { hasText: "Lydia" })
+        .waitFor({ timeout: 20000 });
       await card.getByRole("button", { name: "Back" }).click();
       await heading(/Macedonian/).click();
       await bar.getByRole("button", { name: "Cast" }).click();
       // The story layer names him as the book does: 'Saul, later called Paul'.
-      await pane.getByRole("button", { name: /called Paul/ }).first().click();
-      await card.locator(".sb-theo-name", { hasText: /^Paul$/ }).waitFor({ timeout: 20000 });
+      await pane
+        .getByRole("button", { name: /called Paul/ })
+        .first()
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: /^Paul$/ })
+        .waitFor({ timeout: 20000 });
       const rings = await card.locator(".sb-story-oikos svg").innerHTML();
       for (const who of ["Barnabas", "Silas"])
         if (!rings.includes(who)) throw new Error(`oikos lacks ${who}`);
@@ -981,7 +1026,10 @@ const BASE_FLOWS: Flow[] = [
       const tree = await card.locator(".sb-story-generations svg").innerHTML();
       for (const body of ["Church at Philippi", "Church at Colossae"])
         if (!tree.includes(body)) throw new Error(`generations lack ${body}`);
-      const label = (await card.locator(".sb-story-generations svg").getAttribute("aria-label")) ?? "";
+      const label =
+        (await card
+          .locator(".sb-story-generations svg")
+          .getAttribute("aria-label")) ?? "";
       return `Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (${label})`;
     },
   },

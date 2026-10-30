@@ -44,7 +44,12 @@ export function oikosRings(o: Oikos) {
   return RINGS.map((r) => {
     const seen = new Set<string>();
     const all = r.members(o).filter((m) => !seen.has(m.id) && seen.add(m.id));
-    return { key: r.key, label: r.label, shown: all.slice(0, PER_RING), more: Math.max(0, all.length - PER_RING) };
+    return {
+      key: r.key,
+      label: r.label,
+      shown: all.slice(0, PER_RING),
+      more: Math.max(0, all.length - PER_RING),
+    };
   }).filter((r) => r.shown.length);
 }
 
@@ -61,7 +66,9 @@ export function OikosDiagram(props: {
   if (!rings.length)
     return (
       <p className="sb-muted sb-small">
-        {t("story-oikos-none", { defaultValue: "No relationships are recorded." })}
+        {t("story-oikos-none", {
+          defaultValue: "No relationships are recorded.",
+        })}
       </p>
     );
   const size = 340;
@@ -87,16 +94,23 @@ export function OikosDiagram(props: {
           />
         ))}
         <circle cx={c} cy={c} r={30} className="sb-story-oikos-centre" />
-        <text x={c} y={c + 4} textAnchor="middle" className="sb-story-oikos-centre-label">
+        <text
+          x={c}
+          y={c + 4}
+          textAnchor="middle"
+          className="sb-story-oikos-centre-label"
+        >
           {props.name.length > 12 ? `${props.name.slice(0, 11)}…` : props.name}
         </text>
         {rings.map((r, i) =>
           r.shown.map((m, j) => {
             // Each ring starts a little turned from the one inside it, so names do not line up and collide.
-            const a = (2 * Math.PI * j) / r.shown.length - Math.PI / 2 + i * 0.35;
+            const a =
+              (2 * Math.PI * j) / r.shown.length - Math.PI / 2 + i * 0.35;
             const x = c + radius(i) * Math.cos(a);
             const y = c + radius(i) * Math.sin(a);
-            const name = m.label.length > 14 ? `${m.label.slice(0, 13)}…` : m.label;
+            const name =
+              m.label.length > 14 ? `${m.label.slice(0, 13)}…` : m.label;
             const open = m.path ? () => props.onOpen(m.path!) : undefined;
             return (
               <g
@@ -106,7 +120,11 @@ export function OikosDiagram(props: {
                 tabIndex={open ? 0 : undefined}
                 onClick={open}
                 onKeyDown={(e) => {
-                  if (open && ((e as KeyboardEvent).key === "Enter" || (e as KeyboardEvent).key === " ")) {
+                  if (
+                    open &&
+                    ((e as KeyboardEvent).key === "Enter" ||
+                      (e as KeyboardEvent).key === " ")
+                  ) {
                     e.preventDefault();
                     open();
                   }
@@ -128,7 +146,10 @@ export function OikosDiagram(props: {
       </svg>
       <figcaption className="sb-story-oikos-legend">
         {rings.map((r, i) => (
-          <span key={r.label} className={`sb-story-oikos-key sb-story-oikos-key-${i}`}>
+          <span
+            key={r.label}
+            className={`sb-story-oikos-key sb-story-oikos-key-${i}`}
+          >
             {r.label}
             {r.more ? ` (+${r.more})` : ""}
           </span>

@@ -95,7 +95,12 @@ export interface EntityCard {
   plantedBy?: EntityRef[];
   grewOutOf?: EntityRef[];
   gaveRiseTo?: EntityRef[];
-  scenes: Array<{ from: string; to: string; label: string; storyRole?: string }>;
+  scenes: Array<{
+    from: string;
+    to: string;
+    label: string;
+    storyRole?: string;
+  }>;
   sceneCount: number;
 }
 
