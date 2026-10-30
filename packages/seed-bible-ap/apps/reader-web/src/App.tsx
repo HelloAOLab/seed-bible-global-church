@@ -17,6 +17,7 @@ import { TabsSidebar } from "./components/reader/TabsSidebar";
 import { PanesLayout } from "./components/reader/PanesLayout";
 import { BibleSelector } from "./components/reader/BibleSelector";
 import { VerseToolbar } from "./components/reader/VerseToolbar";
+import { HeadingToolbar } from "./components/reader/HeadingToolbar";
 import { ReaderToolbar } from "./components/reader/ReaderToolbar";
 import { NotesPane } from "./components/records/NotesPane";
 import { AccountPane } from "./components/chrome/AccountPane";
@@ -238,6 +239,7 @@ export function App({ state }: { state: ReaderState }) {
         </aside>
       )}
       <VerseToolbar state={state} />
+      <HeadingToolbar state={state} />
       <ReaderToolbar state={state} />
       <PhoneNav state={state} />
       <FloatingSearch state={state} />

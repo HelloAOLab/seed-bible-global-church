@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-27 00:50 UTC",
+  "when": "2026-10-30 22:35 UTC",
   "results": [
     {
-      "id": "FX1",
-      "section": "8. Today, Discover and publishing",
-      "title": "Two friends, the whole way: reading, notes, playlists, a live session",
-      "checks": "Seed Reader and Ruth Bankole on two browsers become friends the real way. Seed Reader reads John 3: Ruth's Today shows the green dot 'reading John 3' (a tap opens it). He moves to Genesis 1: her Community says he read John 3. He publishes a note on John 3:16: her Community quotes its words; in her John 3 a friend mark sits at verse 16 and opens his note; her Discover lists it as a friend's. He publishes a playlist: her Library's 'Playlists from your friends' lists it. He starts a live session: Ruth is told '… is sharing — Join', and Join puts her in it. Everything is withdrawn, ended and unfriended after, whatever happens.",
+      "id": "X17",
+      "section": "12. Extensions",
+      "title": "Drill from a section into a place, a person's oikos and generations",
+      "checks": "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; open Paul from 'Paul’s Vision of the Macedonian' → Cast: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
       "mark": "✅",
-      "note": "friends; reading now (tap opened John 3); 'read John 3' in her Community; his note's words in her Community; the friend mark at John 3:16 opened his note; Discover lists it as a friend's; 'Playlists from your friends' lists his playlist; 'Reader is sharing John 3 Join Not now' → Join put her in",
-      "ms": 559405
+      "note": "Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (What grew out of Paul: 2 generations)",
+      "ms": 2618
     }
   ]
 }

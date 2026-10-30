@@ -1,0 +1,255 @@
+/* A tappable section heading: it says it can be tapped, and the chosen one is marked like a chosen verse. */
+.sb-chapter-heading-tappable {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+.sb-chapter-heading-tappable:hover,
+.sb-chapter-heading-tappable:focus-visible {
+  background: var(--sb-hover-background, rgba(127, 127, 127, 0.12));
+  outline: none;
+}
+.sb-chapter-heading-selected {
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
+}
+
+/* The heading toolbar: the verse toolbar's frame, with the heading and its verses above the row of tools. */
+.sb-heading-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+}
+.sb-heading-toolbar-title {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.25rem 0.5rem 0;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sb-heading-toolbar-heading {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-heading-toolbar-ref {
+  opacity: 0.7;
+}
+
+/* The Story pane. */
+.sb-story {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-story-heading {
+  margin: 0.25rem 0 0;
+}
+/* Every tab in sight: the row wraps rather than scrolling one out of view (Discover's chip row scrolls). */
+.sb-dcp-filters.sb-story-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.sb-story-scene h4 {
+  margin: 0.5rem 0 0.25rem;
+}
+.sb-story-scene p {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+.sb-story-name,
+.sb-story-ref {
+  padding: 0 0.25rem;
+}
+.sb-story-name-plain {
+  font-style: italic;
+}
+.sb-story-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-story-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.sb-story-nav button {
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-story-modes {
+  display: flex;
+  height: 1.25rem;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.7rem;
+  margin: 0.25rem 0;
+}
+.sb-story-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  color: #fff;
+  background: #64748b;
+  overflow: hidden;
+}
+.sb-story-mode-narration {
+  background: #475569;
+}
+.sb-story-mode-direct-speech,
+.sb-story-mode-speech {
+  background: #2563eb;
+}
+.sb-story-mode-prayer,
+.sb-story-mode-song {
+  background: #7c3aed;
+}
+.sb-story-mode-prophecy,
+.sb-story-mode-vision {
+  background: #b45309;
+}
+.sb-story-act-who {
+  font-weight: 600;
+}
+.sb-story-act-arrow {
+  font-size: 1rem;
+  vertical-align: middle;
+  margin: 0 0.25rem;
+}
+.sb-story-map {
+  height: 260px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sb-story-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-story-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+.sb-story-credit {
+  margin-top: 0.75rem;
+}
+
+/* The oikos: rings by closeness around the person. */
+.sb-story-oikos {
+  margin: 0;
+}
+.sb-story-oikos svg {
+  width: 100%;
+  max-width: 360px;
+  display: block;
+  margin: 0 auto;
+}
+.sb-story-oikos-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-dasharray: 3 4;
+}
+.sb-story-oikos-centre {
+  fill: var(--sb-primary-color);
+}
+.sb-story-oikos-centre-label {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sb-story-oikos-node text {
+  font-size: 9.5px;
+  fill: currentColor;
+}
+.sb-story-oikos-node circle,
+.sb-story-oikos-node rect {
+  fill: #64748b;
+}
+.sb-story-oikos-person circle {
+  fill: #0d9488;
+}
+.sb-story-oikos-community rect,
+.sb-story-oikos-group rect {
+  fill: #b45309;
+}
+.sb-story-oikos-link {
+  cursor: pointer;
+}
+.sb-story-oikos-link:hover text,
+.sb-story-oikos-link:focus-visible text {
+  text-decoration: underline;
+}
+.sb-story-oikos-legend {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Generations: what grew out of whom, left to right. */
+.sb-story-generations {
+  margin: 0;
+}
+.sb-story-generations-scroll {
+  overflow-x: auto;
+}
+.sb-story-gen-edge path {
+  fill: none;
+  stroke-width: 1.5;
+  stroke: #94a3b8;
+}
+.sb-story-gen-plantedBody path {
+  stroke: #b45309;
+}
+.sb-story-gen-discipled path {
+  stroke: #0d9488;
+  stroke-dasharray: 4 3;
+}
+.sb-story-gen-gaveRiseTo path {
+  stroke: #7c3aed;
+}
+.sb-story-gen-node circle {
+  fill: #0d9488;
+}
+.sb-story-gen-church circle {
+  fill: var(--sb-background);
+  stroke: #b45309;
+  stroke-width: 3;
+}
+.sb-story-gen-node text {
+  font-size: 11px;
+  fill: currentColor;
+}
+.sb-story-gen-link {
+  cursor: pointer;
+}
+.sb-story-gen-link:hover text,
+.sb-story-gen-link:focus-visible text {
+  text-decoration: underline;
+}
+.sb-story-gen-key {
+  font-weight: 600;
+}
+.sb-story-gen-key.sb-story-gen-plantedBody {
+  color: #b45309;
+}
+.sb-story-gen-key.sb-story-gen-discipled {
+  color: #0d9488;
+}
+.sb-story-gen-key.sb-story-gen-gaveRiseTo {
+  color: #7c3aed;
+}

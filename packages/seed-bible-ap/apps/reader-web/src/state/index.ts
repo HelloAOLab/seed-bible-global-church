@@ -519,12 +519,31 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         }
       });
   });
+  /** The section heading chosen (the heading toolbar's), with the verses under it; null when none. */
+  const heading = signal<{
+    heading: string;
+    start: number;
+    end: number;
+  } | null>(null);
   effect(() => {
     readingOf().chapterRef.value;
     verses.value = [];
+    heading.value = null;
+  });
+  // A heading and a choice of verses are never both chosen: whichever came last stands.
+  effect(() => {
+    if (verses.value.length && heading.peek()) heading.value = null;
   });
   const selection = {
     verses,
+    heading,
+    chooseHeading(h: { heading: string; start: number; end: number }) {
+      verses.value = [];
+      heading.value = h;
+    },
+    clearHeading() {
+      if (heading.value) heading.value = null;
+    },
     /** A tap adds or drops that one verse, gaps allowed (the old reader's); Shift extends a run to it. */
     toggle(verse: number, extend = false) {
       const cur = verses.value;

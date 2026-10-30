@@ -13,6 +13,7 @@ import theographic from "./theographic";
 import interpretations from "./interpretations";
 import scrolls from "./scrolls";
 import elsewhere from "./elsewhere";
+import story from "./story";
 
 export function registerBuiltInExtensions(host: ExtensionHost) {
   for (const ext of [
@@ -28,6 +29,7 @@ export function registerBuiltInExtensions(host: ExtensionHost) {
     defaultContent,
     theographic,
     interpretations,
+    story,
   ])
     host.register(ext);
 }

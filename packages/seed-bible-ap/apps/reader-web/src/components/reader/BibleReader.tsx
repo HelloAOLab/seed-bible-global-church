@@ -234,6 +234,19 @@ export function BibleReader({
     }
     selection.toggle(verseNumber, event.shiftKey);
   };
+  /** A heading tapped chooses its section (tapped again, lets it go) — only while some extension offers a heading tool. */
+  const onHeadingClick =
+    active && state.extensions.headingTools.value.length
+      ? (
+          section: { heading: string; start: number; end: number },
+          event: MouseEvent
+        ) => {
+          event.stopPropagation();
+          if (selection.heading.value?.start === section.start)
+            selection.clearHeading();
+          else selection.chooseHeading(section);
+        }
+      : undefined;
 
   /** Others' marks in the live session, verse by verse, for the off-screen cues. */
   const sessionCues = (): CueMark[] => {
@@ -511,6 +524,10 @@ export function BibleReader({
           notes,
           scriptureElements: settings.scripture.value,
           onVerseClick,
+          onHeadingClick,
+          selectedHeadingStart: active
+            ? (selection.heading.value?.start ?? null)
+            : null,
           onOpenFootnote: (noteId, verse) => setFootnote({ noteId, verse }),
           onAnnotationVerseClick: (verseNumber, event) => {
             event.stopPropagation();

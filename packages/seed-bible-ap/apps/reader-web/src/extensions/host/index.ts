@@ -36,6 +36,26 @@ export interface VerseToolItem {
   onSelect: (ctx: VerseToolContext) => void;
 }
 
+/** A section of the chapter: an edition's heading (scr:EditionMark, section-heading) and the verses under it (scr:Pericope). */
+export interface HeadingToolContext {
+  chapterRef: string;
+  /** The heading's words as the edition prints them. */
+  heading: string;
+  /** The first and last verse under the heading. */
+  start: number;
+  end: number;
+}
+/** A tool on the heading toolbar — what the verse toolbar is to verses, for a section heading. */
+export interface HeadingTool {
+  id: string;
+  label: string;
+  icon: string;
+  /** Higher comes first. */
+  priority?: number;
+  isVisible?: (ctx: HeadingToolContext) => boolean;
+  onSelect: (ctx: HeadingToolContext) => void;
+}
+
 export interface DiscoverItem {
   id: string;
   title: string;
@@ -92,7 +112,10 @@ export interface ExtensionPane {
 
 export interface ExtensionContext {
   state: ReaderState;
-  tools: { registerVerseTool: (tool: VerseTool) => () => void };
+  tools: {
+    registerVerseTool: (tool: VerseTool) => () => void;
+    registerHeadingTool: (tool: HeadingTool) => () => void;
+  };
   discover: { registerProvider: (p: DiscoverProvider) => () => void };
   toolbar: { add: (item: ToolbarItem) => () => void };
   header: { add: (button: HeaderButton) => () => void };
@@ -149,6 +172,7 @@ export function createExtensionHost(stores: ReaderStores) {
   const registered = signal<ExtensionRegistration[]>([]);
   const enabled = signal<Set<string>>(new Set());
   const verseTools = registry<VerseTool>();
+  const headingTools = registry<HeadingTool>();
   const providers = registry<DiscoverProvider>();
   const toolbarItems = registry<ToolbarItem>();
   const headerButtons = registry<HeaderButton>();
@@ -230,7 +254,10 @@ export function createExtensionHost(stores: ReaderStores) {
     const s = state;
     return {
       state: s,
-      tools: { registerVerseTool: verseTools.add },
+      tools: {
+        registerVerseTool: verseTools.add,
+        registerHeadingTool: headingTools.add,
+      },
       discover: { registerProvider: providers.add },
       toolbar: { add: toolbarItems.add },
       header: { add: headerButtons.add },
@@ -304,6 +331,7 @@ export function createExtensionHost(stores: ReaderStores) {
     enabled,
     errors,
     verseTools: verseTools.items,
+    headingTools: headingTools.items,
     providers: providers.items,
     toolbarItems: toolbarItems.items,
     headerButtons: headerButtons.items,
