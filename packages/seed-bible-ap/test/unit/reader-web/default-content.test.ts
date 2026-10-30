@@ -49,58 +49,56 @@ describe("what is published about a place in the Bible", () => {
     let t = 0;
     const now = () => t;
     expect(
-      (await loadPublished("MAT.26.26", "section", c, f, now))!.map(
-        (m) => m.item.title
-      )
+      (await loadPublished("MAT.26.26", "section", c, {
+        fetchImpl: f,
+        now,
+        edition: "BSB",
+      }))!.map((m) => m.item.title)
     ).toEqual([upperRoom.item.title]);
     expect(String(f.mock.calls[0]![0])).toMatch(
-      /\/api\/about\/MAT\.26\.26\?scope=section$/
+      /\/api\/about\/MAT\.26\.26\?scope=section&edition=BSB$/
     );
-    await loadPublished("MAT.26.26", "section", c, f, now);
+    await loadPublished("MAT.26.26", "section", c, {
+      fetchImpl: f,
+      now,
+      edition: "BSB",
+    });
     expect(f).toHaveBeenCalledTimes(1);
     t = 7 * 60 * 60_000;
-    await loadPublished("MAT.26.26", "section", c, f, now);
+    await loadPublished("MAT.26.26", "section", c, {
+      fetchImpl: f,
+      now,
+      edition: "BSB",
+    });
     expect(f).toHaveBeenCalledTimes(2);
   });
   it("answers an empty list when nothing is published, and null when the agent cannot be asked", async () => {
     expect(
-      await loadPublished(
-        "OBA.1",
-        "section",
-        cache(),
-        answering({ ok: true, items: [] })
-      )
+      await loadPublished("OBA.1", "section", cache(), {
+        fetchImpl: answering({ ok: true, items: [] }),
+      })
     ).toEqual([]);
     expect(
-      await loadPublished(
-        "GEN",
-        "book",
-        cache(),
-        answering({ ok: false, error: "down" }, 502)
-      )
+      await loadPublished("GEN", "book", cache(), {
+        fetchImpl: answering({ ok: false, error: "down" }, 502),
+      })
     ).toBeNull();
   });
   it("keeps what it had when the agent later fails, and ignores items that are not media", async () => {
     const c = cache();
     let t = 0;
-    await loadPublished(
-      "GEN",
-      "book",
-      c,
-      answering({
+    await loadPublished("GEN", "book", c, {
+      fetchImpl: answering({
         ok: true,
         items: [upperRoom, { item: { kind: "feature" } }],
       }),
-      () => t
-    );
+      now: () => t,
+    });
     t = 7 * 60 * 60_000;
-    const kept = await loadPublished(
-      "GEN",
-      "book",
-      c,
-      answering({ ok: false }, 502),
-      () => t
-    );
+    const kept = await loadPublished("GEN", "book", c, {
+      fetchImpl: answering({ ok: false }, 502),
+      now: () => t,
+    });
     expect(kept!.map((m) => m.item.kind)).toEqual(["media"]);
   });
 });

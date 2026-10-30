@@ -34,7 +34,8 @@ const defaultContent: ExtensionRegistration = {
           (await loadPublished(
             d.chapterRef,
             "section",
-            ctx.state.stores.chapters
+            ctx.state.stores.chapters,
+            { edition: ctx.state.reading.translationId.value }
           )) ?? []
         ).map(discoverItemOf),
     });

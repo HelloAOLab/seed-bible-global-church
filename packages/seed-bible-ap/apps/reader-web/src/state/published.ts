@@ -23,7 +23,12 @@ export interface PublishedMedia {
     startSeconds?: number;
   };
   /** The spans it is about: `Gen`, `Gen.1-11`, `Matt.26.20-30`. */
-  references: Array<{ osis: string; scope: string; relation: string }>;
+  references: Array<{
+    osis: string;
+    scope: string;
+    relation: string;
+    edition?: string;
+  }>;
   publisher: { handle: string };
   release: {
     work: string;
@@ -39,21 +44,26 @@ export interface PublishedMedia {
 const ABOUT_KEEP_MS = 6 * 60 * 60_000;
 
 /** What the publishing app holds about a book (`GEN`, scope book), a passage (`GEN.1.3-5`, scope section) or a verse,
- *  through this reader's agent; empty when nothing is, null when it could not be asked. */
+ *  through this reader's agent — the items for every edition, and with `edition` (the translation on screen) those
+ *  published for that one too; empty when nothing is, null when it could not be asked. */
 export async function loadPublished(
   ref: string,
   scope: "book" | "section",
   cache: Cache,
-  fetchImpl: typeof fetch = fetch,
-  now: () => number = Date.now
+  opts: {
+    edition?: string;
+    fetchImpl?: typeof fetch;
+    now?: () => number;
+  } = {}
 ): Promise<PublishedMedia[] | null> {
-  const key = `about1:${scope}:${ref}`;
+  const { edition, fetchImpl = fetch, now = Date.now } = opts;
+  const key = `about2:${scope}:${edition ?? ""}:${ref}`;
   const hit = (await cache.get(key)) as
     | { at: number; items: PublishedMedia[] }
     | undefined;
   if (hit && now() - hit.at < ABOUT_KEEP_MS) return hit.items;
   const res = await fetchImpl(
-    `${A2A_BASE}/api/about/${encodeURIComponent(ref)}?scope=${scope}`
+    `${A2A_BASE}/api/about/${encodeURIComponent(ref)}?scope=${scope}${edition ? `&edition=${encodeURIComponent(edition)}` : ""}`
   ).catch(() => null);
   const out = (await res?.json().catch(() => null)) as {
     ok?: boolean;

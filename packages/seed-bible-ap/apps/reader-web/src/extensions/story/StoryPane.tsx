@@ -321,7 +321,8 @@ function SectionView(
     void loadPublished(
       passageRef(chapterRef, focus.start, focus.end),
       "section",
-      state.stores.chapters
+      state.stores.chapters,
+      { edition: state.reading.translationId.value }
     )
       .then((m) => live && setMedia(m ?? []))
       .catch(() => live && setMedia([]));
@@ -596,7 +597,9 @@ function BookView(
     void readBook(focus.bookId, state.stores.chapters)
       .then((c) => live && setCard(c))
       .catch(() => live && setCard(null));
-    void loadPublished(focus.bookId, "book", state.stores.chapters)
+    void loadPublished(focus.bookId, "book", state.stores.chapters, {
+      edition: state.reading.translationId.value,
+    })
       .then((m) => live && setMedia(m ?? []))
       .catch(() => live && setMedia([]));
     void loadPassageWritings(focus.bookId, 1, state.stores.chapters)

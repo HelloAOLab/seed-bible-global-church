@@ -247,7 +247,8 @@ export function ContentPane({
     void loadPublished(
       `${chapterRef}.${verse}`,
       "section",
-      state.stores.chapters
+      state.stores.chapters,
+      { edition: state.reading.translationId.value }
     )
       .then((m) => live && setMedia(m ?? []))
       .catch(() => undefined);

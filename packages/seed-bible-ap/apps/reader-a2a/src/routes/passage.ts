@@ -1107,15 +1107,22 @@ export function passageRoutes<E extends BibleEnv & PlatformEnv & PublishingEnv>(
   // WHAT IS PUBLISHED ABOUT A BOOK, A PASSAGE OR A VERSE — the publishing gateway's `publisher.about`: videos, articles and
   // recordings whose signed scripture references overlap the place asked, narrowest first. `scope=book` keeps only those
   // about the whole book (its overviews); `scope=section` only those about a chapter or verses (what a passage shows).
+  // Places are canonical (one numbering for every translation); `edition` adds what was published for that one.
   app.get("/api/about/:ref", async (c) => {
     const ref = decodeURIComponent(c.req.param("ref"));
     const scope = c.req.query("scope");
+    // The translation on screen: what was published for it is added to what was published for every edition.
+    const edition = c.req.query("edition");
     if (scope && scope !== "book" && scope !== "section")
       return c.json({ ok: false, error: "scope is book or section" }, 400);
     const res = await publishingFetch(c.env, "/publisher/about", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ref, ...(scope ? { scope } : {}) }),
+      body: JSON.stringify({
+        ref,
+        ...(scope ? { scope } : {}),
+        ...(edition ? { edition } : {}),
+      }),
     }).catch(() => null);
     const out = (await res?.json().catch(() => null)) as {
       ok?: boolean;
