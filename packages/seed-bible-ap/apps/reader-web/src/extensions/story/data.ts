@@ -66,16 +66,42 @@ export interface GenerationNode extends EntityRef {
   via?: "plantedBody" | "discipled" | "gaveRiseTo";
   children: GenerationNode[];
 }
+/** A person's ties, by kind: the household (parents, partners, children, siblings), the extended family derived from
+ *  those (grandparents … cousins, in-laws), the people they walked with, and the bodies they belonged to or planted. A
+ *  relative holding two ties is listed under both (Laban is Jacob's uncle and father-in-law). Older cards lack the
+ *  extended family. */
 export interface Oikos {
   parents: EntityRef[];
   partners: EntityRef[];
   children: EntityRef[];
   siblings: EntityRef[];
+  grandparents?: EntityRef[];
+  grandchildren?: EntityRef[];
+  auntsUncles?: EntityRef[];
+  niecesNephews?: EntityRef[];
+  parentsInLaw?: EntityRef[];
+  childrenInLaw?: EntityRef[];
+  siblingsInLaw?: EntityRef[];
+  cousins?: EntityRef[];
   companions: EntityRef[];
   discipled: EntityRef[];
   discipledBy: EntityRef[];
   tribe: EntityRef[];
   planted: EntityRef[];
+  memberOf?: EntityRef[];
+  hosted?: EntityRef[];
+  hostedBy?: EntityRef[];
+  /** The households the person headed or belonged to (hh:Family: Lydia's household). */
+  households?: EntityRef[];
+}
+/** One direct tie as the oikos model states it (hh:OikosTie): its kind, the other end, the verses that attest it and
+ *  where it comes from. */
+export interface OikosTie {
+  kind: string;
+  to: EntityRef;
+  verses: string[];
+  source: string | null;
+  license: string | null;
 }
 export interface EntityCard {
   id: string;
@@ -92,6 +118,14 @@ export interface EntityCard {
   type?: string;
   attestedAt?: string[];
   oikos: Oikos | null;
+  /** Where the kinship ties come from (`TIPNR (STEPBible, CC BY 4.0)`). */
+  kinshipSource?: string | null;
+  ties?: OikosTie[];
+  /** A household's head and members, and the community it became (hh:gatheredAs); a community's households. */
+  head?: EntityRef[];
+  members?: EntityRef[];
+  gatheredAs?: EntityRef[];
+  gatheredFrom?: EntityRef[];
   generations?: GenerationNode;
   plantedBy?: EntityRef[];
   grewOutOf?: EntityRef[];
@@ -110,6 +144,9 @@ type Cache = {
   set: (k: string, v: unknown) => Promise<void>;
 };
 const PATH = /^[A-Za-z0-9_./-]+$/;
+/** The story dataset's build, in every request and every key it is kept under on the device: a rebuilt dataset is read
+ *  fresh at once — past the edge cache and past what a device kept of the last one. Bump it after each upload. */
+export const STORY_DATA = "2026-10-30c";
 
 async function read(
   path: string,
@@ -117,10 +154,12 @@ async function read(
   fetchImpl: typeof fetch
 ): Promise<unknown> {
   if (!PATH.test(path) || path.includes("..")) return null;
-  const key = `story:${path}`;
+  const key = `story:${STORY_DATA}:${path}`;
   const hit = await cache.get(key);
   if (hit !== undefined && hit !== null) return hit;
-  const res = await fetchImpl(`${ORIGIN}/api/d/story/${path}.json`);
+  const res = await fetchImpl(
+    `${ORIGIN}/api/d/story/${path}.json?v=${STORY_DATA}`
+  );
   if (!res.ok) return null;
   const value: unknown = await res.json();
   await cache.set(key, value);

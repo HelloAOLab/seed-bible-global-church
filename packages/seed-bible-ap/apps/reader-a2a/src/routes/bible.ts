@@ -123,7 +123,8 @@ export function skillForPath(
     return {
       skill: "read-dataset",
       args: { dataset: m[1], path: m[2] },
-      maxAge: 86400,
+      // The story layer is rebuilt while it is worked on; the others are received datasets that do not change.
+      maxAge: m[1] === "story" ? 3600 : 86400,
     };
   m = /^search\/([a-z]{2,8})$/.exec(p);
   if (m) {

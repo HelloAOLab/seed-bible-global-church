@@ -40,6 +40,7 @@ import {
 } from "./data";
 import { PublishedMediaList } from "../../components/reader/PublishedMediaList";
 import { OikosDiagram } from "./OikosDiagram";
+import { FamilyTree, familyGenerations } from "./FamilyTree";
 import { GenerationsDiagram } from "./GenerationsDiagram";
 import { SceneMap } from "./SceneMap";
 
@@ -1086,6 +1087,10 @@ function CastList(props: {
   );
 }
 
+/** Whether a person's ties hold any family at all (Paul's hold none; Jacob's four generations). */
+const hasFamily = (o: NonNullable<EntityCard["oikos"]>) =>
+  familyGenerations(o).some((g) => g.line.length || g.others.length);
+
 /** One person's, place's or community's card, with its own views. */
 function Card(props: {
   state: ReaderState;
@@ -1098,9 +1103,9 @@ function Card(props: {
 }) {
   const { t } = useI18n();
   const [card, setCard] = useState<EntityCard | null | undefined>(undefined);
-  const [view, setView] = useState<"oikos" | "generations" | "scenes" | "map">(
-    "scenes"
-  );
+  const [view, setView] = useState<
+    "family" | "oikos" | "generations" | "scenes" | "map"
+  >("scenes");
   useEffect(() => {
     let live = true;
     setCard(undefined);
@@ -1109,13 +1114,15 @@ function Card(props: {
         if (!live) return;
         setCard(c);
         setView(
-          c?.oikos
-            ? "oikos"
-            : c?.generations
-              ? "generations"
-              : typeof c?.lat === "number"
-                ? "map"
-                : "scenes"
+          c?.oikos && hasFamily(c.oikos)
+            ? "family"
+            : c?.oikos
+              ? "oikos"
+              : c?.generations
+                ? "generations"
+                : typeof c?.lat === "number"
+                  ? "map"
+                  : "scenes"
         );
       })
       .catch(() => live && setCard(null));
@@ -1153,6 +1160,12 @@ function Card(props: {
       </div>
     );
   const views = [
+    card.oikos && hasFamily(card.oikos)
+      ? ([
+          "family",
+          t("story-view-family", { defaultValue: "Family" }),
+        ] as const)
+      : null,
     card.oikos
       ? (["oikos", t("story-view-oikos", { defaultValue: "Oikos" })] as const)
       : null,
@@ -1170,7 +1183,7 @@ function Card(props: {
       t("story-view-appears", { defaultValue: "Appears in" }),
     ] as const,
   ].filter(Boolean) as Array<
-    readonly ["oikos" | "generations" | "scenes" | "map", string]
+    readonly ["family" | "oikos" | "generations" | "scenes" | "map", string]
   >;
   const Refs = ({ label, xs }: { label: string; xs?: EntityRef[] }) =>
     xs?.length ? (
@@ -1220,6 +1233,22 @@ function Card(props: {
         label={t("story-gave-rise-to", { defaultValue: "Gave rise to" })}
         xs={card.gaveRiseTo}
       />
+      <Refs
+        label={t("story-household-head", { defaultValue: "Head" })}
+        xs={card.head}
+      />
+      <Refs
+        label={t("story-household-members", { defaultValue: "Members" })}
+        xs={card.members}
+      />
+      <Refs
+        label={t("story-gathered-as", { defaultValue: "Became" })}
+        xs={card.gatheredAs}
+      />
+      <Refs
+        label={t("story-gathered-from", { defaultValue: "Gathered from" })}
+        xs={card.gatheredFrom}
+      />
       <div className="sb-dcp-filters sb-story-tabs" role="tablist">
         {views.map(([k, label]) => (
           <button
@@ -1234,11 +1263,21 @@ function Card(props: {
           </button>
         ))}
       </div>
+      {view === "family" && card.oikos && (
+        <FamilyTree
+          name={card.label}
+          oikos={card.oikos}
+          onOpen={props.onOpen}
+        />
+      )}
       {view === "oikos" && card.oikos && (
         <OikosDiagram
           name={card.label}
           oikos={card.oikos}
+          source={card.kinshipSource}
+          ties={card.ties}
           onOpen={props.onOpen}
+          goTo={props.goTo}
         />
       )}
       {view === "generations" && card.generations && (

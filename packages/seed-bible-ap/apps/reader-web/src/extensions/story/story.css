@@ -313,3 +313,98 @@
 .sb-story-where {
   margin: 0;
 }
+
+/* Oikos rings by closeness: household nearest, then extended family, those they walked with, the bodies. */
+.sb-story-oikos-in-household circle {
+  fill: #0d9488;
+}
+.sb-story-oikos-in-extended circle {
+  fill: #5eead4;
+  stroke: #0d9488;
+  stroke-width: 1.5;
+}
+.sb-story-oikos-in-walked-with circle {
+  fill: #2563eb;
+}
+.sb-story-oikos-in-bodies rect,
+.sb-story-oikos-in-bodies circle {
+  fill: #b45309;
+}
+.sb-story-oikos-legend button.sb-story-oikos-key {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  padding: 0.1rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+.sb-story-oikos-legend button[aria-pressed="false"] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.sb-story-oikos-legend {
+  flex-wrap: wrap;
+}
+.sb-story-ties {
+  margin-top: 0.75rem;
+}
+.sb-story-ties p {
+  margin: 0.25rem 0;
+}
+.sb-story-tie-verse {
+  font-size: 0.75rem;
+  margin-left: 0.15rem;
+}
+
+/* The family by generation: the direct line set apart from the rest of each generation. */
+.sb-story-family {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-story-family-gen {
+  border-left: 3px solid var(--sb-hover-background, rgba(127, 127, 127, 0.25));
+  padding-left: 0.5rem;
+}
+.sb-story-family-own {
+  border-left-color: var(--sb-primary-color);
+}
+.sb-story-family-row {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+.sb-story-family-member {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.sb-story-family-member .sb-note-button {
+  padding: 0 0.25rem;
+}
+.sb-story-family-line .sb-note-button,
+.sb-story-family-line > span:first-child {
+  font-weight: 600;
+}
+.sb-story-family-self strong {
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: var(--sb-primary-color);
+  color: #fff;
+}
+.sb-story-family-tie {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  padding-left: 0.25rem;
+}
+
+/* The phone's book icon sits by the phone's title, which a wider screen hides. */
+@media (min-width: 721px) {
+  .sb-bible-reader-book-picker-mobile {
+    display: none;
+  }
+}

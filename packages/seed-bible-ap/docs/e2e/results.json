@@ -1,15 +1,15 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-30 23:13 UTC",
+  "when": "2026-10-30 23:54 UTC",
   "results": [
     {
-      "id": "X16",
+      "id": "X17",
       "section": "12. Extensions",
-      "title": "A section heading opens its pane, published content first",
-      "checks": "On Genesis 1 tap the heading 'The First Day': the pane at the right is titled 'The First Day' and opens on Published, listing BibleProject's 'Genesis 1-11' section from the publishing app (signed); Overview shows what the story layer holds for 1:3–5 (God speaks light into being) with God on stage; Cast lists God under deity",
+      "title": "Drill from a section into a place, a person's oikos and generations",
+      "checks": "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
       "mark": "✅",
-      "note": "pane 'The First Day'; Published: play_circleGenesis 1-11 — God Bringing Order and Beauty Out of Darknes…; Overview: 'God speaks light into being; light separated from darkness; first day'",
-      "ms": 26929
+      "note": "Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (What grew out of Paul: 2 generations)",
+      "ms": 8166
     },
     {
       "id": "X18",
@@ -18,16 +18,25 @@
       "checks": "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
       "mark": "✅",
       "note": "pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: Old Testament · Hebrew · genealogy, narrative the origins of…; References: GENESIS POINTS TO Psalms 1004 links Strongest: Gen 50:20 ↔ P…; the book icon opens the picker",
-      "ms": 2410
+      "ms": 1962
     },
     {
-      "id": "X19",
+      "id": "X20",
       "section": "12. Extensions",
-      "title": "A verse's videos and articles come from the publishing app",
-      "checks": "On Matthew 26, tap verse 26 and Content: under 'Videos and articles about this verse' the pane lists Expedition Bible's 'The Last Supper and Pentecost' and BibleProject's section of Matthew 14-28, from the work 'Videos and articles about the Bible' on the publishing app",
+      "title": "A person's family by generation, and the extended family in the oikos",
+      "checks": "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
       "mark": "✅",
-      "note": "play_circleThe Last Supper and Pentecost...HERE! Expedition Bible · Matt 26:20-30 Join Joel in learning how the Upper Room was found and identified, and marvel ",
-      "ms": 2994
+      "note": "Ruth's family: PARENTS' GENERATION Elimelech parent-in-law Naomi parent-in-law Salmon parent-in-law THEIR GENERATION Ruth Boaz spouse Mahlon spouse Chilion…; oikos 3 rings, extended family toggled off",
+      "ms": 3760
+    },
+    {
+      "id": "X21",
+      "section": "12. Extensions",
+      "title": "A household the text names, and the church it became",
+      "checks": "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
+      "mark": "✅",
+      "note": "Lydia → Lydia's household (Acts 16:15) → Church at Philippi, gathered from her household, planted by Paul",
+      "ms": 4109
     }
   ]
 }

@@ -3,6 +3,8 @@
   "patterns": [
     "^setting-[a-zA-Z]+(-[a-zA-Z0-9]+)?$",
     "^story-boundary-[a-z-]+$",
-    "^story-oikos-(household|walked-with|bodies)$"
+    "^story-oikos-(household|extended|walked-with|bodies)$",
+    "^story-tie-[A-Za-z]+$",
+    "^story-family-(grandparents|parents|own|children|grandchildren)$"
   ]
 }

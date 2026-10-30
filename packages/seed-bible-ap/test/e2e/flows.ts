@@ -1116,6 +1116,104 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X20",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title:
+      "A person's family by generation, and the extended family in the oikos",
+    checks:
+      "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
+    run: async (c) => {
+      await c.open("/read/BSB/RUT/4");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: "Boaz Marries Ruth",
+        })
+        .click();
+      const story = c.page.locator(".sb-story");
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
+      await story
+        .getByRole("button", { name: /^Ruth the Moabite/ })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-story-card");
+      await card
+        .getByRole("tab", { name: "Family", selected: true })
+        .waitFor({ timeout: 20000 });
+      const family = (
+        await card.locator(".sb-story-family").innerText()
+      ).replace(/\s+/g, " ");
+      for (const want of ["Boaz", "Obed", "Jesse", "Naomi"])
+        if (!family.includes(want))
+          throw new Error(`family lacks ${want}: ${family.slice(0, 300)}`);
+      await card.getByRole("tab", { name: "Oikos" }).click();
+      const rings = () => card.locator(".sb-story-oikos-ring").count();
+      const before = await rings();
+      if (before < 2) throw new Error(`only ${before} ring(s)`);
+      await card.getByRole("button", { name: /^Extended family/ }).click();
+      if ((await rings()) !== before - 1)
+        throw new Error("the extended family ring did not go");
+      return `Ruth's family: ${family.slice(0, 140)}…; oikos ${before} rings, extended family toggled off`;
+    },
+  },
+  {
+    id: "X21",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title: "A household the text names, and the church it became",
+    checks:
+      "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/16");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: /Lydia/,
+        })
+        .click();
+      const story = c.page.locator(".sb-story");
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
+      await story
+        .getByRole("button", { name: /^Lydia/ })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-story-card");
+      await card.getByRole("tab", { name: "Oikos" }).click({ timeout: 20000 });
+      const ties = (await card.locator(".sb-story-ties").innerText()).replace(
+        /\s+/g,
+        " "
+      );
+      if (!/household.*Lydia's household.*Acts 16:15/i.test(ties))
+        throw new Error(`ties: ${ties.slice(0, 200)}`);
+      await card
+        .locator(".sb-story-ties")
+        .getByRole("button", { name: "Lydia's household" })
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: "Lydia's household" })
+        .waitFor({ timeout: 20000 });
+      const house = (await card.innerText()).replace(/\s+/g, " ");
+      if (
+        !/Head Lydia/i.test(house) ||
+        !/Became Church at Philippi/i.test(house)
+      )
+        throw new Error(`household: ${house.slice(0, 300)}`);
+      await card
+        .getByRole("button", { name: "Church at Philippi" })
+        .first()
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: "Church at Philippi" })
+        .waitFor({ timeout: 20000 });
+      const church = (await card.innerText()).replace(/\s+/g, " ");
+      if (
+        !/Gathered from Lydia.s household/i.test(church) ||
+        !/Planted by Paul/i.test(church)
+      )
+        throw new Error(`church: ${church.slice(0, 300)}`);
+      return `Lydia → Lydia's household (Acts 16:15) → Church at Philippi, gathered from her household, planted by Paul`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

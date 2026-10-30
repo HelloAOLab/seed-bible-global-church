@@ -10,10 +10,12 @@ import {
   readChapterScenes,
   readEntity,
   scenesOfSection,
+  STORY_DATA,
   spanLabel,
   type Scene,
 } from "../../../apps/reader-web/src/extensions/story/data";
 import { oikosRings } from "../../../apps/reader-web/src/extensions/story/OikosDiagram";
+import { familyGenerations } from "../../../apps/reader-web/src/extensions/story/FamilyTree";
 import { layoutGenerations } from "../../../apps/reader-web/src/extensions/story/GenerationsDiagram";
 import { createExtensionHost } from "../../../apps/reader-web/src/extensions/host";
 import story from "../../../apps/reader-web/src/extensions/story";
@@ -148,30 +150,95 @@ describe("a person's oikos", () => {
     tribe: [],
     planted: [],
   };
-  it("puts the household nearest, then who they walked with, then their bodies; empty rings are left out", () => {
+  it("puts the household nearest, then the extended family, who they walked with, their bodies; empty rings are left out", () => {
     const rings = oikosRings({
       ...none,
       parents: [ref("Jesse")],
+      grandparents: [ref("Obed")],
       discipled: [ref("Timothy")],
-      planted: [ref("Church at Philippi", "community")],
+      households: [ref("Lydia's household", "household")],
     });
     expect(rings.map((r) => [r.key, r.shown.map((m) => m.label)])).toEqual([
       ["household", ["Jesse"]],
+      ["extended", ["Obed"]],
       ["walked-with", ["Timothy"]],
-      ["bodies", ["Church at Philippi"]],
+      ["bodies", ["Lydia's household"]],
     ]);
     expect(oikosRings(none)).toEqual([]);
   });
-  it("shows one person once in a ring though they are companion and disciple both, and counts beyond twelve", () => {
-    const many = Array.from({ length: 15 }, (_, i) => ref(`p${i}`));
+  it("draws a relative with two ties once, in the nearer ring, named with both", () => {
     const rings = oikosRings({
       ...none,
-      companions: [ref("Silas"), ...many],
-      discipled: [ref("Silas")],
+      auntsUncles: [ref("Laban")],
+      parentsInLaw: [ref("Laban")],
+      partners: [ref("Leah")],
     });
-    expect(rings[0]!.shown.filter((m) => m.label === "Silas")).toHaveLength(1);
+    const laban = rings
+      .flatMap((r) => r.shown.map((m) => [r.key, m] as const))
+      .filter(([, m]) => m.label === "Laban");
+    expect(laban.map(([ring, m]) => [ring, m.relations])).toEqual([
+      ["extended", ["aunt or uncle", "parent-in-law"]],
+    ]);
+  });
+  it("counts beyond what a ring can hold", () => {
+    const many = Array.from({ length: 15 }, (_, i) => ref(`p${i}`));
+    const rings = oikosRings({ ...none, companions: many });
     expect(rings[0]!.shown).toHaveLength(12);
-    expect(rings[0]!.more).toBe(4);
+    expect(rings[0]!.more).toBe(3);
+  });
+});
+
+describe("a person's family by generation", () => {
+  const ref = (n: string) => ({ id: n, label: n, kind: "person", path: null });
+  const none = {
+    parents: [],
+    partners: [],
+    children: [],
+    siblings: [],
+    companions: [],
+    discipled: [],
+    discipledBy: [],
+    tribe: [],
+    planted: [],
+  };
+  it("sets grandparents above parents, the person's own generation, then children and grandchildren, the direct line first", () => {
+    const gens = familyGenerations({
+      ...none,
+      grandparents: [ref("Abraham")],
+      parents: [ref("Isaac")],
+      auntsUncles: [ref("Ishmael")],
+      partners: [ref("Leah")],
+      siblings: [ref("Esau")],
+      children: [ref("Judah")],
+      grandchildren: [ref("Perez")],
+    });
+    expect(
+      gens.map((g) => [
+        g.id,
+        g.line.map((m) => m.label),
+        g.others.map((m) => m.label),
+      ])
+    ).toEqual([
+      ["grandparents", ["Abraham"], []],
+      ["parents", ["Isaac"], ["Ishmael"]],
+      ["own", ["Leah"], ["Esau"]],
+      ["children", ["Judah"], []],
+      ["grandchildren", ["Perez"], []],
+    ]);
+  });
+  it("shows a relative once, in the nearer generation, with both ties", () => {
+    const gens = familyGenerations({
+      ...none,
+      auntsUncles: [ref("Laban")],
+      parentsInLaw: [ref("Laban")],
+    });
+    const parents = gens.find((g) => g.id === "parents")!;
+    expect(parents.others.map((m) => [m.label, m.ties])).toEqual([
+      ["Laban", ["aunt or uncle", "parent-in-law"]],
+    ]);
+  });
+  it("keeps only the person's own generation when nothing is recorded", () => {
+    expect(familyGenerations(none).map((g) => g.id)).toEqual(["own"]);
   });
 });
 
@@ -234,9 +301,22 @@ describe("the story dataset", () => {
     expect(
       (await readChapterScenes("GEN", 1, c, fetchImpl)).map((s) => s.id)
     ).toEqual(["s2"]);
-    expect(asked[0]).toMatch(/\/api\/d\/story\/GEN\/1\.json$/);
+    expect(asked[0]).toMatch(
+      new RegExp(`/api/d/story/GEN/1\\.json\\?v=${STORY_DATA}$`)
+    );
     await readChapterScenes("GEN", 1, c, fetchImpl);
     expect(asked).toHaveLength(1);
+  });
+  it("reads a rebuilt dataset fresh, past what the device kept of an earlier build", async () => {
+    const c = cache();
+    c.m.set("story:GEN/1", { scenes: [scene("old", "Gen.1.1", "Gen.1.2")] });
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({ scenes: [scene("s2", "Gen.1.3", "Gen.1.5")] })
+      )) as unknown as typeof fetch;
+    expect(
+      (await readChapterScenes("GEN", 1, c, fetchImpl)).map((s) => s.id)
+    ).toEqual(["s2"]);
   });
   it("answers a chapter the story layer lacks as no scenes, and keeps nothing", async () => {
     const c = cache();
