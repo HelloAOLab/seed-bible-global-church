@@ -156,6 +156,23 @@ describe("publishing without the Library reads", () => {
     expect(d["@type"]).toBe("seed:Offering");
   });
 
+  it("keeps a note's first words (schema:abstract, bounded) so a friend's Today can quote it", async () => {
+    const { library, backend } = await readerWith([]);
+    await backend.publishSlice({
+      kind: "note",
+      passage: "JHN.3.16",
+      title: "John 3:16 — Ruth",
+      slug: "note-1",
+      markdown: "# John 3:16 — Ruth\n\nLoved, and given.",
+      descriptor: { "schema:abstract": `Loved, and given. ${"x".repeat(400)}` },
+    });
+    const d = JSON.parse(
+      library.text(READER, "seed-bible/public/note", "note-1.jsonld") ?? "{}"
+    ) as Record<string, unknown>;
+    expect(String(d["schema:abstract"])).toMatch(/^Loved, and given\./);
+    expect(String(d["schema:abstract"]).length).toBe(280);
+  });
+
   it("publishes into the newest of two documents that share a name, instead of refusing every time", async () => {
     const { library, backend } = await readerWith([]);
     const folder = "seed-bible/public/profile";

@@ -19,6 +19,10 @@ export interface PresenceDeps {
   stores: ReaderStores;
   /** The chapter on screen and how to say it — null when nothing is open. */
   here: () => { scope: string; label: string } | null;
+  /** The live session this reader hosts, for friends to join (`session:<id>:<code>`) — null when none. */
+  sharing?: () => { scope: string; label: string } | null;
+  /** How often friends' presence is looked at in the background (a friend's "is sharing" reaches the reader). */
+  friendsEveryMs?: number;
   isVisible?: () => boolean;
   beatMs?: number;
 }
@@ -35,6 +39,9 @@ export function createPresence(deps: PresenceDeps) {
     (() =>
       typeof document === "undefined" || document.visibilityState !== "hidden");
   let lastSent: string | null = null;
+  let sharingSent: string | null = null;
+  /** Live sessions a friend is sharing that this reader put aside (by session id). */
+  const dismissed = signal<string[]>([]);
 
   void deps.stores.prefs.get(SHARE_KEY).then((v) => {
     if (typeof v === "boolean") share.value = v;
@@ -43,6 +50,7 @@ export function createPresence(deps: PresenceDeps) {
   /** One beat for the chapter on screen; nothing when sharing is off, signed out, hidden, or nothing is open. */
   async function beat(): Promise<boolean> {
     if (!share.value || !deps.backend.identity() || !visible()) return false;
+    await beatSharing();
     const h = deps.here();
     if (!h) return false;
     await deps.backend.presenceBeat(h);
@@ -50,18 +58,41 @@ export function createPresence(deps: PresenceDeps) {
     return true;
   }
 
+  /** "I am sharing a live session": beaten while this reader hosts one, ended when it ends. */
+  async function beatSharing() {
+    const s = deps.sharing?.() ?? null;
+    if (s) {
+      await deps.backend.presenceBeat({ ...s, channel: "session" });
+      sharingSent = s.scope;
+    } else if (sharingSent) {
+      sharingSent = null;
+      await deps.backend
+        .presenceBeat({ gone: true, channel: "session" })
+        .catch(() => undefined);
+    }
+  }
+
   /** Leave: an immediate end to the beat (closing the tab, signing out, turning sharing off). */
-  async function gone() {
-    if (lastSent === null) return;
+  async function gone(forget = false) {
+    if (sharingSent) {
+      sharingSent = null;
+      await deps.backend
+        .presenceBeat({ gone: true, channel: "session" })
+        .catch(() => undefined);
+    }
+    if (lastSent === null && !forget) return;
     lastSent = null;
-    await deps.backend.presenceBeat({ gone: true }).catch(() => undefined);
+    await deps.backend
+      .presenceBeat({ gone: true, ...(forget ? { forget: true } : {}) })
+      .catch(() => undefined);
   }
 
   async function setShare(on: boolean) {
     share.value = on;
     await deps.stores.prefs.set(SHARE_KEY, on);
     if (on) await beat();
-    else await gone();
+    // turned off: friends stop seeing where the reader is now, and where they were this week
+    else await gone(true);
   }
 
   async function refresh() {
@@ -82,11 +113,38 @@ export function createPresence(deps: PresenceDeps) {
   }
 
   const here = computed(() => friends.value.filter((f) => f.presence.length));
+  /** Friends sharing a live session right now, that this reader has not put aside. */
+  const sharingNow = computed(() =>
+    friends.value.flatMap((f) =>
+      f.presence
+        .filter(
+          (p) => p.app.endsWith(":session") && p.scope?.startsWith("session:")
+        )
+        .map((p) => {
+          const [, sessionId = "", code = ""] = p.scope!.split(":");
+          return {
+            agent: f.agent,
+            name: f.profileName ?? f.name ?? null,
+            sessionId,
+            code,
+            label: p.label ?? null,
+          };
+        })
+        .filter((s) => s.sessionId && !dismissed.value.includes(s.sessionId))
+    )
+  );
+  const dismiss = (sessionId: string) => {
+    dismissed.value = [...dismissed.value, sessionId];
+  };
 
   /** The beat loop and the leave on page hide; returns the stop. */
   function start(): () => void {
     void beat();
     const t = setInterval(() => void beat(), beatMs);
+    // friends' presence, now and then while the reader is here — so "Ruth is sharing" reaches them on any screen
+    const look = setInterval(() => {
+      if (deps.backend.identity() && visible()) void refresh();
+    }, deps.friendsEveryMs ?? 60_000);
     const onHide = () => {
       if (
         typeof document !== "undefined" &&
@@ -101,6 +159,7 @@ export function createPresence(deps: PresenceDeps) {
       window.addEventListener("pagehide", () => void gone());
     return () => {
       clearInterval(t);
+      clearInterval(look);
       if (typeof document !== "undefined")
         document.removeEventListener("visibilitychange", onHide);
       void gone();
@@ -112,6 +171,8 @@ export function createPresence(deps: PresenceDeps) {
     setShare,
     friends,
     here,
+    sharingNow,
+    dismiss,
     error,
     loading,
     loadedAt,

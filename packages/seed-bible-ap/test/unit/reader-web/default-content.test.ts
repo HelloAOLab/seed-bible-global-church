@@ -1,48 +1,121 @@
-// DEFAULT CONTENT: the old reader's curated videos and BibleProject overviews come up for the chapters they cover,
-// curated first, each BibleProject video once, and each opens only its own page.
-import { describe, expect, it } from "vitest";
+// VIDEOS AND ARTICLES FROM THE PUBLISHING APP: what is published about a book, a passage or a verse is asked through the
+// reader's agent (`/api/about/<ref>?scope=`), kept on the device for a while, kept when the agent cannot answer, and shown
+// in Discover as a card that names its maker and the passage it is about and opens at the maker.
+import { describe, expect, it, vi } from "vitest";
 import {
-  contentForChapter,
-  urlOf,
-  type BibleProjectItem,
-  type CuratedItem,
-} from "../../../apps/reader-web/src/extensions/defaultContent";
-import curated from "../../../apps/reader-web/src/extensions/defaultContent/discoveredContent.json";
-import bibleProject from "../../../apps/reader-web/src/extensions/defaultContent/bibleProject.json";
+  loadPublished,
+  type PublishedMedia,
+} from "../../../apps/reader-web/src/state/published";
+import { discoverItemOf } from "../../../apps/reader-web/src/extensions/defaultContent";
 
-const C = curated as CuratedItem[];
-const B = bibleProject as BibleProjectItem[];
+const upperRoom: PublishedMedia = {
+  item: {
+    kind: "media",
+    medium: "video",
+    id: "demo-admin-1/videos-and-articles-about-the-bible#curated:upper-room",
+    title: "The Last Supper and Pentecost...HERE!",
+    provider: "Expedition Bible",
+    url: "https://www.youtube.com/watch?v=1e5paRyGr0A",
+    embedUrl: "https://www.youtube-nocookie.com/embed/1e5paRyGr0A",
+  },
+  references: [{ osis: "Matt.26.20-30", scope: "verse", relation: "depicts" }],
+  publisher: { handle: "demo-admin-1" },
+  release: {
+    work: "demo-admin-1/videos-and-articles-about-the-bible",
+    title: "Videos and articles about the Bible",
+    url: "https://publishing.faithnet.io/@demo-admin-1/videos-and-articles-about-the-bible",
+    signatureStatus: "verified",
+  },
+  license: "CC-BY-4.0",
+  attribution: "Seed Bible's index",
+};
+const cache = () => {
+  const m = new Map<string, unknown>();
+  return {
+    m,
+    get: async (k: string) => m.get(k),
+    set: async (k: string, v: unknown) => void m.set(k, v),
+  };
+};
+const answering = (body: unknown, status = 200) =>
+  vi.fn(
+    async () => new Response(JSON.stringify(body), { status })
+  ) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
 
-describe("default content for a chapter", () => {
-  it("offers the Upper Room video for Matthew 26 and its verses", () => {
-    const items = contentForChapter("MAT", 26, C, B);
-    const upper = items.find(
-      (i) => i.id === "curated:the-last-supper-and-pentecost-here"
-    );
-    expect(upper).toMatchObject({
-      description: "Expedition Bible · 26:20–30",
-      icon: "play_circle",
-    });
-    expect(urlOf(upper!.id, C, B)).toBe(
-      "https://www.youtube.com/watch?v=1e5paRyGr0A"
-    );
-  });
-
-  it("offers BibleProject's Genesis overview for Genesis 2, once, after the curated items", () => {
-    const items = contentForChapter("GEN", 2, C, B);
-    const bp = items.filter((i) => i.description === "BibleProject");
-    expect(bp.length).toBeGreaterThan(0);
-    expect(new Set(bp.map((i) => i.id)).size).toBe(bp.length);
-    const firstBp = items.findIndex((i) => i.description === "BibleProject");
+describe("what is published about a place in the Bible", () => {
+  it("asks the reader's agent with the scope, keeps the answer, and asks again only once it is old", async () => {
+    const c = cache();
+    const f = answering({ ok: true, items: [upperRoom] });
+    let t = 0;
+    const now = () => t;
     expect(
-      items.slice(firstBp).every((i) => i.description === "BibleProject")
-    ).toBe(true);
-    expect(urlOf(bp[0]!.id, C, B)).toMatch(/^https:\/\/bibleproject\.com\//);
+      (await loadPublished("MAT.26.26", "section", c, {
+        fetchImpl: f,
+        now,
+        edition: "BSB",
+      }))!.map((m) => m.item.title)
+    ).toEqual([upperRoom.item.title]);
+    expect(String(f.mock.calls[0]![0])).toMatch(
+      /\/api\/about\/MAT\.26\.26\?scope=section&edition=BSB$/
+    );
+    await loadPublished("MAT.26.26", "section", c, {
+      fetchImpl: f,
+      now,
+      edition: "BSB",
+    });
+    expect(f).toHaveBeenCalledTimes(1);
+    t = 7 * 60 * 60_000;
+    await loadPublished("MAT.26.26", "section", c, {
+      fetchImpl: f,
+      now,
+      edition: "BSB",
+    });
+    expect(f).toHaveBeenCalledTimes(2);
   });
+  it("answers an empty list when nothing is published, and null when the agent cannot be asked", async () => {
+    expect(
+      await loadPublished("OBA.1", "section", cache(), {
+        fetchImpl: answering({ ok: true, items: [] }),
+      })
+    ).toEqual([]);
+    expect(
+      await loadPublished("GEN", "book", cache(), {
+        fetchImpl: answering({ ok: false, error: "down" }, 502),
+      })
+    ).toBeNull();
+  });
+  it("keeps what it had when the agent later fails, and ignores items that are not media", async () => {
+    const c = cache();
+    let t = 0;
+    await loadPublished("GEN", "book", c, {
+      fetchImpl: answering({
+        ok: true,
+        items: [upperRoom, { item: { kind: "feature" } }],
+      }),
+      now: () => t,
+    });
+    t = 7 * 60 * 60_000;
+    const kept = await loadPublished("GEN", "book", c, {
+      fetchImpl: answering({ ok: false }, 502),
+      now: () => t,
+    });
+    expect(kept!.map((m) => m.item.kind)).toEqual(["media"]);
+  });
+});
 
-  it("offers nothing for a book it does not cover, and opens nothing it does not know", () => {
-    expect(contentForChapter("XYZ", 1, C, B)).toEqual([]);
-    expect(urlOf("bibleproject:https://evil.test/", C, B)).toBeNull();
-    expect(urlOf("curated:nope", C, B)).toBeNull();
+describe("a published video in Discover", () => {
+  it("names its maker and the passage, plays in place where it can, and opens at the maker", () => {
+    const open = vi.fn();
+    vi.stubGlobal("window", { open });
+    const card = discoverItemOf(upperRoom);
+    expect(card.description).toBe("Expedition Bible · Matt.26.20-30");
+    expect(card.embedUrl).toBe(upperRoom.item.embedUrl);
+    card.onOpen!();
+    expect(open).toHaveBeenCalledWith(
+      upperRoom.item.url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+    vi.unstubAllGlobals();
   });
 });

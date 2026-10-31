@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Period writings</title>
+    <meta
+      name="description"
+      content="How the writings around Scripture reach the reader: open-licence editions published as signed works and indexed, the textual-sources and writings ontologies that describe them, and the programme that drafts English for writings that have none, with the translation approach in detail."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/" aria-current="page"
+            >Information Architecture</a
+          >
+          <a href="/architecture/agentic/">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/information/">Information Architecture</a> /
+        Period writings
+      </div>
+      <h1>Period writings: publishing, indexing and translating them</h1>
+      <p class="lede">
+        Next to a verse, the reader can show what else was written about it: 1
+        Enoch beside Genesis 6, Josephus beside the Flood, Rashi beside every
+        verse of the Torah, Chrysostom preaching on the same chapter. None of
+        this comes from a model's memory. Every writing is an
+        <strong>open-licence edition</strong>, published as a signed work,
+        indexed by verse, name, source word and meaning, and described in an
+        <strong>ontology</strong> that records what the work is, which edition
+        we hold, its date and what we are allowed to do with it. Where a writing
+        has no free English, the programme
+        <strong>drafts its own English from the original language</strong>,
+        labels it as a draft, and publishes it through the same path. This page
+        covers all three.
+      </p>
+
+      <p class="toc">
+        <a href="#picture">The picture</a>
+        <a href="#rights">What we may hold</a>
+        <a href="#publish">Publishing</a>
+        <a href="#index">Indexing</a>
+        <a href="#ontology">The ontology</a>
+        <a href="#translate">Translating what has no English</a>
+        <a href="#approach">The translation approach</a>
+        <a href="#measure">How it is measured</a>
+        <a href="#next">The next sources</a>
+      </p>
+
+      <h2 id="picture">The whole path, in one picture</h2>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 760 676"
+          role="img"
+          aria-labelledby="path-t"
+        >
+          <title id="path-t">
+            Three kinds of source enter the path. Editions that already have a
+            free English go straight to an edition record. Original-language
+            editions with no free English, and dated readings of ancient Near
+            Eastern texts, go through the draft pipeline first. Every edition
+            record is published as a signed work on Source Publishing, read
+            back, then indexed and described in the writings ontology, and
+            served by the Scripture agent to the Seed reader and the workbench.
+          </title>
+          <defs>
+            <marker
+              id="wa"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+            <marker
+              id="wa-hot"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow hot" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="40" y="32">
+            From a source edition to a verse in the reader
+          </text>
+
+          <!-- edges -->
+          <path class="edge" d="M150 124V264" marker-end="url(#wa)" />
+          <path class="edge hot" d="M390 124V148" marker-end="url(#wa-hot)" />
+          <path
+            class="edge hot"
+            d="M620 124V188H502"
+            marker-end="url(#wa-hot)"
+          />
+          <path class="edge hot" d="M390 228V264" marker-end="url(#wa-hot)" />
+          <path class="edge" d="M380 320V348" marker-end="url(#wa)" />
+          <path class="edge" d="M205 420V460" marker-end="url(#wa)" />
+          <path class="edge" d="M555 420V460" marker-end="url(#wa)" />
+          <path class="edge" d="M205 548V588" marker-end="url(#wa)" />
+          <path class="edge" d="M555 548V588" marker-end="url(#wa)" />
+
+          <!-- row 1: sources -->
+          <rect
+            class="box plain"
+            x="40"
+            y="52"
+            width="220"
+            height="72"
+            rx="10"
+          />
+          <text
+            x="150"
+            y="74"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Editions with free English
+          </text>
+          <text class="sub" x="150" y="93" text-anchor="middle">
+            Charles · Whiston · ANF/NPNF
+          </text>
+          <text class="sub" x="150" y="109" text-anchor="middle">
+            Sefaria's open versions · Brenton
+          </text>
+
+          <rect
+            class="box plain"
+            x="280"
+            y="52"
+            width="220"
+            height="72"
+            rx="10"
+          />
+          <text
+            x="390"
+            y="74"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Originals with no free English
+          </text>
+          <text class="sub" x="390" y="93" text-anchor="middle">
+            Migne's Greek and Latin · Weimar
+          </text>
+          <text class="sub" x="390" y="109" text-anchor="middle">
+            Sefaria's rabbinic Hebrew
+          </text>
+
+          <rect
+            class="box plain"
+            x="520"
+            y="52"
+            width="200"
+            height="72"
+            rx="10"
+          />
+          <text
+            x="620"
+            y="74"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Dated readings
+          </text>
+          <text class="sub" x="620" y="93" text-anchor="middle">
+            ANE transliterations in the
+          </text>
+          <text class="sub" x="620" y="109" text-anchor="middle">
+            public domain, since corrected
+          </text>
+
+          <!-- row 2: draft pipeline -->
+          <rect
+            class="box seed"
+            x="280"
+            y="148"
+            width="220"
+            height="80"
+            rx="10"
+            style="stroke: var(--accent); stroke-width: 2"
+          />
+          <text
+            x="390"
+            y="170"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Our draft pipeline
+          </text>
+          <text class="sub" x="390" y="188" text-anchor="middle">
+            draft · clause critic · revise
+          </text>
+          <text class="sub" x="390" y="204" text-anchor="middle">
+            witness · notes · relations
+          </text>
+          <text class="lbl" x="390" y="220" text-anchor="middle">
+            labelled a draft on every unit
+          </text>
+          <text class="lbl" x="612" y="206" text-anchor="middle">
+            with its date
+          </text>
+
+          <!-- row 3: edition record -->
+          <rect
+            class="box found"
+            x="40"
+            y="268"
+            width="680"
+            height="52"
+            rx="10"
+          />
+          <text
+            x="380"
+            y="289"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Edition record: one per edition, outside every repository
+          </text>
+          <text class="sub" x="380" y="308" text-anchor="middle">
+            units with locators · licence and its evidence · snapshot hash ·
+            work date with its basis · status
+          </text>
+
+          <!-- row 4: publish -->
+          <rect
+            class="box domain"
+            x="40"
+            y="352"
+            width="680"
+            height="68"
+            rx="10"
+          />
+          <text
+            x="380"
+            y="373"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Source Publishing (publishing.faithnet.io)
+          </text>
+          <text class="sub" x="380" y="391" text-anchor="middle">
+            one writing-text work per edition · one signed block per citable
+            unit
+          </text>
+          <text class="sub" x="380" y="408" text-anchor="middle">
+            [[Josephus, Antiquities 1.3.1 | Gen.6.4]] · read back, commitments
+            recomputed, receipt written
+          </text>
+
+          <!-- row 5: index + ontology -->
+          <rect
+            class="box agent"
+            x="40"
+            y="464"
+            width="330"
+            height="84"
+            rx="10"
+          />
+          <text
+            x="205"
+            y="486"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Indexes (D1 + Vectorize)
+          </text>
+          <text class="sub" x="205" y="504" text-anchor="middle">
+            by verse · by name · by source word
+          </text>
+          <text class="sub" x="205" y="520" text-anchor="middle">
+            by meaning · chapter record · book windows
+          </text>
+          <text class="lbl" x="205" y="538" text-anchor="middle">
+            derived, rebuildable, one writer
+          </text>
+
+          <rect
+            class="box found"
+            x="390"
+            y="464"
+            width="330"
+            height="84"
+            rx="10"
+          />
+          <text
+            x="555"
+            y="486"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Writings ontology (GraphDB)
+          </text>
+          <text class="sub" x="555" y="504" text-anchor="middle">
+            work · edition · witness · span
+          </text>
+          <text class="sub" x="555" y="520" text-anchor="middle">
+            alignment · canon classification
+          </text>
+          <text class="lbl" x="555" y="538" text-anchor="middle">
+            records only, never a triple per block
+          </text>
+
+          <!-- row 6: served -->
+          <rect class="zone" x="40" y="592" width="680" height="64" rx="10" />
+          <text
+            x="380"
+            y="614"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Scripture agent (scripture-resolver.svc)
+          </text>
+          <text class="sub" x="380" y="632" text-anchor="middle">
+            passage-writings · verse-associations · ask-writings
+          </text>
+          <text class="sub" x="380" y="648" text-anchor="middle">
+            → the Seed reader's Writings pane and Discover · the workbench's
+            writings card and Ask
+          </text>
+        </svg>
+        <figcaption>
+          Every writing follows one path. The only difference between a writing
+          that already has a free English and one that does not is the draft
+          pipeline (orange), and a drafted writing says on every unit that it is
+          a draft. Everything below the publishing gateway is derived from the
+          published works and can be rebuilt from them.
+        </figcaption>
+      </figure>
+
+      <h2 id="rights">What we may hold, and what that decides</h2>
+      <p>
+        Rights are recorded <strong>per edition</strong>, never per author: a
+        Greek text of Josephus and Whiston's English are two editions with two
+        licences. The licence decides three things: whether a source is
+        published as a work at all, which partition it is indexed in, and
+        whether an answer may quote it.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Licence of the edition</th>
+              <th>Published as a work?</th>
+              <th>Indexed?</th>
+              <th>Quoted in an answer?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Public domain · CC0 · CC BY</td>
+              <td>Yes, free lane</td>
+              <td>Yes</td>
+              <td>Yes, with attribution</td>
+            </tr>
+            <tr>
+              <td>CC BY-SA (Wikisource transcriptions)</td>
+              <td>Yes, flagged share-alike</td>
+              <td>Yes; derived records stay share-alike</td>
+              <td>Yes, with attribution</td>
+            </tr>
+            <tr>
+              <td>CC BY-NC (Open Dead Sea, ETCSL)</td>
+              <td>Yes, non-commercial lane only</td>
+              <td>Yes, in its own partition</td>
+              <td>Yes; never in a paid lane, never a translation input</td>
+            </tr>
+            <tr>
+              <td>By permission (a study Bible's notes)</td>
+              <td>Yes, terms on the edition record</td>
+              <td>Yes, in a partition never exported</td>
+              <td>As the permission allows</td>
+            </tr>
+            <tr>
+              <td>Unknown or all rights reserved</td>
+              <td><strong>No.</strong> A work record only</td>
+              <td>Title and date only</td>
+              <td>Cited, never quoted</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        That last row is the reason the translation programme exists. Most of
+        what Charlesworth, Pritchard's <em>ANET</em>, Soncino and the modern
+        critical editions contain cannot be held. Where the
+        <strong>original-language text</strong> is in the public domain, we can
+        hold the original and make our own English from it.
+      </p>
+
+      <h2 id="publish">Publishing: one work per edition, one block per unit</h2>
+      <ol class="steps">
+        <li>
+          <strong>Snapshot.</strong> One importer per edition fetches the source
+          once and pins its bytes, with their hash, under
+          <code>~/eval-store/</code> (never in a repository). The licence is
+          stored with its evidence URL. A rerun reads the snapshot, not the web,
+          so a source that changes upstream never changes a published work
+          silently.
+        </li>
+        <li>
+          <strong>Cut into citable units.</strong> The unit is the edition's own
+          smallest citable piece: a verse of 1 Enoch (Charles numbers them,
+          including his transposed <code>6a.</code>/<code>7c.</code>), a section
+          of Josephus, one comment of Rashi on one verse, a paragraph of
+          Augustine, a scroll line. Free-standing editor's notes are their own
+          units. A note marker the source lost is never re-attached by guess.
+        </li>
+        <li>
+          <strong>Place on a verse by citation only.</strong> A unit is linked
+          to a verse <em>only</em> when its own text or its editor's notes cite
+          the verse ("Gen. vi. 4", "Genesis 6:4", "Jude 6, 7"), when the
+          publisher's own structure says so (Sefaria's reference for a Rashi
+          comment), or when the owner's research atlas names the link. Nothing
+          is placed by similarity. Hebrew-numbered sources are converted to the
+          English numbering through the pinned versification file, and a verse
+          outside the canon is a refusal at publish time, never a silent miss.
+          The method of every link travels with it: text citation, note
+          citation, publisher structure, atlas.
+        </li>
+        <li>
+          <strong>Write the edition record.</strong> One record per edition:
+          title, editor or translator, the publication, the licence and its
+          evidence, the snapshot pin and hash, the work's date
+          <em>with its basis</em> (atlas, chronology, or the edition's own
+          statement; undated if none of them dates it), its group, and the
+          status of the English.
+        </li>
+        <li>
+          <strong>Publish.</strong> The edition becomes a
+          <code>writing-text</code> work on Source Publishing, under the
+          publisher identity <code>@demo-admin-1</code>: a README part (the
+          front matter above) and one part per book or volume, at most 1.5 MB
+          each. Each block is headed by its label, which carries the edition's
+          own locator and, where placed, the verses it bears on:
+          <pre><code>[[Rashi on Genesis 6:4 | Gen.6.4]]
+[[1 Enoch 6:2 | Gen.6.2]]
+[[City of God XV.23 ¶4 | Gen.6.1-4]]
+[[Against Celsus IV.ii]]            ← no verse: found by its own locator</code></pre>
+          The gateway parses every label as it publishes and writes the verse
+          index and the locator index. It refuses a label it cannot read.
+        </li>
+        <li>
+          <strong>Read it back, then write the receipt.</strong> A success
+          response is not proof. Every part is read back from the gateway and
+          its commitment is recomputed. Only then does the work enter the
+          receipt (<code>published.json</code>), which is what the indexer
+          reads. A partial edition that a complete one replaces is
+          <em>withdrawn</em> (a tombstone), never deleted.
+        </li>
+      </ol>
+      <div class="note">
+        <p>
+          <strong>Today:</strong> 150 works from 89 editions are live and in the
+          receipt. They include the Pseudepigrapha (Charles), Josephus
+          (Whiston), the deuterocanon (Brenton), the Testaments of the Twelve,
+          the Apostolic Fathers, the Sefaria commentators and Targums across the
+          Hebrew Bible (one edition per commentator, language and licence), the
+          Ante-Nicene and Nicene Fathers by volume, and the programme's own
+          drafts. The Dead Sea Scrolls (1,027 manuscripts) are published the
+          same way, as 28 works in the non-commercial lane.
+        </p>
+      </div>
+
+      <h2 id="index">Indexing</h2>
+      <p>
+        The indexer reads the published works back and writes six projections:
+        <strong>by verse</strong> (with the method of each link),
+        <strong>by name</strong> (persons, places and things the knowledge base
+        holds, with ambiguity kept, so four Johns stay four),
+        <strong>by source word</strong> (a Strong's number and its Septuagint
+        equivalent, so a word reaches its verses with no English in between),
+        <strong>by meaning</strong> (a multilingual embedding, bge-m3, in
+        Vectorize, with one fixed score floor),
+        <strong>the chapter record</strong> and
+        <strong>the book windows</strong>. It is the only writer, and every unit
+        carries its work's date with the basis for it, its licence, its
+        partition and a link to its signed block. About 242,000 units are
+        indexed today. The full table, with sizes, is on the
+        <a href="/architecture/harness/#indexes">Scripture harness</a> page.
+      </p>
+      <p>
+        One rule is decided by code at query time:
+        <strong>layer</strong>. Each book of the Bible has a date window (its
+        composition end, else its earliest witness, else its earliest dated
+        copy). A writing dated inside the window is the passage's
+        <em>own period</em>. A writing dated after it is a
+        <em>later reading</em> and is shown as reception. A writing with no date
+        is <em>undated</em>, and is never placed. Nothing in the later layer is
+        ever given to the Bible translation's drafter.
+      </p>
+
+      <h2 id="ontology">The ontology: textual sources and writings</h2>
+      <p>
+        The writings are described by two bounded contexts, authored as Turtle
+        in the skills repository and mirrored in GraphDB. Until 27 October 2026
+        one domain, <em>scripture-writings</em>, held both the Bible's own
+        copies and every other text; it was
+        <a href="/architecture/ontology/domains/">split</a> that day.
+        <strong>Textual sources</strong> (<code>txt:</code>,
+        <code>https://skills.demo/textual-sources#</code>) is the upper domain:
+        the classes below, which any text shares.
+        <strong>Writings</strong> (<code>wrt:</code>,
+        <code>https://skills.demo/writings#</code>) holds everything that is not
+        the Bible — its records in the A-box namespace <code>wrtx:</code> and
+        the scroll compositions in <code>wrtd:</code>. The Bible's own witnesses
+        stay in the Scripture domain: the canon's A-box is <code>scrc:</code>,
+        the biblical scroll lines <code>scrd:</code>. All of it inherits from
+        the <a href="/architecture/ontology/">agentic-trust upper ontology</a>,
+        which grounds on DOLCE, PROV-O and the Web Annotation model. The upper
+        domain separates five things that are easy to merge by mistake:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>What it is</th>
+              <th>Grounded on</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>txt:SourceWork</code></td>
+              <td>
+                The work as composed: author, language, group, composition date
+                range with its argument, attribution certainty, the register
+                entry and the chronology key.
+              </td>
+              <td>
+                <code>dul:InformationObject</code>, <code>prov:Entity</code>
+              </td>
+              <td>1 Enoch; Seder Olam Rabbah</td>
+            </tr>
+            <tr>
+              <td><code>txt:TextEdition</code></td>
+              <td>
+                One edition of a work: editor, translator, language, where it
+                was published, the licence and its evidence, the allowed
+                operations, the export partition, when and from where it was
+                acquired, the snapshot hash, and its published form (a
+                <code>wrt:PublishedWriting</code>: the work's address, version
+                and parts on Source Publishing, recorded only after every part
+                was read back).
+              </td>
+              <td><code>at:InformationArtifact</code></td>
+              <td>Whiston's <em>Antiquities</em> (1737, public domain)</td>
+            </tr>
+            <tr>
+              <td><code>txt:TextualWitness</code></td>
+              <td>
+                A physical carrier of a text: date, where it is held, its
+                preservation. A witness date is never guessed.
+              </td>
+              <td><code>at:InformationArtifact</code></td>
+              <td>the Great Isaiah Scroll, 1QIsaᵃ</td>
+            </tr>
+            <tr>
+              <td><code>txt:SourceSpan</code></td>
+              <td>
+                A located piece of an edition or a witness. It stores text only
+                where the edition allows <code>store</code>; otherwise it says
+                <code>textUnavailable</code>.
+              </td>
+              <td>
+                <code>oa:SpecificResource</code>, <code>prov:Entity</code>
+              </td>
+              <td>1QIsaᵃ 33:2</td>
+            </tr>
+            <tr>
+              <td><code>txt:PassageAlignment</code></td>
+              <td>
+                The claim that a span bears on a passage: the relation (cites ·
+                quotes · comments-on · retells · parallels · witness), the
+                method, and the status (proposed · reviewed · quarantined).
+              </td>
+              <td><code>at:Observation</code></td>
+              <td>Jubilees 5 retells Gen 6, by Charles's margin</td>
+            </tr>
+            <tr>
+              <td><code>txt:CanonClassification</code></td>
+              <td>
+                Which community counts a work as canonical, and since when. It
+                is a classification of the work, never a property of it.
+              </td>
+              <td><code>dul:Classification</code></td>
+              <td>1 Enoch: canonical in the Ethiopian Orthodox Church</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The rights vocabularies (<code>txt:AllowedOperation</code>: read · quote
+        · store · export-by · export-sa · reference-only;
+        <code>txt:ExportPartition</code>: by · sa · licensed · restricted) are
+        SKOS concept schemes in the upper domain. They are the same values the
+        indexer filters on, so a paid lane can never retrieve a non-commercial
+        text.
+      </p>
+      <div class="layer">
+        <h3>
+          <span class="chip found">design rule</span> GraphDB holds records, D1
+          holds blocks
+        </h3>
+        <p>
+          The graph holds
+          <strong>work, edition, witness and alignment records</strong>, never a
+          triple per published block. A block-level A-box would be millions of
+          triples that say nothing a D1 row does not already say. It would also
+          feed the store's reasoner, which has already filled the disk once
+          through a single symmetric and transitive DOLCE relation. The Dead Sea
+          Scrolls are the precedent: their own named graph holds one file per
+          manuscript (the manuscript as a witness, its spans with
+          <code>textUnavailable</code>, and its alignments) and no text.
+        </p>
+        <dl>
+          <dt>Source</dt>
+          <dd>
+            <code>ontology/textual-sources.ttl</code> (the upper T-box and
+            shapes); <code>ontology/writings.ttl</code> with
+            <code>writings.data.ttl</code> (vocabularies and the work records
+            projected from the chronology), <code>writings.dss/</code> (the
+            scroll compositions), <code>writings.sa.ttl</code> (the share-alike
+            partition) and <code>writings.published.ttl</code> (the published
+            works and the programme's translations);
+            <code>ontology/scripture.canon.ttl</code> for the canon's own copies
+          </dd>
+          <dt>Generated</dt>
+          <dd>
+            the work A-box and the canon A-box by
+            <code>build-writings-abox.py</code> from the reference chronology,
+            the scroll A-boxes by <code>build-dss-abox.py</code>, the published
+            records by <code>receipt.py</code> after every read-back
+          </dd>
+          <dt>Gate</dt>
+          <dd>
+            preflight holds the A-boxes to a fresh build and to their SHACL
+            shapes before anything is pushed, and <code>preflight --live</code>
+            confirms the store serves the same source
+          </dd>
+          <dt>In the store (27 October 2026)</dt>
+          <dd>
+            textual-sources 530 triples; writings 135, its data 20,365, the
+            scroll compositions 225,024, the share-alike partition 3,284, the
+            published records 3,917 (179 published works, 26 of them the
+            programme's own translations); the Scripture canon 1,450 and the
+            biblical scroll lines 191,677
+          </dd>
+          <dt>Done</dt>
+          <dd>
+            an edition record for every published edition, its published form as
+            a <code>wrt:PublishedWriting</code>, and the status of a drafted
+            English (below) as a controlled value on a
+            <code>wrt:ProgrammeTranslation</code> (machine draft, model-revised,
+            or reviewed), not only a string on its translator line
+          </dd>
+        </dl>
+      </div>
+
+      <h2 id="translate">Translating what has no free English</h2>
+      <p>
+        Much of what was written around Scripture in its own period, and much of
+        what was written about it soon after, has never been translated into
+        English, or only into an English still in copyright. The programme
+        drafts its own English
+        <strong>from a public-domain original-language edition</strong>,
+        publishes it under CC BY 4.0 (CC BY-SA 4.0 where the transcription it
+        was made from is share-alike), and places it beside the open-licence
+        works through the same path. Before drafting, it checks what free
+        English exists. Seder Olam Rabbah is the example: the Sefaria community
+        translation (CC0) covers about a third of chapters 1–2, Feuer's (CC BY)
+        chapter 3 only, nothing covers chapter 4, and Guggenheimer's 1998
+        English is in copyright.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Work drafted</th>
+              <th>Made from</th>
+              <th>Units · notes</th>
+              <th>Published</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                John Chrysostom, <em>Homilies on Genesis</em> 22–25 (Gen
+                6:1–7:24), c. AD 388
+              </td>
+              <td>
+                Migne, <em>Patrologia Graeca</em> 53 (1862), the Greek column,
+                from a scan's OCR
+              </td>
+              <td>101 · 400</td>
+              <td>yes</td>
+            </tr>
+            <tr>
+              <td>
+                Martin Luther, <em>Lectures on Genesis</em> on Gen 6:1–4,
+                1535–1545
+              </td>
+              <td>Weimar edition vol. 42 (1911), Latin, from a scan's OCR</td>
+              <td>7 · 30</td>
+              <td>yes</td>
+            </tr>
+            <tr>
+              <td>
+                George Syncellus, <em>Chronography</em>: the Watchers and the
+                Greek Enoch excerpt, c. AD 808–810
+              </td>
+              <td>
+                Dindorf (Bonn, 1829), Greek with Goar's facing Latin, from a
+                scan's OCR
+              </td>
+              <td>5 · 21</td>
+              <td>yes</td>
+            </tr>
+            <tr>
+              <td>
+                Yalkut Shimoni, Bereshit §44 (Shemhazai and Azael), 13th century
+              </td>
+              <td>Hebrew Wikisource's transcription (CC BY-SA)</td>
+              <td>2 · 14</td>
+              <td>yes</td>
+            </tr>
+            <tr>
+              <td>
+                Seder Olam Rabbah 1–4 (Adam to Abraham), 2nd century as
+                transmitted
+              </td>
+              <td>Seder Olam, Warsaw 1904, as Sefaria carries it (PD)</td>
+              <td>6 · 14</td>
+              <td>drafted, not yet published</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Every drafted unit carries the original beside it and a status line that
+        says exactly what was done:
+      </p>
+      <pre><code>machine-aided draft from the Ancient Greek, claude-haiku-5-5: drafted, then checked
+and revised against the original by the model; not yet reviewed by a person</code></pre>
+      <p>
+        A drafted edition has one of three statuses, and only a person can move
+        it to the third:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="chip domain">machine-draft</span></td>
+              <td>one model pass, not checked</td>
+            </tr>
+            <tr>
+              <td><span class="chip agent">model-revised</span></td>
+              <td>
+                drafted, then checked clause by clause and revised against the
+                original by the model; no person has reviewed it
+              </td>
+            </tr>
+            <tr>
+              <td><span class="chip found">human-reviewed</span></td>
+              <td>a person reviewed it against the named edition</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="approach">The translation approach, in detail</h2>
+      <p>
+        The aim is an English that a scholar can read next to the original and
+        trust to say what the original says: faithful, plain, and with every
+        place where the English had to decide something marked in a note. Five
+        commitments shape every step.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Translate the witness, not a better text.</strong> The English
+          renders the text as this edition prints it. If a number or a name
+          looks wrong, the printed reading stays in the English and the doubt
+          goes into a note. (The first Seder Olam draft quietly changed an age
+          from fourteen to three "as emended"; in a chronicle, that is fatal.)
+        </li>
+        <li>
+          <strong>No English Bible in the room.</strong> When a writing quotes
+          Scripture, the drafter translates the words in front of it and never
+          substitutes the wording of an English Bible. Notes explain and never
+          quote one.
+        </li>
+        <li>
+          <strong>Code decides what code can decide.</strong> The model drafts,
+          criticises and revises. Code checks coverage, script, length,
+          emendation markers, quoted claims and kinship, and refuses a result
+          that fails. A model is never the gate.
+        </li>
+        <li>
+          <strong>Never silent, never changing.</strong> Every passage is cached
+          by a hash of the model, the pipeline version and the original text. A
+          rerun costs nothing and a published draft never changes without a new
+          pipeline version.
+        </li>
+        <li>
+          <strong>One pipeline, written as data.</strong> Every prompt, tool
+          schema and code rule lives in one file,
+          <code>writings-pipeline.json</code> (currently
+          <code>v2i-relation-triples</code>). The importer and the translation
+          runtime's writings steps both read it, so no prompt exists in two
+          places. All model calls use Claude Haiku 5.5.
+        </li>
+      </ol>
+
+      <h3>Getting the original into passages</h3>
+      <p>
+        Most originals reach us as scans of 19th-century printed editions, and
+        OCR is the first source of error. The cutting is done per edition, by
+        code, from marks that can be trusted:
+      </p>
+      <ul>
+        <li>
+          <strong>Find reliable marks, not headings.</strong> In Migne's
+          Chrysostom, the OCR misread the homily numbers (ΚΕ΄ came out as
+          "ΟἌΠΛΙΑ Κ΄."), and the first cut put four homilies under Homily 22's
+          title. A homily's first section mark, α΄. on a line of its own after
+          the Scripture lemma, is reliable. The cut now runs from the blank line
+          before each lemma to the next one.
+        </li>
+        <li>
+          <strong>Keep one language.</strong> Migne prints a Greek column and a
+          facing Latin translation, and the OCR reads the Latin as Greek
+          capitals. Only lines that read as Greek prose (mostly Greek letters,
+          mostly lower case with accents) are kept. In Dindorf's Syncellus the
+          Latin is kept, but only to resolve OCR damage, and the critical
+          apparatus is skipped.
+        </li>
+        <li>
+          <strong>Strip what is not text.</strong> Margin line numbers (the
+          Weimar Luther), running headers, page numbers and apparatus lines.
+        </li>
+        <li>
+          <strong>Cut at sentence ends.</strong> A passage is about 1,800–2,600
+          characters, closed at a full stop, colon, semicolon, Greek ano teleia
+          or Hebrew sof pasuq, so no sentence is split across two passages. A
+          work in chapters is drafted chapter by chapter, and each chapter
+          becomes a part with its own locator.
+        </li>
+      </ul>
+
+      <h3>The six steps for each passage</h3>
+      <ol class="steps">
+        <li>
+          <strong>Draft, with the tradition's terms in view.</strong> The
+          drafter is given the passage, a short note on what the text is (for
+          example "the numbers, the names and the scripture quotations carry the
+          sense; keep the arithmetic exact"), and only those entries of the
+          translation glossary whose source form occurs in the passage (for
+          example יצר הרע → "the evil inclination", with the transliteration
+          given once in a note). It is told the three faults a literal pass
+          makes: flattening a term of art, rendering an idiom or euphemism word
+          for word, and confusing look-alike roots. OCR damage it cannot resolve
+          is marked <code>[?]</code> and an unreadable passage
+          <code>[illegible]</code>.
+        </li>
+        <li>
+          <strong>A critic that walks every clause.</strong> A second call reads
+          the original against the draft, in windows of about 400 characters,
+          and accounts for <em>every clause in order</em>: the draft's English
+          for it, the root of each content word and its alternatives, and any
+          fault, classed as one of nine kinds: term-of-art, idiom, lexical,
+          sense, omission, addition, OCR, name, scripture. Code checks that the
+          clauses it returned cover the original, and asks again if they do not.
+          (A critic asked for "faults" skimmed and missed three of the four the
+          outside review found. One asked to account for every clause has to
+          look at each.)
+        </li>
+        <li>
+          <strong>Revise, with translator's notes.</strong> A third call fixes
+          every fault it agrees with, keeps the rest of the draft as it is, and
+          attaches a translator's note, anchored to the exact English words,
+          wherever the English settles a euphemism, a disputed reading or a term
+          of art. Code refuses a revision that is still in the source script or
+          has lost a third of the draft's length, and keeps the draft.
+        </li>
+        <li>
+          <strong>Restore the witness.</strong> Code looks for emendation
+          markers in the English ("so the emended text", "read …"). Where it
+          finds one, a call puts the printed reading back and moves the doubt
+          into a note that says what the printed text has, why it is doubted,
+          and what editors read.
+        </li>
+        <li>
+          <strong>Hold every note to the source.</strong> A note may gloss a
+          word, name a term, explain an idiom or state a textual doubt. It may
+          not add a genealogical, historical or geographical claim the passage
+          does not make. Each note is split into its factual claims, each
+          pronoun is resolved to the person the English sentence means, and each
+          claim must quote the exact words of the English or the original that
+          state it. Code keeps a note only if every quoted claim is really
+          there. (A note once said "Yoktan is Eber's brother"; the passage's
+          "his brother" is Peleg's.)
+        </li>
+        <li>
+          <strong>Decide kinship and ages by code.</strong> The notes check's
+          answer to "do these words state the claim?" changed from one run to
+          the next, so it no longer decides the claims a chronicle cannot get
+          wrong. For a kinship claim in a note, one narrow call lists the
+          relations (person, relation, of whom) stated by the single English
+          sentence that holds the quoted words, with each pronoun resolved
+          inside that sentence. A second call lists the relations in the claim
+          the same way. Code keeps the claim only if its relations are among the
+          sentence's. For an age or a span of years, months, days or
+          generations, code alone holds every number in the claim to a number
+          the English or the original carries. A bare number, such as a
+          scripture citation, is not held this way.
+        </li>
+      </ol>
+      <div class="note">
+        <p>
+          <strong>Every step came from a found fault.</strong> v2 came from an
+          outside review of the Yalkut draft (four kinds of fault a literal pass
+          makes). v2b, the clause-by-clause critic, came from a critic that
+          skimmed. v2d, the witness and notes steps, came from the Seder Olam
+          draft's emended age and its wrong note. v2e, quoted claims, came from
+          a notes check that "corrected" a wrong note into a worse one. The fix
+          goes into the step that should have caught the fault, never into the
+          draft by hand.
+        </p>
+      </div>
+      <h3>What the outside reviews added (October 2026)</h3>
+      <p>
+        Two outside reviews of the published drafts (Sifra on Leviticus 1 and 2;
+        the Testament of Solomon against Conybeare's 1898 English) found that
+        what passed every step above was not vocabulary. It was grammar and
+        direction: a feminine demon made male where a chunk ended, a boast made
+        a prohibition, a possessor the Greek never attaches ("my liver"), a
+        condition dropped, the addressee made the speaker, and an argument whose
+        every term was right run backwards. Three things were added, none of
+        them a stronger model.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>A knowledge sheet, cut to the passage.</strong> For each work
+          a file of terms of art in the sense they have in that domain (the
+          source spellings, the context words that must also occur, the
+          rendering, the renderings that flatten it), the hermeneutic formulae
+          with the move each makes ("Scripture says" settles a question; "one
+          might think" raises a reading to be rejected), and the persons named
+          (a name, never a kinship word). Code filters the sheet to the words a
+          passage actually contains, the drafter and the critic read that slice,
+          and deterministic checks hold the English to it. In the ontology these
+          are <code>wrt:KnowledgeSheet</code>, <code>wrt:SheetTerm</code>,
+          <code>wrt:HermeneuticFormula</code> and <code>wrt:NamedPerson</code>;
+          the sheets are projected to a graph (<code>writings.kb.ttl</code>)
+          beside the held units.
+        </li>
+        <li>
+          <strong>Two blind readings, compared by code.</strong> The draft's
+          clauses are numbered and read twice by the same cheap model: the
+          original's clauses with no English in sight, the English's clauses
+          with no original in sight. Each reading gives every clause its actor,
+          the actor's gender and person, action, object, possessor, whether it
+          is negated or conditional, and its modality (statement, question,
+          command, wish, boast), and then the argument's steps with the effect
+          each has on the step before (reverses, limits, upholds). Code aligns
+          the two by clause number; a disagreement is a finding the reviser must
+          settle, and after the revision the revised clauses are read and
+          compared again. A formula on the sheet also predicts what the reading
+          must show ("one might think" opens a proposal the next step reverses;
+          "from where?" is a question), so the sheet's own knowledge catches a
+          reversed argument. The classes are <code>wrt:ClauseRelation</code> and
+          <code>wrt:ArgumentStep</code>; a note that settles a reading carries a
+          <code>wrt:TextualDecision</code> (the base reading, the reading
+          rendered, whose it is: the transcription's, an editor's, a
+          conjecture).
+        </li>
+        <li>
+          <strong>A gate, and gaps shown where they are.</strong> At assembly a
+          unit is held back when the fidelity judge reads a meaning change, a
+          major check fails (a sheet term, a formula, a speaker, a citation, a
+          relation, an argument's direction, a reading without its decision), or
+          the English is unintelligible. A held unit is printed in its place in
+          the original with a marker, so the reader meets the gap where it is,
+          and the edition counts coverage apart from accuracy. Held units are
+          revised once against the judge's own findings and judged again; what
+          passes is released and labelled a judge-guided revision, counted apart
+          from the blind arms.
+        </li>
+      </ol>
+      <div class="note">
+        <p>
+          <strong>Why this, and not a bigger model.</strong> A cheap model
+          cannot be trusted to notice that its English reversed a relation, but
+          two cheap readings made blind of each other can be compared by code,
+          and code does not tire. The structure a step must emit is what makes
+          its reading comparable; the ontology names that structure so every
+          step, check and held unit is the same kind of record. A model trained
+          on these languages can later take the drafter's seat without changing
+          any of this.
+        </p>
+      </div>
+
+      <h2 id="measure">How it is measured</h2>
+      <p>
+        Two kinds of evaluation, kept apart. Both are judged by Claude Haiku 5.5
+        three times, and neither has yet been adjudicated by a person, so the
+        numbers are diagnostics, not quality claims.
+      </p>
+      <div class="layer">
+        <h3>
+          <span class="chip agent">review points</span> Does the draft say what
+          a reviewer said it must?
+        </h3>
+        <p>
+          Each point names the source words, what the English must do, and the
+          kind of fault it tests. On Yalkut Shimoni §44, six points: the single
+          literal pass (v1) met 3; every pipeline from v2c on meets 5. The moral
+          comparison ("worse than human beings", not "harsher"), the idiom
+          ("consent", not "listen to me") and the term of art are now right. The
+          lexical point is still missed by every pipeline: שתזכו ("that you may
+          merit") is still read as "remembered".
+        </p>
+      </div>
+      <div class="layer">
+        <h3>
+          <span class="chip found">reference pairs</span> Against a published
+          English the pipeline never sees
+        </h3>
+        <p>
+          For Hebrew works that <em>do</em> have a public-domain English, the
+          pipeline drafts without ever showing that English to the drafter,
+          critic or reviser. Two readings follow. The first is chrF, a
+          character-overlap score, as a closeness diagnostic and never a target.
+          The second is a judge that reads the source, our draft and the held
+          English in random order and says which carries the source's sense,
+          listing each divergence and which side is wrong. A divergence where
+          the held English is wrong is counted, not penalised. A control (the
+          same text on both sides) read "both" on 53 of 54 readings.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Set (held English)</th>
+                <th>Readings</th>
+                <th>chrF v1 → v2</th>
+                <th>Judge: ours · held · both, v1</th>
+                <th>Judge, v2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Pirkei de-Rabbi Eliezer 22–23 (Friedlander 1916)</td>
+                <td>24</td>
+                <td>0.56 → 0.55</td>
+                <td>21 · 2 · 1</td>
+                <td>23 · 1 · 0</td>
+              </tr>
+              <tr>
+                <td>Rashi on Genesis 6 (Rosenbaum–Silbermann 1929)</td>
+                <td>9</td>
+                <td>0.45 → 0.44</td>
+                <td>4 · 4 · 1</td>
+                <td>6 · 1 · 2</td>
+              </tr>
+              <tr>
+                <td>Bereshit Rabbah 26 (Sefaria Midrash Rabbah 2022)</td>
+                <td>18</td>
+                <td>0.56 → 0.57</td>
+                <td>4 · 13 · 1</td>
+                <td>10 · 8 · 0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The critique and revise pipeline moved the judge toward our draft on
+          all three sets while leaving closeness to the held English unchanged.
+          It did not get closer by imitating it. The judge is the same model
+          family as the drafter, which is why these readings wait for a person's
+          adjudication before anyone quotes them as quality. The workbench's
+          Translations page shows each work's review points one by one and the
+          pairs as cards.
+        </p>
+      </div>
+
+      <h2 id="next">The next sources, and the hard case</h2>
+      <p>
+        The pipeline does not change with the source. What changes is how the
+        original is found, cut and dated. Three families come next.
+      </p>
+      <div class="layer">
+        <h3>
+          <span class="chip agent">ready</span> Migne's Greek and Latin: cut and
+          drafted like Chrysostom
+        </h3>
+        <p>
+          The <em>Patrologia Graeca</em> and <em>Patrologia Latina</em> are
+          public domain, and the scans are on the Internet Archive. Each work is
+          cut the way Chrysostom was: locate it by marks the OCR reads reliably
+          (section marks, the Scripture lemma, column numbers), not by headings
+          it garbles; keep the Greek column and drop the facing Latin (or, for a
+          Latin work, the Latin alone, with margin numbers stripped); close
+          passages at sentence ends. Then it goes through the six steps
+          unchanged. A Latin work goes through the same pipeline as Luther's
+          Weimar Latin did. Each importer is a function returning the passages
+          and the edition's metadata, so a new work is one function and its
+          verification of the cut, nothing else.
+        </p>
+      </div>
+      <div class="layer">
+        <h3>
+          <span class="chip agent">ready</span> Sefaria's rabbinic Hebrew:
+          straight through the Seder Olam importer
+        </h3>
+        <p>
+          Sefaria's text arrives already digitised and structured, with each
+          version's licence stated. There is no OCR and no column to separate.
+          The Seder Olam importer fetches a reference in a named version through
+          the snapshotting client, flattens its sections, cuts at sentence ends,
+          drafts chapter by chapter and assembles one edition whose parts are
+          the chapters. Another work is a new entry in its table: the reference,
+          the version name, the date with its basis, and a one-line note on what
+          kind of text it is. Two checks come first: a public-domain or
+          open-licence Hebrew version must exist, and the free English must be
+          missing or incomplete. Where a free English exists, the work goes to
+          the reference-pairs track instead, and becomes a measurement.
+        </p>
+      </div>
+      <div class="layer">
+        <h3>
+          <span class="chip seed">hard case</span> Ancient Near Eastern texts: a
+          draft carries a dated text
+        </h3>
+        <p>
+          For Akkadian, Sumerian and Ugaritic texts, the editions we may hold
+          are old: transliterations and copies published a century or more ago,
+          now in the public domain. The current corpora either restrict their
+          use or are in copyright, and since those old editions appeared, the
+          readings have been corrected. Signs have been re-read, fragments
+          joined, lines restored differently. A faithful draft from an old
+          transliteration is therefore a faithful translation of
+          <strong>that editor's reading, as of that year</strong>, and not of
+          the text as it is read today. The pipeline's first rule, to translate
+          the witness as printed, makes that exact. It also makes it dangerous
+          if the date is not said. So for this family:
+        </p>
+        <ul>
+          <li>
+            <strong>The edition's reading is the witness.</strong> The draft
+            renders the transliteration as printed, including the editor's
+            restorations, which stay marked as restorations. It never "corrects"
+            toward a reading the model remembers from later scholarship. Without
+            an edition, that would be an unattributed emendation.
+          </li>
+          <li>
+            <strong>The date is on every unit.</strong> Each status line says
+            whose reading, and when ("from the transliteration of [editor],
+            [year]"), beside the work's own date. The edition record carries the
+            reading's date as a field of its own, so the reader and the Ask
+            harness can say "a 1902 reading" rather than present it as the text.
+          </li>
+          <li>
+            <strong>Later corrections are referenced, not merged.</strong>
+            Where a current edition we may only cite reads a line differently,
+            the unit can carry a note naming that edition and its line, never
+            its wording. Where the newer reading is under a non-commercial
+            licence that we can hold, it is published as its own edition in the
+            non-commercial lane, and the two are aligned to each other. One is
+            never silently replaced by the other.
+          </li>
+          <li>
+            <strong>It stays out of the Bible translation.</strong> Like every
+            writing, it is evidence for readers and for the Ask harness. It is
+            never an input to the drafter of the Bible.
+          </li>
+        </ul>
+        <p>
+          This family is designed, not yet built. The first work will show
+          whether a status line and a note are enough, or whether a dated
+          reading needs its own status value beside <em>machine-draft</em>,
+          <em>model-revised</em> and <em>human-reviewed</em>.
+        </p>
+      </div>
+
+      <h2>Where it lives</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Where</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Importers, one per edition</td>
+              <td>
+                <code>~/skills/scripts/writings/importers/</code>; our drafts in
+                <code>translations.py</code> and
+                <code>translation_works.py</code>
+              </td>
+            </tr>
+            <tr>
+              <td>The translation pipeline, as data</td>
+              <td>
+                <code>scripts/writings/pipeline/writings-pipeline.json</code>;
+                the glossary in
+                <code
+                  >evaluations/bible-translation/writings/translation-glossary.json</code
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Snapshots, edition records, draft caches</td>
+              <td><code>~/eval-store/</code>, outside every repository</td>
+            </tr>
+            <tr>
+              <td>Published works</td>
+              <td>
+                Source Publishing, <code>publishing.faithnet.io</code>, as
+                <code>@demo-admin-1</code>; the receipt in
+                <code
+                  >evaluations/bible-translation/writings/published.json</code
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Indexes</td>
+              <td>
+                the Scripture data worker's D1 and the Vectorize index
+                <code>scripture-writings-faithnet</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Ontology</td>
+              <td>
+                <code>ontology/textual-sources.ttl</code>,
+                <code>ontology/writings.*</code> and
+                <code>ontology/scripture.canon.ttl</code> in the skills
+                repository, mirrored in GraphDB
+              </td>
+            </tr>
+            <tr>
+              <td>Evaluations</td>
+              <td>
+                <code>translation-eval.py</code>,
+                <code>translation-pairs.py</code>; results in
+                <code>evaluations/results/writings/</code>; the workbench's
+                Translations page
+              </td>
+            </tr>
+            <tr>
+              <td>What the reader sees</td>
+              <td>
+                the Writings pane and Discover in the Seed reader, through the
+                Scripture agent's <code>passage-writings</code>,
+                <code>verse-associations</code> and
+                <code>ask-writings</code> skills
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Built on the agenticprimitives substrate · faithnet estate ·
+        <a href="/">seed-reader.faithnet.io</a>
+      </div>
+    </footer>
+  </body>
+</html>

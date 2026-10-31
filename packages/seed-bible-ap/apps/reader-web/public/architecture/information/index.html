@@ -6,7 +6,7 @@
     <title>Information Architecture</title>
     <meta
       name="description"
-      content="Every kind of data the reader touches, by where it lives: the Home, your personal Library, the Scripture agent's Bible corpora, the published shelf and serving plane, and the publishing agent."
+      content="Every kind of data the reader touches, by where it lives: the Home, your personal Library, the Scripture agent's Bible corpora, the published shelf and Seed registry, and the publishing agent."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -83,7 +83,12 @@
                 <li>Plan progress</li>
                 <li>Playlists · Reading plans</li>
                 <li>Pictures · Church themes</li>
+                <li>Saved places</li>
               </ul>
+              <div class="ia-foot">
+                Your own agent is a publisher too: a private lane for you, a
+                public lane for what you mark public
+              </div>
             </a>
           </div>
 
@@ -100,18 +105,23 @@
                 <li>Church themes</li>
                 <li>Videos, articles, studies</li>
               </ul>
-              <div class="ia-foot">A signed release, still yours</div>
+              <div class="ia-foot">
+                A signed release, still yours · served by your agent's public
+                lane
+              </div>
             </a>
             <a class="ia-node" href="#published">
-              <h3>Serving plane</h3>
+              <h3>Seed registry</h3>
               <code>seed-bible.svc</code>
               <ul>
-                <li>Index by passage</li>
-                <li>Re-crawled every 15 min</li>
-                <li>Link previews</li>
-                <li>Study companion</li>
+                <li>Public releases by passage, every 15 min</li>
+                <li>Catalog of followed publishers' works</li>
+                <li>Withdrawals as tombstones · crawl log</li>
+                <li>Cache of public picture bytes</li>
               </ul>
-              <div class="ia-foot">Only an index: rebuildable</div>
+              <div class="ia-foot">
+                An index and a cache, rebuildable, never the record
+              </div>
             </a>
           </div>
 
@@ -131,6 +141,8 @@
                 <li>Audio with word timings</li>
                 <li>Interpretations</li>
                 <li>Scrolls · Septuagint · parallels</li>
+                <li>Writings indexed by verse, name, source word, meaning</li>
+                <li>The ask harness: evidence in, checked answer out</li>
               </ul>
             </a>
             <a class="ia-node" href="#publishing">
@@ -139,7 +151,13 @@
               <ul>
                 <li>Complete works, signed part by part</li>
                 <li>Dead Sea Scroll lines by verse</li>
-                <li>The Bible lands base map</li>
+                <li>
+                  Writings of the period and later readers: 1 Enoch, Josephus,
+                  the Fathers
+                </li>
+                <li>Study notes by verse: a study Bible, by permission</li>
+                <li>Notes and pictures at a verse: early people groups</li>
+                <li>Places by verse · the Bible lands base map</li>
                 <li>Quote checks</li>
                 <li>The Lausanne Covenant</li>
               </ul>
@@ -149,10 +167,15 @@
 
         <div class="ia-flows" aria-hidden="true">
           <span
-            >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Serving
-            plane</span
+            >Library <b>→ publish →</b> Public shelf <b>→ crawl →</b> Seed
+            registry (Seed registry)</span
           >
           <span>Publishing agent <b>→ affirm →</b> Home</span>
+          <span
+            >Snapshots <b>→ publish →</b> Publishing agent
+            <b>→ index →</b> Scripture agent <b>→ harness →</b> a checked
+            answer</span
+          >
         </div>
 
         <div class="ia-anchor">
@@ -167,15 +190,25 @@
             <li class="c-signed">its wording in 10 editions</li>
             <li class="c-signed">cross-references</li>
             <li class="c-signed">Dead Sea Scroll copies</li>
+            <li class="c-signed">writings that cite it</li>
+            <li class="c-signed">study notes</li>
+            <li class="c-signed">the places it names</li>
           </ul>
         </div>
         <figcaption>
           Figure 1. The reader's data grouped by who owns it. Private data and
-          shared data are yours, written only by your own agent; trusted sources
-          are signed by their publishers and checked on your device. Each card
-          links to its section below.
+          shared data are yours, written only by your own agent, which also
+          answers as a publisher; trusted sources are signed by their publishers
+          and checked on your device. Writings outside Scripture are published
+          as signed works, indexed on the Scripture agent, and read by its ask
+          harness. Each card links to its section below.
         </figcaption>
       </figure>
+      <p>
+        How those writings are published, described in the ontology, and
+        translated where no free English exists:
+        <a href="/architecture/writings/">Period writings</a>.
+      </p>
 
       <p class="toc" style="margin-top: 24px">
         <a href="#home">1. Home</a>
@@ -192,9 +225,9 @@
           <strong>One rule ties them together.</strong> Your own data is written
           only by your own agent, in your Home and Library. The reader and its
           workspace keep nothing of yours that counts; Bible text is never
-          copied into your records (a mark points at a passage); and the serving
-          plane is only an index, which can be rebuilt from the public shelves
-          at any time.
+          copied into your records (a mark points at a passage); and the Seed
+          registry is only an index, which can be rebuilt from the public
+          shelves at any time.
         </p>
       </div>
 
@@ -728,8 +761,14 @@
             </tr>
             <tr>
               <td><strong>Writings around a passage</strong></td>
-              <td>Period writings and teaching resources tied to a chapter</td>
-              <td>Discover</td>
+              <td>
+                Period writings, later readers' notes and commentary tied to a
+                chapter; behind them, the writings indexes (by verse, name,
+                source word and meaning) and the
+                <a href="/architecture/harness/">ask harness</a> that answers a
+                question from that evidence
+              </td>
+              <td>Discover; Writings; the workbench's Ask</td>
             </tr>
             <tr>
               <td><strong>Knowledge graph</strong></td>
@@ -748,8 +787,8 @@
 
       <!-- 4. PUBLISHED -->
       <h2 id="published">
-        <span class="chip agent">4</span> Workspace — published context (serving
-        plane)
+        <span class="chip agent">4</span> Workspace — published context (Seed
+        registry)
       </h2>
       <p>
         Anything you or a church chooses to share. Publishing does two things:
@@ -758,7 +797,7 @@
         >
         in your Library, as JSON-LD plus a readable Markdown page) and signs a
         release of it. The record stays yours. The
-        <strong>serving plane</strong> (<code>seed-bible.svc</code>) then finds
+        <strong>Seed registry</strong> (<code>seed-bible.svc</code>) then finds
         it and indexes it so others can discover it.
       </p>
       <h3>What can be published</h3>
@@ -820,7 +859,7 @@
           </tbody>
         </table>
       </div>
-      <h3>What the serving plane keeps</h3>
+      <h3>What the Seed registry keeps</h3>
       <div class="table-wrap">
         <table>
           <thead>
@@ -848,17 +887,24 @@
               <td>No harm: refilled from the Libraries</td>
             </tr>
             <tr>
-              <td><strong>Link previews</strong></td>
-              <td>Title and image for links in playlists and notes</td>
-              <td>A cache</td>
+              <td><strong>Works catalog</strong></td>
+              <td>
+                One row per work from each publisher the registry follows, read
+                by <code>publisher.changes</code> every 15 minutes from where
+                the last crawl stopped; never a work's content
+              </td>
+              <td>No harm: read again from a cursor of 0</td>
             </tr>
             <tr>
-              <td><strong>Study companion and transcription</strong></td>
+              <td><strong>Running here, not of this plane</strong></td>
               <td>
-                AI answers about a passage; transcripts of recordings (Workers
-                AI)
+                The study companion (a Workers AI answer about a chapter),
+                transcription of a recording, and link previews. None is an
+                index. Their place is the Scripture agent's ask and the
+                workspace's tools:
+                <a href="/architecture/agentic/#seed-registry">the breakdown</a>
               </td>
-              <td>Not stored as your record</td>
+              <td>Nothing stored as your record</td>
             </tr>
           </tbody>
         </table>
@@ -922,14 +968,22 @@
             <tr>
               <td><strong>Readings by verse</strong></td>
               <td>
-                Every block, across works split by verse, that witnesses a
-                verse. Today this is the <strong>Dead Sea Scroll lines</strong>:
-                Hebrew, an English first draft, status, licence and a citation
-                (verse, work, block, fingerprint)
+                Every block, across works, labelled with the verses it reads,
+                each with its relation to the verse: the
+                <strong>Dead Sea Scroll lines</strong> witness it; the
+                <strong>writings of the period and later readers</strong>
+                (1 Enoch, Josephus, the Testaments, the deuterocanon, Justin,
+                Irenaeus, Origen, Augustine, the Apostolic Fathers) cite it;
+                <strong>study notes</strong> (a study Bible, one work per book,
+                by permission) interpret it;
+                <strong>notes and pictures</strong> (early people groups) teach
+                it; <strong>places</strong> locate it. Every block carries its
+                licence and a citation (verse, work, block, fingerprint)
               </td>
               <td>
-                The reader's Content for a verse and Discover → Scrolls, read by
-                verse and never copied
+                The reader's Content, Interpretations, Writings and Places for a
+                verse, read by verse and never copied; the Scripture agent's
+                indexes and harness
               </td>
             </tr>
             <tr>

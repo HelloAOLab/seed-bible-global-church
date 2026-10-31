@@ -63,19 +63,35 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
   const requested = computed<Friend[]>(
     () => friendsView.value?.requested ?? []
   );
-  /** Friends' published profiles (kind profile in their recent releases), by agent address. */
+  /** Friends' profiles by agent address: first what their own Home profile says (its name and photo, read under the
+   *  grant their friendship offer gave), then what they published (kind profile in their recent releases) where the
+   *  Home profile says nothing. */
   const profiles = computed<Record<string, FriendProfile>>(() => {
     const out: Record<string, FriendProfile> = {};
+    for (const f of [
+      ...(friendsView.value?.friends ?? []),
+      ...(friendsView.value?.requests ?? []),
+    ]) {
+      if (!f.profileName && !f.photo) continue;
+      out[f.agent.toLowerCase()] = {
+        ...(f.profileName ? { displayName: f.profileName } : {}),
+        ...(f.photo ? { picture: f.photo } : {}),
+      };
+    }
+    const published = new Set<string>();
     for (const o of feed.value) {
       if (o.kind !== "profile") continue;
       const w = (o.descriptor as { work?: FriendProfile }).work ?? {};
       const key = o.owner.toLowerCase();
-      if (!out[key])
-        out[key] = {
-          ...(w.displayName ? { displayName: w.displayName } : {}),
-          ...(w.about ? { about: w.about } : {}),
-          ...(w.picture ? { picture: w.picture } : {}),
-        };
+      if (published.has(key)) continue; // the newest release only
+      published.add(key);
+      const home = out[key] ?? {};
+      out[key] = {
+        ...(w.displayName ? { displayName: w.displayName } : {}),
+        ...(w.about ? { about: w.about } : {}),
+        ...(w.picture ? { picture: w.picture } : {}),
+        ...home,
+      };
     }
     return out;
   });
@@ -84,9 +100,20 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
     feed.value.filter((o) => o.kind !== "profile")
   );
 
-  async function refreshContacts() {
+  /** The read in flight: a read takes 10–20 s and a watch asks every few seconds, so asks share one read instead of
+   *  piling up behind each other (seen live: a pile that never let the list show). */
+  let inFlight: Promise<void> | null = null;
+  function refreshContacts(): Promise<void> {
+    if (!inFlight)
+      inFlight = readContacts().finally(() => {
+        inFlight = null;
+      });
+    return inFlight;
+  }
+  async function readContacts() {
     if (!backend.identity()) {
       contacts.value = [];
+      friendsView.value = null; // signed out: nobody's friends stay on the device's screen
       return;
     }
     contactsLoading.value = true;
@@ -99,8 +126,13 @@ export function createToday(backend: ReaderBackend, stores: ReaderStores) {
         friendsView.value = await backend.friends();
         await stores.prefs.set(FRIENDS_KEY, friendsView.value);
         return;
-      } catch {
-        friendsView.value = null;
+      } catch (e) {
+        // A read that fails after one that answered keeps what was shown, and says so; only an agent that never
+        // answered the friends read falls back to its contacts.
+        if (friendsView.value) {
+          contactsError.value = e instanceof Error ? e.message : String(e);
+          return;
+        }
       }
       contacts.value = await backend.contacts();
       await stores.prefs.set(KEY, contacts.value);

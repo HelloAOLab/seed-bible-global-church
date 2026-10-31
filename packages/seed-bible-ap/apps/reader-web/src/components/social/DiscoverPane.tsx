@@ -6,6 +6,7 @@ import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import type { Offering } from "../../state/social/discover";
 import { ContentCards, byAuthor } from "./ContentCards";
+import { FromFriends } from "./FromFriends";
 import { ChapterNotes, createNote, SectionedRows } from "./DiscoverPanel";
 import type { DiscoverItem, DiscoverProvider } from "../../extensions/host";
 
@@ -19,6 +20,23 @@ const KIND_ICON: Record<string, string> = {
   plan: "event_note",
   image: "image",
 };
+
+/** "Ruth Bankole · friend" for a friend's offering (their own name), null for anyone else's. */
+function friendLabel(
+  state: ReaderState,
+  o: Offering,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
+  const a = (o.owner || o.shelf).toLowerCase();
+  const f = state.today.friends.value.find(
+    (c) => c.contact.toLowerCase() === a
+  );
+  if (!f) return null;
+  return t("offering-from-friend", {
+    name: state.today.profiles.value[a]?.displayName ?? f.name ?? o.shelf,
+    defaultValue: "{{name}} · friend",
+  });
+}
 
 export function OfferingItem({
   state,
@@ -45,6 +63,7 @@ export function OfferingItem({
   const mine = state.backend.identity()?.agent === o.owner;
   const page = sharedRefOf(o);
   const [copied, setCopied] = useState(false);
+  const [takingDown, setTakingDown] = useState(false);
   return (
     <li
       ref={item}
@@ -62,7 +81,7 @@ export function OfferingItem({
         <span className="sb-discover-item-content">
           <span className="sb-discover-item-title">{o.title}</span>
           <span className="sb-discover-item-description">
-            {o.shelf}
+            {friendLabel(state, o, t) ?? o.shelf}
             {mine
               ? ` · ${t("discover-yours", { defaultValue: "yours" })}`
               : ""}{" "}
@@ -85,24 +104,46 @@ export function OfferingItem({
           ) : (
             <pre className="sb-discover-markdown">{body}</pre>
           )}
-          {page && (
+          {(page || mine) && (
             <div className="sb-note-card-actions">
-              <button
-                type="button"
-                className="sb-note-button sb-discover-copy-page"
-                onClick={() =>
-                  void navigator.clipboard
-                    .writeText(`${location.origin}${sharedPathOf(page)}`)
-                    .then(() => setCopied(true))
-                    .catch(() => undefined)
-                }
-              >
-                {copied
-                  ? t("shared-page-copied", {
-                      defaultValue: "Page link copied",
-                    })
-                  : t("shared-copy-page", { defaultValue: "Copy page link" })}
-              </button>
+              {mine && (
+                <button
+                  type="button"
+                  className="sb-note-button"
+                  disabled={takingDown}
+                  onClick={() => {
+                    setTakingDown(true);
+                    void state.publishing
+                      .withdrawOffering(o)
+                      .then(() =>
+                        state.discover.refresh(state.reading.chapterRef.value)
+                      )
+                      .catch(() => setTakingDown(false));
+                  }}
+                >
+                  {takingDown
+                    ? t("taking-down", { defaultValue: "Taking down…" })
+                    : t("take-down", { defaultValue: "Take down" })}
+                </button>
+              )}
+              {page && (
+                <button
+                  type="button"
+                  className="sb-note-button sb-discover-copy-page"
+                  onClick={() =>
+                    void navigator.clipboard
+                      .writeText(`${location.origin}${sharedPathOf(page)}`)
+                      .then(() => setCopied(true))
+                      .catch(() => undefined)
+                  }
+                >
+                  {copied
+                    ? t("shared-page-copied", {
+                        defaultValue: "Page link copied",
+                      })
+                    : t("shared-copy-page", { defaultValue: "Copy page link" })}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -378,6 +419,15 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
           }
         />
       ))}
+      {picked === "all" && (
+        <FromFriends
+          state={state}
+          kinds={["playlist", "plan", "customization"]}
+          heading={t("from-your-friends", {
+            defaultValue: "From your friends",
+          })}
+        />
+      )}
     </section>
   );
 }

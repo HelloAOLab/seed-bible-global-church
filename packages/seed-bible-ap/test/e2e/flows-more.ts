@@ -9046,4 +9046,306 @@ export const MORE_FLOWS: Flow[] = [
       }
     },
   },
+  {
+    id: "FX1",
+    timeoutMs: 3_600_000,
+    section: "8. Today, Discover and publishing",
+    title:
+      "Two friends, the whole way: reading, notes, playlists, a live session",
+    rows: [
+      "Who is reading now",
+      "Friends' notes in Today",
+      "Today's community feed",
+      "Friends' notes in the passage",
+      "From your friends",
+      "A friend is sharing a live session",
+      "Where friends were this week",
+      "Take down a public copy",
+    ],
+    checks:
+      "Seed Reader and Ruth Bankole on two browsers become friends the real way. Seed Reader reads John 3: Ruth's Today shows the green dot 'reading John 3' (a tap opens it). He moves to Genesis 1: her Community says he read John 3. He publishes a note on John 3:16: her Community quotes its words; in her John 3 a friend mark sits at verse 16 and opens his note; her Discover lists it as a friend's. He publishes a playlist: her Library's 'Playlists from your friends' lists it. He starts a live session: Ruth is told '… is sharing — Join', and Join puts her in it. Everything is withdrawn, ended and unfriended after, whatever happens.",
+    run: async (c) => {
+      const k = friendKit(c);
+      const SR = /reader/i;
+      const ctxR = await c.browser.newContext({
+        permissions: ["clipboard-read", "clipboard-write"],
+      });
+      const ruth = await ctxR.newPage();
+      c.watch(ruth);
+      const text = `a note for friends ${stamp()}`;
+      const listTitle = `Friends list ${stamp()}`;
+      const said: string[] = [];
+      const openToday = async (pg: import("playwright").Page) => {
+        await pg.keyboard.press("Escape").catch(() => {});
+        await c.pressToolbar("Today", pg);
+        await c.pane(pg).waitFor({ timeout: 10000 });
+        return c.pane(pg);
+      };
+      /** Look again until `found` answers, reloading Ruth's reader between looks. */
+      const until = async (
+        label: string,
+        ms: number,
+        found: () => Promise<boolean>
+      ) => {
+        const t0 = Date.now();
+        while (Date.now() - t0 < ms) {
+          if (await found().catch(() => false)) {
+            await k.shot(ruth, label);
+            return Math.round((Date.now() - t0) / 1000);
+          }
+          await ruth.waitForTimeout(10000);
+          await ruth.reload();
+          await ruth.waitForTimeout(3000);
+        }
+        await k.shot(ruth, `${label}-missing`);
+        throw new Error(`${label}: not seen in ${Math.round(ms / 1000)} s`);
+      };
+      /** Seed Reader's notes on this chapter made private again (a run that failed may have left one public). */
+      const unpublishNotes = async () => {
+        await c.pressToolbar("Notes");
+        for (let i = 0; i < 5; i++) {
+          const pub = c.page
+            .locator(".sb-note-card", {
+              has: c.page.locator(".sb-note-published-tag"),
+            })
+            .first();
+          if (!(await pub.count())) break;
+          await c.noteAction(pub, /make private again/i);
+          await pub
+            .locator(".sb-note-published-tag")
+            .waitFor({ state: "detached", timeout: 120000 })
+            .catch(() => {});
+        }
+        // copies left public by an earlier run whose note is gone: taken down from Discover ("Take down")
+        await c.page.keyboard.press("Escape").catch(() => {});
+        await c.pressToolbar("Discover");
+        for (let i = 0; i < 6; i++) {
+          const mine = c
+            .pane()
+            .locator(".sb-discover-item", { hasText: /yours/ })
+            .first();
+          if (
+            !(await mine
+              .waitFor({ timeout: 8000 })
+              .then(() => true)
+              .catch(() => false))
+          )
+            break;
+          await mine.locator(".sb-discover-item-main").click();
+          await mine.getByRole("button", { name: /^take down$/i }).click();
+          await mine
+            .waitFor({ state: "detached", timeout: 60000 })
+            .catch(() => {});
+        }
+        await c.page.keyboard.press("Escape").catch(() => {});
+      };
+      /** Seed Reader's test playlists withdrawn and deleted. */
+      const dropPlaylists = async () => {
+        const lib = await c.openLibrary("Playlists");
+        for (let i = 0; i < 6; i++) {
+          const old = lib
+            .locator(".sb-note-card", { hasText: /Friends list \d+/ })
+            .first();
+          if (!(await old.count())) break;
+          await ensureOpen(old);
+          const published = old.locator("button", {
+            hasText: /(^|\s)Published\s*$/,
+          });
+          if (await published.count()) {
+            await published.click();
+            await old
+              .locator("button", { hasText: /(^|\s)Publish\s*$/ })
+              .waitFor({ timeout: 120000 })
+              .catch(() => {});
+          }
+          c.page.once("dialog", (d) => void d.accept());
+          await old.getByRole("button", { name: /^delete$/i }).click();
+          await c.confirmDelete();
+          await c.page.waitForTimeout(800);
+        }
+        await c.page.keyboard.press("Escape").catch(() => {});
+      };
+      try {
+        // 0. friends, the real way
+        await k.signIn(c.page, c.context, /seed ?reader/i, "sr");
+        await k.signIn(ruth, ctxR, /ruth bankole/i, "ruth");
+        await k.removeAll(
+          c.page,
+          c.context,
+          /ruth|@example\.invalid/i,
+          "sr-pre"
+        );
+        await k.removeAll(ruth, ctxR, SR, "ruth-pre");
+        const pane = await k.openFriends(c.page);
+        await pane.getByLabel("Add a friend").fill("ruth.me");
+        const w = c.context.waitForEvent("page", { timeout: 15000 });
+        w.catch(() => undefined);
+        await pane.getByRole("button", { name: /send request/i }).click();
+        await k.answer(await w, /yes, add them/i, "sr-asks");
+        await k.expectRow(ruth, "Friend requests", SR, "ruth-request");
+        const p2 = await k.openFriends(ruth);
+        const w2 = ctxR.waitForEvent("page", { timeout: 15000 });
+        w2.catch(() => undefined);
+        await p2
+          .locator(".sb-friends-row", { hasText: SR })
+          .getByRole("button", { name: /^accept/i })
+          .click();
+        await k.answer(await w2, /yes, add them/i, "ruth-accepts");
+        await k.expectRow(c.page, "Friends", /ruth/i, "sr-friends");
+        await k.expectRow(ruth, "Friends", SR, "ruth-friends");
+        said.push("friends");
+
+        // 1. reading now, then where he was
+        await c.open("/read/BSB/JHN/3");
+        await until("ruth-sees-reading-now", 180000, async () => {
+          const today = await openToday(ruth);
+          return today
+            .locator(".sb-presence-where", { hasText: /John 3/ })
+            .first()
+            .waitFor({ timeout: 20000 })
+            .then(() => true);
+        });
+        await c
+          .pane(ruth)
+          .locator(".sb-presence-where", { hasText: /John 3/ })
+          .first()
+          .click();
+        await ruth.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+        said.push("reading now (tap opened John 3)");
+        await c.open("/read/BSB/GEN/1");
+        await until("ruth-sees-he-read", 180000, async () => {
+          const today = await openToday(ruth);
+          return today
+            .locator(".sb-today-feed-row", { hasText: /read John 3/ })
+            .first()
+            .waitFor({ timeout: 20000 })
+            .then(() => true);
+        });
+        said.push("'read John 3' in her Community");
+
+        // 2. a published note: her Community, her chapter, her Discover
+        await c.open("/read/BSB/JHN/3");
+        await unpublishNotes();
+        await deleteAllNotes(c);
+        await writeNote(c, 16, text);
+        await synced(c);
+        await c.pressToolbar("Notes");
+        const card = c.page
+          .locator(".sb-note-card:not(.sb-note-card-draft)")
+          .first();
+        await c.noteAction(card, /publish to your public shelf/i);
+        await card
+          .locator(".sb-note-published-tag")
+          .waitFor({ timeout: 120000 });
+        await c.page.keyboard.press("Escape").catch(() => {});
+        await until("ruth-community-note", 600000, async () => {
+          const today = await openToday(ruth);
+          return today
+            .locator(".sb-today-feed-row", { hasText: text })
+            .first()
+            .waitFor({ timeout: 20000 })
+            .then(() => true);
+        });
+        said.push("his note's words in her Community");
+        await c.open("/read/BSB/JHN/3", ruth);
+        await until("ruth-friend-mark", 180000, async () =>
+          ruth
+            .locator(".sb-bible-reader-active .sb-verse-friend-note")
+            .first()
+            .waitFor({ timeout: 20000 })
+            .then(() => true)
+        );
+        await ruth
+          .locator(".sb-bible-reader-active .sb-verse-friend-note")
+          .first()
+          .click();
+        await c.waitText(
+          ruth.locator("body"),
+          new RegExp(text.slice(0, 20)),
+          60000
+        );
+        await k.shot(ruth, "ruth-opened-friend-note");
+        await ruth.keyboard.press("Escape").catch(() => {});
+        said.push("the friend mark at John 3:16 opened his note");
+        await c.open("/read/BSB/JHN/3", ruth);
+        await c.pressToolbar("Discover", ruth);
+        await c.waitText(c.pane(ruth), /· friend/, 60000);
+        await k.shot(ruth, "ruth-discover-friend");
+        said.push("Discover lists it as a friend's");
+
+        // 3. a published playlist: her Library's 'Playlists from your friends'
+        await dropPlaylists();
+        const lib = await c.openLibrary("Playlists");
+        await lib.locator('input[placeholder^="New playlist"]').fill(listTitle);
+        await lib.getByRole("button", { name: /^create$/i }).click();
+        const pcard = lib
+          .locator(".sb-note-card", { hasText: listTitle })
+          .first();
+        await pcard.waitFor({ timeout: 10000 });
+        await ensureOpen(pcard);
+        await pcard.locator("button", { hasText: /(^|\s)Publish\s*$/ }).click();
+        await pcard
+          .locator("button", { hasText: /(^|\s)Published\s*$/ })
+          .waitFor({ timeout: 120000 });
+        await c.page.keyboard.press("Escape").catch(() => {});
+        await until("ruth-friends-playlists", 600000, async () => {
+          const rl = await c.openLibrary("Playlists", ruth);
+          return rl
+            .locator('[data-testid="from-friends"]', { hasText: listTitle })
+            .waitFor({ timeout: 25000 })
+            .then(() => true);
+        });
+        said.push("'Playlists from your friends' lists his playlist");
+
+        // 4. a live session: '… is sharing — Join'
+        await c.open("/read/BSB/JHN/3");
+        await startSession(c);
+        await until("ruth-told-sharing", 240000, async () =>
+          ruth
+            .locator('[data-testid="friend-sharing"]')
+            .waitFor({ timeout: 70000 })
+            .then(() => true)
+        );
+        const banner = (
+          await ruth.locator('[data-testid="friend-sharing"]').innerText()
+        ).replace(/\s+/g, " ");
+        await ruth
+          .locator('[data-testid="friend-sharing"]')
+          .getByRole("button", { name: /^join$/i })
+          .click();
+        await c.waitText(c.pane(ruth), /participants|connected|leave/i, 60000);
+        await k.shot(ruth, "ruth-joined");
+        said.push(`'${banner.slice(0, 50)}' → Join put her in`);
+        return said.join("; ");
+      } finally {
+        await c.page.keyboard.press("Escape").catch(() => {});
+        // end a session left running
+        if (
+          await c.page
+            .locator(".sb-session-code")
+            .count()
+            .catch(() => 0)
+        ) {
+          await c.pressToolbar("Live session").catch(() => {});
+          await c
+            .pane()
+            .getByRole("button", { name: /session settings/i })
+            .click()
+            .catch(() => {});
+          await c.page
+            .getByRole("dialog", { name: "Session settings" })
+            .getByRole("button", { name: /end session/i })
+            .click()
+            .catch(() => {});
+        }
+        await c.open("/read/BSB/JHN/3").catch(() => {});
+        await unpublishNotes().catch(() => {});
+        await deleteAllNotes(c).catch(() => {});
+        await dropPlaylists().catch(() => {});
+        await k.removeAll(c.page, c.context, /ruth/i, "sr-post").catch(() => 0);
+        await k.removeAll(ruth, ctxR, SR, "ruth-post").catch(() => 0);
+        await ctxR.close().catch(() => {});
+      }
+    },
+  },
 ];

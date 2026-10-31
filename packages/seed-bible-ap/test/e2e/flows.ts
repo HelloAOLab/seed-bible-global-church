@@ -917,6 +917,303 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X16",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title: "A section heading opens its pane, published content first",
+    checks:
+      "On Genesis 1 tap the heading 'The First Day': the pane at the right is titled 'The First Day' and opens on Published, listing BibleProject's 'Genesis 1-11' section from the publishing app (signed); Overview shows what the story layer holds for 1:3–5 (God speaks light into being) with God on stage; Cast lists God under deity",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: "The First Day",
+        })
+        .click();
+      const pane = c.page.locator(".sb-app-pane .sb-pane").first();
+      await pane
+        .locator(".sb-pane-header h2", { hasText: "The First Day" })
+        .waitFor({ timeout: 20000 });
+      if (await c.page.locator(".sb-heading-toolbar").count())
+        throw new Error("a toolbar opened");
+      const story = pane.locator(".sb-story");
+      await story
+        .getByRole("tab", { name: /^Published/, selected: true })
+        .waitFor({ timeout: 30000 });
+      const published = (
+        await story.locator(".sb-published-media").innerText()
+      ).replace(/\s+/g, " ");
+      if (!/Genesis 1-11/.test(published))
+        throw new Error(`published: ${published.slice(0, 200)}`);
+      const work = await story
+        .locator("a", { hasText: "Videos and articles about the Bible" })
+        .first()
+        .getAttribute("href");
+      if (!/publishing\.faithnet\.io/.test(work ?? ""))
+        throw new Error(`not from the publishing app: ${work}`);
+      await story.getByRole("tab", { name: /^Overview/ }).click();
+      const scene = await story
+        .locator(".sb-story-scene h4")
+        .first()
+        .innerText();
+      if (!/light/i.test(scene)) throw new Error(`overview is '${scene}'`);
+      await story.getByRole("tab", { name: /^Cast/ }).click();
+      const cast = (await story.locator(".sb-story-cast").innerText()).replace(
+        /\s+/g,
+        " "
+      );
+      if (!/deity.*God/i.test(cast))
+        throw new Error(`cast: ${cast.slice(0, 200)}`);
+      return `pane 'The First Day'; Published: ${published.slice(0, 70)}…; Overview: '${scene}'`;
+    },
+  },
+  {
+    id: "X17",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title:
+      "Drill from a section into a place, a person's oikos and generations",
+    checks:
+      "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/16");
+      const heading = (text: RegExp) =>
+        c.page.locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: text,
+        });
+      const story = c.page.locator(".sb-story");
+      await heading(/Lydia/).click();
+      await story
+        .getByRole("tab", { name: /^Setting/ })
+        .click({ timeout: 30000 });
+      await story.locator(".sb-story-map").waitFor({ timeout: 30000 });
+      await c.page.waitForFunction(
+        () =>
+          /Philippi/.test(
+            document
+              .querySelector(".sb-story-map")
+              ?.getAttribute("data-drawn") ?? ""
+          ),
+        null,
+        { timeout: 20000 }
+      );
+      await story.getByRole("tab", { name: /^Cast/ }).click();
+      await story
+        .getByRole("button", { name: /^Lydia/ })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-story-card");
+      await card
+        .locator(".sb-theo-name", { hasText: "Lydia" })
+        .waitFor({ timeout: 20000 });
+      await card.getByRole("button", { name: "Back" }).click();
+      await heading(/Macedonian/).click();
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
+      // The story layer names him as the book does: 'Saul, later called Paul'.
+      await story
+        .getByRole("button", { name: /called Paul/ })
+        .first()
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: /^Paul$/ })
+        .waitFor({ timeout: 20000 });
+      const rings = await card.locator(".sb-story-oikos svg").innerHTML();
+      for (const who of ["Barnabas", "Silas"])
+        if (!rings.includes(who)) throw new Error(`oikos lacks ${who}`);
+      await card.getByRole("tab", { name: "Generations" }).click();
+      const tree = await card.locator(".sb-story-generations svg").innerHTML();
+      for (const body of ["Church at Philippi", "Church at Colossae"])
+        if (!tree.includes(body)) throw new Error(`generations lack ${body}`);
+      const label =
+        (await card
+          .locator(".sb-story-generations svg")
+          .getAttribute("aria-label")) ?? "";
+      return `Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (${label})`;
+    },
+  },
+  {
+    id: "X18",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title:
+      "The chapter's title opens the book's pane; the book icon opens the book picker",
+    checks:
+      "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.page
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-title:visible, .sb-bible-reader-active .sb-bible-reader-mobile-content-title:visible"
+        )
+        .first()
+        .click();
+      const pane = c.page.locator(".sb-app-pane .sb-pane").first();
+      await pane
+        .locator(".sb-pane-header h2", { hasText: /^Genesis$/ })
+        .waitFor({ timeout: 20000 });
+      const story = pane.locator(".sb-story-book");
+      await story
+        .getByRole("tab", { name: /^Published/, selected: true })
+        .waitFor({ timeout: 30000 });
+      const published = (
+        await story.locator(".sb-published-media").innerText()
+      ).replace(/\s+/g, " ");
+      for (const v of ["Genesis 1-11", "Genesis 12-50"])
+        if (!published.includes(v))
+          throw new Error(`published lacks ${v}: ${published.slice(0, 200)}`);
+      await story.getByRole("tab", { name: /^About/ }).click();
+      const about = (
+        await story.locator(".sb-story-about").innerText()
+      ).replace(/\s+/g, " ");
+      if (
+        !/Old Testament/.test(about) ||
+        !/Hebrew/.test(about) ||
+        !/authorship/i.test(about)
+      )
+        throw new Error(`about: ${about.slice(0, 200)}`);
+      await story.getByRole("tab", { name: /^References/ }).click();
+      const refs = (
+        await story.locator(".sb-story-xbooks").first().innerText()
+      ).replace(/\s+/g, " ");
+      if (!/points to/i.test(refs))
+        throw new Error(`references: ${refs.slice(0, 200)}`);
+      await c.page
+        .locator(".sb-bible-reader-active .sb-bible-reader-book-picker:visible")
+        .first()
+        .click();
+      await c.page
+        .getByPlaceholder(/Search books/i)
+        .waitFor({ timeout: 10000 });
+      await c.page.keyboard.press("Escape");
+      return `pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: ${about.slice(0, 60)}…; References: ${refs.slice(0, 60)}…; the book icon opens the picker`;
+    },
+  },
+  {
+    id: "X19",
+    rows: ["Content"],
+    section: "12. Extensions",
+    title: "A verse's videos and articles come from the publishing app",
+    checks:
+      "On Matthew 26, tap verse 26 and Content: under 'Videos and articles about this verse' the pane lists Expedition Bible's 'The Last Supper and Pentecost' and BibleProject's section of Matthew 14-28, from the work 'Videos and articles about the Bible' on the publishing app",
+    run: async (c) => {
+      await c.open("/read/BSB/MAT/26");
+      await c.selectVerse(26);
+      await c.page
+        .locator(".sb-verse-toolbar-action", {
+          has: c.page.locator(".sb-verse-toolbar-action-label", {
+            hasText: /^Content$/,
+          }),
+        })
+        .first()
+        .click();
+      const list = c.page.locator("#sb-content-media .sb-published-media");
+      await list.waitFor({ timeout: 30000 });
+      const said = (await list.innerText()).replace(/\s+/g, " ");
+      for (const v of ["The Last Supper and Pentecost", "Matthew 14-28"])
+        if (!said.includes(v))
+          throw new Error(`lacks ${v}: ${said.slice(0, 200)}`);
+      return said.slice(0, 160);
+    },
+  },
+  {
+    id: "X20",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title:
+      "A person's family by generation, and the extended family in the oikos",
+    checks:
+      "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
+    run: async (c) => {
+      await c.open("/read/BSB/RUT/4");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: "Boaz Marries Ruth",
+        })
+        .click();
+      const story = c.page.locator(".sb-story");
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
+      await story
+        .getByRole("button", { name: /^Ruth the Moabite/ })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-story-card");
+      await card
+        .getByRole("tab", { name: "Family", selected: true })
+        .waitFor({ timeout: 20000 });
+      const family = (
+        await card.locator(".sb-story-family").innerText()
+      ).replace(/\s+/g, " ");
+      for (const want of ["Boaz", "Obed", "Jesse", "Naomi"])
+        if (!family.includes(want))
+          throw new Error(`family lacks ${want}: ${family.slice(0, 300)}`);
+      await card.getByRole("tab", { name: "Oikos" }).click();
+      const rings = () => card.locator(".sb-story-oikos-ring").count();
+      const before = await rings();
+      if (before < 2) throw new Error(`only ${before} ring(s)`);
+      await card.getByRole("button", { name: /^Extended family/ }).click();
+      if ((await rings()) !== before - 1)
+        throw new Error("the extended family ring did not go");
+      return `Ruth's family: ${family.slice(0, 140)}…; oikos ${before} rings, extended family toggled off`;
+    },
+  },
+  {
+    id: "X21",
+    rows: ["Section stories"],
+    section: "12. Extensions",
+    title: "A household the text names, and the church it became",
+    checks:
+      "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
+    run: async (c) => {
+      await c.open("/read/BSB/ACT/16");
+      await c.page
+        .locator(".sb-bible-reader-active .sb-chapter-heading", {
+          hasText: /Lydia/,
+        })
+        .click();
+      const story = c.page.locator(".sb-story");
+      await story.getByRole("tab", { name: /^Cast/ }).click({ timeout: 30000 });
+      await story
+        .getByRole("button", { name: /^Lydia/ })
+        .first()
+        .click();
+      const card = c.page.locator(".sb-story-card");
+      await card.getByRole("tab", { name: "Oikos" }).click({ timeout: 20000 });
+      const ties = (await card.locator(".sb-story-ties").innerText()).replace(
+        /\s+/g,
+        " "
+      );
+      if (!/household.*Lydia's household.*Acts 16:15/i.test(ties))
+        throw new Error(`ties: ${ties.slice(0, 200)}`);
+      await card
+        .locator(".sb-story-ties")
+        .getByRole("button", { name: "Lydia's household" })
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: "Lydia's household" })
+        .waitFor({ timeout: 20000 });
+      const house = (await card.innerText()).replace(/\s+/g, " ");
+      if (
+        !/Head Lydia/i.test(house) ||
+        !/Became Church at Philippi/i.test(house)
+      )
+        throw new Error(`household: ${house.slice(0, 300)}`);
+      await card
+        .getByRole("button", { name: "Church at Philippi" })
+        .first()
+        .click();
+      await card
+        .locator(".sb-theo-name", { hasText: "Church at Philippi" })
+        .waitFor({ timeout: 20000 });
+      const church = (await card.innerText()).replace(/\s+/g, " ");
+      if (
+        !/Gathered from Lydia.s household/i.test(church) ||
+        !/Planted by Paul/i.test(church)
+      )
+        throw new Error(`church: ${church.slice(0, 300)}`);
+      return `Lydia → Lydia's household (Acts 16:15) → Church at Philippi, gathered from her household, planted by Paul`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

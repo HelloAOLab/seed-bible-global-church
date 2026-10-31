@@ -4,6 +4,7 @@ import { EditProfilePane, ProfilePane } from "./components/chrome/ProfilePane";
 import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { ActivityBar } from "./components/chrome/ActivityBar";
 import { Toast } from "./components/chrome/Toast";
+import { FriendSharing } from "./components/social/FriendSharing";
 import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
@@ -173,10 +174,13 @@ export function App({ state }: { state: ReaderState }) {
             const p = state.extensions.panes.value.find(
               (x) => `ext:${x.id}` === pane
             );
+            const title =
+              (typeof p?.title === "function" ? p.title() : p?.title) ??
+              "Extension";
             return (
-              <section className="sb-pane" aria-label={p?.title ?? "Extension"}>
+              <section className="sb-pane" aria-label={title}>
                 <header className="sb-pane-header">
-                  <h2>{p?.title ?? "Extension"}</h2>
+                  <h2>{title}</h2>
                   <span className="sb-pane-header-actions">
                     <button
                       className="sb-pane-close sb-pane-expand"
@@ -260,6 +264,7 @@ export function App({ state }: { state: ReaderState }) {
       <FullScreenHelp state={state} />
       <ActivityBar />
       <Toast state={state} />
+      <FriendSharing state={state} />
       <FriendInviteDialog state={state} />
       <Onboarding state={state} />
     </div>

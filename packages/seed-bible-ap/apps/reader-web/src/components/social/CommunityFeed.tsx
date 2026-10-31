@@ -149,7 +149,12 @@ export function CommunityFeed({ state }: { state: ReaderState }) {
                 defaultValue: "{{name}} shared a reading plan at {{reference}}",
               }),
       reference: passageLabel(o.passage),
-      quote: o.title,
+      // a note's own first words when its publisher sent them; its title otherwise
+      quote:
+        typeof o.descriptor?.["schema:abstract"] === "string" &&
+        o.descriptor["schema:abstract"]
+          ? (o.descriptor["schema:abstract"] as string)
+          : o.title,
       at: Date.parse(o.indexedAt) || 0,
       open: () => go(o.passage.split("-")[0]!.split(".").slice(0, 2).join(".")),
     });
@@ -182,7 +187,38 @@ export function CommunityFeed({ state }: { state: ReaderState }) {
       });
     }
   }
-  for (const r of recentMine)
+  // Where friends were this past week ("Ruth read John 3"), and the chapters you both read ("You and Ruth both read
+  // John 3", which then stands for your own line) — what they let friends see, as the old reader's community reading.
+  const bothRead = new Set<string>();
+  for (const f of state.presence.friends.value) {
+    const live = new Set(f.presence.map((p) => p.scope));
+    for (const r of f.recent ?? []) {
+      if (!/^[1-4]?[A-Z]{2,3}\.\d+$/.test(r.scope) || live.has(r.scope))
+        continue;
+      const mineToo = recentMine.find((m) => m.chapterRef === r.scope);
+      if (mineToo) bothRead.add(r.scope);
+      rows.push({
+        id: `recent:${f.agent}:${r.scope}`,
+        kind: "reading",
+        who: mineToo ? [me, f.agent.toLowerCase()] : [f.agent.toLowerCase()],
+        sentence: mineToo
+          ? t("feed-both-read", {
+              names: NAME,
+              reference: REF,
+              defaultValue: "{{names}} both read {{reference}}",
+            })
+          : t("feed-read", {
+              name: NAME,
+              reference: REF,
+              defaultValue: "{{name}} read {{reference}}",
+            }),
+        reference: chapterLabel(r.scope),
+        at: Math.max(r.at, mineToo ? Date.parse(mineToo.at) || 0 : 0),
+        open: () => go(r.scope),
+      });
+    }
+  }
+  for (const r of recentMine.filter((m) => !bothRead.has(m.chapterRef)))
     rows.push({
       id: `mine:${r.chapterRef}`,
       kind: "reading",

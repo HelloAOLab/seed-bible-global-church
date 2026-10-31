@@ -1,155 +1,43 @@
-// DEFAULT CONTENT — ported from packages/default-content-extension: the videos and articles the old reader offered
-// for every chapter (Expedition Bible, The Chosen and the rest of its curated list, and BibleProject's book
-// overviews, trimmed to what Discover shows). Static data shipped with the app and loaded only when Discover asks;
-// opening one only opens its page in a new tab — nothing is sent anywhere.
+// VIDEOS AND ARTICLES — what the publishing app holds about the chapter on screen, in Discover: BibleProject's overviews
+// (the section of the video that covers this chapter, at the second it starts) and the curated videos the old reader
+// offered, each published as a signed `media` work with the books, chapters and verses it is about. Asked through this
+// reader's agent (state/published.ts); opening one opens it at its maker, in a new tab.
 import type { DiscoverItem, ExtensionRegistration } from "../host";
+import { loadPublished, type PublishedMedia } from "../../state/published";
 
-export interface ContentReference {
-  book: string;
-  chapter: number;
-  endChapter?: number;
-  verse?: number;
-  endVerse?: number;
+/** A published medium as a Discover card: its maker and the passage it is about, and where it plays in place. */
+export function discoverItemOf(m: PublishedMedia): DiscoverItem {
+  return {
+    id: `published:${m.item.id}`,
+    title: m.item.title,
+    description: `${m.item.provider} · ${m.references.map((r) => r.osis).join(", ")}`,
+    icon: m.item.medium === "article" ? "article" : "play_circle",
+    author: m.item.provider,
+    ...(m.item.description ? { longText: m.item.description } : {}),
+    ...(m.item.image ? { image: m.item.image } : {}),
+    ...(m.item.embedUrl ? { embedUrl: m.item.embedUrl } : {}),
+    onOpen: () => window.open(m.item.url, "_blank", "noopener,noreferrer"),
+  };
 }
-export interface CuratedItem {
-  id: string;
-  title: string;
-  author: string;
-  description: string;
-  url: string;
-  imageUrl?: string;
-  references: ContentReference[];
-}
-export interface BibleProjectItem {
-  book: string;
-  chapterStart: number;
-  chapterEnd: number;
-  startSeconds: number;
-  section: string;
-  title: string;
-  description: string;
-  url: string;
-  image: string;
-}
-
-/** A YouTube or Vimeo page as its embeddable player, to play in place; anything else opens its page. */
-export function videoEmbedOf(url: string): string | null {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, "");
-    if (host === "youtu.be")
-      return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}`;
-    if (host === "youtube.com" || host === "m.youtube.com") {
-      const v = u.searchParams.get("v");
-      if (v) return `https://www.youtube-nocookie.com/embed/${v}`;
-    }
-    if (host === "vimeo.com") {
-      const id = /^\/(\d+)/.exec(u.pathname)?.[1];
-      if (id) return `https://player.vimeo.com/video/${id}`;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-const covers = (r: ContentReference, book: string, chapter: number) =>
-  r.book === book &&
-  chapter >= r.chapter &&
-  chapter <= (r.endChapter ?? r.chapter);
-
-/** The curated items and BibleProject sections for a chapter, curated first. */
-export function contentForChapter(
-  book: string,
-  chapter: number,
-  curated: CuratedItem[],
-  bibleProject: BibleProjectItem[]
-): DiscoverItem[] {
-  const out: DiscoverItem[] = [];
-  for (const item of curated) {
-    const ref = item.references.find((r) => covers(r, book, chapter));
-    if (!ref) continue;
-    out.push({
-      id: `curated:${item.id}`,
-      title: item.title,
-      description: `${item.author}${ref.verse ? ` · ${chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `–${ref.endVerse}` : ""}` : ""}`,
-      icon: /youtube\.com|youtu\.be|vimeo\.com/.test(item.url)
-        ? "play_circle"
-        : "article",
-      author: item.author,
-      longText: item.description,
-      ...(item.imageUrl ? { image: item.imageUrl } : {}),
-      ...(videoEmbedOf(item.url) ? { embedUrl: videoEmbedOf(item.url)! } : {}),
-    });
-  }
-  const seen = new Set<string>();
-  for (const v of bibleProject) {
-    if (v.book !== book || chapter < v.chapterStart || chapter > v.chapterEnd)
-      continue;
-    if (seen.has(v.url)) continue;
-    seen.add(v.url);
-    out.push({
-      id: `bibleproject:${v.url}`,
-      title: `${v.title}${v.section ? ` — ${v.section}` : ""}`,
-      description: "BibleProject",
-      icon: "play_circle",
-      author: "BibleProject",
-      longText: v.description,
-      image: v.image,
-    });
-  }
-  return out;
-}
-
-/** Where an item opens: its own page (a BibleProject video at the moment this chapter starts). */
-export function urlOf(
-  id: string,
-  curated: CuratedItem[],
-  bibleProject: BibleProjectItem[]
-): string | null {
-  if (id.startsWith("curated:")) {
-    const it = curated.find((c) => `curated:${c.id}` === id);
-    return it?.url ?? null;
-  }
-  const url = id.slice("bibleproject:".length);
-  return bibleProject.some((v) => v.url === url) ? url : null;
-}
-
-let data: Promise<{
-  curated: CuratedItem[];
-  bibleProject: BibleProjectItem[];
-}> | null = null;
-const load = () =>
-  (data ??= Promise.all([
-    import("./discoveredContent.json"),
-    import("./bibleProject.json"),
-  ]).then(([a, b]) => ({
-    curated: a.default as CuratedItem[],
-    bibleProject: b.default as BibleProjectItem[],
-  })));
 
 const defaultContent: ExtensionRegistration = {
   id: "default-content",
   label: "Videos and articles",
   description:
-    "BibleProject overviews and curated videos for the chapter on screen, in Discover.",
+    "Videos and articles published about the chapter on screen (BibleProject's overviews, curated videos), in Discover.",
   init: function* (ctx) {
     yield ctx.discover.registerProvider({
       id: "default-content",
       label: "Videos and articles",
-      discover: async (d) => {
-        const [book, ch] = d.chapterRef.split(".");
-        const { curated, bibleProject } = await load();
-        return contentForChapter(book!, Number(ch), curated, bibleProject).map(
-          (it) => ({
-            ...it,
-            onOpen: () => {
-              const url = urlOf(it.id, curated, bibleProject);
-              if (url) window.open(url, "_blank", "noopener,noreferrer");
-            },
-          })
-        );
-      },
+      discover: async (d) =>
+        (
+          (await loadPublished(
+            d.chapterRef,
+            "section",
+            ctx.state.stores.chapters,
+            { edition: ctx.state.reading.translationId.value }
+          )) ?? []
+        ).map(discoverItemOf),
     });
   },
 };

@@ -1,0 +1,154 @@
+<section aria-label="Places map" class="sb-pane">
+  <header class="sb-pane-header">
+    <h2>Places map</h2>
+    <button aria-label="Close" class="sb-pane-close">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </header>
+  <section aria-label="Places map" class="sb-pane sb-places-map">
+    <div
+      class="sb-places-map-canvas leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom"
+      tabindex="0"
+      style="position: relative"
+    >
+      <div
+        class="leaflet-pane leaflet-map-pane"
+        style="transform: translate3d(0px, 0px, 0px)"
+      >
+        <div class="leaflet-pane leaflet-tile-pane"></div>
+        <div class="leaflet-pane leaflet-overlay-pane"></div>
+        <div class="leaflet-pane leaflet-shadow-pane"></div>
+        <div class="leaflet-pane leaflet-marker-pane"></div>
+        <div class="leaflet-pane leaflet-tooltip-pane"></div>
+        <div class="leaflet-pane leaflet-popup-pane"></div>
+        <div
+          class="leaflet-proxy leaflet-zoom-animated"
+          style="transform: translate3d(19588px, 13328.3px, 0px) scale(64)"
+        ></div>
+      </div>
+      <div class="leaflet-control-container">
+        <div class="leaflet-top leaflet-left">
+          <div class="leaflet-control-zoom leaflet-bar leaflet-control">
+            <a
+              class="leaflet-control-zoom-in"
+              href="#"
+              title="Zoom in"
+              role="button"
+              aria-label="Zoom in"
+              aria-disabled="false"
+              ><span aria-hidden="true">+</span></a
+            ><a
+              class="leaflet-control-zoom-out"
+              href="#"
+              title="Zoom out"
+              role="button"
+              aria-label="Zoom out"
+              aria-disabled="false"
+              ><span aria-hidden="true">−</span></a
+            >
+          </div>
+        </div>
+        <div class="leaflet-top leaflet-right"></div>
+        <div class="leaflet-bottom leaflet-left"></div>
+        <div class="leaflet-bottom leaflet-right">
+          <div class="leaflet-control-attribution leaflet-control">
+            <a
+              href="https://leafletjs.com"
+              title="A JavaScript library for interactive maps"
+              ><svg
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="8"
+                viewBox="0 0 12 8"
+                class="leaflet-attribution-flag"
+              >
+                <path fill="#4C7BE1" d="M0 0h12v4H0z"></path>
+                <path fill="#FFD500" d="M0 4h12v3H0z"></path>
+                <path fill="#E0BC00" d="M0 7h12v1H0z"></path>
+              </svg>
+              Leaflet</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="sb-places-list">
+      <li>
+        <button type="button" class="sb-presence-where">Jerusalem</button>
+        <span class="sb-small sb-muted">· 1, 14, 25, 26, 27</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">Judea</button>
+        <span class="sb-small sb-muted">· 1</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Samaria (region)
+        </button>
+        <span class="sb-small sb-muted">· 1, 5, 9, 14, 25</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Antioch — Greek-speaking Jewish Christians (the Hellenists)
+        </button>
+        <span class="sb-small sb-muted">· 1, 2, 3, 4, 5</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Greek-speaking Jewish Christians (the Hellenists)
+        </button>
+        <span class="sb-small sb-muted">· 1, 2, 3, 4, 5</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Jerusalem — Greek-speaking Jewish Christians (the Hellenists)
+        </button>
+        <span class="sb-small sb-muted">· 1, 2, 3, 4, 5</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Mount Gerizim — Samaritan believers
+        </button>
+        <span class="sb-small sb-muted"
+          >· 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+          22, 23, 24, 25</span
+        >
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Samaritan believers
+        </button>
+        <span class="sb-small sb-muted"
+          >· 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+          22, 23, 24, 25</span
+        >
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">
+          Sychar (Shechem) — Samaritan believers
+        </button>
+        <span class="sb-small sb-muted"
+          >· 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+          22, 23, 24, 25</span
+        >
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">Gaza</button>
+        <span class="sb-small sb-muted">· 26</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">Ethiopia</button>
+        <span class="sb-small sb-muted">· 27</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">Ashdod</button>
+        <span class="sb-small sb-muted">· 40</span>
+      </li>
+      <li>
+        <button type="button" class="sb-presence-where">Caesarea</button>
+        <span class="sb-small sb-muted">· 40</span>
+      </li>
+    </ul>
+  </section>
+</section>

@@ -1,0 +1,1443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scripture harness</title>
+    <meta
+      name="description"
+      content="How the Scripture agent answers a question from evidence: the sources of content, how they are published and indexed, the seven recorded steps, what comes out, and the checks that make it robust."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> / Scripture harness
+      </div>
+      <h1>Scripture harness: how a question is answered from evidence</h1>
+      <p class="lede">
+        When someone asks the Scripture agent a question, the answer is not
+        written from a model's memory. It is built from evidence the agent
+        holds: the verse from a signed corpus, its source words, the story
+        around it, what the knowledge base knows about the people and places in
+        it, what this translation decided there and why, the manuscripts and
+        versions, the writings of the passage's own time, and what later readers
+        made of it. Code decides what is evidence, which layer it belongs to,
+        and which dates it may give. A model only relates the evidence to the
+        question. Code then checks the answer and strikes what does not hold.
+        There are two ways to ask: one fast, about a verse you have open, and
+        one broad, about anything the agent holds.
+      </p>
+
+      <p class="toc">
+        <a href="#two-asks">Two asks</a>
+        <a href="#picture">The picture</a>
+        <a href="#layers">Layers of evidence</a>
+        <a href="#verse">The verse ask</a>
+        <a href="#writings">The open ask</a>
+        <a href="#graph">The knowledge graph, projected</a>
+        <a href="#sources">Sources</a>
+        <a href="#indexes">Indexes</a>
+        <a href="#out">What comes out</a>
+        <a href="#checks">Checks, not intentions</a>
+        <a href="#measured">How it is measured</a>
+        <a href="#runs">Where it runs</a>
+      </p>
+
+      <h2 id="two-asks">Two asks, for two kinds of question</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th><code>ask-verse</code>: the fast ask</th>
+              <th><code>ask-writings</code>: the open ask</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>For</td>
+              <td>
+                A question about one verse you have open (or up to five): "what
+                does this word mean?", "who is 'he' here?", "why does this
+                translation read it so?", "what do the scrolls have?". The Seed
+                reader's Study companion asks this way.
+              </td>
+              <td>
+                An open question over everything the agent holds: a theme, how a
+                reading changed over time, a writing by name, the collection
+                itself, this edition's choices. The translation workbench's Ask,
+                and any question the fast ask hands on.
+              </td>
+            </tr>
+            <tr>
+              <td>Evidence</td>
+              <td>
+                The verse's <strong>dossier</strong>, built once from records
+                the system already holds and stored. Nothing is searched at ask
+                time.
+              </td>
+              <td>
+                Gathered for the question at ask time from fifteen channels:
+                verses, citations, names linked to the knowledge base, meaning
+                (writings and Scripture), exact words, the edition's record, the
+                catalog.
+              </td>
+            </tr>
+            <tr>
+              <td>Model</td>
+              <td>
+                One streamed call to Claude Haiku 5.5, with the dossier as a
+                cached prefix.
+              </td>
+              <td>
+                Haiku 5.5 classifies; the agent's model (Claude Opus 5.5)
+                selects the evidence and writes the answer.
+              </td>
+            </tr>
+            <tr>
+              <td>Time</td>
+              <td>First words in about 0.7 s, done in about 3 s.</td>
+              <td>About two minutes.</td>
+            </tr>
+            <tr>
+              <td>Checked by code</td>
+              <td colspan="2">
+                The same rules on both: every claim cites held evidence; no date
+                a cited item does not carry; a later reading never stands for
+                what the text says; no quotation the evidence does not hold. The
+                verse ask also strikes another English Bible's wording of the
+                verse, and a pronoun the story layer contradicts. The open ask
+                also strikes kinship the knowledge base contradicts, and an
+                "edition decides" claim about a question the edition leaves
+                open.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        A verse question that reaches beyond the verse ("where else in the
+        Bible…", "throughout the prophets") is not guessed at. The fast ask says
+        so in one sentence and offers the open ask as a button, and the slow
+        search runs only when the reader presses it.
+      </p>
+
+      <h2 id="picture">The picture</h2>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 760 660"
+          role="img"
+          aria-labelledby="harness-t"
+        >
+          <title id="harness-t">
+            The reader's Study companion asks reader-a2a, which calls the
+            Scripture agent's ask-verse skill over A2A and streams its events
+            back. The workbench calls ask-writings. Both read from the Scripture
+            data worker: the signed corpus, the verse dossiers, the
+            knowledge-base projection and the writings index in D1, and two
+            meaning indexes in Vectorize. All of it is projected at build time
+            from the skills repository and the published works; GraphDB is never
+            asked at ask time.
+          </title>
+          <defs>
+            <marker
+              id="ha"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+            <marker
+              id="ha-hot"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow hot" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="40" y="32">
+            Two asks over one set of projections
+          </text>
+
+          <path class="edge hot" d="M150 104V132" marker-end="url(#ha-hot)" />
+          <path class="edge hot" d="M150 180V214" marker-end="url(#ha-hot)" />
+          <path class="edge" d="M610 104V214" marker-end="url(#ha)" />
+          <path class="edge" d="M205 382V414" marker-end="url(#ha)" />
+          <path class="edge" d="M555 382V414" marker-end="url(#ha)" />
+          <path class="edge" d="M380 560V528" marker-end="url(#ha)" />
+
+          <rect
+            class="box seed"
+            x="40"
+            y="48"
+            width="220"
+            height="56"
+            rx="10"
+          />
+          <text
+            x="150"
+            y="71"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Seed reader · Study companion
+          </text>
+          <text class="sub" x="150" y="90" text-anchor="middle">
+            a verse open, a question
+          </text>
+
+          <rect
+            class="box plain"
+            x="500"
+            y="48"
+            width="220"
+            height="56"
+            rx="10"
+          />
+          <text
+            x="610"
+            y="71"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Translation workbench · Ask
+          </text>
+          <text class="sub" x="610" y="90" text-anchor="middle">
+            any question, a chronology view
+          </text>
+
+          <rect
+            class="box agent"
+            x="40"
+            y="136"
+            width="220"
+            height="44"
+            rx="10"
+          />
+          <text
+            x="150"
+            y="155"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            reader-a2a /companion/ask
+          </text>
+          <text class="sub" x="150" y="171" text-anchor="middle">
+            A2A, streamed through
+          </text>
+
+          <rect
+            class="box agent"
+            x="40"
+            y="214"
+            width="680"
+            height="168"
+            rx="12"
+            style="stroke: var(--accent); stroke-width: 2"
+          />
+          <text
+            x="380"
+            y="236"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Scripture agent (scripture-resolver.svc)
+          </text>
+          <rect
+            class="box plain"
+            x="56"
+            y="248"
+            width="274"
+            height="122"
+            rx="8"
+          />
+          <text
+            x="193"
+            y="268"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            ask-verse (seconds)
+          </text>
+          <text class="sub" x="193" y="288" text-anchor="middle">
+            dossier (read, built on miss)
+          </text>
+          <text class="sub" x="193" y="304" text-anchor="middle">
+            focus (code) · off-verse → nextStep
+          </text>
+          <text class="sub" x="193" y="320" text-anchor="middle">
+            compose: Haiku 5.5, streamed, cached
+          </text>
+          <text class="sub" x="193" y="336" text-anchor="middle">
+            check (code), struck shown
+          </text>
+          <text class="sub" x="193" y="352" text-anchor="middle">
+            events: who · dossier · delta · check · done
+          </text>
+          <rect
+            class="box plain"
+            x="430"
+            y="248"
+            width="274"
+            height="122"
+            rx="8"
+          />
+          <text
+            x="567"
+            y="268"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            ask-writings (minutes)
+          </text>
+          <text class="sub" x="567" y="288" text-anchor="middle">
+            classify (Haiku) · link names (code)
+          </text>
+          <text class="sub" x="567" y="304" text-anchor="middle">
+            gather: 15 channels, the skill's graph
+          </text>
+          <text class="sub" x="567" y="320" text-anchor="middle">
+            select · compose (Opus 5.5)
+          </text>
+          <text class="sub" x="567" y="336" text-anchor="middle">
+            check (code) · revise once · answer
+          </text>
+          <text class="sub" x="567" y="352" text-anchor="middle">
+            seven recorded steps
+          </text>
+          <path class="edge" d="M332 300H428" marker-end="url(#ha)" />
+          <text class="lbl" x="380" y="292" text-anchor="middle">nextStep</text>
+
+          <rect
+            class="box domain"
+            x="40"
+            y="418"
+            width="680"
+            height="110"
+            rx="12"
+          />
+          <text
+            x="380"
+            y="440"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="700"
+          >
+            Scripture data worker (bsb.faithnet.io)
+          </text>
+          <text class="sub" x="380" y="462" text-anchor="middle">
+            D1: the signed corpus · verse dossiers · the edition's notes and
+            interpretation records
+          </text>
+          <text class="sub" x="380" y="480" text-anchor="middle">
+            the knowledge-base projection (kb_*) · the writings index and its
+            exact-words index
+          </text>
+          <text class="sub" x="380" y="498" text-anchor="middle">
+            Vectorize: the writings by meaning (242,763) · Scripture by meaning
+            (39,959)
+          </text>
+          <text class="lbl" x="380" y="516" text-anchor="middle">
+            everything here is derived and can be rebuilt
+          </text>
+
+          <rect class="zone" x="40" y="564" width="680" height="76" rx="12" />
+          <text
+            x="380"
+            y="586"
+            text-anchor="middle"
+            font-size="13"
+            font-weight="700"
+          >
+            Built offline, gated in preflight
+          </text>
+          <text class="sub" x="380" y="606" text-anchor="middle">
+            the ontology's knowledge base · story and meaning layers ·
+            chronology · edition records
+          </text>
+          <text class="sub" x="380" y="624" text-anchor="middle">
+            Source Publishing: the signed writings · GraphDB mirrors the
+            ontology and is never asked at ask time
+          </text>
+        </svg>
+        <figcaption>
+          The reader's path (orange) is the fast one: one stored dossier and one
+          streamed call. The open ask gathers per question. Both read the same
+          projections, and neither reaches GraphDB, which runs two queries at a
+          time and is never in the path of a reader.
+        </figcaption>
+      </figure>
+
+      <h2 id="layers">Layers of evidence</h2>
+      <p>
+        Every item of evidence carries a <strong>layer</strong>, decided by
+        code, never by the model. The layer says what an item may be used for.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Holds</th>
+              <th>May say what the text says?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="chip found">text</span></td>
+              <td>
+                The verse and its neighbours from the signed corpus, in the
+                reader's edition; its source words (Hebrew, Aramaic, Greek) with
+                their glosses; the Septuagint; the Dead Sea Scroll copies;
+                parallel passages.
+              </td>
+              <td>Yes. Only this layer may.</td>
+            </tr>
+            <tr>
+              <td><span class="chip seed">edition</span></td>
+              <td>
+                What this translation decided at the verse and why: its note on
+                the source, its interpretation record (the reading it adopted,
+                the alternatives it keeps, the questions it leaves open), its
+                curated concept rules.
+              </td>
+              <td>No. Told as "this edition reads…"</td>
+            </tr>
+            <tr>
+              <td><span class="chip home">reference</span></td>
+              <td>
+                Knowledge-base facts (who a name denotes, kin, ancestry, a place
+                and where it is) and the story layer (the scene, who is on
+                stage, who "he" is). Each names its source: TIPNR, OpenBible, a
+                curated file, or the story layer, which says when it is not yet
+                reviewed.
+              </td>
+              <td>No. Reference data, never a witness.</td>
+            </tr>
+            <tr>
+              <td><span class="chip agent">period</span></td>
+              <td>
+                Writings dated inside the book's window: of the passage's own
+                time. Scroll quotations of the verse.
+              </td>
+              <td>No. Told as theirs.</td>
+            </tr>
+            <tr>
+              <td><span class="chip domain">later</span></td>
+              <td>
+                Writings dated after the window: reception (the Fathers, the
+                rabbis, the Targums, the Reformers).
+              </td>
+              <td>No. Told as reception.</td>
+            </tr>
+            <tr>
+              <td>register · undated</td>
+              <td>
+                The owner's chronology register entries; works the chronology
+                does not date (served as undated, never placed).
+              </td>
+              <td>No.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="verse">The verse ask (<code>ask-verse</code>)</h2>
+      <p>
+        The reader already knows the verse, so nothing is classified and nothing
+        is searched. The evidence for a verse is a function of the verse, so it
+        is built once and stored: the
+        <strong>verse dossier</strong>
+        (<code>ap.scripture.verse-dossier.v1</code>), one per edition and verse.
+      </p>
+      <h3>The dossier: a join and a trim, never model-written</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>From</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>verse</td>
+              <td>
+                The verse in the reader's edition from the signed corpus, with
+                its commitment; for the RBS, its stage (every check passes, or a
+                check is open) and its note on the source.
+              </td>
+            </tr>
+            <tr>
+              <td>context</td>
+              <td>Two verses each side, same edition.</td>
+            </tr>
+            <tr>
+              <td>story</td>
+              <td>
+                The story layer's state at the verse: the scene and its span,
+                the mode (narration, speech), the speaker, who is on stage with
+                natural gender and number, who each reference in the verse is,
+                the speech acts.
+              </td>
+            </tr>
+            <tr>
+              <td>meaning</td>
+              <td>
+                The meaning layer for the scene: what it does and what it leaves
+                open, the connectors and question words at the verse, the book's
+                key words that occur in it.
+              </td>
+            </tr>
+            <tr>
+              <td>source</td>
+              <td>
+                The source words in order with their Strong's numbers and
+                glosses; a curated concept rule wherever one binds a word.
+              </td>
+            </tr>
+            <tr>
+              <td>knowledgeBase</td>
+              <td>
+                For each person and place the story layer binds at the verse:
+                description, period, parents, partner, children, tribe, modern
+                name.
+              </td>
+            </tr>
+            <tr>
+              <td>interpretation</td>
+              <td>
+                The edition's interpretation record: each question, its status,
+                the reading decided with its rationale and footnote, the
+                alternatives kept.
+              </td>
+            </tr>
+            <tr>
+              <td>witnesses</td>
+              <td>
+                The Septuagint (Swete); which Dead Sea Scrolls copy the verse;
+                which scroll lines quote it; parallel passages.
+              </td>
+            </tr>
+            <tr>
+              <td>writings</td>
+              <td>
+                Units placed on the verse by citation (at most two a work, eight
+                a layer, the layer against the book's window, each date with its
+                basis); the chapter's period and later writings from the
+                chronology.
+              </td>
+            </tr>
+            <tr>
+              <td>register</td>
+              <td>The chronology register's entries at the verse.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        A dossier is about 7,000 to 14,000 characters. It is built on the first
+        ask of a verse (0.3 to 1.7 s, every source is in the same D1) and read
+        in about 40 ms afterwards; reloading any source empties the store, so
+        the next ask rebuilds it. The other English Bibles' wordings of the
+        verse (WEB, ASV, KJV, BSB) ride beside the dossier for the leak check
+        only and never enter a prompt.
+      </p>
+      <h3>Five steps, each timed on the receipt</h3>
+      <ol class="steps">
+        <li>
+          <strong>Dossier (code).</strong> Read the stored dossier, or build and
+          store it. A range of up to five verses reads each one and keeps the
+          first whole.
+        </li>
+        <li>
+          <strong>Focus (code).</strong> The question's words point at sections:
+          a word or "mean" at the source words, "who" or a pronoun at the story
+          and the knowledge base, "why does this translation" at the edition's
+          record, "scroll" or "Septuagint" at the witnesses, "Fathers" or
+          "rabbis" at later writings. A question that names another chapter,
+          asks "where else" or "throughout", or names a writing the dossier does
+          not hold is <em>off-verse</em>: one sentence, and a next step to the
+          open ask.
+        </li>
+        <li>
+          <strong>Compose (Haiku 5.5, streamed).</strong> The system prompt and
+          the whole dossier are a cached prefix: the same bytes for every
+          question about the verse, so a follow-up reads them from the cache.
+          The focus is an instruction after it. Items are tagged [E1]…[En], and
+          every claim cites its tags. Thinking is off; the dossier is the
+          expertise.
+        </li>
+        <li>
+          <strong>Check (code).</strong> Over the finished text, sentence by
+          sentence: an unknown tag; a later reading given as what the text says;
+          a date no cited item carries; a quotation of seven words or more that
+          no item holds; five words in a row from another English Bible's
+          wording of the verse that the dossier itself does not hold; a pronoun
+          resolution the story layer contradicts. A failing sentence is struck
+          in place, with its reason.
+        </li>
+        <li>
+          <strong>Answer.</strong> The receipt: the dossier version, the model,
+          the skill and its hash, what was cited and struck, cache reads and
+          writes, timings.
+        </li>
+      </ol>
+      <p>
+        <strong>Transport.</strong> The agent answers the A2A streaming method
+        with server-sent events: <code>who</code> (agent, model, skill),
+        <code>dossier</code> (the items, so citations can render as the text
+        arrives), <code>delta</code> (text), <code>check</code> (what was
+        struck) and <code>done</code> (the receipt, with the checked answer).
+        <code>SendMessage</code> answers the same thing whole. The Seed reader's
+        <code>/companion/ask</code> calls this skill over the standard A2A
+        client it already uses for every Bible read, and pipes the stream to the
+        pane. The pane shows each source by number, the struck sentences struck
+        through with the reason on hover, and the agent, model and skill that
+        answered. Under each answer the pane lists what to read next, chosen by
+        code: the passage before and after the verse (by the Berean text's own
+        section breaks, named by the story layer), the parallel passages of the
+        verse and of what follows (Matthew 11:1 reads on to 10:1–42, 11:2–19 and
+        Luke 7:18–20), then the strongest cross-references; and two or three
+        follow-up questions the verse's evidence can answer. Answers run about
+        120–170 words: the direct answer, then up to four points. The earlier
+        companion asked a small open model about the chapter text through a
+        shared secret, with no evidence at all; it is out of the path.
+      </p>
+
+      <h2 id="writings">The open ask (<code>ask-writings</code>)</h2>
+      <p>
+        Seven recorded steps on the agent, each its own receipt. A step that
+        fails returns its cause, and every later step carries it to the asker.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Classify (Haiku 5.5).</strong> The question's kind (text,
+          history of reading, term, source, compare, verse, collection, edition)
+          and its anchors: verses, source words at a verse, names, passages of
+          writings by their own reference, exact phrases, search phrasings. Code
+          validates every anchor: a verse must be in the canon, a Strong's
+          number must occur at the verse claimed, a quoted phrase in the
+          question is taken as an exact-words search whatever the model named.
+        </li>
+        <li>
+          <strong>Link (code).</strong> Every name is linked to the
+          knowledge-base people, places and things it can denote. The story
+          layer's binding at the question's verses decides first (which John),
+          then a single candidate; otherwise the name stays <em>ambiguous</em>,
+          every candidate kept and none chosen.
+        </li>
+        <li>
+          <strong>Gather (code, in parallel).</strong> Only the graph queries
+          the question's skill declares (below). Channels: the verses, resolved
+          and verified in the asker's edition; Scripture by meaning (verses the
+          model did not name); writings citing each verse; the chapter's
+          writings record; scroll copies and quotations and the Septuagint;
+          every verse a source word occurs in; writings naming a linked
+          referent, by every name it has; writings named by their own reference;
+          writings by meaning, per layer; writings by exact words; the edition's
+          record at each verse; the knowledge-base facts on each referent;
+          concept rules; and, for a question about the collection, the
+          chronology's compositions and the catalog. A meaning hit that names a
+          linked person as someone else is dropped and counted. Each layer is
+          capped, with at most eight items of one work, and every cut is
+          counted.
+        </li>
+        <li>
+          <strong>Select (Opus 5.5).</strong> Sees one-line summaries only and
+          returns an outline whose every point names its evidence. The answering
+          steps are told what the agent holds (the chronology's 286 writings in
+          Ask, in 578 catalog works and 242,763 passages) and may never say a
+          held writing is missing; one not retrieved is "not retrieved for this
+          question". If a layer the pool holds is ignored, the outline is asked
+          for once more.
+        </li>
+        <li>
+          <strong>Compose (Opus 5.5).</strong> Sees the selected items whole and
+          writes claims, each with its layer, its kind and its evidence, then
+          the prose.
+        </li>
+        <li>
+          <strong>Check (code).</strong> Strikes a claim citing nothing held; a
+          date no cited item carries; a "what the text says" claim resting on
+          anything but the text layer; a quotation not held; a kinship sentence
+          ("X's father was Y", "Y, the son of X") the knowledge base contradicts
+          for a linked person; a claim that the edition decides a question its
+          own record leaves open.
+        </li>
+        <li>
+          <strong>Revise, then answer.</strong> Once, only if the check struck
+          something, told why. A second refusal stands, and what was struck is
+          reported.
+        </li>
+      </ol>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Skill (by question kind)</th>
+              <th>The graph queries it declares</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ask-text</code> (text, verse)</td>
+              <td>
+                kb.link, kb.referent@verse, kb.entity, kb.kin, kb.name-change,
+                writings.by-referent, scripture.meaning, edition.record
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-term</code></td>
+              <td>
+                kb.link, kb.concept, kb.names, kb.entity, writings.by-referent,
+                scripture.meaning, edition.record
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-history-of-reading</code></td>
+              <td>
+                kb.link, kb.referent@verse, kb.entity, kb.name-change,
+                writings.by-referent, scripture.meaning, edition.record
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-source</code></td>
+              <td>kb.link, kb.entity, kb.names, writings.by-referent</td>
+            </tr>
+            <tr>
+              <td><code>ask-compare</code></td>
+              <td>
+                kb.link, kb.referent@verse, kb.entity, kb.kin,
+                writings.by-referent, edition.record
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-collection</code></td>
+              <td>
+                writings.compositions, kb.link, kb.entity, scripture.meaning
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-edition</code></td>
+              <td>
+                kb.link, kb.referent@verse, kb.concept, edition.record,
+                scripture.meaning
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-verse</code></td>
+              <td>
+                kb.referent@verse, kb.entity, kb.kin, kb.concept, edition.record
+                (through the dossier)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Each skill is a <code>SKILL.md</code> in the skills repository whose
+        frontmatter lists its queries. The export compiles them into the agent
+        and refuses a query no projection serves, and preflight refuses an agent
+        module the skills have moved past.
+      </p>
+
+      <h2 id="graph">The knowledge graph, projected</h2>
+      <p>
+        The ontology lives in GraphDB, and the repository holds its source. The
+        ask never queries GraphDB. GraphDB Free runs two queries at once, so one
+        slow query is an outage, and its reasoner once filled the disk through a
+        single symmetric, transitive relation. Instead, each question the ask
+        may put to the graph is a named query, answered by a table built at
+        build time from the same sources. Every closure is computed in code (all
+        of a person's ancestors, every name a referent is called by), every row
+        names its source, and preflight rebuilds the projection from the sources
+        and refuses drift.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Query</th>
+              <th>Answers</th>
+              <th>Rows</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>kb.link</code></td>
+              <td>
+                A name (and the question's verses) → the people, places and
+                things it can denote
+              </td>
+              <td>6,656 names over 4,249 entities</td>
+            </tr>
+            <tr>
+              <td><code>kb.referent@verse</code></td>
+              <td>A verse → whom the story layer binds there (which John)</td>
+              <td>75,313 bindings, all 66 books</td>
+            </tr>
+            <tr>
+              <td><code>kb.entity</code> · <code>kb.kin</code></td>
+              <td>
+                An entity's description, period, place; its parents, children,
+                siblings, partners, tribe
+              </td>
+              <td>10,961 edges</td>
+            </tr>
+            <tr>
+              <td><code>kb.ancestry</code></td>
+              <td>Every ancestor, with the generations (closure)</td>
+              <td>45,565</td>
+            </tr>
+            <tr>
+              <td><code>kb.names</code> · <code>kb.name-change</code></td>
+              <td>
+                Every name a referent is called by; Abram → Abraham at Gen 17:5
+                and its rule
+              </td>
+              <td>in the names and edges</td>
+            </tr>
+            <tr>
+              <td><code>kb.concept</code></td>
+              <td>
+                A Strong's number → the curated theological concept and its rule
+              </td>
+              <td>184 concepts, 453 numbers</td>
+            </tr>
+            <tr>
+              <td><code>story@verse</code></td>
+              <td>
+                A verse → its scene, cast, references, speech acts, meaning
+              </td>
+              <td>30,351 verses</td>
+            </tr>
+            <tr>
+              <td><code>writings.by-referent</code></td>
+              <td>A referent → the writings that name it (ambiguity said)</td>
+              <td>over the writings index's 109,867 name hits</td>
+            </tr>
+            <tr>
+              <td><code>writings.compositions</code></td>
+              <td>
+                The chronology's writings in Ask, with dates and their bases
+              </td>
+              <td>286</td>
+            </tr>
+            <tr>
+              <td><code>edition.record</code></td>
+              <td>A verse → the edition's note and interpretation record</td>
+              <td>3,629 notes, 3,749 records (RBS)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Sources: the knowledge base (TIPNR and OpenBible, CC BY; curated
+        concepts and relations), the story layer and meaning layer (all 66
+        books, model-built with code checks, not yet reviewed, and said so on
+        every fact), the chronology, and the edition's own records. The
+        projection is written by <code>build-kb-projection.py</code>; its
+        manifest of counts and digests is committed and checked in preflight.
+      </p>
+
+      <h2 id="sources">The sources of content</h2>
+      <p>
+        Every source is held under its own rights and in its own place. Three
+        things are true of all of them: the text sits in a signed record, the
+        rights are recorded per edition, and the harness reads them through
+        indexes it can rebuild at any time.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>What is held</th>
+              <th>Rights</th>
+              <th>Where it lives</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture</td>
+              <td>
+                Ten editions as signed corpora (BSB, WEB, ASV, KJV, the RBS
+                family and others), each verse with a commitment a reader can
+                verify; the frozen Hebrew and Greek source tokens with their
+                Strong's numbers; Swete's Septuagint.
+              </td>
+              <td>public domain or open licences; per edition</td>
+              <td>Scripture data worker (D1)</td>
+            </tr>
+            <tr>
+              <td>Witnesses</td>
+              <td>
+                The Dead Sea Scrolls: 1,027 manuscripts, 53,694 lines, as 28
+                published works. A line that copies a verse is a witness of its
+                text; a line that quotes it is a writing of its time. The 36,585
+                lines of the non-biblical scrolls (753 manuscripts) are indexed
+                as writings of the period.
+              </td>
+              <td>
+                CC BY-NC; free lane only, never an input to the translation
+              </td>
+              <td>Source Publishing</td>
+            </tr>
+            <tr>
+              <td>Writings of the period</td>
+              <td>
+                1 Enoch, Jubilees and the Pseudepigrapha (Charles), Josephus
+                (Whiston), Philo (Yonge), the Testaments of the Twelve, the
+                deuterocanon (Brenton), 2 Esdras; the targums and the rabbinic
+                commentators from Sefaria (Rashi, Ibn Ezra, Radak, Ramban,
+                Rashbam, Sforno, Onkelos, Targum Jonathan), Pirkei de-Rabbi
+                Eliezer, four Talmud passages; the wider ancient world as the
+                writings cite it: Gilgamesh, Hesiod, the Odyssey, the
+                North-Semitic inscriptions (Cooke), Cory's fragments, Rogers'
+                cuneiform parallels, the Cave of Treasures, Marcus Aurelius; and
+                the programme's own machine-aided English drafts of writings
+                with no public-domain English (Chrysostom on Genesis, Luther on
+                Genesis 6, Syncellus on the Watchers, Yalkut Shimoni §44), each
+                passage labelled as a draft with the original beside it.
+              </td>
+              <td>public domain, CC0, CC BY, CC BY-SA; per edition</td>
+              <td>Source Publishing, <code>writing-text</code> works</td>
+            </tr>
+            <tr>
+              <td>Later readers</td>
+              <td>
+                The Ante-Nicene Fathers, volumes I to V (Justin, Irenaeus,
+                Clement of Rome, Athenagoras, Theophilus, Tatian, Clement of
+                Alexandria, Hermas, Tertullian, Origen, Minucius Felix,
+                Hippolytus, Cyprian, Novatian), the Nicene and Post-Nicene
+                Fathers volumes NPNF1 II (Augustine's City of God and Christian
+                Doctrine), NPNF2 I (Eusebius' Church History and Life of
+                Constantine) and NPNF2 IV (Athanasius); Eusebius' Preparation,
+                Demonstration and Onomasticon; the early Christian witnesses
+                taken on the fourth and fifth outside reviews (Egeria,
+                Serapion's prayers, the Doctrine of Addai, Pistis Sophia, the
+                Six Books Dormition, the Phos Hilaron, the Apocryphal New
+                Testament, the Edict of Thessalonica, Jerome on Daniel, Julian
+                Against the Galileans, Basil to young men, the Toledot Yeshu);
+                Augustine, Calvin on Genesis, Pember; a study Bible's notes, one
+                work per book of the Bible, 22,932 notes.
+              </td>
+              <td>
+                CC BY-SA (the Fathers' transcriptions); all rights reserved,
+                used by permission (the study notes)
+              </td>
+              <td>
+                Source Publishing, <code>writing-text</code> and
+                <code>study-notes</code> works
+              </td>
+            </tr>
+            <tr>
+              <td>Knowledge base</td>
+              <td>
+                3,129 persons, 1,007 places, 5,168 key terms, 45 concepts, 16
+                divine names, with the names each can be called by.
+              </td>
+              <td>CC BY</td>
+              <td>Scripture data worker</td>
+            </tr>
+            <tr>
+              <td>Chronology</td>
+              <td>
+                The reference chronology: 143 register entries, 504 story
+                sources, 603 works with their class, group and date range, the
+                research atlas, and each book's date window.
+              </td>
+              <td>the project's own research</td>
+              <td>the skills repository; projected into the indexes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p>
+          <strong>Rights decide three things.</strong> Whether a source is
+          published as a work (an unlicensed text gets a record with its title
+          and date, and nothing more), whether it is indexed and in which
+          partition, and whether an answer may quote it. The study Bible's notes
+          are held by permission in a partition that is never exported, and no
+          claim is ever extracted from them.
+        </p>
+      </div>
+      <p>
+        The publishing path, the writings ontology, and the programme that
+        drafts English for writings with none are on their own page:
+        <a href="/architecture/writings/">Period writings</a>.
+      </p>
+
+      <h2>How a source becomes evidence</h2>
+      <ol class="steps">
+        <li>
+          <strong>Snapshot.</strong> The source's bytes are pinned outside every
+          repository with their hash, the edition and the licence with its
+          evidence.
+        </li>
+        <li>
+          <strong>Publish.</strong> One work per edition on Source Publishing,
+          one signed block per citable unit: a verse of 1 Enoch, a section of
+          Josephus, one comment of Rashi on one verse, a paragraph of Augustine,
+          a study note. A block is placed on a verse only by a citation in its
+          own text or its editor's notes, or by a reviewed link in the research
+          atlas. Nothing is placed by guess, and a verse outside the canon is a
+          refusal, not a silent miss.
+        </li>
+        <li>
+          <strong>Index.</strong> The indexer reads the published works back and
+          writes its projections: by verse, by referent, by source word, by
+          meaning, by exact words, the chapter record and the book windows; a
+          reload empties the stored verse dossiers so each is rebuilt from what
+          was just loaded. It is the only writer. Each unit carries the work's
+          date with the basis for that date, its licence, its partition and the
+          link to the signed block. Wiping an index loses nothing a rebuild does
+          not restore.
+        </li>
+        <li>
+          <strong>Layer.</strong> Code decides, against the asked book's window,
+          whether a writing is of the passage's own period or a later reading. A
+          work with no date is served as undated, never placed.
+        </li>
+      </ol>
+
+      <h2 id="indexes">The indexes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Answers</th>
+              <th>Built from</th>
+              <th>Size today</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Writings by verse</td>
+              <td>
+                Which units cite a verse or chapter, with the method of each
+                link.
+              </td>
+              <td>the works' block labels and notes</td>
+              <td>169,091 links over 242,763 units</td>
+            </tr>
+            <tr>
+              <td>Writings by referent</td>
+              <td>
+                Which units name a knowledge-base person, place or thing; a name
+                that could denote two stays two.
+              </td>
+              <td>the units' text against the knowledge base's names</td>
+              <td>109,867 hits, 1,718 names</td>
+            </tr>
+            <tr>
+              <td>Writings by meaning</td>
+              <td>
+                The units nearest a question in meaning, in any language, at or
+                above one fixed score; empty is an answer.
+              </td>
+              <td>bge-m3 embeddings (1,024 dimensions) in Vectorize</td>
+              <td>242,763 vectors, floor 0.5</td>
+            </tr>
+            <tr>
+              <td>Writings by exact words</td>
+              <td>
+                The units holding a quoted phrase word for word, for what
+                meaning search blurs.
+              </td>
+              <td>SQLite FTS5 over the units, rebuilt with every reload</td>
+              <td>242,763 units</td>
+            </tr>
+            <tr>
+              <td>Scripture by meaning</td>
+              <td>
+                The verses nearest a question, so a theme reaches verses the
+                model would not name; and the edition's notes and interpretation
+                questions, for questions about the edition.
+              </td>
+              <td>bge-m3 over the RBS verses, notes and questions</td>
+              <td>
+                39,959 vectors (31,085 verses, 3,629 notes, the questions)
+              </td>
+            </tr>
+            <tr>
+              <td>By source word</td>
+              <td>
+                Every verse a Strong's number occurs in, and its Septuagint
+                equivalent.
+              </td>
+              <td>the frozen source tokens</td>
+              <td>437,587 tokens</td>
+            </tr>
+            <tr>
+              <td>The knowledge-base projection</td>
+              <td>The named graph queries above.</td>
+              <td>
+                the ontology's knowledge base, the story and meaning layers
+              </td>
+              <td>seven tables, checked against a committed manifest</td>
+            </tr>
+            <tr>
+              <td>Verse dossiers</td>
+              <td>Everything held about one verse, for the verse ask.</td>
+              <td>a join over the rows above, built on first ask</td>
+              <td>one per edition and verse asked</td>
+            </tr>
+            <tr>
+              <td>Chapter record · book windows</td>
+              <td>
+                For a chapter: its window, period and later writings,
+                commentary, register. The date before which a writing is of a
+                book's own time.
+              </td>
+              <td>the evidence store and the chronology</td>
+              <td>1,189 chapters · 66 books</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="out">What comes out</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>The verse ask</th>
+              <th>The open ask</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>answer</td>
+              <td>
+                The checked prose: [E…] tags for its sources, struck sentences
+                marked with their reasons.
+              </td>
+              <td>The checked prose and a next step.</td>
+            </tr>
+            <tr>
+              <td>cited · evidence</td>
+              <td>
+                Each cited dossier item: title, layer, kind, date and basis,
+                licence, link to the signed block.
+              </td>
+              <td>
+                The cited items grouped by layer (text, edition, reference,
+                period, later, register, undated) and sorted by date.
+              </td>
+            </tr>
+            <tr>
+              <td>claims · struck</td>
+              <td>What the check struck, and why, in words.</td>
+              <td>
+                Every claim with its layer, kind, evidence and whether it
+                passed; what was struck and why.
+              </td>
+            </tr>
+            <tr>
+              <td>nextStep</td>
+              <td>
+                The open ask, prefilled, when the question reaches beyond the
+                verse.
+              </td>
+              <td>What to ask next.</td>
+            </tr>
+            <tr>
+              <td>agent</td>
+              <td>The agent, the model and the skill with its hash.</td>
+              <td>The agent, the models and the skill with its hash.</td>
+            </tr>
+            <tr>
+              <td>coverage · steps</td>
+              <td>
+                Each step's time; cache reads and writes; the dossier's version.
+              </td>
+              <td>
+                Items gathered, selected and cited per layer; which channel
+                found each; what the caps cut; which names were linked and how;
+                which channels dropped out.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="checks">Robustness: checks, not intentions</h2>
+      <ul>
+        <li>
+          <strong
+            >The model never supplies a verse, a date or a quotation.</strong
+          >
+          Verses come from the signed corpus in the reader's edition; dates only
+          from the chronology, each with its basis; a quotation must be in held
+          evidence.
+        </li>
+        <li>
+          <strong>Layers are decided by code.</strong> Period or later is the
+          work's date against the book's window. Edition and reference are kinds
+          of record. The model never labels evidence.
+        </li>
+        <li>
+          <strong>A name is linked by rule, and ambiguity is kept.</strong> The
+          story layer at the verse, then a single candidate; otherwise every
+          candidate is carried and the answer is told not to choose.
+        </li>
+        <li>
+          <strong>The graph is a projection, never a live dependency.</strong>
+          No SPARQL at ask time; closures computed in code; preflight holds the
+          projection to its sources.
+        </li>
+        <li>
+          <strong>The agent knows what it holds.</strong> It may not call a held
+          writing missing, and a count it gives says what it counts.
+        </li>
+        <li>
+          <strong
+            >No other English Bible's wording enters an answer about a
+            verse.</strong
+          >
+          The check strikes five words in a row from the WEB, ASV, KJV or BSB at
+          that verse unless the dossier itself holds them (the reader's own
+          verse, or a writing quoting it).
+        </li>
+        <li>
+          <strong>A failed channel is named, not hidden.</strong> It contributes
+          nothing and is listed; the gather goes on. A heavy load of the data
+          worker's database makes its reads fail; loads run between
+          measurements, never during them.
+        </li>
+        <li>
+          <strong>Every cut is counted,</strong> including verses past the cap,
+          items past a layer's cap, a second language copy of a comment, a
+          meaning hit naming the wrong person, and a dossier section over its
+          size target.
+        </li>
+        <li>
+          <strong>Rights are enforced three times:</strong> at publish (the
+          lane), at index (the partition, filtered per lane) and at answer
+          (quote only where the edition allows it).
+        </li>
+        <li>
+          <strong>Nothing here reaches the translation drafter.</strong> Later
+          readings and the edition's own decisions never inform a translation
+          decision.
+        </li>
+      </ul>
+
+      <h2 id="measured">How it is measured</h2>
+      <p>
+        Each ask has its own development sets, written as drafts for the owner
+        to adjudicate. The gold names the evidence a complete answer cites.
+        Graders are code (recall of the gold, citation coverage, date
+        provenance, layer discipline, leaks, story agreement, struck rate,
+        latency). Every case runs three times in a fresh conversation, and
+        results from different sets or judges are never pooled.
+
+        <a href="/architecture/ask-evaluation/"
+          >See the Ask evaluation: question and answer sets, the judge, the
+          Workbench and the baseline →</a
+        >
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Run (27 October 2026)</th>
+              <th>Questions</th>
+              <th>Required recall</th>
+              <th>Expected recall</th>
+              <th>Time</th>
+              <th>Also</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ask-verse</strong>, Haiku 5.5, 3 repeats</td>
+              <td>
+                30 verses, 36 turns with follow-ups (word, who, why this
+                rendering, scrolls, later readers, what to notice, two beyond
+                the verse)
+              </td>
+              <td><strong>0.936</strong></td>
+              <td>0.795</td>
+              <td>first words 0.71 s (p95 1.67 s); done 3.0 s (p95 4.0 s)</td>
+              <td>
+                struck 4.1% of sentences; off-verse handed on 100%; about $0.05
+                for all 108 answers
+              </td>
+            </tr>
+            <tr>
+              <td>ask-verse after the leak fix, 1 repeat</td>
+              <td>the same 36</td>
+              <td><strong>0.971</strong></td>
+              <td>0.769</td>
+              <td>first words 0.71 s; done 2.9 s (p95 3.8 s)</td>
+              <td>
+                struck 1.6% of sentences (was 4.1%); a leak struck in 2 of 36
+                answers
+              </td>
+            </tr>
+            <tr>
+              <td>ask-writings on the same verse questions, 1 repeat</td>
+              <td>the same 36</td>
+              <td>0.632</td>
+              <td>0.462</td>
+              <td>done 118 s (p95 150 s)</td>
+              <td>
+                graded in the dossier's terms, which the open ask has no story
+                or source-word items for: a speed comparison, not a recall
+                ceiling
+              </td>
+            </tr>
+            <tr>
+              <td>
+                ask-writings, with the edition layer and the collection, 3
+                repeats
+              </td>
+              <td>12 theme, collection and edition questions</td>
+              <td>0.838</td>
+              <td>0.540</td>
+              <td>median 123 s</td>
+              <td>no answer denied a held writing; every date carried</td>
+            </tr>
+            <tr>
+              <td>ask-writings, with names linked to the graph, 3 repeats</td>
+              <td>the same 12</td>
+              <td><strong>0.852</strong></td>
+              <td>0.512</td>
+              <td>median 104 s</td>
+              <td>
+                citation coverage 0.997; date provenance 1.00; layer discipline
+                0.977
+              </td>
+            </tr>
+            <tr>
+              <td>The Scripture-only ask, 1 repeat</td>
+              <td>the same 12</td>
+              <td>0.375</td>
+              <td>0.344</td>
+              <td>median 42 s</td>
+              <td>the baseline: it holds no writings and no edition record</td>
+            </tr>
+            <tr>
+              <td>ask-writings, the first set (regression), 1 repeat</td>
+              <td>20 questions on passages, words, writings and readings</td>
+              <td><strong>0.767</strong></td>
+              <td>0.475</td>
+              <td>median 94 s</td>
+              <td>
+                was 0.658 / 0.375 before linking, the edition layer and the
+                wider index; every claim cited, every date carried
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The ship test the verse ask was held to (required recall at least 0.8,
+        done within 10 s at the 95th percentile, at most 5% of sentences struck)
+        is met. Its check was then loosened in one respect the transcripts
+        showed: a writing in the dossier that quotes the verse in its own older
+        English was being struck as a leak, and now is not. The first open-ask
+        set, re-run as a regression check, rose from 0.658 to 0.767 (one
+        repeat). Sets are drafts for the owner's adjudication, so these are
+        diagnostics, not quality claims.
+      </p>
+
+      <h2 id="runs">Where it runs</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Host</th>
+              <th>Built from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture agent (both asks, the checks, the card)</td>
+              <td>scripture.faithnet.io</td>
+              <td>
+                verifiable-content-demo
+                <code>demo-bible-a2a</code> (<code>ask-verse.ts</code>,
+                <code>ask-writings.ts</code>)
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Scripture data worker (the corpus, the dossiers, the projection,
+                the indexes)
+              </td>
+              <td>bsb.faithnet.io (D1, Workers AI, Vectorize)</td>
+              <td>
+                verifiable-content-demo
+                <code>demo-bible-mcp</code> (<code>verse-dossier.ts</code>,
+                <code>kb.ts</code>, <code>edition-index.ts</code>,
+                <code>writings.ts</code>)
+              </td>
+            </tr>
+            <tr>
+              <td>The Study companion's route</td>
+              <td>seed-reader-a2a.faithnet.io <code>/companion/ask</code></td>
+              <td>
+                this package, <code>reader-a2a/src/routes/companion.ts</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Source Publishing (the signed works)</td>
+              <td>publishing.faithnet.io</td>
+              <td>verifiable-content-demo</td>
+            </tr>
+            <tr>
+              <td>
+                The ask skills, the projection builder, the evaluation sets
+              </td>
+              <td>run locally; snapshots outside every repository</td>
+              <td>
+                the skills repository (<code>skills/scripture/ask-*</code>,
+                <code>scripts/writings/</code>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

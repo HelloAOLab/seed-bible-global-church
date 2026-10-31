@@ -3,6 +3,9 @@
 // Discover, Share and an orange Listen; the chapter column, the footnote modal, the skeleton and error states), over
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
+import { friendNotesByVerse } from "../../state/social/friendNotes";
+import { sharedRefOf } from "../../state/social/sharedPage";
+import type { Offering } from "../../state/social/discover";
 import { DiscoverPanel } from "../social/DiscoverPanel";
 import { PresenceGutter, colorOf } from "../sessions/PresenceGutter";
 import { ScriptureCheckBadge, verseCheckTitle } from "./ScriptureCheck";
@@ -52,6 +55,27 @@ export function BibleReader({
   const notes = ui.embed.value
     ? []
     : state.annotations.forChapter(chapterRef).value;
+  // Friends' published notes on this chapter, marked at their verses (asked for only when there are friends).
+  const friendSet = new Set(
+    state.today.friends.value.map((f) => f.contact.toLowerCase())
+  );
+  const friendNotes =
+    ui.embed.value || !state.session.value || !friendSet.size
+      ? new Map<number, Offering[]>()
+      : friendNotesByVerse(
+          chapterRef,
+          state.discover.forChapter(chapterRef).value?.offerings ?? [],
+          friendSet
+        );
+  const friendName = (o: Offering) => {
+    const a = (o.owner || o.shelf).toLowerCase();
+    return (
+      state.today.profiles.value[a]?.displayName ??
+      state.today.friends.value.find((f) => f.contact.toLowerCase() === a)
+        ?.name ??
+      o.shelf
+    );
+  };
   // This pane shows the live session's tab: the room's marks and where everyone is are drawn here.
   const inSession =
     state.live.active.value && state.live.sessionReading() === reading;
@@ -210,6 +234,55 @@ export function BibleReader({
     }
     selection.toggle(verseNumber, event.shiftKey);
   };
+  /** The first of a registry by priority — what a tap on a heading or the title runs. */
+  const first = <T extends { priority?: number }>(xs: T[]) =>
+    [...xs].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))[0];
+  /** A heading tapped chooses its section and opens what an extension offers for it — only while one offers something. */
+  const headingTool = first(state.extensions.headingTools.value);
+  const onHeadingClick =
+    active && headingTool
+      ? (
+          section: { heading: string; start: number; end: number },
+          event: MouseEvent
+        ) => {
+          event.stopPropagation();
+          selection.chooseHeading(section);
+          headingTool.onSelect({
+            chapterRef: reading.chapterRef.value,
+            ...section,
+          });
+        }
+      : undefined;
+  /** The chapter title opens what an extension offers for the book; with none, the book picker as before. */
+  const onTitleClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    const tool = first(state.extensions.bookTools.value);
+    if (!tool || !active) {
+      ui.selector.value = "books";
+      return;
+    }
+    selection.clear();
+    selection.clearHeading();
+    tool.onSelect({
+      chapterRef: reading.chapterRef.value,
+      bookId: reading.bookId.value,
+      bookName: reading.bookName.value,
+    });
+  };
+  const bookPicker = (className: string) => (
+    <button
+      type="button"
+      className={className}
+      aria-label={t("change-book", { defaultValue: "Change book" })}
+      title={t("change-book", { defaultValue: "Change book" })}
+      onClick={(e: MouseEvent) => {
+        e.stopPropagation();
+        ui.selector.value = ui.selector.value === "books" ? null : "books";
+      }}
+    >
+      <span className="material-symbols-outlined">menu_book</span>
+    </button>
+  );
 
   /** Others' marks in the live session, verse by verse, for the off-screen cues. */
   const sessionCues = (): CueMark[] => {
@@ -487,11 +560,31 @@ export function BibleReader({
           notes,
           scriptureElements: settings.scripture.value,
           onVerseClick,
+          onHeadingClick,
+          selectedHeadingStart: active
+            ? (selection.heading.value?.start ?? null)
+            : null,
           onOpenFootnote: (noteId, verse) => setFootnote({ noteId, verse }),
           onAnnotationVerseClick: (verseNumber, event) => {
             event.stopPropagation();
             ui.pane.value = "notes";
             ui.focusNoteVerse.value = verseNumber;
+          },
+          friendNotes: new Map(
+            [...friendNotes].map(([v, list]) => [
+              v,
+              t("friend-note-at", {
+                names: [...new Set(list.map(friendName))].join(", "),
+                defaultValue: "A note from {{names}}",
+              }),
+            ])
+          ),
+          // one friend's note opens as its page (their words, their name); several, Discover's notes for the chapter
+          onFriendNoteClick: (verseNumber) => {
+            const list = friendNotes.get(verseNumber) ?? [];
+            const ref = list.length === 1 ? sharedRefOf(list[0]!) : null;
+            if (ref) ui.shared.value = ref;
+            else ui.pane.value = "discover";
           },
           ...(verseChecks
             ? { verseChecks, verseCheckTitle: verseCheckTitle(t) }
@@ -753,13 +846,7 @@ export function BibleReader({
         </div>
         <div className="sb-bible-reader-header">
           <div className="sb-bible-reader-heading">
-            <h2
-              className="sb-bible-reader-title"
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.selector.value = "books";
-              }}
-            >
+            <h2 className="sb-bible-reader-title" onClick={onTitleClick}>
               <span className="sb-bible-reader-book">
                 {reading.bookName.value}
               </span>
@@ -770,6 +857,7 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
+            {bookPicker("sb-bible-reader-book-picker")}
             <button
               type="button"
               className="sb-bible-reader-translation"
@@ -854,10 +942,7 @@ export function BibleReader({
           <div className="sb-bible-reader-main-content">
             <h2
               className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                ui.selector.value = "books";
-              }}
+              onClick={onTitleClick}
             >
               <span className="sb-bible-reader-book">
                 {reading.bookName.value}
@@ -866,6 +951,9 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
+            {bookPicker(
+              "sb-bible-reader-book-picker sb-bible-reader-book-picker-mobile"
+            )}
             {body()}
           </div>
           {/* The old reader's Discover card in the chapter — not while a side pane is open: it would repeat the pane

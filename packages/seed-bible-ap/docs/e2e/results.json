@@ -1,78 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-26 18:31 UTC",
+  "when": "2026-10-30 23:54 UTC",
   "results": [
     {
-      "id": "X1",
+      "id": "X17",
       "section": "12. Extensions",
-      "title": "Places map",
-      "checks": "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
+      "title": "Drill from a section into a place, a person's oikos and generations",
+      "checks": "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
       "mark": "✅",
-      "note": "base map with 6 tile(s) drawn, 8 marker(s)",
-      "ms": 3786
+      "note": "Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (What grew out of Paul: 2 generations)",
+      "ms": 8166
     },
     {
-      "id": "X8",
+      "id": "X18",
       "section": "12. Extensions",
-      "title": "Places map follows a chapter that arrives late",
-      "checks": "With the Places map open on Deuteronomy 32, move to John 1 while its chapter is slow to arrive: the map draws John 1's places from the publishers (Jerusalem, Bethany beyond the Jordan, Galilee, Beth-Saida, Nazareth), not Deuteronomy's, and marks Bethany beyond the Jordan's site as uncertain",
+      "title": "The chapter's title opens the book's pane; the book icon opens the book picker",
+      "checks": "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
       "mark": "✅",
-      "note": "Deuteronomy 32 drew Bashan,Gomorrah,Sodom,Jordan,Abarim,Canaan,Jericho,Moab,Mount Nebo,Mount Hor (of Edom),Meribah 1,Wilderness of Zin; John 1 drew Alexandria — Valentinians,Lyon (Irenaeus’s opponents) — Valentinians,Rome — Valentinians,Docetic tendencies,Smyrna — Docetic tendencies,Tralles — Docetic tendencies,Rome — Marcionites,Sinope (his home) — Marcionites,Jerusalem,Bethany (Beyond the Jordan),Jordan,Galilee,Beth-Saida,Nazareth; Bethany beyond the Jordan: site uncertain",
-      "ms": 2053
+      "note": "pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: Old Testament · Hebrew · genealogy, narrative the origins of…; References: GENESIS POINTS TO Psalms 1004 links Strongest: Gen 50:20 ↔ P…; the book icon opens the picker",
+      "ms": 1962
     },
     {
-      "id": "X9",
+      "id": "X20",
       "section": "12. Extensions",
-      "title": "A people group published at a verse",
-      "checks": "On Acts 6, tap verse 1 and Content: the pane shows the published note about the Hellenists (Greek-speaking Jewish Christians) with its picture and its fields, read from Source Publishing",
+      "title": "A person's family by generation, and the extended family in the oikos",
+      "checks": "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
       "mark": "✅",
-      "note": "\"Aramaic-speaking Jewish followers of Jesus\" with its picture and fields Where, Period, Writings, Why these verses, Sources",
-      "ms": 2268
+      "note": "Ruth's family: PARENTS' GENERATION Elimelech parent-in-law Naomi parent-in-law Salmon parent-in-law THEIR GENERATION Ruth Boaz spouse Mahlon spouse Chilion…; oikos 3 rings, extended family toggled off",
+      "ms": 3760
     },
     {
-      "id": "X10",
+      "id": "X21",
       "section": "12. Extensions",
-      "title": "A people group's region on the map",
-      "checks": "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
+      "title": "A household the text names, and the church it became",
+      "checks": "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
       "mark": "✅",
-      "note": "drew 13 places including the Samaritan believers' region",
-      "ms": 1070
-    },
-    {
-      "id": "X11",
-      "section": "12. Extensions",
-      "title": "Places map without its base map",
-      "checks": "When the base map's library cannot be loaded (as in a tab left open across a deploy, where the host answers the app shell for a chunk it no longer has), the Places map on Acts 6 still draws the chapter's places and says under the map that the base map could not be loaded, with Reload",
-      "mark": "✅",
-      "note": "drew 14 places (14 marker(s)) on a blank map; \"The base map could not be loaded, so the places are drawn on…\" with Reload",
-      "ms": 1919
-    },
-    {
-      "id": "X13",
-      "section": "12. Extensions",
-      "title": "Places map on the full page with a place's details",
-      "checks": "On Acts 8 open the Places map, press Expand on its header: the map fills the page beside a details column; tap 'Samaritan believers' in the list: the column shows the group's picture, period and summary and the verses naming it; Shrink puts the map back beside the chapter",
-      "mark": "✅",
-      "note": "full page: map 576px of the 960px pane with the details column; Samaritan believers' picture, period, summary and verses; shrunk back",
-      "ms": 1926
-    },
-    {
-      "id": "X14",
-      "section": "12. Extensions",
-      "title": "A place in the list goes to its verse",
-      "checks": "On Acts 6 open the Places map and tap 'Alexandria' in the list under it: verse 9 (the Synagogue of the Freedmen) is selected and scrolled into view",
-      "mark": "✅",
-      "note": "Alexandria → verse 9 selected (9) and on screen",
-      "ms": 1903
-    },
-    {
-      "id": "X15",
-      "section": "12. Extensions",
-      "title": "The Writings pane lists a study Bible's notes as reception",
-      "checks": "On Genesis 1 open Writings (the bottom toolbar): under 'Commentary on the chapter — later readers' the Reformation Study Bible's study notes are listed as a later reading (Reformed confessional) with their note count and Ligonier's attribution; 'Show … notes' opens the notes, each with a link to the whole note at the publisher",
-      "mark": "✅",
-      "note": "36 Reformation Study Bible notes on Genesis 1, listed as a later reading (reception) with Ligonier's attribution; each note links to the published work",
-      "ms": 1610
+      "note": "Lydia → Lydia's household (Acts 16:15) → Church at Philippi, gathered from her household, planted by Paul",
+      "ms": 4109
     }
   ]
 }

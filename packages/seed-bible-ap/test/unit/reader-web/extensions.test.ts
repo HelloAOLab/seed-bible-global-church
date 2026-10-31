@@ -12,7 +12,13 @@ import {
   loadChapterReferences,
 } from "../../../apps/reader-web/src/extensions/references";
 import {} from "../../../apps/reader-web/src/extensions/locations";
-import { parseSse } from "../../../apps/reader-web/src/extensions/companion";
+import {
+  parseSse,
+  renderAnswer,
+  type AgentEvent,
+} from "../../../apps/reader-web/src/extensions/companion";
+import { render } from "preact-render-to-string";
+import { h } from "preact";
 import { crossReferenceItems } from "../../../apps/reader-a2a/src/routes/passage";
 import { parseLocus } from "../../../lib/locus";
 import type { ReaderState } from "../../../apps/reader-web/src/state";
@@ -179,21 +185,45 @@ describe("the ported extensions' pure parts", () => {
     ]);
   });
 
-  it("companion: the stream parser yields text and the answerer, across chunk boundaries", () => {
-    const text: string[] = [];
-    let who = "";
-    let rest = parseSse(
-      'event: who\ndata: seed-bible.svc · llama\n\ndata: {"response":"For "}\n\ndata: {"respo',
-      (t) => text.push(t),
-      (w) => (who = w)
-    );
-    rest = parseSse(
-      rest + 'nse":"God"}\n\ndata: [DONE]\n\n',
-      (t) => text.push(t),
-      (w) => (who = w)
-    );
-    expect(who).toBe("seed-bible.svc · llama");
-    expect(text.join("")).toBe("For God");
+  it("companion: the stream parser reads the scripture agent's events across chunk boundaries", () => {
+    const ev = (data: Record<string, unknown>) =>
+      `data: ${JSON.stringify({ jsonrpc: "2.0", id: 1, result: { message: { parts: [{ data }] } } })}\n\n`;
+    const all =
+      ev({
+        event: "who",
+        agent: "scripture-resolver.svc",
+        model: "claude-haiku-5-5",
+      }) +
+      ev({ event: "delta", text: "For " }) +
+      ev({ event: "delta", text: "God" });
+    const seen: AgentEvent[] = [];
+    let rest = parseSse(all.slice(0, 150), (e) => seen.push(e));
+    rest = parseSse(rest + all.slice(150), (e) => seen.push(e));
+    expect(seen.map((e) => e.event)).toEqual(["who", "delta", "delta"]);
+    expect(
+      seen
+        .filter((e) => e.event === "delta")
+        .map((e) => e.text)
+        .join("")
+    ).toBe("For God");
     expect(rest).toBe("");
+  });
+
+  it("companion: an answer's tags become source numbers and a struck sentence is struck with its reason", () => {
+    const html = render(
+      h(
+        "p",
+        null,
+        ...renderAnswer(
+          "Jesus answers his mother [E1]. ~~The verse says he rebuked her [E3].~~ *(struck: a later reading)* Done.",
+          [{ id: "v", title: "John 2:4", layer: "text", kind: "scripture" }],
+          { E1: "v", E3: "u" }
+        )
+      )
+    );
+    expect(html).toContain('<sup class="sb-companion-cite">1</sup>');
+    expect(html).toContain(
+      '<del class="sb-companion-struck" title="Struck by the check: a later reading">The verse says he rebuked her .</del>'
+    );
   });
 });

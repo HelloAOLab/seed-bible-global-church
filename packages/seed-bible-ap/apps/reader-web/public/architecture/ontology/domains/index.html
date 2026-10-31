@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scripture and the writings</title>
+    <meta
+      name="description"
+      content="How the ontology keeps the Bible apart from every other writing: one shared vocabulary for any text, the scripture domain for the 66 books and their witnesses, and the writings domain for everything else — and which books drive each level."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+    <style>
+      .rule {
+        border-left: 3px solid var(--accent);
+        padding: 0.4rem 0.9rem;
+        background: var(--accent-soft);
+        border-radius: 0 6px 6px 0;
+      }
+      td ul {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+      .diagram text {
+        font:
+          13px/1.2 system-ui,
+          sans-serif;
+        fill: var(--text);
+      }
+      .diagram .t {
+        font-weight: 600;
+      }
+      .diagram .s {
+        fill: var(--muted);
+        font-size: 12px;
+      }
+      .diagram .box {
+        stroke: var(--line);
+        stroke-width: 1;
+        rx: 8;
+      }
+      .diagram .f {
+        fill: var(--c-found);
+      }
+      .diagram .a {
+        fill: var(--c-agent);
+      }
+      .diagram .u {
+        fill: var(--c-home);
+      }
+      .diagram .d {
+        fill: var(--c-domain);
+      }
+      .diagram .imp {
+        stroke: var(--muted);
+        stroke-width: 1.5;
+        fill: none;
+        marker-end: url(#arr);
+      }
+      .diagram .ref {
+        stroke: var(--accent);
+        stroke-width: 1.5;
+        fill: none;
+        stroke-dasharray: 5 4;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/" aria-current="page"
+            >Information Architecture</a
+          >
+          <a href="/architecture/agentic/">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/ontology/">Ontology</a> / Scripture and the
+        writings
+      </div>
+      <h1>Scripture and the writings: two domains on one shared vocabulary</h1>
+      <p class="lede">
+        The system reads the Bible beside many other texts: the Dead Sea
+        Scrolls, Josephus, the Church Fathers, rabbinic commentary, ancient Near
+        Eastern inscriptions, Greek myth. The ontology keeps the Bible apart
+        from every other writing. Each kind of text has its own level, and the
+        rule for deciding where a book goes is written in code. This page sets
+        out the levels, what each one holds, and which books drive each one.
+      </p>
+
+      <p class="toc">
+        <a href="#why">Why the split</a>
+        <a href="#levels">The levels</a>
+        <a href="#books">Which books drive which level</a>
+        <a href="#rules">How a record is placed</a>
+        <a href="#apart">How the two stay apart</a>
+        <a href="#counts">What is in each today</a>
+        <a href="#where">Where it lives</a>
+      </p>
+
+      <h2 id="why">Why the split</h2>
+      <p>
+        Until 27 October 2026 one domain, <code>scripture-writings</code>, held
+        every writing the system cites: the copies of the biblical books, the
+        Apocrypha, the Fathers, councils, rabbinic works and inscriptions. It
+        also imported the Bible ontology. So the classes that describe the Bible
+        and the records of texts that are not the Bible lived in one place. A
+        change made for one kind of text could quietly affect the other. And
+        nothing in the model said which texts are scripture.
+      </p>
+      <p>
+        The owner's direction was to put all the canonical books in the
+        scripture domain and the non-canonical writings in a separate domain, so
+        that the ontology for Bible content stays separate from the ontology for
+        everything else. The working canon is the <strong>66 books</strong> that
+        the project's own translation (RBS) translates. Every other book,
+        including those other churches hold canonical, is a writing. Which
+        traditions hold a writing canonical is still recorded, as data on that
+        writing.
+      </p>
+
+      <h2 id="levels">The levels</h2>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 960 520"
+          role="img"
+          aria-labelledby="lv-t"
+        >
+          <title id="lv-t">
+            The foundations (PROV-O, DOLCE+DnS, P-Plan) sit at the bottom.
+            Agentic-trust builds on them. Textual Sources builds on
+            agentic-trust and holds the vocabulary any text shares. Scripture
+            and Writings both build on Textual Sources. Neither imports the
+            other; a writing refers to a Bible passage only by its OSIS id.
+            Doctrine and Bible Translation sit above.
+          </title>
+          <defs>
+            <marker
+              id="arr"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+            </marker>
+          </defs>
+          <rect class="box f" x="40" y="440" width="880" height="56" />
+          <text class="t" x="60" y="463">
+            Foundations — PROV-O · DOLCE+DnS · P-Plan · Web Annotation
+          </text>
+          <text class="s" x="60" y="483">
+            what an entity, a description, a situation, an activity and a plan
+            are — no subject matter
+          </text>
+
+          <rect class="box a" x="40" y="350" width="880" height="56" />
+          <text class="t" x="60" y="373">agentic-trust (at:) — the base</text>
+          <text class="s" x="60" y="393">
+            agents, organizations, information artifacts, observations,
+            classifications, categories
+          </text>
+
+          <rect class="box u" x="200" y="252" width="560" height="64" />
+          <text class="t" x="220" y="276">Textual Sources (txt:) — upper</text>
+          <text class="s" x="220" y="296">
+            work · edition · witness · span · passage alignment · canon
+            classification · licence and allowed use
+          </text>
+
+          <rect class="box d" x="40" y="120" width="400" height="98" />
+          <text class="t" x="60" y="145">Scripture (scr:) — the 66 books</text>
+          <text class="s" x="60" y="166">
+            verses, editions, the knowledge base, the story,
+          </text>
+          <text class="s" x="60" y="184">
+            interpretations; the canon's witnesses: codices,
+          </text>
+          <text class="s" x="60" y="202">
+            papyri, early versions, biblical scroll copies
+          </text>
+
+          <rect class="box d" x="520" y="120" width="400" height="98" />
+          <text class="t" x="540" y="145">
+            Writings (wrt:) — everything else
+          </text>
+          <text class="s" x="540" y="166">
+            deuterocanon, pseudepigrapha, scroll compositions,
+          </text>
+          <text class="s" x="540" y="184">
+            Josephus, Philo, Fathers, councils, rabbinic, ANE,
+          </text>
+          <text class="s" x="540" y="202">
+            classics; published works; our own translations
+          </text>
+
+          <rect class="box d" x="40" y="24" width="400" height="56" />
+          <text class="t" x="60" y="47">
+            Bible Translation (btr:) · Seed (seed:)
+          </text>
+          <text class="s" x="60" y="67">built on scripture</text>
+          <rect class="box d" x="520" y="24" width="400" height="56" />
+          <text class="t" x="540" y="47">Doctrine (sdo:)</text>
+          <text class="s" x="540" y="67">
+            on textual-sources; cites councils as writings records
+          </text>
+
+          <path class="imp" d="M480 350 L480 318" style="color: var(--muted)" />
+          <path class="imp" d="M480 440 L480 408" style="color: var(--muted)" />
+          <path class="imp" d="M380 252 L300 220" style="color: var(--muted)" />
+          <path class="imp" d="M580 252 L660 220" style="color: var(--muted)" />
+          <path class="imp" d="M240 120 L240 82" style="color: var(--muted)" />
+          <path
+            class="imp"
+            d="M720 252 C 900 240, 900 110, 840 82"
+            style="color: var(--muted)"
+          />
+          <path class="ref" d="M520 170 L442 170" />
+          <text class="s" x="452" y="160">OSIS id</text>
+          <text class="s" x="452" y="190">only</text>
+        </svg>
+        <figcaption>
+          Solid arrows mean "builds on" (imports). The dashed line is the only
+          link between the two domains: a writing names a Bible passage by its
+          reference (<code>Gen.6.4</code>), a string. Neither domain imports the
+          other's ontology.
+        </figcaption>
+      </figure>
+
+      <div class="layer" id="txt">
+        <h3>
+          <span class="chip found">upper</span> Textual Sources — the vocabulary
+          any text shares
+        </h3>
+        <p>
+          The terms needed to describe <em>any</em> text: the intellectual
+          <strong>work</strong>, dated by its composition, with a range that
+          spans every dating the sources give; each exact
+          <strong>edition</strong> or translation, with its own licence and the
+          uses it allows; each material <strong>witness</strong> (a scroll, a
+          codex, a papyrus), dated by the object; the cited
+          <strong>span</strong>, whose text is stored only where the edition
+          allows it; the <strong>alignment</strong> of a span to a passage; and
+          a community's <strong>canon classification</strong> of a work. It
+          holds no Bible content and no non-Bible content, so a change to it
+          means the same thing for both domains.
+        </p>
+        <dl>
+          <dt>Key terms</dt>
+          <dd>
+            <code>txt:SourceWork</code>, <code>txt:TextEdition</code>,
+            <code>txt:TextualWitness</code>, <code>txt:SourceSpan</code>,
+            <code>txt:PassageAlignment</code>,
+            <code>txt:CanonClassification</code>
+          </dd>
+          <dt>Grounded in</dt>
+          <dd>
+            <code>txt:SourceWork</code> ⊑ <code>dul:InformationObject</code> ·
+            <code>txt:TextEdition</code>, <code>txt:TextualWitness</code> ⊑
+            <code>at:InformationArtifact</code> ·
+            <code>txt:PassageAlignment</code> ⊑ <code>at:Observation</code> ·
+            <code>txt:CanonClassification</code> ⊑
+            <code>dul:Classification</code>
+          </dd>
+          <dt>Imports</dt>
+          <dd>agentic-trust only</dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="scr">
+        <h3>
+          <span class="chip domain">domain</span> Scripture — the 66 books and
+          the witnesses that carry their text
+        </h3>
+        <p>
+          Everything about the Bible itself. Its verses and editions, the
+          knowledge base of people and places, the story layer and the
+          interpretation layer were already here. Since the split it also holds
+          the <em>textual</em> records of the canon: the canonical books as
+          works, and every witness whose text is one of them. Those witnesses
+          include the great codices, the early papyri, the ancient translations
+          of the Bible, and the Dead Sea Scrolls that are copies of a biblical
+          book.
+        </p>
+        <dl>
+          <dt>Graphs</dt>
+          <dd>
+            <code>urn:skills:context:scripture</code> (the T-box) ·
+            <code>…:scripture:canon</code> (the canon's works and witnesses) ·
+            <code>…:scripture:dss</code> (the biblical scroll copies, one span
+            per line) · <code>…:scripture:kb</code>, <code>…:discourse</code>,
+            <code>…:interpretations</code>
+          </dd>
+          <dt>Imports</dt>
+          <dd>
+            textual-sources (and publishing, faith, agentic-trust) — never
+            writings
+          </dd>
+        </dl>
+      </div>
+
+      <div class="layer" id="wrt">
+        <h3>
+          <span class="chip domain">domain</span> Writings — every writing that
+          is not one of the 66
+        </h3>
+        <p>
+          Every other text the Bible is read with. That covers the
+          deuterocanonical books and the pseudepigrapha, the Dead Sea Scrolls'
+          own compositions, Jewish writers of the Greek and Roman period, the
+          Church Fathers and councils, rabbinic and Targumic works, inscriptions
+          and literature of the ancient Near East, and Greek and Latin classics.
+          Each carries the communities that hold it canonical, as data. The
+          domain adds two classes of its own:
+        </p>
+        <ul>
+          <li>
+            <code>wrt:PublishedWriting</code>: a work as the publishing service
+            serves it, with its address, version and parts. It is recorded only
+            after every part was read back and its commitment recomputed.
+          </li>
+          <li>
+            <code>wrt:ProgrammeTranslation</code>: our own machine-aided
+            English, made from a public-domain original-language edition. Each
+            one records the pipeline and model that made it and its
+            <strong>review status</strong> (machine draft, model-revised, or
+            reviewed by a person). Only a person can set it to reviewed.
+          </li>
+        </ul>
+        <dl>
+          <dt>Graphs</dt>
+          <dd>
+            <code>urn:skills:context:writings</code> (T-box) ·
+            <code>…:writings:data</code> (works, editions, spans, alignments,
+            canon classifications) · <code>…:writings:published</code> (the
+            published works and our translations) ·
+            <code>…:writings:sa</code> (share-alike evidence, kept apart) ·
+            <code>…:writings:dss</code> (the non-biblical scroll lines)
+          </dd>
+          <dt>Imports</dt>
+          <dd>textual-sources only — never scripture</dd>
+        </dl>
+      </div>
+
+      <h2 id="books">Which books drive which level</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Texts</th>
+              <th>Level</th>
+              <th>Why there</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>The 66 books</strong>: Genesis–Malachi (39),
+                Matthew–Revelation (27)
+              </td>
+              <td>Scripture</td>
+              <td>
+                The working canon: the books the project translates and verses
+                are numbered against.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Manuscripts of those books</strong>: Codex Sinaiticus,
+                Vaticanus, Alexandrinus, Bezae; the Aleppo and Leningrad
+                Codices; Codex Sassoon; the papyri P45, P46, P47, P52, P66, P72,
+                P75; the Nash Papyrus; the En-Gedi scroll
+              </td>
+              <td>Scripture</td>
+              <td>
+                Each one carries the text of a canonical book; a witness is
+                dated by the object.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Early versions</strong> (translations of the Bible): the
+                Septuagint, Aquila, Symmachus, Theodotion, the Hexapla; the
+                Peshitta and Old Syriac; the Vulgate and Old Latin; Coptic
+                (Sahidic, Bohairic), Gothic, Armenian, Georgian, Geʿez (Garima
+                Gospels), Arabic; the Samaritan Pentateuch; the Diatessaron
+              </td>
+              <td>Scripture</td>
+              <td>
+                A translation of a canonical book is that book's witness in
+                another language. The chronology files them as "Biblical
+                manuscripts and early versions".
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Biblical Dead Sea Scrolls</strong>: 274 manuscripts
+                copying a canonical book, among them the Great Isaiah Scroll,
+                1QIsaiah b, 4QSamuel a, 4QJeremiah a–b, 4QDeuteronomy j and q,
+                4QpaleoExodus m, the Great Psalms Scroll (11Q5), the Minor
+                Prophets scrolls (MurXII, 8ḤevXIIgr), the Masada Leviticus,
+                Deuteronomy and Ezekiel scrolls, 11QTargum of Job
+              </td>
+              <td>Scripture</td>
+              <td>
+                Copies of a canonical book. The Qumran Targum of Job is counted
+                as an early version of Job.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Deuterocanonical books</strong>: Tobit, Judith, Wisdom
+                of Solomon, Sirach (incl. the Masada Ben Sira scroll), Baruch,
+                1–4 Maccabees, the Greek additions to Esther and Daniel, 1–2
+                Esdras, the Prayer of Manasseh, Psalm 151
+              </td>
+              <td>Writings</td>
+              <td>
+                Outside the 66. Each records the communities that hold it
+                canonical (Catholic, Orthodox, and others) as a canon
+                classification.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Pseudepigrapha and other Second Temple writings</strong
+                >: 1 Enoch, Jubilees, the Testaments of the Twelve Patriarchs,
+                the Psalms of Solomon, the Book of Giants, Aramaic Levi
+              </td>
+              <td>Writings</td>
+              <td>
+                Outside the 66. Where a church holds one canonical (the
+                Ethiopian church with 1 Enoch and Jubilees), that is recorded as
+                data.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Dead Sea Scroll compositions</strong>: 753 non-biblical
+                manuscripts, among them the Community Rule, Damascus Document,
+                War Scroll, Temple Scroll, Hodayot, the pesharim (Habakkuk,
+                Nahum, Psalms), 4QMMT, the Genesis Apocryphon, Testimonia,
+                Florilegium, 4Q252
+              </td>
+              <td>Writings</td>
+              <td>
+                Works of their own. A pesher quotes and comments on scripture
+                but is not a copy of it.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Jewish writers of the Greek and Roman period</strong>:
+                Josephus (Antiquities, War, Against Apion), Philo
+              </td>
+              <td>Writings</td>
+              <td>Period writers. Their spans align to verses by reference.</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Christian writings</strong>: the Apostolic Fathers; the
+                Ante-Nicene and Nicene and Post-Nicene Fathers (Justin,
+                Irenaeus, Origen, Tertullian, Eusebius, Athanasius, Augustine,
+                Chrysostom …); New Testament apocrypha and Nag Hammadi; councils
+                and creeds
+              </td>
+              <td>Writings</td>
+              <td>
+                Later interpretation and reception. Doctrine cites the councils
+                as writings records.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Rabbinic and Targumic works</strong>: Talmud passages,
+                Genesis Rabbah, Pirkei de-Rabbi Eliezer, Seder Olam, Yalkut
+                Shimoni, Rashi and the medieval commentators, Targum Onkelos and
+                Jonathan
+              </td>
+              <td>Writings</td>
+              <td>
+                Rabbinic literature. The rabbinic Targums paraphrase and
+                interpret the text, and the chronology files them with rabbinic
+                literature.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>The ancient Near East</strong>: the Mesha Stele,
+                Merneptah Stele, Ketef Hinnom, Elephantine papyri, Gilgamesh,
+                Berossus, Phoenician inscriptions
+              </td>
+              <td>Writings</td>
+              <td>The period's own documents and literature (realia).</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Greek and Latin classics</strong>: Hesiod, Homer,
+                Pseudo-Apollodorus, Marcus Aurelius, Julian
+              </td>
+              <td>Writings</td>
+              <td>Comparative literature.</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Our own translations</strong>: Chrysostom, Homilies on
+                Genesis 22–25; Syncellus on the Watchers; Luther on Genesis 6;
+                Yalkut Shimoni §44; Seder Olam Rabbah 1–4
+              </td>
+              <td>Writings</td>
+              <td>
+                Machine-aided English made by the programme; each carries its
+                pipeline, model and review status.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="rules">How a record is placed</h2>
+      <p>
+        Code places every record. Nobody sorts them by hand, and a model is
+        never asked.
+      </p>
+      <ol>
+        <li>
+          <span class="rule"
+            >A work is scripture's when it is one of the 66 books.</span
+          >
+          The test is the whole title: "Psalms" is one of the 66, but "Psalms of
+          Solomon" and "Genesis Rabbah" are not.
+        </li>
+        <li>
+          <span class="rule"
+            >A witness is scripture's when its text is one of the 66.</span
+          >
+          These are biblical manuscripts and early versions. Among the Dead Sea
+          Scrolls, a manuscript counts as a copy when its name gives a canonical
+          book (4QSamuel a, MasLev), unless it is a commentary, an apocryphon or
+          a reworking of that book (Pesher Isaiah, the Genesis Apocryphon, the
+          Reworked Pentateuch, 4Q252).
+        </li>
+        <li>
+          <span class="rule">Everything else is the writings domain's.</span> A
+          community's view that a writing is canonical is recorded as a canon
+          classification on that writing. It never moves the writing into
+          scripture.
+        </li>
+        <li>
+          <span class="rule"
+            >The writings domain refuses a canonical book.</span
+          >
+          When a published work's title is one of the 66, the build stops and
+          names it.
+        </li>
+      </ol>
+      <p class="note">
+        One judgement call is worth naming: a translation of the Bible counts as
+        a witness of the Bible. That puts the Septuagint, Peshitta and Vulgate,
+        and the Qumran Targum of Job, in scripture. The rabbinic Targums
+        (Onkelos, Jonathan) count as rabbinic literature, so they are writings.
+        Changing that is one line of the placement rule.
+      </p>
+
+      <h2 id="apart">How the two stay apart</h2>
+      <ul>
+        <li>
+          <strong>Neither imports the other.</strong> Scripture and writings
+          both import textual-sources; neither imports the other's ontology.
+        </li>
+        <li>
+          <strong>A link is a reference, not an import.</strong> A writing's
+          span reaches a verse through <code>txt:toPassage "Gen.6.4"</code>, a
+          string checked against the versification. A writing says which verse
+          it bears on without the writings ontology knowing what a verse is.
+        </li>
+        <li>
+          <strong>Separate named graphs.</strong> The canon's records and the
+          writings' records are loaded into different graphs. Reloading one
+          never touches the other.
+        </li>
+        <li>
+          <strong
+            >Interpretations are scripture's; their evidence may be a
+            writing.</strong
+          >
+          A claim about what a passage means lives in scripture's interpretation
+          layer. Where it cites Rashi or Josephus, it names that writing's
+          record by its IRI, the way one names a book in a footnote.
+        </li>
+      </ul>
+
+      <h2 id="counts">What is in each today</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Scripture</th>
+              <th>Writings</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Works (from the chronology)</td>
+              <td>86</td>
+              <td>608</td>
+            </tr>
+            <tr>
+              <td>Researched witnesses</td>
+              <td>63</td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td>Dead Sea Scroll manuscripts</td>
+              <td>274 (copies of the 66)</td>
+              <td>753 (their own compositions)</td>
+            </tr>
+            <tr>
+              <td>Editions, spans, alignments</td>
+              <td>the biblical scroll editions and lines</td>
+              <td>
+                125 editions · 994 spans · 869 alignments, plus the share-alike
+                partition and the non-biblical scroll lines
+              </td>
+            </tr>
+            <tr>
+              <td>Canon classifications</td>
+              <td>—</td>
+              <td>63 (who holds which writing canonical)</td>
+            </tr>
+            <tr>
+              <td>Published works</td>
+              <td>—</td>
+              <td>153 read back; 4 of our own translations</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="where">Where it lives</h2>
+      <ul>
+        <li>
+          <code>~/skills/ontology/textual-sources.ttl</code> (+
+          <code>.clusters.ttl</code>, <code>.data.ttl</code> for the controlled
+          values): the upper.
+        </li>
+        <li>
+          <code>~/skills/ontology/writings.ttl</code> (+ clusters);
+          <code>writings.data.ttl</code>, <code>writings.sa.ttl</code>,
+          <code>writings.published.ttl</code>, <code>writings.dss/</code>: the
+          writings domain and its records.
+        </li>
+        <li>
+          <code>~/skills/ontology/scripture.ttl</code>;
+          <code>scripture.canon.ttl</code>, <code>scripture.dss/</code>: the
+          canon's records.
+        </li>
+        <li>
+          Generated, never hand-edited:
+          <code>scripts/build-writings-abox.py</code> (from the chronology)
+          places each record, <code>scripts/build-dss-abox.py</code> places each
+          scroll, and
+          <code>scripts/writings/build-published-abox.py</code> builds from the
+          publishing receipt. Each has a <code>--check</code> in preflight.
+        </li>
+      </ul>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <a href="/architecture/ontology/">← Ontology</a> · Next:
+        <a href="/architecture/agentic/">Agentic →</a>
+      </div>
+    </footer>
+  </body>
+</html>

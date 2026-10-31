@@ -223,6 +223,35 @@ export interface ChapterContentOptions {
   verseCheckTitle?: (status: VerseCheck) => string;
   /** Verses someone in the live session just tapped: their numbers flare in that person's colour. */
   flares?: Array<{ id: string; verse: number; color: string }>;
+  /** Verses a friend's published note starts at, with how to name them (state/social/friendNotes.ts). */
+  friendNotes?: Map<number, string>;
+  onFriendNoteClick?: (verseNumber: number) => void;
+  /** A section heading tapped: its words and the verses under it (the heading toolbar's). Absent, headings are plain text. */
+  onHeadingClick?: (
+    section: { heading: string; start: number; end: number },
+    event: MouseEvent
+  ) => void;
+  /** The first verse of the chosen heading's section, marked `sb-chapter-heading-selected`. */
+  selectedHeadingStart?: number | null;
+}
+
+/** The verses under the heading at `index`: from the first verse after it to the last before the next heading. */
+export function sectionUnder(
+  entries: unknown[],
+  index: number
+): { start: number; end: number } | null {
+  let start: number | null = null;
+  let end: number | null = null;
+  for (let i = index + 1; i < entries.length; i++) {
+    const e = entries[i] as { type?: string; number?: unknown } | null;
+    if (!e || typeof e !== "object") continue;
+    if (e.type === "heading") break;
+    if (e.type === "verse" && typeof e.number === "number") {
+      start ??= e.number;
+      end = e.number;
+    }
+  }
+  return start === null || end === null ? null : { start, end };
 }
 
 export function renderChapterContent(
@@ -262,7 +291,33 @@ export function renderChapterContent(
   const hasNote = (verseNumber: number) =>
     notes.some((n) => n.start === verseNumber);
 
-  const renderVerseNumberOrIcon = (verseNumber: number) => {
+  // A friend's note at this verse: its own small mark after the verse's number or icon.
+  const friendMark = (verseNumber: number) => {
+    const who = opts.friendNotes?.get(verseNumber);
+    if (!who) return null;
+    return (
+      <sup
+        className="sb-verse-friend-note"
+        role="button"
+        tabIndex={0}
+        title={who}
+        aria-label={who}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          opts.onFriendNoteClick?.(verseNumber);
+        }}
+      >
+        <span className="material-symbols-outlined">group</span>
+      </sup>
+    );
+  };
+  const renderVerseNumberOrIcon = (verseNumber: number) => (
+    <>
+      {verseMark(verseNumber)}
+      {friendMark(verseNumber)}
+    </>
+  );
+  const verseMark = (verseNumber: number) => {
     const annotated = hasNote(verseNumber);
     const handle = (event: MouseEvent) =>
       opts.onAnnotationVerseClick(verseNumber, event);
@@ -464,10 +519,34 @@ export function renderChapterContent(
       const heading = (entry.content as unknown[])
         .filter((x) => typeof x === "string")
         .join(" ");
+      const section = opts.onHeadingClick ? sectionUnder(entries, i) : null;
+      const onHeadingClick = opts.onHeadingClick;
       nodes.push(
-        <h3 key={`heading-${i}`} className="sb-chapter-heading">
-          {heading}
-        </h3>
+        section && onHeadingClick ? (
+          <h3
+            key={`heading-${i}`}
+            className={`sb-chapter-heading sb-chapter-heading-tappable${opts.selectedHeadingStart === section.start ? " sb-chapter-heading-selected" : ""}`}
+            data-heading-start={section.start}
+            role="button"
+            tabIndex={0}
+            onClick={(e) =>
+              onHeadingClick({ heading, ...section }, e as MouseEvent)
+            }
+            onKeyDown={(e) => {
+              const k = (e as KeyboardEvent).key;
+              if (k === "Enter" || k === " ") {
+                e.preventDefault();
+                onHeadingClick({ heading, ...section }, e as never);
+              }
+            }}
+          >
+            {heading}
+          </h3>
+        ) : (
+          <h3 key={`heading-${i}`} className="sb-chapter-heading">
+            {heading}
+          </h3>
+        )
       );
       previousWasVerse = false;
       i += 1;

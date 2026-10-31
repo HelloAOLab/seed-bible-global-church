@@ -2,6 +2,7 @@
 // player (walks the reader through a playlist's items), a plan's sessions with their readings to tick, and
 // Publish for each. Dressed by the copied `playlists.css` / `plans.css` where the classes match.
 
+import { FromFriends } from "../social/FromFriends";
 import { sharedLinkOf } from "../../state/social/sharedPage";
 import { ThemeLivePreview } from "../chrome/ThemePreview";
 import { PictureField } from "./PictureField";
@@ -1079,6 +1080,13 @@ export function LibraryPane({ state }: { state: ReaderState }) {
             );
           })}
           <PlayHistory state={state} />
+          <FromFriends
+            state={state}
+            kinds={["playlist"]}
+            heading={t("friends-playlists", {
+              defaultValue: "Playlists from your friends",
+            })}
+          />
         </>
       )}
 
@@ -1574,6 +1582,13 @@ export function LibraryPane({ state }: { state: ReaderState }) {
               />
             );
           })}
+          <FromFriends
+            state={state}
+            kinds={["plan"]}
+            heading={t("friends-reading-plans", {
+              defaultValue: "Reading plans from your friends",
+            })}
+          />
         </>
       )}
       {deleting && (

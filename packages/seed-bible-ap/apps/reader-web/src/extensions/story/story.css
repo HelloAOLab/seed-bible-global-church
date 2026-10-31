@@ -1,0 +1,414 @@
+/* A tappable section heading: it says it can be tapped, and the chosen one is marked like a chosen verse. */
+.sb-chapter-heading-tappable {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+.sb-chapter-heading-tappable:hover,
+.sb-chapter-heading-tappable:focus-visible {
+  background: var(--sb-hover-background, rgba(127, 127, 127, 0.12));
+  outline: none;
+}
+.sb-chapter-heading-selected {
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
+}
+
+/* The Story pane. */
+.sb-story {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-story-heading {
+  margin: 0.25rem 0 0;
+}
+/* Every tab in sight: the row wraps rather than scrolling one out of view (Discover's chip row scrolls). */
+.sb-dcp-filters.sb-story-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.sb-story-scene h4 {
+  margin: 0.5rem 0 0.25rem;
+}
+.sb-story-scene p {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+.sb-story-name,
+.sb-story-ref {
+  padding: 0 0.25rem;
+}
+.sb-story-name-plain {
+  font-style: italic;
+}
+.sb-story-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-story-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.sb-story-nav button {
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-story-modes {
+  display: flex;
+  height: 1.25rem;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.7rem;
+  margin: 0.25rem 0;
+}
+.sb-story-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  color: #fff;
+  background: #64748b;
+  overflow: hidden;
+}
+.sb-story-mode-narration {
+  background: #475569;
+}
+.sb-story-mode-direct-speech,
+.sb-story-mode-speech {
+  background: #2563eb;
+}
+.sb-story-mode-prayer,
+.sb-story-mode-song {
+  background: #7c3aed;
+}
+.sb-story-mode-prophecy,
+.sb-story-mode-vision {
+  background: #b45309;
+}
+.sb-story-act-who {
+  font-weight: 600;
+}
+.sb-story-act-arrow {
+  font-size: 1rem;
+  vertical-align: middle;
+  margin: 0 0.25rem;
+}
+.sb-story-map {
+  height: 260px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sb-story-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+.sb-story-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+.sb-story-credit {
+  margin-top: 0.75rem;
+}
+
+/* The oikos: rings by closeness around the person. */
+.sb-story-oikos {
+  margin: 0;
+}
+.sb-story-oikos svg {
+  width: 100%;
+  max-width: 360px;
+  display: block;
+  margin: 0 auto;
+}
+.sb-story-oikos-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-dasharray: 3 4;
+}
+.sb-story-oikos-centre {
+  fill: var(--sb-primary-color);
+}
+.sb-story-oikos-centre-label {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sb-story-oikos-node text {
+  font-size: 9.5px;
+  fill: currentColor;
+}
+.sb-story-oikos-node circle,
+.sb-story-oikos-node rect {
+  fill: #64748b;
+}
+.sb-story-oikos-person circle {
+  fill: #0d9488;
+}
+.sb-story-oikos-community rect,
+.sb-story-oikos-group rect {
+  fill: #b45309;
+}
+.sb-story-oikos-link {
+  cursor: pointer;
+}
+.sb-story-oikos-link:hover text,
+.sb-story-oikos-link:focus-visible text {
+  text-decoration: underline;
+}
+.sb-story-oikos-legend {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Generations: what grew out of whom, left to right. */
+.sb-story-generations {
+  margin: 0;
+}
+.sb-story-generations-scroll {
+  overflow-x: auto;
+}
+.sb-story-gen-edge path {
+  fill: none;
+  stroke-width: 1.5;
+  stroke: #94a3b8;
+}
+.sb-story-gen-plantedBody path {
+  stroke: #b45309;
+}
+.sb-story-gen-discipled path {
+  stroke: #0d9488;
+  stroke-dasharray: 4 3;
+}
+.sb-story-gen-gaveRiseTo path {
+  stroke: #7c3aed;
+}
+.sb-story-gen-node circle {
+  fill: #0d9488;
+}
+.sb-story-gen-church circle {
+  fill: var(--sb-background);
+  stroke: #b45309;
+  stroke-width: 3;
+}
+.sb-story-gen-node text {
+  font-size: 11px;
+  fill: currentColor;
+}
+.sb-story-gen-link {
+  cursor: pointer;
+}
+.sb-story-gen-link:hover text,
+.sb-story-gen-link:focus-visible text {
+  text-decoration: underline;
+}
+.sb-story-gen-key {
+  font-weight: 600;
+}
+.sb-story-gen-key.sb-story-gen-plantedBody {
+  color: #b45309;
+}
+.sb-story-gen-key.sb-story-gen-discipled {
+  color: #0d9488;
+}
+.sb-story-gen-key.sb-story-gen-gaveRiseTo {
+  color: #7c3aed;
+}
+
+/* The book icon beside the chapter's title: the book picker (the title itself opens the Story pane for the book). */
+.sb-bible-reader-book-picker {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem;
+  margin: 0 0.25rem;
+  border-radius: 6px;
+  opacity: 0.75;
+  align-self: center;
+}
+.sb-bible-reader-book-picker:hover,
+.sb-bible-reader-book-picker:focus-visible {
+  opacity: 1;
+  background: var(--sb-hover-background, rgba(127, 127, 127, 0.12));
+}
+.sb-bible-reader-title,
+.sb-bible-reader-mobile-content-title-tappable {
+  cursor: pointer;
+}
+
+/* Published media: a picture when the publisher signed one, the maker and the passage under the title. */
+.sb-story-video {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 1px solid var(--sb-hover-background, rgba(127, 127, 127, 0.2));
+  border-radius: 10px;
+}
+/* The picture across the card, as the old reader's Discover cards showed it. */
+.sb-story-video img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.sb-story-video a {
+  color: inherit;
+  text-decoration: none;
+}
+.sb-story-video a:hover strong {
+  text-decoration: underline;
+}
+.sb-story-video-icon {
+  font-size: 1rem;
+  vertical-align: -0.15rem;
+  margin-right: 0.25rem;
+  color: var(--sb-primary-color);
+}
+.sb-story-published section + section {
+  margin-top: 0.75rem;
+}
+
+/* A book's references: one bar per book, as long as its summed cross-reference score against the strongest. */
+.sb-story-subtabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.sb-story-xbooks + .sb-story-xbooks {
+  margin-top: 0.75rem;
+}
+.sb-story-xbook {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+.sb-story-xbar {
+  height: 0.5rem;
+  border-radius: 4px;
+  background: var(--sb-primary-color);
+  opacity: 0.6;
+}
+.sb-story-outline details {
+  margin: 0.25rem 0;
+}
+.sb-story-outline summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.sb-story-where {
+  margin: 0;
+}
+
+/* Oikos rings by closeness: household nearest, then extended family, those they walked with, the bodies. */
+.sb-story-oikos-in-household circle {
+  fill: #0d9488;
+}
+.sb-story-oikos-in-extended circle {
+  fill: #5eead4;
+  stroke: #0d9488;
+  stroke-width: 1.5;
+}
+.sb-story-oikos-in-walked-with circle {
+  fill: #2563eb;
+}
+.sb-story-oikos-in-bodies rect,
+.sb-story-oikos-in-bodies circle {
+  fill: #b45309;
+}
+.sb-story-oikos-legend button.sb-story-oikos-key {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  padding: 0.1rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+.sb-story-oikos-legend button[aria-pressed="false"] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.sb-story-oikos-legend {
+  flex-wrap: wrap;
+}
+.sb-story-ties {
+  margin-top: 0.75rem;
+}
+.sb-story-ties p {
+  margin: 0.25rem 0;
+}
+.sb-story-tie-verse {
+  font-size: 0.75rem;
+  margin-left: 0.15rem;
+}
+
+/* The family by generation: the direct line set apart from the rest of each generation. */
+.sb-story-family {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sb-story-family-gen {
+  border-left: 3px solid var(--sb-hover-background, rgba(127, 127, 127, 0.25));
+  padding-left: 0.5rem;
+}
+.sb-story-family-own {
+  border-left-color: var(--sb-primary-color);
+}
+.sb-story-family-row {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+.sb-story-family-member {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.sb-story-family-member .sb-note-button {
+  padding: 0 0.25rem;
+}
+.sb-story-family-line .sb-note-button,
+.sb-story-family-line > span:first-child {
+  font-weight: 600;
+}
+.sb-story-family-self strong {
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: var(--sb-primary-color);
+  color: #fff;
+}
+.sb-story-family-tie {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  padding-left: 0.25rem;
+}
+
+/* The phone's book icon sits by the phone's title, which a wider screen hides. */
+@media (min-width: 721px) {
+  .sb-bible-reader-book-picker-mobile {
+    display: none;
+  }
+}

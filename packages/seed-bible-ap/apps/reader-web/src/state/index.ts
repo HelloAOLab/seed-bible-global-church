@@ -164,6 +164,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   const discover = createDiscover(backend);
   const publishing = createPublishing(backend, stores);
+  // Deleting a note takes its public copy down first: a deleted note is not left readable by anyone with its link
+  // (seen live: a note deleted while published stayed on the shelf, listed at its verse for every reader).
+  const removeNote = annotations.remove;
+  annotations.remove = async (chapterRef, id) => {
+    if (publishing.isPublished(id)) await publishing.withdrawNote({ id });
+    return removeNote(chapterRef, id);
+  };
   const today = createToday(backend, stores);
   const friendship = createFriendship({
     prefs: stores.prefs,
@@ -361,6 +368,16 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         label: `reading ${r.bookName.value} ${r.chapterNumber.value} · ${edition}`,
       };
     },
+    sharing: () => {
+      // a session this reader hosts is told to their friends, with what they need to join it
+      if (!live.isHost.value || !live.sessionId.value || !live.code.value)
+        return null;
+      const r = sessionReading();
+      return {
+        scope: `session:${live.sessionId.value}:${live.code.value}`,
+        label: `${r.bookName.value} ${r.chapterNumber.value}`,
+      };
+    },
     ...(opts.presenceBeatMs ? { beatMs: opts.presenceBeatMs } : {}),
   });
   // A church theme's recommended extensions are turned on when the theme is picked (a reader can turn them off).
@@ -389,6 +406,13 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     reading: sessionReading,
     identity: () => backend.identity(),
     selectionEffects: () => settings.selectionEffects.value,
+  });
+  // Starting or ending a session tells friends at once ("Ruth is sharing — Join"), not at the next beat.
+  effect(() => {
+    live.sessionId.value;
+    live.isHost.value;
+    live.code.value;
+    if (session.value) void presence.beat();
   });
   effect(() => {
     const id = live.sessionId.value;
@@ -495,12 +519,31 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         }
       });
   });
+  /** The section heading chosen (the heading toolbar's), with the verses under it; null when none. */
+  const heading = signal<{
+    heading: string;
+    start: number;
+    end: number;
+  } | null>(null);
   effect(() => {
     readingOf().chapterRef.value;
     verses.value = [];
+    heading.value = null;
+  });
+  // A heading and a choice of verses are never both chosen: whichever came last stands.
+  effect(() => {
+    if (verses.value.length && heading.peek()) heading.value = null;
   });
   const selection = {
     verses,
+    heading,
+    chooseHeading(h: { heading: string; start: number; end: number }) {
+      verses.value = [];
+      heading.value = h;
+    },
+    clearHeading() {
+      if (heading.value) heading.value = null;
+    },
     /** A tap adds or drops that one verse, gaps allowed (the old reader's); Shift extends a run to it. */
     toggle(verse: number, extend = false) {
       const cur = verses.value;

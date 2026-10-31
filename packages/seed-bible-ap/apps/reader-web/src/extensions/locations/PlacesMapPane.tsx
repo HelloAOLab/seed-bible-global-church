@@ -32,7 +32,7 @@ const escapeHtml = (s: string) =>
     .replace(/"/g, "&quot;");
 
 /** The base map layer: the published map's vector tiles, drawn in the page. */
-async function baseMapLayer(
+export async function baseMapLayer(
   L: Leaflet,
   info: TilesInfo | null,
   dark: boolean,

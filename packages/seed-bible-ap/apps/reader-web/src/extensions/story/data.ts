@@ -1,0 +1,331 @@
+// THE STORY DATASET — the story layer by chapter, as the scripture agent serves it (`read-dataset` story, built by
+// ~/skills scripts/build-story-dataset.py, CC BY-SA 4.0): each chapter's scenes (scr:Scene) with their cast
+// (scr:CastEntry), setting, events, communication acts and the communities attested there; and a card per person, place
+// or community — its oikos (household, companions, disciples) and its generations (scr:plantedBody → scr:gaveRiseTo …).
+// Read under the reader's `/bible/` route like every dataset; records are kept on the device once read.
+import { CANON_66 } from "@seed/locus";
+export { loadPublished, type PublishedMedia } from "../../state/published";
+import { BIBLE_API_ENDPOINT } from "../../backend/bible";
+
+const ORIGIN = BIBLE_API_ENDPOINT.replace(/\/$/, "");
+
+export interface EntityRef {
+  id: string;
+  label: string;
+  /** person · place · group · community · divine · other · discourse-entity (one the book introduces, with no card). */
+  kind: string;
+  /** The card's path in the dataset, absent when there is none. */
+  path: string | null;
+}
+export interface CastMember extends EntityRef {
+  storyRole?: string;
+  naturalGender?: string;
+  naturalNumber?: string;
+  introducedAt?: string;
+  brief?: string | null;
+}
+export interface Located extends EntityRef {
+  lat?: number | null;
+  lon?: number | null;
+  brief?: string | null;
+  modernName?: string | null;
+}
+export interface CommunicationAct {
+  communicator: string[];
+  audience: string[];
+  mode: string[];
+  /** The first and last verse (OSIS). */
+  verses: [string, string];
+}
+export interface StoryEvent {
+  label: string;
+  kind: string;
+  year: number | null;
+}
+export interface Scene {
+  id: string;
+  order: number;
+  label: string;
+  from: string;
+  to: string;
+  sceneBoundary?: string;
+  narrativeTime?: string | null;
+  temporalRelation?: string;
+  setting: Located | null;
+  places: Located[];
+  cast: CastMember[];
+  events: StoryEvent[];
+  narrativeModes: Record<string, number>;
+  communication: CommunicationAct[];
+  communities: EntityRef[];
+  previous: { label: string; from: string } | null;
+  next: { label: string; from: string } | null;
+}
+export interface GenerationNode extends EntityRef {
+  /** How it came from its parent: planted (scr:plantedBody), discipled (scr:discipled), gave rise to (scr:gaveRiseTo). */
+  via?: "plantedBody" | "discipled" | "gaveRiseTo";
+  children: GenerationNode[];
+}
+/** A person's ties, by kind: the household (parents, partners, children, siblings), the extended family derived from
+ *  those (grandparents … cousins, in-laws), the people they walked with, and the bodies they belonged to or planted. A
+ *  relative holding two ties is listed under both (Laban is Jacob's uncle and father-in-law). Older cards lack the
+ *  extended family. */
+export interface Oikos {
+  parents: EntityRef[];
+  partners: EntityRef[];
+  children: EntityRef[];
+  siblings: EntityRef[];
+  grandparents?: EntityRef[];
+  grandchildren?: EntityRef[];
+  auntsUncles?: EntityRef[];
+  niecesNephews?: EntityRef[];
+  parentsInLaw?: EntityRef[];
+  childrenInLaw?: EntityRef[];
+  siblingsInLaw?: EntityRef[];
+  cousins?: EntityRef[];
+  companions: EntityRef[];
+  discipled: EntityRef[];
+  discipledBy: EntityRef[];
+  tribe: EntityRef[];
+  planted: EntityRef[];
+  memberOf?: EntityRef[];
+  hosted?: EntityRef[];
+  hostedBy?: EntityRef[];
+  /** The households the person headed or belonged to (hh:Family: Lydia's household). */
+  households?: EntityRef[];
+}
+/** One direct tie as the oikos model states it (hh:OikosTie): its kind, the other end, the verses that attest it and
+ *  where it comes from. */
+export interface OikosTie {
+  kind: string;
+  to: EntityRef;
+  verses: string[];
+  source: string | null;
+  license: string | null;
+}
+export interface EntityCard {
+  id: string;
+  kind: string;
+  label: string;
+  brief?: string | null;
+  firstAt?: string | null;
+  occurrences?: number | null;
+  gender?: string | null;
+  period?: string | null;
+  modernName?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  type?: string;
+  attestedAt?: string[];
+  oikos: Oikos | null;
+  /** Where the kinship ties come from (`TIPNR (STEPBible, CC BY 4.0)`). */
+  kinshipSource?: string | null;
+  ties?: OikosTie[];
+  /** A household's head and members, and the community it became (hh:gatheredAs); a community's households. */
+  head?: EntityRef[];
+  members?: EntityRef[];
+  gatheredAs?: EntityRef[];
+  gatheredFrom?: EntityRef[];
+  generations?: GenerationNode;
+  plantedBy?: EntityRef[];
+  grewOutOf?: EntityRef[];
+  gaveRiseTo?: EntityRef[];
+  scenes: Array<{
+    from: string;
+    to: string;
+    label: string;
+    storyRole?: string;
+  }>;
+  sceneCount: number;
+}
+
+type Cache = {
+  get: (k: string) => Promise<unknown>;
+  set: (k: string, v: unknown) => Promise<void>;
+};
+const PATH = /^[A-Za-z0-9_./-]+$/;
+/** The story dataset's build, in every request and every key it is kept under on the device: a rebuilt dataset is read
+ *  fresh at once — past the edge cache and past what a device kept of the last one. Bump it after each upload. */
+export const STORY_DATA = "2026-10-30c";
+
+async function read(
+  path: string,
+  cache: Cache,
+  fetchImpl: typeof fetch
+): Promise<unknown> {
+  if (!PATH.test(path) || path.includes("..")) return null;
+  const key = `story:${STORY_DATA}:${path}`;
+  const hit = await cache.get(key);
+  if (hit !== undefined && hit !== null) return hit;
+  const res = await fetchImpl(
+    `${ORIGIN}/api/d/story/${path}.json?v=${STORY_DATA}`
+  );
+  if (!res.ok) return null;
+  const value: unknown = await res.json();
+  await cache.set(key, value);
+  return value;
+}
+
+/** A chapter's scenes (`GEN`, 1); empty when the story layer has none for it. */
+export async function readChapterScenes(
+  book: string,
+  chapter: number,
+  cache: Cache,
+  fetchImpl: typeof fetch = fetch
+): Promise<Scene[]> {
+  const raw = (await read(`${book}/${chapter}`, cache, fetchImpl)) as {
+    scenes?: Scene[];
+  } | null;
+  return Array.isArray(raw?.scenes) ? raw.scenes : [];
+}
+
+/** A person's, place's or community's card by its path (`person-p/person-Paul_Act.7.58-2Pe`); null when not held. */
+export async function readEntity(
+  path: string,
+  cache: Cache,
+  fetchImpl: typeof fetch = fetch
+): Promise<EntityCard | null> {
+  const raw = (await read(path, cache, fetchImpl)) as EntityCard | null;
+  return raw && typeof raw === "object" && "label" in raw ? raw : null;
+}
+
+const usfmOf = new Map(CANON_66.map((b) => [b[1], b[0]]));
+
+/** An OSIS verse (`Acts.16.13`) as the reader's place: USFM book, chapter, verse. */
+export function placeOf(
+  osis: string
+): { book: string; chapter: number; verse: number } | null {
+  const [b, c, v] = osis.split(".");
+  const book = b ? usfmOf.get(b) : undefined;
+  const chapter = Number(c);
+  const verse = Number(v);
+  return book && chapter > 0 && verse > 0 ? { book, chapter, verse } : null;
+}
+
+/** The scenes a section of a chapter (its first and last verse) overlaps, in order. */
+export function scenesOfSection(
+  scenes: Scene[],
+  chapter: number,
+  start: number,
+  end: number
+): Scene[] {
+  const at = (osis: string) => {
+    const p = placeOf(osis);
+    return p ? p.chapter * 1000 + p.verse : 0;
+  };
+  const lo = chapter * 1000 + start;
+  const hi = chapter * 1000 + end;
+  return scenes
+    .filter((s) => at(s.from) <= hi && at(s.to) >= lo)
+    .sort((a, b) => a.order - b.order);
+}
+
+/** A verse span in short form for the chapter on screen: `1:3–5`, or `16:40–17:1` across chapters. */
+export function spanLabel(from: string, to: string): string {
+  const a = placeOf(from);
+  const b = placeOf(to);
+  if (!a || !b) return from;
+  if (a.chapter !== b.chapter)
+    return `${a.chapter}:${a.verse}–${b.chapter}:${b.verse}`;
+  return a.verse === b.verse
+    ? `${a.chapter}:${a.verse}`
+    : `${a.chapter}:${a.verse}–${b.verse}`;
+}
+
+/** The cast, the places, the events and the communities of several scenes, each once. */
+export function gatherSection(scenes: Scene[]) {
+  const once = <T extends { id?: string; label: string }>(xs: T[]) => {
+    const seen = new Set<string>();
+    return xs.filter((x) => {
+      const k = x.id ?? x.label;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+  return {
+    cast: once(scenes.flatMap((s) => s.cast)),
+    places: once(
+      scenes.flatMap((s) => [...(s.setting ? [s.setting] : []), ...s.places])
+    ),
+    events: once(scenes.flatMap((s) => s.events)),
+    communities: once(scenes.flatMap((s) => s.communities)),
+    communication: scenes.flatMap((s) => s.communication),
+  };
+}
+
+export interface Tallied extends EntityRef {
+  scenes: number;
+  firstAt: string;
+  roles: string[];
+  brief?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+}
+export interface BookClaim {
+  /** authorship · date · audience … (scr:contextKind) */
+  kind: string | null;
+  /** traditional · modern … (scr:contextView) */
+  view: string | null;
+  content: string | null;
+  source: string | null;
+  sourceDate: string | null;
+  status: string | null;
+  by: string | null;
+}
+export interface CrossReferenceBook {
+  /** USFM */
+  book: string;
+  osis: string;
+  count: number;
+  score: number;
+  top: Array<{ from: string; to: string; toEnd: string | null; score: number }>;
+}
+/** A book as a whole (scr:Book): its facts, the claims made about it, its scenes by chapter, who and where across it,
+ *  and the books its cross-references point to and from. */
+export interface BookCard {
+  usfm: string;
+  osis: string;
+  name?: string;
+  testament?: string;
+  languages?: string[];
+  genres?: string[];
+  audience?: string | null;
+  setting?: string | null;
+  purpose?: string | null;
+  divisions?: string[];
+  claims: BookClaim[];
+  outline: Array<{
+    chapter: number;
+    scenes: Array<{ label: string; from: string; to: string }>;
+  }>;
+  people: Tallied[];
+  places: Tallied[];
+  events: Array<StoryEvent & { firstAt: string }>;
+  communities: Tallied[];
+  references: {
+    out: CrossReferenceBook[];
+    in: CrossReferenceBook[];
+    within: number;
+  } | null;
+}
+
+/** A book's card (`GEN`); null when not held. */
+export async function readBook(
+  usfm: string,
+  cache: Cache,
+  fetchImpl: typeof fetch = fetch
+): Promise<BookCard | null> {
+  const raw = (await read(
+    `book-${usfm}/${usfm}`,
+    cache,
+    fetchImpl
+  )) as BookCard | null;
+  return raw && typeof raw === "object" && "outline" in raw ? raw : null;
+}
+
+/** A verse span as the reader's record form, for the passage answer: `GEN.1.3-GEN.1.5`. */
+export const passageRef = (chapterRef: string, start: number, end: number) =>
+  start === end
+    ? `${chapterRef}.${start}`
+    : `${chapterRef}.${start}-${chapterRef}.${end}`;

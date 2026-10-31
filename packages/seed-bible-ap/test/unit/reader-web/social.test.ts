@@ -44,6 +44,10 @@ describe("publish and discover", () => {
       passage: "JHN.3.16-JHN.3.17",
       owner: RUTH.agent,
     });
+    // its first words travel with it, plain — what a friend's Today quotes
+    expect(String(list[0]!.descriptor["schema:abstract"])).toMatch(
+      /^For God so loved/
+    );
     const body = discover.body(list[0]!);
     await settle();
     expect(body.value).toContain("# Ruth on John 3");
@@ -198,6 +202,45 @@ describe("profiles", () => {
     // The profile is shown with the friend, not among their releases.
     expect(today.releases.value.map((o) => o.kind)).not.toContain("profile");
   });
+  it("a nameless friend is shown by their Home profile's name and photo, which win over an old published copy", async () => {
+    const backend = createDevBackend(SEED);
+    const NAMELESS = "0x" + "e2".repeat(20);
+    backend.friendsView = {
+      friends: [
+        {
+          agent: NAMELESS,
+          name: null,
+          profileName: "Rich Pedersen",
+          photo: "data:image/jpeg;base64,AAAA",
+        },
+      ],
+      requests: [
+        { agent: "0x" + "55".repeat(20), name: null, profileName: "Naomi B" },
+      ],
+      requested: [],
+    };
+    const today = createToday(backend, memoryStores());
+    await today.refresh();
+    expect(today.profiles.value[NAMELESS]).toEqual({
+      displayName: "Rich Pedersen",
+      picture: "data:image/jpeg;base64,AAAA",
+    });
+    expect(today.profiles.value["0x" + "55".repeat(20)]).toEqual({
+      displayName: "Naomi B",
+    });
+  });
+});
+
+describe("taking down a public copy", () => {
+  it("one of my releases is taken down by what the registry lists, even when its note is gone", async () => {
+    const backend = createDevBackend(RUTH);
+    const publishing = createPublishing(backend, memoryStores());
+    await publishing.publishNote("JHN.3", note, "Ruth on John 3");
+    const [listed] = await backend.discover({ passage: "JHN.3" });
+    await publishing.withdrawOffering(listed!);
+    expect(await backend.discover({ passage: "JHN.3" })).toHaveLength(0);
+    expect(publishing.isPublished(note.id)).toBe(false);
+  });
 });
 
 describe("connectors", () => {
@@ -230,6 +273,35 @@ describe("connectors", () => {
 // contacts in it — "your agent's reply carried no result for person.contact.list" stood in the Friends pane): when the
 // friends read answers, the contacts read is not asked, and no error shows.
 describe("friends without the contacts read", () => {
+  it("asks made while a friends read is under way share it, and a read that fails keeps the list shown", async () => {
+    const backend = createDevBackend(SEED);
+    backend.friendsView = {
+      friends: [{ agent: RUTH.agent, name: "Ruth" }],
+      requests: [],
+      requested: [],
+    };
+    let reads = 0;
+    const real = backend.friends.bind(backend);
+    backend.friends = async () => {
+      reads++;
+      await new Promise((r) => setTimeout(r, 20));
+      return real();
+    };
+    const today = createToday(backend, memoryStores());
+    await Promise.all([
+      today.refreshContacts(),
+      today.refreshContacts(),
+      today.refreshContacts(),
+    ]);
+    expect(reads).toBe(1);
+    backend.friends = async () => {
+      throw new Error("the agent did not answer");
+    };
+    await today.refreshContacts();
+    expect(today.friends.value.map((f) => f.name)).toEqual(["Ruth"]);
+    expect(today.contactsError.value).toMatch(/did not answer/);
+  });
+
   it("does not ask for contacts once the friends read has answered", async () => {
     const backend = createDevBackend(SEED);
     backend.friendsView = {

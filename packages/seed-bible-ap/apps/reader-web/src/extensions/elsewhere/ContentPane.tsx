@@ -7,6 +7,8 @@ import { signal } from "@preact/signals";
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { loadPublished, type PublishedMedia } from "../../state/published";
+import { PublishedMediaList } from "../../components/reader/PublishedMediaList";
 import {
   loadPassage,
   type PassageAnswer,
@@ -50,7 +52,7 @@ const fieldLabel = (k: string) => k.charAt(0).toUpperCase() + k.slice(1);
 
 /** A note a publisher released about this verse (a people group, a place, a practice): its picture, its words as
  *  signed, the fields beside them, and whose it is — with a link to the publisher's own page for it. */
-function Teaching({ it }: { it: PassageItem }) {
+export function Teaching({ it }: { it: PassageItem }) {
   const { t } = useI18n();
   const d = (it.data ?? {}) as Record<string, unknown>;
   const fields = (d["fields"] ?? {}) as Record<string, string>;
@@ -236,6 +238,24 @@ export function ContentPane({
       live = false;
     };
   }, [chapterRef, verse]);
+  // The videos and articles published about this verse, from the publishing app.
+  const [media, setMedia] = useState<PublishedMedia[]>([]);
+  useEffect(() => {
+    if (!verse) return;
+    let live = true;
+    setMedia([]);
+    void loadPublished(
+      `${chapterRef}.${verse}`,
+      "section",
+      state.stores.chapters,
+      { edition: state.reading.translationId.value }
+    )
+      .then((m) => live && setMedia(m ?? []))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [chapterRef, verse]);
   if (!verse)
     return (
       <p className="sb-pane-empty">
@@ -301,7 +321,7 @@ export function ContentPane({
       <h3 className="sb-content-pane-title">
         {t("content-at", { ref, defaultValue: "Content for {{ref}}" })}
       </h3>
-      {items.length > 0 && (
+      {items.length + media.length > 0 && (
         <nav
           className="sb-content-summary"
           aria-label={t("content-on-this-verse", {
@@ -309,6 +329,15 @@ export function ContentPane({
           })}
         >
           {[
+            media.length
+              ? [
+                  "sb-content-media",
+                  t("content-n-media", {
+                    count: media.length,
+                    defaultValue: "{{count}} videos and articles",
+                  }),
+                ]
+              : null,
             teachings.length
               ? [
                   "sb-content-teaching",
@@ -399,12 +428,22 @@ export function ContentPane({
           })}
         </p>
       )}
-      {answer && !items.length && (
+      {answer && !items.length && !media.length && (
         <p className="sb-muted sb-small">
           {t("content-none", {
             defaultValue: "Nothing more is known for this verse yet.",
           })}
         </p>
+      )}
+      {media.length > 0 && (
+        <Section
+          id="sb-content-media"
+          title={t("content-media", {
+            defaultValue: "Videos and articles about this verse",
+          })}
+        >
+          <PublishedMediaList media={media} />
+        </Section>
       )}
       {teachings.length > 0 && (
         <Section

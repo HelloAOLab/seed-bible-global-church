@@ -132,10 +132,18 @@ export async function publishSlice(
   // The schema checks the fields the registry indexes and drops the rest — but the rest is the point for a
   // playlist, plan or theme (`work`: what a reader saves or applies) and its provenance. They ride along under the
   // checked fields, which always win.
+  // `schema:abstract` is a note's first words, so a friend's Today can say what the note says (short; never the body).
   const extras = Object.fromEntries(
-    Object.entries(raw.descriptor ?? {}).filter(
-      ([k]) => k === "work" || k === "prov:wasDerivedFrom"
-    )
+    Object.entries(raw.descriptor ?? {})
+      .filter(
+        ([k, v]) =>
+          k === "work" ||
+          k === "prov:wasDerivedFrom" ||
+          (k === "schema:abstract" && typeof v === "string")
+      )
+      .map(([k, v]) =>
+        k === "schema:abstract" ? [k, String(v).trim().slice(0, 280)] : [k, v]
+      )
   );
   const descriptor = {
     ...extras,

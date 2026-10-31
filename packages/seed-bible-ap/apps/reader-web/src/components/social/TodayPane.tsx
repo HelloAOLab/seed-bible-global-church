@@ -317,7 +317,10 @@ export function FriendsSection({ state }: { state: ReaderState }) {
         </p>
       )}
       {today.friends.value.map((c) => {
-        const here = presenceOf(c.contact);
+        // a live session they share is told by its own banner (FriendSharing), not as a place to open here
+        const here = presenceOf(c.contact).filter(
+          (p) => !p.app.endsWith(":session")
+        );
         const prof = today.profiles.value[c.contact.toLowerCase()];
         return (
           <div key={c.contact} className="sb-friends-row">
@@ -360,12 +363,9 @@ export function FriendsSection({ state }: { state: ReaderState }) {
                         {p.label ?? p.app}
                       </button>
                     ))
-                  : c.name
-                    ? c.contact
+                  : prof?.displayName && c.name && c.name !== prof.displayName
+                    ? c.name
                     : ""}
-                {!here.length && c.mutual
-                  ? ` · ${t("friends-mutual", { defaultValue: "mutual" })}`
-                  : ""}
               </span>
             </span>
           </div>
@@ -396,7 +396,9 @@ function FriendRequests({ state }: { state: ReaderState }) {
       {asks.map((r) => (
         <div key={r.agent} className="sb-friends-row sb-friend-request">
           <span className="sb-friends-person-text">
-            <span className="sb-friends-person-name">{r.name ?? r.agent}</span>
+            <span className="sb-friends-person-name">
+              {r.profileName ?? r.name ?? r.agent}
+            </span>
             <span className="sb-friends-person-subtitle">
               {t("friend-request-line", {
                 defaultValue: "wants to be friends",

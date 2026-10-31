@@ -86,6 +86,10 @@ export interface Friend {
   since?: string;
   /** When they added the reader (a request). */
   at?: string | null;
+  /** Their own Home profile's name and photo — read by the reader's agent under the grant their friendship offer gave
+   *  (a friend, or someone asking to be one). A nameless agent has no other name. */
+  profileName?: string;
+  photo?: string;
 }
 export interface FriendsView {
   /** Mutual: the reader added them and they added the reader back. */
@@ -108,6 +112,8 @@ export interface PresenceEntry {
 export interface FriendPresence extends Friend {
   /** Live entries, newest first; empty when the friend is not here now. */
   presence: PresenceEntry[];
+  /** Where they were this past week (a chapter each), newest first — absent from an older runtime. */
+  recent?: Array<{ app: string; scope: string; label?: string; at: number }>;
 }
 
 export interface ReaderIdentity {
@@ -163,7 +169,9 @@ export interface ReaderBackend {
   orgs(): Promise<Org[]>;
   /** Where the reader is now, for their friends: a beat that lapses on its own; `gone` ends it. No act, no record. */
   presenceBeat(
-    beat: { scope?: string; label?: string } | { gone: true }
+    beat:
+      | { scope?: string; label?: string; channel?: "session" }
+      | { gone: true; forget?: boolean; channel?: "session" }
   ): Promise<void>;
   /** The reader's mutual friends with where each is now. */
   presenceFriends(): Promise<FriendPresence[]>;

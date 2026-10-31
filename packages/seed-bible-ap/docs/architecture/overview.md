@@ -80,7 +80,7 @@ flowchart TB
 | `reader-a2a` | `hello-reader` skill, `/me`, harness, `streaming: false` | Workspace coordinator. Plans person-agent and org-agent skills. `streaming: true`; relays session and run event streams to the browser over SSE. Never exposes MCP to the browser |
 | `reader-mcp` | `hello` tool                                             | Vault tools and domain tools bound to `seed:` IRIs                                                                                                                                |
 
-`seed-bible.svc` (new `seed-bible-a2a` + `seed-bible-mcp`) is the **serving plane**: live session Durable Objects, public file bytes, caches, and the **Seed registry** — a rebuildable D1 index (openbook pattern, `demo-openbook-registry`) built by crawling the public shelves (`library.public.list/read`) of Seed Bible org and person agents, verifying each release, and indexing by `seed:offeredForLocus`. It is not the record and not the identity.
+`seed-bible.svc` (new `seed-bible-a2a` + `seed-bible-mcp`) is the **serving plane**: public file bytes, caches, and the **Seed registry** (the live reading rooms are Durable Objects on `reader-a2a`, the workspace, not here) — a rebuildable D1 index (openbook pattern, `demo-openbook-registry`) built by crawling the public shelves (`library.public.list/read`) of Seed Bible org and person agents, verifying each release, and indexing by `seed:offeredForLocus`. It is not the record and not the identity.
 
 ## How a public work becomes findable
 

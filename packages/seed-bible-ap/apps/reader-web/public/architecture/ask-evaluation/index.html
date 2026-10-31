@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ask evaluation</title>
+    <meta
+      name="description"
+      content="In development, scores provisional. How the Scripture agent's Christian question answering is evaluated: the question and answer sets, the evaluation record behind every case, the five-dimension judge and its verdict, the Expert Workbench and the improvement loop, the first baseline, and how this compares with rubric-only grading."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> /
+        <a href="/architecture/harness/">Scripture harness</a> / Ask evaluation
+      </div>
+      <h1>Ask evaluation: is the answer right, not only well sourced?</h1>
+      <p class="lede">
+        The <a href="/architecture/harness/">Scripture harness</a> already
+        guarantees where an answer's evidence comes from: every verse it cites
+        carries a canonical id and a content commitment that is checked before
+        the answer leaves. That settles <strong>authenticity</strong>. It does
+        not settle the question a reader actually cares about: did the agent
+        <strong
+          >understand the question and use that authentic Scripture
+          correctly</strong
+        >
+        to answer it? This page describes the evaluation built for that
+        question: the question and answer sets, the record that sits behind
+        every case, the judge and the verdict it produces, how the results reach
+        the Expert Workbench, the loop used to improve the agent, and the first
+        baseline. It also sets the approach beside the common alternative,
+        grading against a rubric alone.
+      </p>
+      <div class="note">
+        <p>
+          <strong
+            >Status: in development; every score on this page is
+            provisional.</strong
+          >
+          An outside review (29 October 2026) found the design sound and its
+          first scores premature: the first scoring confused
+          <em>covering a reference answer</em>,
+          <em>answering the question</em> and <em>being correct</em>. This page
+          describes the revised evaluator, what the review changed, and what is
+          still needed before a score is used to steer the agent. The most
+          valuable next result is evidence that the evaluator tells apart a
+          concise correct answer, a genuinely incomplete one, a justified
+          alternative and a well-cited wrong answer.
+        </p>
+      </div>
+      <p class="toc">
+        <a href="#problem">The problem</a>
+        <a href="#picture">The picture</a>
+        <a href="#compare">Reference answers and rubrics</a>
+        <a href="#record">The evaluation record</a>
+        <a href="#sets">The question sets</a>
+        <a href="#questions">How questions are made</a>
+        <a href="#judge">The judge and its outcomes</a>
+        <a href="#access">What the agent could see</a>
+        <a href="#splits">Splits that stay independent</a>
+        <a href="#licensed">Licensed text stays private</a>
+        <a href="#workbench">The Workbench</a>
+        <a href="#loop">The improvement loop</a>
+        <a href="#results">The baseline</a>
+        <a href="#trust">How far to trust it</a>
+        <a href="#review">What the review changed</a>
+        <a href="#next">What comes next</a>
+        <a href="#runs">Where it runs</a>
+      </p>
+
+      <h2 id="problem">The problem this solves</h2>
+      <p>
+        A Scripture answer can fail in three different places, and each needs a
+        different kind of check.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Failure</th>
+              <th>Example</th>
+              <th>What catches it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>The source is wrong</strong></td>
+              <td>A misquoted verse, or a verse that does not exist.</td>
+              <td>
+                Structural: canonical ids and signed content commitments; the
+                harness strikes a quotation it cannot verify. Not part of this
+                evaluation.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>The source is real but misused</strong></td>
+              <td>
+                A genuine verse cited for a claim it does not support, read out
+                of its context.
+              </td>
+              <td>This evaluation: citation support.</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>The answer is wrong, incomplete or overreaching</strong>
+              </td>
+              <td>
+                True sentences that miss the point; a claim that contradicts the
+                text; one tradition's reading presented as the only Christian
+                one; an extra assertion with nothing behind it.
+              </td>
+              <td>
+                This evaluation: intent, required claims, additional claims,
+                scope.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Quotation-accuracy harnesses, which compare a quotation with the text a
+        Bible API returns, measure only the first row; the Scripture agent's
+        citations are verified by construction. The work is in the other two,
+        where a judgment about meaning is unavoidable. The design question is
+        how to make that judgment
+        <strong>grounded, auditable and validated</strong>.
+      </p>
+
+      <h2 id="picture">The whole path, in one picture</h2>
+      <figure>
+        <svg
+          class="diagram"
+          viewBox="0 0 760 620"
+          role="img"
+          aria-labelledby="ae-t"
+        >
+          <title id="ae-t">
+            Published question and answer literature and open benchmark sets are
+            turned into evaluation records whose required claims a reviewer
+            confirms. A frozen suite selects the same development questions
+            every run. The Scripture agent is asked each question in a fresh
+            conversation and its answers are stored. A judge reads each answer
+            against its record and returns five dimensions and a verdict.
+            Results go to the Expert Workbench and to a paired comparison with
+            the baseline, which tells whether a change to the agent made it
+            better or worse. A person's review calibrates the judge.
+          </title>
+          <defs>
+            <marker
+              id="ae"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+            <marker
+              id="ae-hot"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="arrow hot" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+          <text class="title" x="40" y="32">
+            From published answers to a verdict on every ask
+          </text>
+
+          <rect
+            class="box found"
+            x="40"
+            y="50"
+            width="320"
+            height="70"
+            rx="10"
+          />
+          <text x="56" y="76">Published question-and-answer literature</text>
+          <text class="sub" x="56" y="96">
+            catechisms · a study Bible's verse notes
+          </text>
+          <text class="sub" x="56" y="112">
+            (human-written, rights checked)
+          </text>
+
+          <rect
+            class="box found"
+            x="400"
+            y="50"
+            width="320"
+            height="70"
+            rx="10"
+          />
+          <text x="416" y="76">Open benchmark sets</text>
+          <text class="sub" x="416" y="96">
+            reference answers · behaviours · rubrics
+          </text>
+          <text class="sub" x="416" y="112">(projected, never rewritten)</text>
+
+          <path class="edge" d="M200 120V150" marker-end="url(#ae)" />
+          <path class="edge" d="M560 120V150" marker-end="url(#ae)" />
+
+          <rect
+            class="box domain"
+            x="40"
+            y="152"
+            width="680"
+            height="70"
+            rx="10"
+          />
+          <text x="56" y="178">Evaluation records, one per question</text>
+          <text class="sub" x="56" y="198">
+            question · task · claims with roles and passages · acceptable
+            alternatives
+          </text>
+          <text class="sub" x="56" y="214">
+            · material errors · perspective · group and split (dev · validation
+            · test)
+          </text>
+
+          <path class="edge hot" d="M380 222V252" marker-end="url(#ae-hot)" />
+
+          <rect
+            class="box domain"
+            x="40"
+            y="254"
+            width="320"
+            height="62"
+            rx="10"
+          />
+          <text x="56" y="280">Frozen suite</text>
+          <text class="sub" x="56" y="300">
+            477 development question ids, every run
+          </text>
+
+          <path class="edge hot" d="M360 285H398" marker-end="url(#ae-hot)" />
+
+          <rect
+            class="box seed"
+            x="400"
+            y="254"
+            width="320"
+            height="62"
+            rx="10"
+          />
+          <text x="416" y="280">Scripture agent, asked live</text>
+          <text class="sub" x="416" y="300">
+            fresh conversation each · answers stored
+          </text>
+
+          <path class="edge hot" d="M560 316V346" marker-end="url(#ae-hot)" />
+
+          <rect
+            class="box agent"
+            x="400"
+            y="348"
+            width="320"
+            height="78"
+            rx="10"
+          />
+          <text x="416" y="374">The judge, one call per answer</text>
+          <text class="sub" x="416" y="394">
+            intent · required claims · citations · additions
+          </text>
+          <text class="sub" x="416" y="412">
+            → good · bad · needs adjudication
+          </text>
+
+          <rect
+            class="box agent"
+            x="40"
+            y="348"
+            width="320"
+            height="78"
+            rx="10"
+          />
+          <text x="56" y="374">Code graders</text>
+          <text class="sub" x="56" y="394">
+            refused? cited? citations verified?
+          </text>
+          <text class="sub" x="56" y="412">
+            gold verses recalled? gold text leaked?
+          </text>
+          <path
+            class="edge"
+            d="M420 316 Q300 330 200 346"
+            marker-end="url(#ae)"
+          />
+
+          <path class="edge hot" d="M560 426V456" marker-end="url(#ae-hot)" />
+          <path class="edge" d="M200 426V456" marker-end="url(#ae)" />
+
+          <rect
+            class="box home"
+            x="40"
+            y="458"
+            width="320"
+            height="62"
+            rx="10"
+          />
+          <text x="56" y="484">Expert Workbench</text>
+          <text class="sub" x="56" y="504">
+            scorecard · struggles · each answer's verdicts
+          </text>
+
+          <rect
+            class="box home"
+            x="400"
+            y="458"
+            width="320"
+            height="62"
+            rx="10"
+          />
+          <text x="416" y="484">Paired comparison</text>
+          <text class="sub" x="416" y="504">
+            baseline vs change · flips · intervals
+          </text>
+
+          <path class="edge" d="M560 520V552" marker-end="url(#ae)" />
+          <rect
+            class="box found"
+            x="400"
+            y="554"
+            width="320"
+            height="50"
+            rx="10"
+          />
+          <text x="416" y="584">A person calibrates the judge</text>
+          <path
+            class="edge"
+            d="M400 579 Q340 579 340 440 Q340 400 398 392"
+            marker-end="url(#ae)"
+          />
+        </svg>
+        <figcaption>
+          The highlighted path is one run. The comparison closes the loop: a
+          change to the agent is kept only when the same questions read better,
+          and the judge itself is held to people's verdicts.
+        </figcaption>
+      </figure>
+
+      <h2 id="compare">Reference answers and rubrics: what each supplies</h2>
+      <p>
+        A <strong>reference answer</strong> is a trusted example of what a
+        correct answer says. A <strong>rubric</strong> is a set of explicit
+        criteria: what must be present, what counts as an error, how much
+        variation is acceptable. Rubric-based grading can be used with or
+        without reference answers, and a rubric can be generic or written for
+        each question.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>What it gives</th>
+              <th>Where it falls short</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>A reference answer alone</strong></td>
+              <td>A concrete standard the grader can see.</td>
+              <td>
+                One preferred paragraph; it usually says more than a question
+                needs, and a correct answer worded differently looks like a miss
+                unless the grader is told what matters.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>A generic rubric</strong> ("accuracy, 1 to 5")</td>
+              <td>
+                Reusable; covers qualities no single answer shows (tone,
+                pastoral care, honesty about disagreement).
+              </td>
+              <td>
+                The grader decides what "accurate" means for each question from
+                its own knowledge, so the score inherits its views and is hard
+                to audit case by case.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>A question-specific rubric</strong></td>
+              <td>
+                Names, for this question, what must be included and what would
+                be wrong; permits different valid answers.
+              </td>
+              <td>
+                Someone has to write and review it for every question. A
+                carefully reviewed one can be stronger than a reference record
+                extracted automatically.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>This harness</strong></td>
+              <td>
+                A question-specific record whose candidate claims and passages
+                come from human-written published answers, judged on reusable
+                dimensions, each verdict naming the claim that decided it.
+              </td>
+              <td>
+                Publication improves traceability; it does not make a statement
+                <em>necessary</em> for a given question or <em>correct</em>.
+                Which claims a question requires is a reviewer's decision; until
+                it is made the record is a proposal.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        So the published answer is <strong>evidence for the rubric</strong>, not
+        the rubric itself: the dimensions are the reusable criteria, the record
+        is the question-specific rubric, and the reference is where its
+        candidate requirements come from. A judge that checks claims rather than
+        wording permits different valid answers while still testing correctness.
+      </p>
+      <div class="note">
+        <p>
+          <strong
+            >Questions worth asking of any rubric-based evaluation.</strong
+          >
+          Is the rubric generic or question-specific? Does each question name
+          expected claims, carry a reference answer, or neither? Who grades
+          (people, a model, or both), and who validates the grader against
+          people? A sample of rubrics with graded responses answers all four.
+        </p>
+      </div>
+
+      <h2 id="record">The evaluation record behind every case</h2>
+      <p>
+        Every case in the catechism and study-note sets carries a record. Code
+        builds what the source supplies; a model may <em>propose</em> what it
+        does not; a reviewer decides. A proposal is marked as one on every case
+        and never overwrites a reviewer.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>What it holds</th>
+              <th>Where it comes from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ask</code></td>
+              <td>The question, as a person would type it.</td>
+              <td>
+                The catechism's own question; for a verse note, a proposed
+                question about the note's word in its verse.
+              </td>
+            </tr>
+            <tr>
+              <td><code>task</code></td>
+              <td>
+                What the question asks the answer to do: explain_text ·
+                explain_doctrine · describe_tradition · compare_readings ·
+                assess_evidence · fact.
+              </td>
+              <td>Proposed; reviewed.</td>
+            </tr>
+            <tr>
+              <td><code>depth</code></td>
+              <td>
+                How much the <em>question</em> asks for: brief · standard ·
+                detailed. A brief verse explanation is not held to a doctrinal
+                survey.
+              </td>
+              <td>Proposed; reviewed.</td>
+            </tr>
+            <tr>
+              <td><code>reference_answer</code></td>
+              <td>The published answer, verbatim.</td>
+              <td>The source.</td>
+            </tr>
+            <tr>
+              <td><code>claims[]</code></td>
+              <td>
+                The reference's candidate claims, each with the passages the
+                source gives for it.
+              </td>
+              <td>
+                Code: proof-text markers split a catechism answer; a note's
+                sentences carry the passages it cites.
+              </td>
+            </tr>
+            <tr>
+              <td><code>roles[]</code></td>
+              <td>
+                For each claim: <strong>required</strong> (needed to answer this
+                question correctly; missing it can fail the answer) ·
+                <strong>supporting</strong> (makes the answer substantially
+                better; a quality score) ·
+                <strong>optional</strong> (elaboration or application; never
+                penalised).
+              </td>
+              <td>Proposed; a reviewer decides.</td>
+            </tr>
+            <tr>
+              <td><code>acceptableAlternatives[]</code></td>
+              <td>
+                Other readings that satisfy a claim, each with its own sources
+                and a reviewer's approval.
+              </td>
+              <td>Reviewer.</td>
+            </tr>
+            <tr>
+              <td><code>materialErrors[]</code></td>
+              <td>Statements that fail an answer outright.</td>
+              <td>Reviewer.</td>
+            </tr>
+            <tr>
+              <td><code>perspective</code></td>
+              <td>Whose teaching the reference states.</td>
+              <td>Code, from the source; said on every case.</td>
+            </tr>
+            <tr>
+              <td><code>group</code>, <code>split</code></td>
+              <td>
+                Which related cases it belongs with, and whether it is
+                development, validation or test.
+              </td>
+              <td>Code (below).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        On the 541 record cases of the current suite, the proposals mark 653
+        claims required, 508 supporting and 251 optional: usually one or two
+        required claims a question, and none for 12 questions the reference does
+        not actually answer.
+      </p>
+
+      <h2 id="sets">The question and answer sets</h2>
+      <p>
+        Two tracks. The <strong>published-literature track</strong> supplies
+        reference answers written by people, adopted after checking edition and
+        licence. The <strong>benchmark track</strong> projects open evaluation
+        sets with their own scoring rules. None of it enters a training set.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Set</th>
+              <th>Source and kind</th>
+              <th>Cases</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Study-Bible verse notes</td>
+              <td>
+                A licensed study Bible's notes on all 66 books, used by
+                permission; a confessional reading of each verse
+              </td>
+              <td>9,875 (of 10,949 notes)</td>
+              <td>
+                The note; its sentences as candidate claims; the passages it
+                cites
+              </td>
+            </tr>
+            <tr>
+              <td>Westminster Shorter and Larger Catechisms</td>
+              <td>1647; public domain</td>
+              <td>107 · 196</td>
+              <td>The answer; clauses with proof texts (Larger)</td>
+            </tr>
+            <tr>
+              <td>Heidelberg Catechism</td>
+              <td>1563; public domain</td>
+              <td>129</td>
+              <td>The answer; clauses with proof texts</td>
+            </tr>
+            <tr>
+              <td>1695 Baptist Catechism</td>
+              <td>public domain</td>
+              <td>114</td>
+              <td>The answer; clauses with proof texts</td>
+            </tr>
+            <tr>
+              <td>An 1891 Catholic catechism with explanations</td>
+              <td>public domain; historical, said on every case</td>
+              <td>421</td>
+              <td>The prescribed answer, the explanation beside it</td>
+            </tr>
+            <tr>
+              <td>An 18th-century explanation of the Shorter Catechism</td>
+              <td>public domain</td>
+              <td>3,831</td>
+              <td>The written answer; references in it</td>
+            </tr>
+            <tr>
+              <td>An 18th-century yes/no exposition</td>
+              <td>CC0; one proof text a sub-question</td>
+              <td>2,611 (200 negative)</td>
+              <td>The Yes or No, read against the question as phrased</td>
+            </tr>
+            <tr>
+              <td>A doctrinal-reliability benchmark</td>
+              <td>CC BY; against a stated confessional standard</td>
+              <td>23</td>
+              <td>Reference answer, banded score</td>
+            </tr>
+            <tr>
+              <td>A faith-and-meaning guidance benchmark</td>
+              <td>CC BY; behaviours, failure modes, weighted dimensions</td>
+              <td>120 + 37 perturbations</td>
+              <td>Behaviours and failure modes</td>
+            </tr>
+            <tr>
+              <td>A theological triage benchmark</td>
+              <td>CC BY-SA; its rubric and judge prompt carried verbatim</td>
+              <td>732</td>
+              <td>Rubric scores by rank</td>
+            </tr>
+            <tr>
+              <td>Bible facts</td>
+              <td>Apache-2.0 community set; unverified, a stand-in</td>
+              <td>1,290</td>
+              <td>The fact; a doubtful gold is set aside</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        A limit the review named: every question in the published-literature
+        track is derived from an answer, so the track favours questions its
+        references can answer. Questions collected independently of any
+        reference (follow-ups, false premises, comparing evidence, admitting
+        uncertainty, declining appropriately) are needed beside them.
+      </p>
+
+      <h2 id="questions">How the questions are made</h2>
+      <p>
+        A verse note is headed by a word or phrase of its verse; its question is
+        <strong>about that word, in that verse</strong>, and nothing more ("What
+        does Paul mean when he says believers are justified in Romans 3:24?" is
+        the shape). A model proposes the wording; code decides whether it may be
+        used: one question of at most 30 words, naming the verse, asking about
+        the heading phrase, quoting no six-word run of the note (apostrophes
+        normalised; every stored question is re-checked when a rule changes),
+        never naming the note. 9,875 of 10,949 notes have an admissible
+        question. A second check asks whether the note actually answers the
+        question; a question it does not answer is an <em>invalid case</em>,
+        decided before any answer is read, excluded from both sides of any
+        comparison, and counted with its reason. A question can still
+        <em>lead</em>; that is the reviewer's first check.
+      </p>
+
+      <h2 id="judge">The judge and its outcomes</h2>
+      <p>
+        One call per answer by a named judge (Claude Haiku 5.5), blind to which
+        system wrote the answer. It sees the record with its roles, the text of
+        every passage the answer cites, and the answer, which is delimited and
+        declared to be data: an answer that tries to instruct the judge cannot,
+        and cannot close its own delimiter. It returns:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>What it asks</th>
+              <th>Effect</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Intent</strong></td>
+              <td>Did the answer do the task the question asks?</td>
+              <td>Must be addressed.</td>
+            </tr>
+            <tr>
+              <td><strong>Required claims</strong></td>
+              <td>
+                Each stated (any words, or an approved alternative), differs,
+                contradicted or absent.
+              </td>
+              <td>
+                All must be stated; one that differs sends the answer to
+                adjudication.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Supporting claims</strong></td>
+              <td>The same, for claims that make the answer better.</td>
+              <td>A quality score; a contradiction fails.</td>
+            </tr>
+            <tr>
+              <td><strong>Citation support</strong></td>
+              <td>
+                Does each cited passage, read with its words, support the claim
+                it is attached to? Cannot-tell where a verse alone is not enough
+                context.
+              </td>
+              <td>
+                At least 0.8 where the answer cites; no citation at all fails a
+                task that needs evidence.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Additional claims</strong></td>
+              <td>
+                Every substantive claim the answer makes beyond the reference:
+                supported, defensible, unsupported or wrong, and major or minor.
+              </td>
+              <td>
+                A wrong claim, or a major unsupported one, fails an otherwise
+                complete answer; a defensible insight the reference lacks is
+                never penalised.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Scope</strong></td>
+              <td>
+                Where the reference is one tradition's, does the answer
+                distinguish shared teaching from that reading?
+              </td>
+              <td>Diagnostic until calibrated.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>Differences depend on the task.</strong> Allowing another
+        reading is right; making it automatically acceptable is not. When the
+        question asks what a named tradition teaches, a different tradition's
+        position is wrong for that question. When it asks what a verse means, a
+        recognised alternative reading is <em>differs</em>, and differing on a
+        required claim sends the answer to a reviewer rather than letting the
+        judge decide that the alternative is established. Recognising several
+        readings does not make them equally supported, and a well-supported
+        conclusion favouring one is not penalised.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Outcome</th>
+              <th>Meaning</th>
+              <th>Counted as</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>good</strong></td>
+              <td>
+                Every required claim stated; nothing required or supporting
+                contradicted; no wrong or major unsupported addition; citations
+                support their claims; intent addressed.
+              </td>
+              <td>good</td>
+            </tr>
+            <tr>
+              <td><strong>bad</strong></td>
+              <td>Anything else; the reasons are on the verdict.</td>
+              <td>bad</td>
+            </tr>
+            <tr>
+              <td><strong>needs-adjudication</strong></td>
+              <td>It would be good, but a required claim differs.</td>
+              <td>neither; listed for a reviewer</td>
+            </tr>
+            <tr>
+              <td><strong>judge-undecided</strong></td>
+              <td>
+                The judge said it could not judge, or no claim was decidable.
+              </td>
+              <td>neither; counted</td>
+            </tr>
+            <tr>
+              <td><strong>invalid-case</strong></td>
+              <td>The question or record is defective.</td>
+              <td>excluded from both sides, with its reason</td>
+            </tr>
+            <tr>
+              <td><strong>execution failure</strong></td>
+              <td>The ask or the judge call failed.</td>
+              <td>neither; counted apart from abstention</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The thresholds were fixed before any result was read and are pinned by
+        tests covering the review's edge cases: a concise correct answer, a
+        genuinely incomplete one, a justified alternative, a well-cited wrong
+        answer, every claim differing, no decidable claim, no citations where
+        evidence is needed, one citation on several claims, a major and a minor
+        unsupported addition, and an answer attempting to instruct the judge.
+      </p>
+
+      <h2 id="access">What the agent could see when it answered</h2>
+      <p>
+        The review found an apparent conflict: the study notes are among the
+        writings the Scripture agent holds, yet they are also gold. Both are
+        true, and what matters is the <em>route</em>. The suite measures the
+        agent's default ask, which searches the signed Bible and reads verses
+        from it; it does not read the commentary index or the per-verse
+        dossiers, and every citation it returned in the baseline was a verse of
+        the signed edition. By retrieval, that run is a
+        <strong>reference withheld</strong> experiment. The verse ask behind the
+        reader's study companion does read a verse dossier that can include the
+        study note on that verse; a run of that route is a
+        <strong>production retrieval</strong> experiment, where using a relevant
+        commentary is legitimate, and must be labelled as such. Neither route
+        can rule out what the answering model learned in pretraining.
+      </p>
+      <p>
+        Each run records its route, edition and agent model in a contract
+        (below). Still to add, with the agent's operators: the effective
+        retrieval filters and the evidence actually supplied to the answering
+        model, per answer. The text-overlap check (no answer shares an
+        eight-word run with its gold) stays as a diagnostic: it can show
+        copying; it cannot show access.
+      </p>
+
+      <h2 id="splits">Splits that stay independent</h2>
+      <p>
+        A stable hash of each case id is reproducible but not independent: a
+        catechism question, its explanation's sub-questions and its yes/no
+        exposition teach the same thing, and nearby notes share an argument. So
+        related cases are <strong>grouped first</strong> (a catechism question
+        with its explanations and its yes/no sub-questions; the notes on one
+        chapter; a benchmark perturbation with its scenario) and whole groups
+        are assigned: <strong>development</strong> 70 % (tuned against),
+        <strong>validation</strong> 15 % (decides whether a change is kept),
+        <strong>test</strong> 15 % (reserved for occasional release decisions,
+        never for choosing between changes). No group spans two splits. The
+        frozen suite now holds only development cases: 477 of the original 645,
+        the rest having moved to validation or test.
+      </p>
+
+      <h2 id="licensed">Licensed text stays private</h2>
+      <p>
+        The study notes are another publisher's text, used by permission and not
+        for redistribution. The set that carries a note lives in a private
+        evaluation store; the repository and this reader's bundle hold a stub
+        with the question, the verse and its strata. The judge's reasoning,
+        which quotes the note, stays private; a committed result keeps labels
+        and numbers. Every committed file is scanned for eight-word runs of any
+        note; what the scan finds is Scripture both quote.
+      </p>
+
+      <h2 id="workbench">The Expert Workbench</h2>
+      <p>
+        The Christian Ask sets are a domain of the existing Expert Workbench.
+        Each run writes the harness's standard experiment record, so the
+        Workbench shows a scorecard by set, the questions the agent struggles
+        with and each answer's verdicts. Screens for the work the review assigns
+        to people (reviewing a record's roles, adjudicating a difference,
+        two-reviewer calibration) are the next piece of the Workbench; today
+        that work is done in reviewer sheets.
+      </p>
+
+      <h2 id="loop">The improvement loop</h2>
+      <ol class="steps">
+        <li>
+          <strong>Freeze the questions</strong> (477 development ids) and the
+          <strong>contract</strong>: the judge model and a hash of its prompt,
+          the verdict version and thresholds, a digest of every case as judged,
+          the route, edition and agent model, and the concurrency. A comparison
+          refuses two runs whose contracts differ, and leaves out any case whose
+          record changed between them.
+        </li>
+        <li>
+          <strong>Run the baseline</strong>: a live ask per question in a fresh
+          conversation, answers stored, then judged.
+        </li>
+        <li><strong>Change the agent</strong>.</li>
+        <li>
+          <strong
+            >Run the same questions again and compare, paired per
+            question</strong
+          >: the primary metric, declared before any comparison (the good rate
+          on the record sets), then the dimensions, each with a 95 % interval
+          from a <em>cluster</em> bootstrap that resamples whole groups and
+          repeats together, an exact McNemar test on the flips, and the cases
+          that flipped each way with their reasons.
+        </li>
+        <li>
+          <strong>Diagnose before fixing.</strong> For each missed required
+          claim, the comparison says whether the answer cited the claim's own
+          passage (the point was dropped in composition) or not (retrieval or
+          selection). The full attribution (absent from the corpus, not
+          retrieved, retrieved but not selected, selected but not written,
+          removed by a check, or mis-graded) needs the agent's per-step evidence
+          record joined to the claim, and is the next diagnostic.
+        </li>
+        <li>
+          <strong>Keep a change</strong> only if it holds on validation; look at
+          test rarely.
+        </li>
+      </ol>
+      <p>
+        Reliability is measured, not hidden: the first answer a user would have
+        received is kept beside any retried one, a decline that a retry later
+        recovers still counts against availability, and latency includes
+        retries. How small a change the comparison can see depends on how many
+        answers flip and in which direction, not on a fixed sample size; the
+        interval is the test.
+      </p>
+
+      <h2 id="results">The baseline, re-judged (29 October 2026)</h2>
+      <p>
+        The same stored answers as the first reading, re-judged under the
+        revised evaluator with <em>proposed</em> roles; development cases only;
+        judge Claude Haiku 5.5. Provisional until the records are reviewed and
+        the judge calibrated.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Set (development)</th>
+              <th>Answers</th>
+              <th>good · bad · needs adjudication · undecided</th>
+              <th>Good rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Study-Bible verse notes, 66 books</td>
+              <td>239</td>
+              <td>161 · 55 · 23 · 0</td>
+              <td><strong>74.5 %</strong> (supporting-claim quality 0.47)</td>
+            </tr>
+            <tr>
+              <td>Westminster Shorter Catechism</td>
+              <td>22</td>
+              <td>17 · 4 · 1 · 0</td>
+              <td>81 %</td>
+            </tr>
+            <tr>
+              <td>1695 Baptist Catechism</td>
+              <td>23</td>
+              <td>19 · 2 · 2 · 0</td>
+              <td>90 %</td>
+            </tr>
+            <tr>
+              <td>Heidelberg Catechism</td>
+              <td>24</td>
+              <td>18 · 6 · 0 · 0</td>
+              <td>75 %</td>
+            </tr>
+            <tr>
+              <td>Westminster Larger Catechism</td>
+              <td>23</td>
+              <td>14 · 9 · 0 · 0</td>
+              <td>61 %</td>
+            </tr>
+            <tr>
+              <td>The 1891 Catholic catechism</td>
+              <td>17</td>
+              <td>6 · 10 · 1 · 0</td>
+              <td>38 % (a different tradition's standard, said)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The open benchmark sets keep their own scoring (doctrinal reliability
+        69, triage 68.1, guidance composite 0.65, facts 0.92 on the first
+        reading) and are not part of the primary metric. The first reading,
+        under the earlier rule that every reference claim counted and two thirds
+        had to be stated, gave 57.8 % on the notes.
+      </p>
+      <p>
+        <strong>What the re-judging shows about the evaluator.</strong> Under
+        the earlier rule, notes with four or more claims passed 39 % and
+        single-claim notes 84 %. With roles applied, the same answers pass 74 %,
+        75 % and 72 % for one, two to three and four or more claims. Most of
+        that gap was the record demanding more than the question asked, as the
+        review suspected, not the agent answering complex questions worse.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Reported finding</th>
+              <th>What it establishes, no more</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>High intent and citation-support scores</td>
+              <td>
+                The current judge usually accepts those dimensions; untested
+                against people.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Notes: 41 bad answers miss a required claim; 26 address the
+                question only in part
+              </td>
+              <td>
+                Candidate omissions, under <em>proposed</em> roles; some will be
+                over-demanding records.
+              </td>
+            </tr>
+            <tr>
+              <td>23 note answers need adjudication</td>
+              <td>
+                The agent took another reading on a required point; a reviewer
+                decides.
+              </td>
+            </tr>
+            <tr>
+              <td>Different catechism scores</td>
+              <td>
+                Different task difficulty, source expectations and, possibly,
+                tradition alignment.
+              </td>
+            </tr>
+            <tr>
+              <td>Two judgings agree (κ 0.96)</td>
+              <td>Stable judgments on the tested answers; not correctness.</td>
+            </tr>
+            <tr>
+              <td>Instant declines under a burst of concurrent asks</td>
+              <td>
+                An operational reliability problem, measured on its own
+                (first-attempt declines), not folded into answer quality.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="trust">How far to trust the verdict</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Result</th>
+              <th>What it shows</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Repeatability: 60 answers judged twice</td>
+              <td>good vs bad 98 % (κ 0.96)</td>
+              <td>
+                The judge is consistent with itself, not that it is right.
+              </td>
+            </tr>
+            <tr>
+              <td>A cheaper judge from another provider, same 60</td>
+              <td>
+                κ 0.53 with the named judge; 9 of the named judge's 16 bad
+                answers called good
+              </td>
+              <td>
+                The two judges disagree. Which is right is unknown until people
+                adjudicate; the cheaper judge was not adopted.
+              </td>
+            </tr>
+            <tr>
+              <td>Agreement with people</td>
+              <td>Sheets ready, not yet reviewed</td>
+              <td>The test that turns a reading into a measurement (below).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>The calibration.</strong> 130 answers, stratified across
+        traditions, tasks, claim counts and verdicts, are on two identical
+        sheets for two qualified reviewers working independently. Each reviewer
+        first judges the <em>record</em> (is the question fair, are the required
+        claims really required) and only then the answer, so an unfair record is
+        not inherited; the judge's verdict is not on the sheet. Disagreements
+        are adjudicated. The report gives reviewer-to-reviewer agreement (the
+        ceiling), and against the adjudicated verdict:
+        <strong>false passes</strong> (the judge passes what people consider
+        materially wrong; the risk that matters most), false fails, whether the
+        judge names the right reason, and all of it by tradition and task. A
+        third of the sheet is held back: the judge's prompt is changed against
+        the rest and the held-back part is read once, at the end. A single κ
+        threshold is not the test; rare false passes on material errors, and
+        agreement close to the reviewers' own, are. Known judge biases
+        (preferring longer answers, answer position, its own model family) are
+        tested for, not assumed away.
+      </p>
+
+      <h2 id="review">What the outside review changed</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Finding</th>
+              <th>Change</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Extracted claims are candidates, not requirements</td>
+              <td>
+                Roles (required · supporting · optional), task and depth per
+                case; only required claims can fail an answer
+              </td>
+              <td>Built; roles proposed, reviewer decides</td>
+            </tr>
+            <tr>
+              <td>Claims beyond the reference were not checked</td>
+              <td>
+                Every substantive additional claim judged; wrong or
+                major-unsupported fails; cited verse text given to the judge
+              </td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>Differences must depend on the question</td>
+              <td>
+                Task types; a different tradition fails a describe-tradition
+                question; differing on a required claim goes to adjudication
+              </td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>Calibration rule insufficient; a circular comparison</td>
+              <td>
+                Two independent reviewers, record first, false pass/fail, tune
+                and hold-out parts; the cheaper-judge result restated as
+                disagreement
+              </td>
+              <td>Built; review not done</td>
+            </tr>
+            <tr>
+              <td>Can the gold be retrieved?</td>
+              <td>
+                The measured route reads Scripture only; route recorded per run;
+                overlap kept as a diagnostic
+              </td>
+              <td>Resolved for this route; per-answer evidence trace to add</td>
+            </tr>
+            <tr>
+              <td>Splits not independent</td>
+              <td>Group before splitting; development · validation · test</td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>Locate the cause of an omission</td>
+              <td>
+                Cited-passage approximation now; per-step evidence join next
+              </td>
+              <td>Partly built</td>
+            </tr>
+            <tr>
+              <td>Verdict edge cases and outcomes</td>
+              <td>
+                Required claims, six outcomes, tested edge cases, an injection
+                guard
+              </td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>A versioned contract</td>
+              <td>
+                Judge prompt hash, verdict version, case digests, route, agent
+                model; first attempts kept; cluster bootstrap; a declared
+                primary metric
+              </td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>644 vs 645 in the first report</td>
+              <td>
+                One frozen question had left its set when the quotation rule was
+                corrected
+              </td>
+              <td>Reconciled</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="next">What comes next, in order</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Work</th>
+              <th>Done when</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>P0</td>
+              <td>Review a core of records: required, supporting, optional</td>
+              <td>The required claims are defensible for each question</td>
+            </tr>
+            <tr>
+              <td>P0</td>
+              <td>Calibrate the judge against two reviewers</td>
+              <td>
+                False passes, false fails and adjudicated disagreements measured
+              </td>
+            </tr>
+            <tr>
+              <td>P0</td>
+              <td>Per-answer evidence trace from the agent</td>
+              <td>
+                Each run shows which sources the answering model was given
+              </td>
+            </tr>
+            <tr>
+              <td>P1</td>
+              <td>Attribute omissions to a stage</td>
+              <td>
+                Each missed required claim points to corpus, retrieval,
+                selection, composition, a check or the grader
+              </td>
+            </tr>
+            <tr>
+              <td>P1</td>
+              <td>
+                Workbench screens for record review, adjudication and
+                calibration
+              </td>
+              <td>Reviewers work in the app, not in sheets</td>
+            </tr>
+            <tr>
+              <td>P2</td>
+              <td>Questions collected independently of any reference</td>
+              <td>
+                Follow-ups, false premises, evidence comparison, uncertainty,
+                appropriate abstention
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Until the P0 items are done, the good rate is a development reading, and
+        the agent is not tuned against it: a score that rewards echoing a
+        reference could be raised by longer answers without making them more
+        useful or more accurate.
+      </p>
+
+      <h2 id="runs">Where it runs</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Where</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Record proposals, grouping and splits</td>
+              <td>
+                <code>propose-records.py</code>,
+                <code>record-proposals.json</code>, <code>groups.py</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Building the sets and records</td>
+              <td>
+                the skills repository,
+                <code>scripts/christian-ask/build-sets.py</code>,
+                <code>build-rsb-sets.py</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Asking and judging</td>
+              <td><code>scripts/christian-ask/run.py</code></td>
+            </tr>
+            <tr>
+              <td>The frozen suite and the comparison</td>
+              <td>
+                <code>suite.py</code>, <code>suite.cases.json</code>,
+                <code>compare.py</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Reviewer calibration</td>
+              <td>
+                <code>calibrate.py</code> (two reviewers, tune and hold-out
+                parts)
+              </td>
+            </tr>
+            <tr>
+              <td>Results and the Workbench</td>
+              <td>
+                <code>evaluations/results/christian-ask/</code>; the Expert
+                Workbench in the skills app, Scripture domain
+              </td>
+            </tr>
+            <tr>
+              <td>Licensed gold, answers, judge reasoning, reviewer sheets</td>
+              <td>a private evaluation store outside every repository</td>
+            </tr>
+            <tr>
+              <td>The agent being evaluated</td>
+              <td>
+                scripture.faithnet.io (see the
+                <a href="/architecture/harness/">Scripture harness</a>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
