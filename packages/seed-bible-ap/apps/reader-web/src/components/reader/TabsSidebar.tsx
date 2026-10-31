@@ -136,6 +136,17 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
               >
                 {t("scripture-map", { defaultValue: "Scripture map" })}
               </MenuItem>
+              {state.extensions.panes.value.some((p) => p.id === "explore") && (
+                <MenuItem
+                  icon="hub"
+                  onSelect={() => {
+                    state.ui.pane.value = "ext:explore" as never;
+                    state.ui.paneWide.value = true;
+                  }}
+                >
+                  {t("explore", { defaultValue: "Explore" })}
+                </MenuItem>
+              )}
               {wakeLockSupported() && (
                 <MenuItem
                   icon="light_mode"

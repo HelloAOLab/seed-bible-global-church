@@ -4,6 +4,7 @@
 // (companions, those they discipled, who discipled them), then the bodies they belonged to or planted (tribe,
 // communities). A relative holding two ties is drawn once, in the nearer ring, and named with both (Laban: uncle,
 // father-in-law). The legend turns a ring on or off; under the rings every tie is listed by kind, with its source.
+import { svgFocusable } from "./svgFocus";
 import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n";
 import type { EntityRef, Oikos, OikosTie } from "./data";
@@ -151,7 +152,7 @@ export function OikosDiagram(props: {
                 key={`${r.key}-${m.id}`}
                 className={`sb-story-oikos-node sb-story-oikos-${m.kind} sb-story-oikos-in-${r.key}${open ? " sb-story-oikos-link" : ""}`}
                 role={open ? "button" : undefined}
-                tabIndex={open ? 0 : undefined}
+                {...svgFocusable(!!open)}
                 aria-label={`${label}, ${m.relations.join(", ")}`}
                 onClick={open}
                 onKeyDown={(e) => {

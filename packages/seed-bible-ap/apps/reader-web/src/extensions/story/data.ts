@@ -63,7 +63,7 @@ export interface Scene {
 }
 export interface GenerationNode extends EntityRef {
   /** How it came from its parent: planted (scr:plantedBody), discipled (scr:discipled), gave rise to (scr:gaveRiseTo). */
-  via?: "plantedBody" | "discipled" | "gaveRiseTo";
+  via?: "plantedBody" | "discipled" | "gaveRiseTo" | "gatheredFrom";
   children: GenerationNode[];
 }
 /** A person's ties, by kind: the household (parents, partners, children, siblings), the extended family derived from
@@ -146,9 +146,9 @@ type Cache = {
 const PATH = /^[A-Za-z0-9_./-]+$/;
 /** The story dataset's build, in every request and every key it is kept under on the device: a rebuilt dataset is read
  *  fresh at once — past the edge cache and past what a device kept of the last one. Bump it after each upload. */
-export const STORY_DATA = "2026-10-30c";
+export const STORY_DATA = "2026-10-31b";
 
-async function read(
+export async function readStory(
   path: string,
   cache: Cache,
   fetchImpl: typeof fetch
@@ -173,7 +173,7 @@ export async function readChapterScenes(
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<Scene[]> {
-  const raw = (await read(`${book}/${chapter}`, cache, fetchImpl)) as {
+  const raw = (await readStory(`${book}/${chapter}`, cache, fetchImpl)) as {
     scenes?: Scene[];
   } | null;
   return Array.isArray(raw?.scenes) ? raw.scenes : [];
@@ -185,7 +185,7 @@ export async function readEntity(
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<EntityCard | null> {
-  const raw = (await read(path, cache, fetchImpl)) as EntityCard | null;
+  const raw = (await readStory(path, cache, fetchImpl)) as EntityCard | null;
   return raw && typeof raw === "object" && "label" in raw ? raw : null;
 }
 
@@ -316,7 +316,7 @@ export async function readBook(
   cache: Cache,
   fetchImpl: typeof fetch = fetch
 ): Promise<BookCard | null> {
-  const raw = (await read(
+  const raw = (await readStory(
     `book-${usfm}/${usfm}`,
     cache,
     fetchImpl

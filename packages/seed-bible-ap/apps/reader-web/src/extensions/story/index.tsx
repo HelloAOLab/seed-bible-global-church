@@ -4,6 +4,7 @@
 import { h } from "preact";
 import type { ExtensionRegistration } from "../host";
 import { StoryPane, storyFocus, storyTitle, storyTrail } from "./StoryPane";
+import { ExplorePane } from "./ExplorePane";
 import "./story.css";
 
 const story: ExtensionRegistration = {
@@ -12,6 +13,11 @@ const story: ExtensionRegistration = {
   description:
     "Tap a section heading or the chapter's title: what has been published about it, then who, where and what happens — and a person's oikos and generations.",
   init: function* (ctx) {
+    yield ctx.panes.register({
+      id: "explore",
+      title: "Explore",
+      render: () => h(ExplorePane, { state: ctx.state }),
+    });
     yield ctx.panes.register({
       id: "story",
       title: storyTitle,
