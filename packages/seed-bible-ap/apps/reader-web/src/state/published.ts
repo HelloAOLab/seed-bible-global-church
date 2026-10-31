@@ -57,7 +57,7 @@ export async function loadPublished(
   } = {}
 ): Promise<PublishedMedia[] | null> {
   const { edition, fetchImpl = fetch, now = Date.now } = opts;
-  const key = `about2:${scope}:${edition ?? ""}:${ref}`;
+  const key = `about3:${scope}:${edition ?? ""}:${ref}`;
   const hit = (await cache.get(key)) as
     | { at: number; items: PublishedMedia[] }
     | undefined;

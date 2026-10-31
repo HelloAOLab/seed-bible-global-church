@@ -15,7 +15,17 @@ export function PublishedMediaList({ media }: { media: PublishedMedia[] }) {
       <ul className="sb-story-list sb-published-media">
         {media.map((m) => (
           <li key={m.item.id} className="sb-story-video" data-media={m.item.id}>
-            {m.item.image && <img src={m.item.image} alt="" loading="lazy" />}
+            {m.item.image && (
+              <a
+                href={m.item.url}
+                target="_blank"
+                rel="noreferrer"
+                tabIndex={-1}
+                aria-hidden="true"
+              >
+                <img src={m.item.image} alt="" loading="lazy" />
+              </a>
+            )}
             <div>
               <a href={m.item.url} target="_blank" rel="noreferrer">
                 <span

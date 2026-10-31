@@ -256,14 +256,18 @@
 /* Published media: a picture when the publisher signed one, the maker and the passage under the title. */
 .sb-story-video {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 1px solid var(--sb-hover-background, rgba(127, 127, 127, 0.2));
+  border-radius: 10px;
 }
+/* The picture across the card, as the old reader's Discover cards showed it. */
 .sb-story-video img {
-  width: 96px;
-  height: 54px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 4px;
-  flex: none;
+  border-radius: 6px;
 }
 .sb-story-video a {
   color: inherit;
