@@ -8,7 +8,10 @@ import {
   wheelArcs,
   type CanonBook,
 } from "../../../apps/reader-web/src/extensions/story/atlas";
-import { churchForest } from "../../../apps/reader-web/src/extensions/story/ExplorePane";
+import {
+  churchForest,
+  shortName,
+} from "../../../apps/reader-web/src/extensions/story/ExplorePane";
 
 const book = (
   usfm: string,
@@ -59,11 +62,12 @@ describe("the speaking network", () => {
     const a = layoutNetwork(ids, links, 720, 520);
     const b = layoutNetwork(ids, links, 720, 520);
     expect([...a]).toEqual([...b]);
+    // Far enough from the sides and the bottom that a name centred under a dot is not cut off.
     for (const p of a.values()) {
-      expect(p.x).toBeGreaterThanOrEqual(30);
-      expect(p.x).toBeLessThanOrEqual(690);
+      expect(p.x).toBeGreaterThanOrEqual(90);
+      expect(p.x).toBeLessThanOrEqual(630);
       expect(p.y).toBeGreaterThanOrEqual(24);
-      expect(p.y).toBeLessThanOrEqual(496);
+      expect(p.y).toBeLessThanOrEqual(480);
     }
   });
   it("keeps everyone apart", () => {
@@ -163,5 +167,45 @@ describe("names in the drawings", () => {
     );
     expect(html).toMatch(/<g[^>]*role="button"[^>]*tabindex="0"/);
     expect(html).not.toMatch(/tabIndex=/);
+  });
+});
+
+describe("a name under a dot", () => {
+  it("drops the gloss and stays short; the whole name is in the tooltip", () => {
+    expect(shortName("Lydia (seller of purple goods from Thyatira)")).toBe(
+      "Lydia"
+    );
+    expect(shortName("Saul, later called Paul (Saulos / Paulos)")).toBe("Saul");
+    expect(shortName("the kinsman with a prior right")).toBe(
+      "the kinsman with…"
+    );
+    expect(shortName("a_wife_of_Simeon")).toBe("a wife of Simeon");
+  });
+});
+
+describe("finding someone by any of their names", () => {
+  it("finds Peter by Simon and Cephas, and Jacob by Israel", async () => {
+    const { findNames } =
+      await import("../../../apps/reader-web/src/extensions/story/ExplorePane");
+    const peter = {
+      label: "Peter",
+      kind: "person",
+      path: "person-p/peter",
+      brief: "",
+      aka: ["Simon", "Cephas"],
+    };
+    const jacob = {
+      label: "Jacob",
+      kind: "person",
+      path: "person-i/israel",
+      brief: "",
+      aka: ["Israel", "Jeshurun"],
+    };
+    expect(findNames(peter).some((n) => n.includes("simon"))).toBe(true);
+    expect(findNames(peter).some((n) => n.includes("cephas"))).toBe(true);
+    expect(findNames(jacob).some((n) => n.includes("israel"))).toBe(true);
+    expect(
+      findNames({ label: "Ruth", kind: "person", path: "p/ruth", brief: "" })
+    ).toEqual(["ruth"]);
   });
 });

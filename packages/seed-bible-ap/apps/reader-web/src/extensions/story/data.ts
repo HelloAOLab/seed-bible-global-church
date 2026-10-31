@@ -120,6 +120,24 @@ export interface EntityCard {
   oikos: Oikos | null;
   /** Where the kinship ties come from (`TIPNR (STEPBible, CC BY 4.0)`). */
   kinshipSource?: string | null;
+  /** The other names the person goes by, from the KB's name forms: each with where it is first used, how often, and its
+   *  Hebrew or Greek forms (Jacob: also Israel, Jeshurun). The card is headed by the name the person's own book uses most. */
+  alsoKnownAs?: Array<{
+    name: string;
+    /** scr:nameUseKind: name · birth-name · given-name · throne-name · court-name · translation · title-or-epithet · patronymic · nickname */
+    kind?: string;
+    uses: number;
+    firstAt: string | null;
+    forms: string[];
+    /** Who gave the name and where, when the text says (scr:nameGivenBy, scr:nameGivenAt). */
+    givenBy?: string;
+    givenByName?: string;
+    givenAt?: string;
+  }>;
+  /** Where the text gives a new name (scr:NameChange): "Jacob → Israel (the man)" at Gen.32.28. */
+  renamed?: Array<{ label: string; at: string }>;
+  /** The name the knowledge base files the person under, when it is not the one shown. */
+  kbLabel?: string;
   ties?: OikosTie[];
   /** A household's head and members, and the community it became (hh:gatheredAs); a community's households. */
   head?: EntityRef[];
@@ -146,7 +164,7 @@ type Cache = {
 const PATH = /^[A-Za-z0-9_./-]+$/;
 /** The story dataset's build, in every request and every key it is kept under on the device: a rebuilt dataset is read
  *  fresh at once — past the edge cache and past what a device kept of the last one. Bump it after each upload. */
-export const STORY_DATA = "2026-10-31b";
+export const STORY_DATA = "2026-10-31d";
 
 export async function readStory(
   path: string,

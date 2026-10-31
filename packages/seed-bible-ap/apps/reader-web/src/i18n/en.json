@@ -1283,5 +1283,8 @@
   "explore-sendings-filter": "Filter: a name, a place, a book…",
   "explore-churches-root": "The churches",
   "explore-find-placeholder": "A person, a place or a household…",
-  "explore": "Explore"
+  "explore": "Explore",
+  "story-aka": "Also known as",
+  "story-aka-uses": "×{{count}}",
+  "story-renamed": "Renamed"
 }

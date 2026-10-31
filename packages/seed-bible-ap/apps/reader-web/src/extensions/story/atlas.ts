@@ -101,6 +101,8 @@ export interface Findable {
   kind: string;
   path: string;
   brief: string;
+  /** Other names the entry goes by: found by any of them. */
+  aka?: string[];
 }
 
 const as = <T>(
@@ -205,7 +207,11 @@ export function layoutNetwork(
       return [id, at] as [string, { x: number; y: number }];
     })
   );
-  const k = Math.sqrt((width * height) / Math.max(1, ids.length)) * 0.6;
+  const k = Math.sqrt((width * height) / Math.max(1, ids.length)) * 0.42;
+  // Room for a name under every dot: names are centred on their dot, so the dots keep clear of the sides and the bottom.
+  const MX = 90;
+  const TOP = 24;
+  const BOTTOM = 40;
   for (let r = 0; r < rounds; r++) {
     const move = new Map(ids.map((id) => [id, { x: 0, y: 0 }]));
     for (let i = 0; i < ids.length; i++)
@@ -238,16 +244,16 @@ export function layoutNetwork(
     for (const id of ids) {
       const p = pos.get(id)!;
       const m = move.get(id)!;
-      m.x += (width / 2 - p.x) * 0.02;
-      m.y += (height / 2 - p.y) * 0.02;
+      m.x += (width / 2 - p.x) * 0.06;
+      m.y += (height / 2 - p.y) * 0.06;
       const len = Math.sqrt(m.x * m.x + m.y * m.y) || 1;
       p.x = Math.min(
-        width - 30,
-        Math.max(30, p.x + (m.x / len) * Math.min(len, temp))
+        width - MX,
+        Math.max(MX, p.x + (m.x / len) * Math.min(len, temp))
       );
       p.y = Math.min(
-        height - 24,
-        Math.max(24, p.y + (m.y / len) * Math.min(len, temp))
+        height - BOTTOM,
+        Math.max(TOP, p.y + (m.y / len) * Math.min(len, temp))
       );
     }
   }

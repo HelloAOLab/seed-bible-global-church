@@ -1087,6 +1087,105 @@ function CastList(props: {
   );
 }
 
+/** What kind of name it is and who gave it, in words: "new name, given by God at Gen 32:28". */
+function nameKindText(
+  n: NonNullable<EntityCard["alsoKnownAs"]>[number]
+): string {
+  const KIND: Record<string, string> = {
+    "birth-name": "birth name",
+    "given-name": "new name",
+    "throne-name": "throne name",
+    "court-name": "court name",
+    translation: "the same name translated",
+    "title-or-epithet": "title",
+    patronymic: "son of",
+    nickname: "nickname",
+  };
+  const kind = n.kind && n.kind !== "name" ? (KIND[n.kind] ?? n.kind) : "";
+  const by = n.givenByName ?? (n.givenBy?.includes("divine") ? "God" : "");
+  const given = [
+    by ? `given by ${by}` : "",
+    n.givenAt ? `at ${refText(n.givenAt)}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return [kind, given].filter(Boolean).join(", ");
+}
+
+/** ALSO KNOWN AS — the other names a person goes by, each with where it is first used and how often, and the verse where
+ *  the text gives a new name (Gen 32:28: Jacob → Israel). A tap on a verse opens it in the reader. */
+function AlsoKnownAs(props: {
+  card: EntityCard;
+  goTo: (osis: string) => void;
+}) {
+  const { t } = useI18n();
+  const { alsoKnownAs = [], renamed = [] } = props.card;
+  const forms = (n: { forms: string[] }) =>
+    n.forms
+      .map((f) => f.split(" (")[0])
+      .filter((f, i, a) => a.indexOf(f) === i);
+  return (
+    <div className="sb-story-aka">
+      {alsoKnownAs.length > 0 && (
+        <p className="sb-small">
+          <span className="sb-rp-section-label">
+            {t("story-aka", { defaultValue: "Also known as" })}
+          </span>{" "}
+          {alsoKnownAs.map((n, i) => (
+            <span
+              key={n.name}
+              className="sb-story-aka-name"
+              title={forms(n).join(" · ")}
+            >
+              {i ? ", " : ""}
+              <strong>{n.name}</strong>
+              {nameKindText(n) && (
+                <span className="sb-muted"> ({nameKindText(n)})</span>
+              )}
+              {n.firstAt && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    className="sb-note-button sb-story-ref"
+                    onClick={() => props.goTo(n.firstAt!)}
+                  >
+                    {refText(n.firstAt)}
+                  </button>
+                </>
+              )}
+              <span className="sb-muted">
+                {" "}
+                {t("story-aka-uses", {
+                  count: n.uses,
+                  defaultValue: "×{{count}}",
+                })}
+              </span>
+            </span>
+          ))}
+        </p>
+      )}
+      {renamed.map((r) => (
+        <p key={r.label} className="sb-small">
+          <span className="sb-rp-section-label">
+            {t("story-renamed", { defaultValue: "Renamed" })}
+          </span>{" "}
+          {r.label}{" "}
+          {r.at && (
+            <button
+              type="button"
+              className="sb-note-button sb-story-ref"
+              onClick={() => props.goTo(r.at)}
+            >
+              {refText(r.at)}
+            </button>
+          )}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /** Whether a person's ties hold any family at all (Paul's hold none; Jacob's four generations). */
 const hasFamily = (o: NonNullable<EntityCard["oikos"]>) =>
   familyGenerations(o).some((g) => g.line.length || g.others.length);
@@ -1218,6 +1317,9 @@ export function Card(props: {
           .filter(Boolean)
           .join(" · ")}
       </p>
+      {(card.alsoKnownAs?.length || card.renamed?.length) && (
+        <AlsoKnownAs card={card} goTo={props.goTo} />
+      )}
       {card.brief && <p>{card.brief}</p>}
       <Refs
         label={t("story-planted-by", { defaultValue: "Planted by" })}

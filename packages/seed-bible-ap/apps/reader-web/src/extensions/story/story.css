@@ -577,9 +577,14 @@
 .sb-explore-node-person circle {
   fill: #0d9488;
 }
+/* A name stays readable where lines cross it: a halo of the page's own colour behind the letters. */
 .sb-explore-node text {
   font-size: 11px;
   fill: currentColor;
+  paint-order: stroke;
+  stroke: var(--sb-background);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 .sb-explore-node-link {
   cursor: pointer;
@@ -628,4 +633,12 @@
 }
 .sb-story-gen-key.sb-story-gen-gatheredFrom {
   color: #0d9488;
+}
+
+/* Also known as: the other names, each with where it is first used and how often. */
+.sb-story-aka p {
+  margin: 0.15rem 0;
+}
+.sb-story-aka-name strong {
+  font-weight: 600;
 }

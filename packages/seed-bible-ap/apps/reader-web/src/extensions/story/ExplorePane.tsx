@@ -580,9 +580,7 @@ function VoicesView(props: {
               >
                 <circle cx={p.x} cy={p.y} r={r} />
                 <text x={p.x} y={p.y + r + 12} textAnchor="middle">
-                  {nameOf(n.label).length > 22
-                    ? `${nameOf(n.label).slice(0, 21)}…`
-                    : nameOf(n.label)}
+                  {shortName(n.label)}
                 </text>
                 <title>{`${nameOf(n.label)} — spoke ${n.spoke}, addressed ${n.heard}`}</title>
               </g>
@@ -592,6 +590,16 @@ function VoicesView(props: {
       )}
     </div>
   );
+}
+
+/** A cast name short enough to sit under its dot: the part before any gloss ("Lydia (seller of purple goods…)" → "Lydia"),
+ *  then cut at 18 letters; the whole name stays in the dot's tooltip. */
+export function shortName(label: string): string {
+  const name =
+    nameOf(label)
+      .split(/\s*[(—–]|,\s/)[0]!
+      .trim() || nameOf(label);
+  return name.length > 18 ? `${name.slice(0, 17).trimEnd()}…` : name;
 }
 
 const OUTCOME_COLOR: Record<string, string> = {
@@ -867,7 +875,11 @@ function ChurchesView(props: {
   );
 }
 
-/** Anyone with a card — a person, a place, a household — by name. */
+/** Every name an entry is found by: its own and the others it goes by ("Simon" finds Peter). */
+export const findNames = (x: Findable) =>
+  [x.label, ...(x.aka ?? [])].map((n) => n.toLowerCase());
+
+/** Anyone with a card — a person, a place, a household — by any of their names. */
 function FindView(props: { cache: Cache; open: (p: string | null) => void }) {
   const { t } = useI18n();
   const all = useLoad<Findable[]>(() => readFindable(props.cache), "findable");
@@ -876,11 +888,11 @@ function FindView(props: { cache: Cache; open: (p: string | null) => void }) {
     const s = q.trim().toLowerCase();
     if (!s || !all) return [];
     return all
-      .filter((x) => x.label.toLowerCase().includes(s))
+      .filter((x) => findNames(x).some((n) => n.includes(s)))
       .sort(
         (a, b) =>
-          Number(!a.label.toLowerCase().startsWith(s)) -
-          Number(!b.label.toLowerCase().startsWith(s))
+          Number(!findNames(a).some((n) => n.startsWith(s))) -
+          Number(!findNames(b).some((n) => n.startsWith(s)))
       )
       .slice(0, 40);
   }, [q, all]);
@@ -909,6 +921,7 @@ function FindView(props: { cache: Cache; open: (p: string | null) => void }) {
             </button>{" "}
             <span className="sb-small sb-muted">
               {h.kind}
+              {h.aka?.length ? ` · also ${h.aka.join(", ")}` : ""}
               {h.brief ? ` · ${h.brief}` : ""}
             </span>
           </li>
