@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-10-30 23:54 UTC",
+  "when": "2026-10-31 11:29 UTC",
   "results": [
     {
       "id": "X17",
@@ -9,25 +9,7 @@
       "checks": "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
       "mark": "✅",
       "note": "Philippi on the map; Lydia's card; Paul's oikos (Barnabas, Silas) and generations (What grew out of Paul: 2 generations)",
-      "ms": 8166
-    },
-    {
-      "id": "X18",
-      "section": "12. Extensions",
-      "title": "The chapter's title opens the book's pane; the book icon opens the book picker",
-      "checks": "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
-      "mark": "✅",
-      "note": "pane 'Genesis'; Published: Genesis 1-11, Genesis 12-50; About: Old Testament · Hebrew · genealogy, narrative the origins of…; References: GENESIS POINTS TO Psalms 1004 links Strongest: Gen 50:20 ↔ P…; the book icon opens the picker",
-      "ms": 1962
-    },
-    {
-      "id": "X20",
-      "section": "12. Extensions",
-      "title": "A person's family by generation, and the extended family in the oikos",
-      "checks": "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
-      "mark": "✅",
-      "note": "Ruth's family: PARENTS' GENERATION Elimelech parent-in-law Naomi parent-in-law Salmon parent-in-law THEIR GENERATION Ruth Boaz spouse Mahlon spouse Chilion…; oikos 3 rings, extended family toggled off",
-      "ms": 3760
+      "ms": 3490
     },
     {
       "id": "X21",
@@ -36,7 +18,16 @@
       "checks": "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
       "mark": "✅",
       "note": "Lydia → Lydia's household (Acts 16:15) → Church at Philippi, gathered from her household, planted by Paul",
-      "ms": 4109
+      "ms": 2777
+    },
+    {
+      "id": "X22",
+      "section": "12. Extensions",
+      "title": "Explore the ontology: canon, voices, sendings, churches, find",
+      "checks": "From the sidebar's More menu open Explore: the canon wheel draws all 66 books and Genesis's sections under the BSB headings ('The Creation', 'The First Day'); a section opens beside the chapter in the Story pane; Voices draws who speaks to whom in Jonah; Sendings draws the commissions and plantings on the map; Churches draws Paul's plantings; Find 'Lydia' opens her card",
+      "mark": "✅",
+      "note": "66 books; Genesis sections under BSB headings; Jonah's voices; map closed after sendings, churches, Lydia's card; 'The First Day' opened in the Story pane",
+      "ms": 1867
     }
   ]
 }

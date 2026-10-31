@@ -2,6 +2,7 @@
 // and churches: a person plants communities (scr:plantedBody) and disciples people (scr:discipled) who plant in turn; a
 // community gives rise to others (scr:gaveRiseTo). Drawn left to right, one generation a column, one leaf a row; a
 // community is a church ring, a person a dot. A node with a card opens it.
+import { svgFocusable } from "./svgFocus";
 import { useI18n } from "../../i18n";
 import type { GenerationNode } from "./data";
 
@@ -9,6 +10,7 @@ const VIA: Record<string, string> = {
   plantedBody: "planted",
   discipled: "discipled",
   gaveRiseTo: "gave rise to",
+  gatheredFrom: "gathered from",
 };
 const COL = 132;
 const ROW = 34;
@@ -103,7 +105,7 @@ export function GenerationsDiagram(props: {
                 key={`n-${p.node.id}-${p.depth}`}
                 className={`sb-story-gen-node${church ? " sb-story-gen-church" : ""}${open ? " sb-story-gen-link" : ""}`}
                 role={open ? "button" : undefined}
-                tabIndex={open ? 0 : undefined}
+                {...svgFocusable(!!open)}
                 onClick={open}
                 onKeyDown={(e) => {
                   if (

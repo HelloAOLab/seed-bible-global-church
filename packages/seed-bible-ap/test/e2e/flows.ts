@@ -1214,6 +1214,82 @@ const BASE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "X22",
+    rows: ["Explore"],
+    section: "12. Extensions",
+    title: "Explore the ontology: canon, voices, sendings, churches, find",
+    checks:
+      "From the sidebar's More menu open Explore: the canon wheel draws all 66 books and Genesis's sections under the BSB headings ('The Creation', 'The First Day'); a section opens beside the chapter in the Story pane; Voices draws who speaks to whom in Jonah; Sendings draws the commissions and plantings on the map; Churches draws Paul's plantings; Find 'Lydia' opens her card",
+    run: async (c) => {
+      await c.open("/read/BSB/GEN/1");
+      await c.page
+        .locator(".sb-tabs-sidebar")
+        .getByRole("button", { name: "More" })
+        .first()
+        .click();
+      await c.page.getByRole("menuitem", { name: /Explore/ }).click();
+      const ex = c.page.locator(".sb-explore");
+      await ex
+        .locator(".sb-explore-section")
+        .first()
+        .waitFor({ timeout: 30000 });
+      const books = await ex.locator(".sb-explore-book").count();
+      if (books !== 66) throw new Error(`${books} books on the wheel`);
+      const strip = (
+        await ex.locator(".sb-explore-sections").innerText()
+      ).replace(/\s+/g, " ");
+      for (const h of ["The First Day", "The Second Day"])
+        if (!strip.includes(h)) throw new Error(`sections lack ${h}`);
+      await ex.getByRole("tab", { name: "Voices" }).click();
+      await ex.locator("select").selectOption("JON");
+      await ex
+        .locator(".sb-explore-network .sb-explore-node")
+        .first()
+        .waitFor({ timeout: 30000 });
+      const voices = await ex.locator(".sb-explore-network").innerHTML();
+      if (!/Jonah/.test(voices)) throw new Error("Jonah not among the voices");
+      await ex.getByRole("tab", { name: "Sendings" }).click();
+      await c.page.waitForFunction(
+        () =>
+          Number(
+            document
+              .querySelector(".sb-explore-map")
+              ?.getAttribute("data-drawn") ?? 0
+          ) > 10,
+        null,
+        { timeout: 30000 }
+      );
+      await ex.getByRole("tab", { name: "Churches" }).click();
+      const forest = await ex.locator(".sb-story-generations svg").innerHTML();
+      for (const w of ["Paul", "Church at Philippi"])
+        if (!forest.includes(w)) throw new Error(`churches lack ${w}`);
+      await ex.getByRole("tab", { name: "Find" }).click();
+      await ex.locator(".sb-explore-search").fill("Lydia");
+      await ex
+        .getByRole("button", { name: /^Lydia$/ })
+        .first()
+        .click();
+      await ex
+        .locator(".sb-explore-card .sb-theo-name", { hasText: "Lydia" })
+        .waitFor({ timeout: 20000 });
+      // Voices chose Jonah, and the views share their book: choose Genesis on the wheel again.
+      await ex.getByRole("tab", { name: "Canon" }).click();
+      // By keyboard: an arc grows under the pointer, which a pointer-driven click waits on.
+      await ex.locator('.sb-explore-book[aria-label="Genesis"]').focus();
+      await c.page.keyboard.press("Enter");
+      await ex
+        .locator(".sb-explore-section", { hasText: "The First Day" })
+        .click();
+      await c.page
+        .locator(".sb-app-pane .sb-pane-header h2", {
+          hasText: "The First Day",
+        })
+        .waitFor({ timeout: 20000 });
+      const drawn = await c.page.locator(".sb-explore-map").count();
+      return `66 books; Genesis sections under BSB headings; Jonah's voices; ${drawn ? "" : "map closed after "}sendings, churches, Lydia's card; 'The First Day' opened in the Story pane`;
+    },
+  },
+  {
     id: "X2",
     rows: ["Compare translations"],
     section: "12. Extensions",

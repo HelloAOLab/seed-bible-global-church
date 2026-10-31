@@ -1092,7 +1092,7 @@ const hasFamily = (o: NonNullable<EntityCard["oikos"]>) =>
   familyGenerations(o).some((g) => g.line.length || g.others.length);
 
 /** One person's, place's or community's card, with its own views. */
-function Card(props: {
+export function Card(props: {
   state: ReaderState;
   path: string;
   onBack: () => void;

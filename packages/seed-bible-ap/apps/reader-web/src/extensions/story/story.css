@@ -412,3 +412,220 @@
     display: none;
   }
 }
+
+/* ── Explore: the ontology drawn whole ─────────────────────────────────────────────────────────── */
+.sb-explore {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0 0.5rem;
+}
+.sb-explore-with-card {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+}
+@media (max-width: 900px) {
+  .sb-explore-with-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.sb-explore-card {
+  border-left: 1px solid var(--sb-hover-background, rgba(127, 127, 127, 0.2));
+  padding-left: 1rem;
+  max-height: calc(100vh - 8rem);
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+/* The wheel, then the chosen book's sections across the full width under it (they need the room). */
+.sb-explore-canon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.sb-explore-sections {
+  width: 100%;
+}
+.sb-explore-wheel {
+  margin: 0;
+}
+.sb-explore-wheel svg {
+  width: 100%;
+  max-width: 620px;
+  display: block;
+}
+.sb-explore-chords-quiet path,
+.sb-explore-chords path {
+  fill: none;
+}
+.sb-explore-chords-quiet path {
+  stroke: currentColor;
+}
+.sb-explore-chords path {
+  stroke-opacity: 0.55;
+}
+.sb-explore-book {
+  cursor: pointer;
+}
+.sb-explore-book text {
+  font-size: 9px;
+  fill: currentColor;
+}
+.sb-explore-book-on text {
+  font-weight: 700;
+  font-size: 11px;
+}
+.sb-explore-book:focus-visible path {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.sb-explore-wheel-name {
+  font-size: 22px;
+  font-weight: 700;
+  fill: currentColor;
+}
+.sb-explore-wheel-sub {
+  font-size: 12px;
+  fill: currentColor;
+  opacity: 0.6;
+}
+.sb-explore-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  font-size: 0.75rem;
+  justify-content: center;
+}
+.sb-explore-legend i {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.25rem;
+  vertical-align: -0.05rem;
+}
+.sb-explore-sections h4 {
+  margin: 0.25rem 0 0.5rem;
+}
+.sb-explore-chapter {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+  margin-bottom: 3px;
+}
+.sb-explore-chapter-n {
+  width: 2rem;
+  flex: none;
+  text-align: right;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  padding-top: 0.3rem;
+}
+.sb-explore-chapter-row {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.sb-explore-section {
+  flex-basis: 0;
+  min-width: 1.6rem;
+  border: none;
+  border-top: 4px solid;
+  background: var(--sb-hover-background, rgba(127, 127, 127, 0.12));
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  text-align: left;
+  padding: 0.2rem 0.3rem;
+  border-radius: 3px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.sb-explore-section span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sb-explore-section:hover,
+.sb-explore-section:focus-visible {
+  background: var(--sb-primary-color);
+  color: #fff;
+  outline: none;
+}
+.sb-explore-network {
+  width: 100%;
+  max-width: 900px;
+  display: block;
+}
+.sb-explore-edge {
+  fill: none;
+  stroke: #64748b;
+}
+.sb-explore-arrow {
+  fill: #64748b;
+}
+.sb-explore-node circle {
+  fill: #0d9488;
+  stroke: var(--sb-background);
+  stroke-width: 2;
+}
+.sb-explore-node-discourse-entity circle {
+  fill: #94a3b8;
+}
+.sb-explore-node-person circle {
+  fill: #0d9488;
+}
+.sb-explore-node text {
+  font-size: 11px;
+  fill: currentColor;
+}
+.sb-explore-node-link {
+  cursor: pointer;
+}
+.sb-explore-node-link:hover text {
+  text-decoration: underline;
+}
+.sb-explore-map {
+  height: 440px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sb-explore-search {
+  width: 100%;
+  max-width: 420px;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--sb-hover-background, rgba(127, 127, 127, 0.35));
+  background: var(--sb-background);
+  color: inherit;
+  font: inherit;
+}
+.sb-explore-steps {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.sb-explore-step-kind {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-right: 0.25rem;
+}
+.sb-explore-outcome {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.7rem;
+}
+.sb-story-gen-gatheredFrom path {
+  stroke: #0d9488;
+  stroke-dasharray: 2 3;
+}
+.sb-story-gen-key.sb-story-gen-gatheredFrom {
+  color: #0d9488;
+}
