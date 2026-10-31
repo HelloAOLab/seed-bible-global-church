@@ -164,7 +164,7 @@ type Cache = {
 const PATH = /^[A-Za-z0-9_./-]+$/;
 /** The story dataset's build, in every request and every key it is kept under on the device: a rebuilt dataset is read
  *  fresh at once — past the edge cache and past what a device kept of the last one. Bump it after each upload. */
-export const STORY_DATA = "2026-10-31d";
+export const STORY_DATA = "2026-10-31e";
 
 export async function readStory(
   path: string,
