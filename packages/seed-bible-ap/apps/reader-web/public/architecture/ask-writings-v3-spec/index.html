@@ -6,7 +6,7 @@
     <title>ask-writings v3 spec</title>
     <meta
       name="description"
-      content="A specification for the next ask-writings: questions parsed into typed frames, plans compiled per question from an operation library over the ontology, skill packages with coverage checklists and exemplars, an extended doctrine, concept and cross-reference layer extracted and admitted by code, and an evaluation with leakage quarantine."
+      content="A specification for the next ask-writings, revised with outside review: attributed propositions with their supporting arguments, prepared evidence bundles, one harness compiling a small typed plan per question, claim types with their own validation rules, a question-form index, executable skill packages improved offline, our own models for bounded jobs, explicit perspective rules, and two evaluation tracks with source exclusion by task."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -32,981 +32,915 @@
         <a href="/architecture/harness/">Scripture harness</a> / ask-writings v3
         spec
       </div>
-      <h1>ask-writings v3: question-shaped answers over the ontology</h1>
+      <h1>
+        ask-writings v3: knowledge prepared before the question, a plan shaped
+        by it
+      </h1>
       <p class="lede">
-        Specification, for review. Date: 1 November 2026. Status:
-        <strong>proposed</strong>. It answers the gaps in the
-        <a href="/architecture/ask-writings-brief/">planning brief</a>: the
-        ontology reaches 3% of what our answers cite, doctrine questions have
-        nothing structured behind them, the skills are instructions only, and
-        every question runs the same plan. v3 makes the <em>question</em> a
-        typed object, compiles a <em>plan</em> for it from an operation library
-        over the ontology, packages each <em>skill</em> with the plan, the
-        points a complete answer must cover and worked examples, extends the
-        ontology where answers need it, and measures everything with the
-        answer's own sources held out.
+        Specification, for review. Date: 1 November 2026 (revision 2, after an
+        outside review). Status: <strong>proposed</strong>. It answers the
+        <a href="/architecture/ask-writings-brief/">planning brief</a>:
+        doctrine, interpretation and chronology do not reach Ask; almost every
+        question triggers the same large search; and the answer rules are better
+        at preventing unsupported statements than at enabling complete,
+        well-supported explanations. The central move: turn the ontology and the
+        writings into
+        <strong
+          >reusable, source-backed knowledge prepared before a question
+          arrives</strong
+        >
+        — attributed propositions with the arguments that connect them to their
+        passages — and let one harness assemble it with a
+        <strong>small plan compiled for the question</strong>. Revision 2
+        changes are marked <em>(rev 2)</em>.
       </p>
 
       <p class="toc">
         <a href="#summary">1. Summary</a>
         <a href="#principles">2. Principles</a>
-        <a href="#flow">3. The flow</a>
-        <a href="#frame">4. The question frame</a>
-        <a href="#ops">5. The operation library</a>
-        <a href="#planner">6. The plan compiler</a>
-        <a href="#coverage">7. Coverage points</a>
-        <a href="#skills">8. Skill packages</a>
-        <a href="#ontology">9. Ontology extensions</a>
-        <a href="#extraction">10. The extraction run</a>
-        <a href="#verify">11. Verification</a>
-        <a href="#runtime">12. Runtime and latency</a>
-        <a href="#eval">13. Evaluation and leakage quarantine</a>
-        <a href="#phases">14. Phases and gates</a>
+        <a href="#propositions">3. Propositions with their arguments</a>
+        <a href="#bundles">4. Prepared evidence bundles</a>
+        <a href="#plans">5. One harness, a plan per question</a>
+        <a href="#claims">6. Claim types and their validation</a>
+        <a href="#perspective">7. Perspective, role and purpose</a>
+        <a href="#qindex">8. A question-form index</a>
+        <a href="#skills">9. Skills as executable specifications</a>
+        <a href="#models">10. Our own models, for bounded jobs</a>
+        <a href="#ontology">11. Ontology extensions and the extraction run</a>
+        <a href="#speed">12. Speed and reliability now</a>
+        <a href="#eval">13. Evaluation: two tracks</a>
+        <a href="#pilot">14. The pilot and the phases</a>
         <a href="#risks">15. Risks and open questions</a>
+        <a href="#refs">16. Precedents</a>
       </p>
 
       <h2 id="summary">1. Summary</h2>
-      <ul>
+      <ol>
         <li>
-          <strong>Question frames.</strong> Classify stops naming one of nine
-          kinds and fills a typed frame: the family, the subject (a passage,
-          concept, doctrine, person, precept or practice — each an ontology
-          node), the aspect asked, the answer form, the tradition scope. Code
-          validates the frame with SHACL.
+          <strong
+            >Retrieve propositions and their supporting arguments, not only
+            passages</strong
+          >
+          <em>(rev 2: the strongest change)</em>. A doctrine answer retrieves
+          the position, who holds it, the exact supporting spans, the stated
+          connection between them, its qualifications and alternatives, and its
+          provenance — always with the passages themselves.
         </li>
         <li>
-          <strong>Plans compiled per question.</strong> A library of about
-          twenty typed operations, each a query over the ontology or the
-          writings, each an <code>ep-plan:Step</code> with typed inputs and
-          outputs. A plan template per family is the default; the model may
-          propose a different plan, and code accepts it only if it type-checks,
-          fits the budget and contains the family's required operations.
+          <strong>Prepare evidence bundles before the question</strong>
+          <em>(rev 2)</em>: per passage, doctrine, author-and-topic and
+          historical interpretation; versioned, rebuilt by recorded dependency;
+          built offline on RunPod.
         </li>
         <li>
-          <strong>Coverage points.</strong> Each family names the points a
-          complete answer covers (a commandment question: what it requires, what
-          it forbids, its ground, its fulfilment in the New Testament, its reach
-          to the heart). Select plans the outline against them; code checks
-          every required point is answered or explicitly said not to be held.
+          <strong>One harness, a plan compiled per question</strong>:
+          parameterised templates per question family over a small library of
+          typed operations; a model proposes changes only when a template does
+          not fit; code validates types, dependencies, permissions and budgets.
         </li>
         <li>
-          <strong>Skill packages.</strong> A skill becomes a package in the
-          existing <code>ase:</code> ontology: voice and rules, frame bindings,
-          plan template, coverage checklist, answer-form schema, reviewed
-          exemplars, named graph queries, evaluation cases and a budget profile
-          — compiled into the agent and checked by preflight.
+          <strong>Claim types with their own validation</strong>
+          <em>(rev 2)</em>: "this passage says", "this author teaches", "this
+          tradition interprets", "taken together these suggest", "these total",
+          "no earlier example was found" — each supported and checked
+          differently.
         </li>
         <li>
-          <strong>An ontology that answers.</strong> Teaching facets for the 184
-          theological concepts; a loci layer, proof texts and tradition
-          statements in the doctrine context; precepts with their duties and
-          prohibitions; the 17,639 OpenBible cross-references (already in the
-          ontology, never reached the ask) projected and typed; question
-          exemplars. Extracted by Haiku, admitted by code, reviewed in priority
-          order.
+          <strong>Explicit perspective</strong> <em>(rev 2)</em>: reader role,
+          theological perspective and question purpose are separate; a named
+          source or tradition sets the perspective; a disputed question with
+          none named gets the positions explained.
         </li>
         <li>
-          <strong>Honest measurement.</strong> Every fact carries its source;
-          for each evaluation set, the sources its references were drawn from
-          are quarantined from the evidence when it is graded.
+          <strong>A question-form index and contextual retrieval</strong>
+          <em>(rev 2)</em>, tested on a limited collection first.
         </li>
-      </ul>
+        <li>
+          <strong>Skills as executable, versioned specifications</strong>,
+          improved offline from traces against held-out questions.
+        </li>
+        <li>
+          <strong>Our own models for bounded, measurable jobs</strong>: offline
+          extraction first.
+        </li>
+        <li>
+          <strong>Two evaluation tracks</strong> <em>(rev 2)</em>:
+          source-grounded explanation and independent synthesis, with source
+          exclusion following the task, paired on the same question ids, and the
+          judge calibrated against blinded human review.
+        </li>
+      </ol>
 
       <h2 id="principles">2. Principles</h2>
       <ol>
         <li>
-          <strong>The ontology plans, the evidence proves.</strong> Graph facts
-          decide <em>what to look for and what a complete answer covers</em>;
-          the answer's claims still rest on held, verified text. A graph fact
-          may itself be cited only where it is reference data, said as such.
+          <strong
+            >Prepared knowledge plans and explains; held text proves.</strong
+          >
+          A proposition record supplies the explanation's structure; the answer
+          still cites the passages.
         </li>
         <li>
-          <strong>Models propose, code decides.</strong> Frames, plans,
-          extracted facts and outlines are model-proposed and code-admitted
-          (SHACL, type checks, verse validation, leakage checks).
+          <strong>Models propose, code decides</strong> — frames, plans,
+          extracted records, claims. Code validates references, types,
+          arithmetic, permissions and attribution. Code cannot establish that an
+          interpretation is true because its evidence ids exist: semantic
+          support needs reviewed relationships or a calibrated assessment.
         </li>
         <li>
-          <strong>One harness.</strong> Families change the plan, never the
+          <strong>One harness.</strong> A question changes the plan, never the
           system.
         </li>
         <li>
-          <strong>Reuse before minting.</strong> New terms ground on the uppers
-          (DOLCE/DnS, PROV-O, P-Plan/EP-Plan) and extend existing contexts
-          (<code>scr:</code>, <code>sdo:</code>, <code>ase:</code>) before any
-          new namespace.
+          <strong>Extend, don't duplicate.</strong> The doctrine context already
+          holds propositions, commitments, chain propositions and defeat
+          conditions; the interpretation layer holds questions, candidates and
+          reception claims. Expose them first, then add only the missing
+          supporting relationships.
         </li>
         <li>
-          <strong>Every fact has a source and a review status.</strong> Proposed
-          facts are usable, labelled, and reviewed in the order they most affect
-          answers.
+          <strong>Every record has provenance and a review status</strong>;
+          model-generated interpretations keep theirs at runtime.
+        </li>
+        <li>
+          <strong>Less reconstruction per request.</strong> The speed gain comes
+          from doing the expensive work during ingestion, not from cutting
+          verification.
         </li>
       </ol>
 
-      <h2 id="flow">3. The flow</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Stage</th>
-              <th>Input → output</th>
-              <th>Who</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>Frame</td>
-              <td>
-                question → <code>AskFrame</code> (family, subject nodes, aspect,
-                form, scope)
-              </td>
-              <td>Haiku proposes; SHACL + entity resolution decide</td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td>Plan</td>
-              <td>
-                frame + skill package → plan (DAG of operations with bound
-                slots, budget)
-              </td>
-              <td>template, or Haiku proposal accepted by the type checker</td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td>Execute</td>
-              <td>
-                plan → evidence graph (items with provenance, the nodes they
-                came through)
-              </td>
-              <td>code, in parallel waves</td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td>Coverage</td>
-              <td>
-                evidence graph × coverage points → gaps → re-plan (≤ 2 rounds)
-              </td>
-              <td>code</td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td>Outline</td>
-              <td>
-                asks + coverage points + evidence → outline, one entry per point
-              </td>
-              <td>
-                Haiku; code checks every required point is covered or declared
-                not held
-              </td>
-            </tr>
-            <tr>
-              <td>6</td>
-              <td>Compose</td>
-              <td>
-                outline → answer in the family's form, claims tagged with
-                evidence and graph nodes
-              </td>
-              <td>Haiku</td>
-            </tr>
-            <tr>
-              <td>7</td>
-              <td>Verify</td>
-              <td>
-                claims → struck / kept; leakage, dates, layers, coverage, form
-              </td>
-              <td>code (+ one revise)</td>
-            </tr>
-            <tr>
-              <td>8</td>
-              <td>Trace</td>
-              <td>
-                an EP-Plan execution bundle: frame, plan, steps, evidence,
-                checks
-              </td>
-              <td>code</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2 id="frame">4. The question frame</h2>
+      <h2 id="propositions">
+        3. Propositions with their arguments <em>(rev 2)</em>
+      </h2>
       <p>
-        A frame is a <code>dul:Description</code> of the asker's situation
-        (DnS), stored with the run. Proposed terms (new context
-        <code>ask</code>, prefix <code>aqf:</code>, grounded on the
-        agentic-trust base):
-      </p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Slot</th>
-              <th>Values (C-box unless a node)</th>
-              <th>
-                Example ("What are the duties required in the seventh
-                commandment?")
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>aqf:family</code></td>
-              <td>
-                QuestionFamily: doctrine · precept · verse-meaning · word-study
-                · person-or-place · event · history-of-reading · comparison ·
-                source · collection · edition · pastoral · apologetic · factual
-              </td>
-              <td>precept</td>
-            </tr>
-            <tr>
-              <td><code>aqf:subject</code></td>
-              <td>
-                node(s): <code>scr:Passage</code>,
-                <code>scr:TheologicalConcept</code>,
-                <code>sdo:DoctrineProposition</code>, <code>sdo:Locus</code>,
-                <code>sdo:Precept</code>, <code>scr:Referent</code>, a held work
-              </td>
-              <td>
-                <code>sdo:precept-decalogue-7</code> (Exod 20:14; Deut 5:18)
-              </td>
-            </tr>
-            <tr>
-              <td><code>aqf:aspect</code></td>
-              <td>
-                AskAspect: meaning · definition · requirement · prohibition ·
-                ground · purpose · identity · history · comparison · application
-                · evidence-for · objection
-              </td>
-              <td>requirement</td>
-            </tr>
-            <tr>
-              <td><code>aqf:answerForm</code></td>
-              <td>
-                AnswerForm: direct-statement · list · yes-no-with-reason ·
-                explanation · narrative · comparison · definition
-              </td>
-              <td>list</td>
-            </tr>
-            <tr>
-              <td><code>aqf:traditionScope</code></td>
-              <td>
-                TraditionScope: common-Christian · named-tradition ·
-                compare-traditions
-              </td>
-              <td>common-Christian (a named catechism → named-tradition)</td>
-            </tr>
-            <tr>
-              <td><code>aqf:depth</code></td>
-              <td>Depth: brief · standard · study</td>
-              <td>standard</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p>
-        A SHACL shape per family says which slots are required (a precept
-        question needs a precept subject and an aspect). Subjects are resolved
-        by code against the knowledge base and the doctrine layer (names,
-        Strong's numbers, loci labels); an unresolved subject is recorded and
-        the family's fallback plan runs.
-      </p>
-
-      <h2 id="ops">5. The operation library</h2>
-      <p>
-        Each operation is an <code>aqf:Operation</code> ⊑
-        <code>ep-plan:Step</code> with typed input and output variables, a cost
-        class and a latency class, and is implemented by an existing or new
-        data-worker tool.
-      </p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Operation</th>
-              <th>In → out</th>
-              <th>Backed by</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>ResolvePassage</td>
-              <td>reference → verses (verified)</td>
-              <td><code>resolve</code>, <code>get_passage_text</code></td>
-              <td>exists</td>
-            </tr>
-            <tr>
-              <td>VerseDossier</td>
-              <td>verse → referents, cast, scene, notes, witnesses</td>
-              <td><code>verse_dossier</code></td>
-              <td>exists, unused</td>
-            </tr>
-            <tr>
-              <td>CrossReferences</td>
-              <td>verse → related verses with relation and weight</td>
-              <td>
-                OpenBible (17,639 at ≥ 20 votes, CC BY), UBS parallels, TSK
-                (public domain, to ingest)
-              </td>
-              <td>in the ontology, not projected</td>
-            </tr>
-            <tr>
-              <td>ConceptProfile</td>
-              <td>
-                concept → definition, key passages, related concepts,
-                distinctions
-              </td>
-              <td><code>kb_concepts</code> + teaching facets (§9.1)</td>
-              <td>partial</td>
-            </tr>
-            <tr>
-              <td>DoctrineProfile</td>
-              <td>
-                proposition / locus → statement, proof texts, tradition
-                statements, relations
-              </td>
-              <td>doctrine layer (§9.2)</td>
-              <td>new projection</td>
-            </tr>
-            <tr>
-              <td>PreceptProfile</td>
-              <td>
-                precept → duties, prohibitions, proof texts, NT fulfilment
-              </td>
-              <td>precept model (§9.3)</td>
-              <td>new</td>
-            </tr>
-            <tr>
-              <td>ConfessionalText</td>
-              <td>
-                tradition × locus → the held confession's article (by locator)
-              </td>
-              <td><code>writings_locate</code> over Schaff and held creeds</td>
-              <td>exists, unused for this</td>
-            </tr>
-            <tr>
-              <td>EntityProfile</td>
-              <td>referent → facts, kin, events, verses</td>
-              <td>
-                <code>kb_facts</code>, <code>get_entity</code>,
-                <code>kb_verses_of</code>
-              </td>
-              <td>partial</td>
-            </tr>
-            <tr>
-              <td>WordStudy</td>
-              <td>Strong's → occurrences, senses, the edition's renderings</td>
-              <td><code>lemma_occurrences</code>, term senses</td>
-              <td>partial</td>
-            </tr>
-            <tr>
-              <td>InterpretationOptions</td>
-              <td>verse → open questions, candidate readings, paths</td>
-              <td><code>get_chapter_interpretations</code></td>
-              <td>exists, unused</td>
-            </tr>
-            <tr>
-              <td>Reception</td>
-              <td>verse / proposition × period → dated writings citing it</td>
-              <td><code>writings_at</code>, chronology</td>
-              <td>exists</td>
-            </tr>
-            <tr>
-              <td>Chronology</td>
-              <td>proposition → when it enters the record, with sources</td>
-              <td>reference chronology (143)</td>
-              <td>new projection</td>
-            </tr>
-            <tr>
-              <td>MeaningSearch · LexicalSearch · LocateCited</td>
-              <td>query → units per layer</td>
-              <td>
-                <code>writings_retrieve</code>, <code>writings_lexical</code>,
-                <code>writings_locate</code>
-              </td>
-              <td>exists</td>
-            </tr>
-            <tr>
-              <td>Catalog · EditionRecord</td>
-              <td>— → holdings · verse → the edition's decisions</td>
-              <td>existing tools</td>
-              <td>exists</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2 id="planner">6. The plan compiler</h2>
-      <ul>
-        <li>
-          <strong>Templates.</strong> Each family's skill package carries a plan
-          template (<code>p-plan:Plan</code>): e.g. <em>precept</em> =
-          ResolvePassage → PreceptProfile → CrossReferences(precept passages) →
-          ConfessionalText(tradition scope) → optional Reception;
-          <em>doctrine</em> = DoctrineProfile → ConceptProfile →
-          CrossReferences(proof texts) → ResolvePassage(proof texts) →
-          ConfessionalText; <em>verse-meaning</em> = VerseDossier →
-          CrossReferences → ConceptProfile(key terms) → InterpretationOptions
-          (only if the verse has open questions) → Reception(depth = study).
-        </li>
-        <li>
-          <strong>Dynamic proposals.</strong> For a question that does not fit
-          one family cleanly (a comparison inside a pastoral question), Haiku
-          proposes a plan as a small JSON DAG over operation ids with bound
-          slots. Code accepts it only if: every operation exists; every input
-          variable is bound to a frame slot or an earlier output of the right
-          type; it contains the family's required operations; it fits the budget
-          profile. Otherwise the template runs. Both are recorded.
-        </li>
-        <li>
-          <strong>Budgets.</strong> brief (≤ 4 operations, one model call after
-          framing), standard (≤ 10), study (≤ 16, with Reception). The asker's
-          depth and the family set the profile.
-        </li>
-        <li>
-          <strong>Re-planning.</strong> After execution, uncovered coverage
-          points (§7) map to operations that can fill them; at most two rounds;
-          the stop reason is kept.
-        </li>
-        <li>
-          <strong>Trace.</strong> Frame, plan, each step's activity and outputs,
-          and checks are written as an
-          <code>ep-plan:ExecutionTraceBundle</code>, so a plan's failures are
-          diagnosable by step.
-        </li>
-      </ul>
-
-      <h2 id="coverage">7. Coverage points</h2>
-      <p>
-        A C-box of <code>aqf:CoveragePoint</code> values per family, each with a
-        required flag, the operations that can supply it, and a test the outline
-        must pass.
-      </p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Family</th>
-              <th>Coverage points (required in bold)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>precept</td>
-              <td>
-                <strong>what it requires</strong> ·
-                <strong>what it forbids</strong> ·
-                <strong>its scriptural ground</strong> · its New Testament
-                fulfilment · its reach to motive and heart
-              </td>
-            </tr>
-            <tr>
-              <td>doctrine</td>
-              <td>
-                <strong>a direct statement</strong> ·
-                <strong
-                  >scriptural ground in both testaments where it exists</strong
-                >
-                · key distinctions (e.g. justification / sanctification) · where
-                traditions differ (if they do) · its bearing on faith and life
-              </td>
-            </tr>
-            <tr>
-              <td>verse-meaning</td>
-              <td>
-                <strong>the plain sense</strong> ·
-                <strong>the context</strong> · the key term(s) ·
-                <strong>the cross-reference that explains it</strong> · the open
-                question, if the verse has one
-              </td>
-            </tr>
-            <tr>
-              <td>pastoral</td>
-              <td>
-                <strong>speak to the person</strong> ·
-                <strong>what Scripture offers here</strong> · one concrete step
-                · when to seek a pastor or professional
-              </td>
-            </tr>
-            <tr>
-              <td>apologetic</td>
-              <td>
-                <strong>the objection stated fairly</strong> ·
-                <strong>the answer, with its evidence</strong> · what remains
-                unresolved, honestly
-              </td>
-            </tr>
-            <tr>
-              <td>history-of-reading</td>
-              <td>
-                <strong>the text</strong> ·
-                <strong>the earliest dated readings</strong> · the turning
-                points · later readings as reception
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2 id="skills">8. Skill packages</h2>
-      <p>
-        A skill becomes an <code>ase:SkillPackage</code> (the
-        agent-skills-engineering context already models packages, bundled
-        resources, evaluations, cases and assertions). Contents:
+        The record Ask retrieves for a position. It extends
+        <code>sdo:DoctrineProposition</code> and the interpretation layer's
+        candidates; it is not a parallel ontology.
       </p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Part</th>
-              <th>What it is</th>
-              <th>Checked by</th>
+              <th>What it supplies</th>
+              <th>Term (existing → added)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>SKILL.md</td>
-              <td>voice and the family's rules (as today)</td>
-              <td>lint</td>
+              <td>Proposition</td>
+              <td>the position stated</td>
+              <td>
+                <code>sdo:DoctrineProposition</code>,
+                <code>sdo:ChainProposition</code> (exist)
+              </td>
             </tr>
             <tr>
-              <td>Frame binding</td>
-              <td>the families and aspects it serves</td>
-              <td>every family has exactly one skill</td>
+              <td>Attribution</td>
+              <td>
+                the author, work or tradition advancing it; endorsing vs
+                reporting vs rejecting
+              </td>
+              <td>
+                <code>sdo:AdoptionAssertion</code>,
+                <code>sdo:DoctrinalCommitment</code> (exist) +
+                <code>sdo:stance</code> (endorses · reports · rejects ·
+                qualifies)
+              </td>
+            </tr>
+            <tr>
+              <td>Supporting spans</td>
+              <td>the exact source spans used</td>
+              <td>
+                + <code>sdo:SupportLink</code> → <code>txt:Span</code> / verse
+              </td>
+            </tr>
+            <tr>
+              <td><strong>The connection</strong></td>
+              <td>
+                how those spans support the position — the step a list of proof
+                texts leaves the model to reconstruct
+              </td>
+              <td>
+                + <code>sdo:Argument</code> (premises, inference stated, the
+                span each premise rests on)
+              </td>
+            </tr>
+            <tr>
+              <td>Qualifications</td>
+              <td>conditions and limits</td>
+              <td>+ <code>sdo:Qualification</code></td>
+            </tr>
+            <tr>
+              <td>Alternatives</td>
+              <td>relevant disagreement</td>
+              <td>
+                <code>sdo:DoctrineRelationAssessment</code>, interpretation
+                candidates (exist)
+              </td>
+            </tr>
+            <tr>
+              <td>Defeat conditions</td>
+              <td>
+                what would undermine it (a disputed date, two writings treated
+                as independent witnesses)
+              </td>
+              <td>
+                <code>sdo:DefeatCondition</code> (exists) — used to drive
+                targeted checks (§6)
+              </td>
+            </tr>
+            <tr>
+              <td>Context</td>
+              <td>speaker, tradition, date uncertainty, source dependence</td>
+              <td>chronology, writings ontology (exist)</td>
+            </tr>
+            <tr>
+              <td>Provenance and review</td>
+              <td>where the record came from, how it was checked</td>
+              <td><code>prov:wasDerivedFrom</code>, review status</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Retrieval: for "what does the Westminster Shorter Catechism teach about
+        X" the harness retrieves <em>that catechism's</em> position and its
+        supports directly (source-grounded track, §13); for an open question it
+        retrieves the relevant attributed positions and how they relate.
+        Indexing propositions as retrieval units, and searching paths through
+        context-rich propositions, follows Dense X Retrieval and PropRAG (§16),
+        adapted to keep speaker, stance, tradition, dates and dependence.
+      </p>
+      <p>
+        <strong>First experiment:</strong> a small, representative set of
+        doctrinal topics; the composer held fixed; passage retrieval vs
+        proposition-plus-evidence retrieval on independently authored questions.
+      </p>
+
+      <h2 id="bundles">4. Prepared evidence bundles <em>(rev 2)</em></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Bundle</th>
+              <th>Contents</th>
+              <th>Built from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Passage</td>
+              <td>
+                context, speakers, referents, scene, significant wording,
+                cross-references with relation, open interpretation questions,
+                the edition's notes
+              </td>
+              <td>
+                story layer, verse dossier (exists), OpenBible / TSK
+                cross-references, interpretation layer
+              </td>
+            </tr>
+            <tr>
+              <td>Doctrine</td>
+              <td>
+                attributed propositions, arguments, qualifications, alternative
+                positions, proof spans
+              </td>
+              <td>doctrine context, held confessions and Fathers</td>
+            </tr>
+            <tr>
+              <td>Author × topic</td>
+              <td>the author's position, the relevant passages, the spans</td>
+              <td>writings index, citation index, propositions</td>
+            </tr>
+            <tr>
+              <td>Historical interpretation</td>
+              <td>
+                dated attestations, transmission relationships, competing date
+                claims
+              </td>
+              <td>reference chronology, writings ontology, reception claims</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          Bundles hold <em>evidence and explanatory structure</em>; the answer
+          is still composed for the reader's actual question.
+        </li>
+        <li>
+          GraphDB stays the authoritative relationship store; bundles are
+          compact, versioned projections in the runtime store (D1); a change to
+          a source or annotation rebuilds the bundles that depend on it.
+        </li>
+        <li>
+          Extraction, alignment, candidate linking and bundle building run
+          offline on RunPod (a fixed cost).
+        </li>
+        <li>
+          A pronoun question reads the passage bundle; it does not run fifteen
+          search channels to rediscover the scene. Graph-integrated retrieval
+          precedent: HippoRAG 2 (§16).
+        </li>
+      </ul>
+
+      <h2 id="plans">5. One harness, a plan per question</h2>
+      <h3>5.1 The question frame</h3>
+      <p>
+        Classify fills a typed frame (validated by SHACL):
+        <strong>family</strong> (doctrine, precept, passage explanation,
+        reference/pronoun, word study, person or place, history of reading,
+        comparison, source, pastoral, apologetic, factual),
+        <strong>subject</strong> (ontology nodes, resolved by code),
+        <strong>aspect</strong>, <strong>answer form</strong>,
+        <strong>perspective</strong> (§7) and <strong>depth</strong>.
+        <em>(rev 2)</em> The planner sees only the question, the relevant
+        conversation, a concise capability catalog and the selected family's
+        instructions — not every skill and rule (today's classify call is 16k
+        tokens, mostly a works catalog).
+      </p>
+      <h3>5.2 The operation library</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>Purpose</th>
+              <th>Backed by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Resolve reference</td>
+              <td>the exact work, passage, entity or concept</td>
+              <td>resolve, KB, cited-form resolution (exist)</td>
+            </tr>
+            <tr>
+              <td>Read passage or bundle</td>
+              <td>primary text and necessary context</td>
+              <td>passage text, verse dossier, bundles (§4)</td>
+            </tr>
+            <tr>
+              <td>Retrieve positions</td>
+              <td>attributed propositions or interpretations</td>
+              <td>proposition index (§3), interpretation layer</td>
+            </tr>
+            <tr>
+              <td>Follow supporting links</td>
+              <td>the spans and arguments behind a position</td>
+              <td><code>sdo:SupportLink</code>, <code>sdo:Argument</code></td>
+            </tr>
+            <tr>
+              <td>Compare</td>
+              <td>agreements and differences between named positions</td>
+              <td>relation assessments, compatibility</td>
+            </tr>
+            <tr>
+              <td>Check chronology</td>
+              <td>date claims and source dependence</td>
+              <td>chronology, writings ontology</td>
+            </tr>
+            <tr>
+              <td>Search an unresolved requirement</td>
+              <td>fill a specific evidence gap</td>
+              <td>meaning, lexical, question-form index (§8)</td>
+            </tr>
+            <tr>
+              <td>Calculate</td>
+              <td>an allowed operation on cited values</td>
+              <td>code</td>
+            </tr>
+            <tr>
+              <td>Compose and assess</td>
+              <td>produce and check the answer</td>
+              <td>Haiku + code checks</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>5.3 Compiling and running</h3>
+      <ul>
+        <li>
+          Parameterised templates for the common families (pronoun: resolve →
+          passage bundle → compose; doctrine: resolve → retrieve positions →
+          follow links → compose; history: positions → chronology → compare →
+          search gaps → compose).
+        </li>
+        <li>
+          A model proposes a modification only when a template is insufficient;
+          code validates operation types, dependencies, permissions and budgets,
+          else the template runs. Independent operations run concurrently (the
+          LLMCompiler principle, §16).
+        </li>
+        <li>
+          Coverage points per family (what a complete answer establishes) drive
+          at most two re-planning rounds.
+        </li>
+        <li>
+          Success criterion: fewer unnecessary operations and tokens with equal
+          or better completeness — not a valid-looking plan.
+        </li>
+        <li>
+          The run is an EP-Plan execution trace: frame, plan, step activities,
+          outputs, checks.
+        </li>
+      </ul>
+
+      <h2 id="claims">6. Claim types and their validation <em>(rev 2)</em></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Claim type</th>
+              <th>Required support</th>
+              <th>Code checks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>"This passage says…"</td>
+              <td>the passage</td>
+              <td>the span resolves; quotation exact</td>
+            </tr>
+            <tr>
+              <td>"This author teaches…"</td>
+              <td>the author's text, attributed</td>
+              <td>
+                the cited item is by that author (not merely about them); stance
+                endorses
+              </td>
+            </tr>
+            <tr>
+              <td>"This tradition interprets…"</td>
+              <td>an attributable statement of that tradition</td>
+              <td>
+                the item is a tradition statement or held confession of that
+                tradition
+              </td>
+            </tr>
+            <tr>
+              <td>"Taken together, these suggest…"</td>
+              <td>a stated connection and its passages</td>
+              <td>
+                at least two cited spans; the connection is written out;
+                labelled as synthesis
+              </td>
+            </tr>
+            <tr>
+              <td>"These figures total…"</td>
+              <td>cited inputs and a reproducible calculation</td>
+              <td>code recomputes</td>
+            </tr>
+            <tr>
+              <td>"No earlier example was found"</td>
+              <td>a defined search scope and its recorded results</td>
+              <td>the scope and result count are in the trace</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          The current rule refusing any "says" claim supported by a
+          non-Scripture item is too broad: what Augustine says is supported by
+          Augustine, with its layer explicit. The rule becomes per type.
+        </li>
+        <li>
+          Defeat conditions drive targeted checks: a conclusion resting on a
+          disputed date or on two writings assumed independent is checked for
+          exactly that.
+        </li>
+        <li>
+          The aim is to reduce hedging and unsupported confidence together: the
+          model has a legitimate way to say what follows from the evidence, with
+          the type and limits of that conclusion visible.
+        </li>
+      </ul>
+
+      <h2 id="perspective">
+        7. Perspective, role and purpose <em>(rev 2)</em>
+      </h2>
+      <ul>
+        <li>
+          <strong>Separate three things</strong>: reader role (pastor, academic,
+          learner — presentation needs), theological perspective (a tradition),
+          question purpose (study, teaching, devotion, apologetics).
+        </li>
+        <li>
+          <strong>The rule</strong>, replacing "commit to the reading most
+          Christians hold": a named source or tradition determines the
+          perspective being explained; a user-selected perspective is stated
+          when it matters; an unspecified, disputed question receives a direct
+          explanation of the relevant positions; broad agreement is described
+          only where the evidence supports that description.
+        </li>
+        <li>
+          This lets an answer be confident without treating the mostly Reformed
+          evaluation references as a universal standard.
+        </li>
+      </ul>
+
+      <h2 id="qindex">
+        8. A question-form index and contextual retrieval <em>(rev 2)</em>
+      </h2>
+      <ul>
+        <li>
+          During ingestion, generate a few candidate questions per passage or
+          reviewed proposition (what it answers, what position it explains, what
+          comparison it serves, how a reader might phrase it) and index them
+          beside the source — document expansion by query prediction (§16).
+        </li>
+        <li>
+          Add concise source context to each indexed unit before embedding and
+          lexical indexing: author, work, section, speaker, subject, and whether
+          the passage reports or rejects a position — contextual retrieval
+          (§16).
+        </li>
+        <li>
+          These are search aids; they are never evidence and never introduce
+          teachings absent from the source.
+        </li>
+        <li>
+          Test on a limited collection, measuring additional useful evidence on
+          unseen questions, before expanding to 3.9M units.
+        </li>
+        <li>
+          Channel decisions by ablation: measure each channel's marginal
+          contribution when removed; a channel that supplies 2% of citations may
+          supply the decisive ones.
+        </li>
+      </ul>
+
+      <h2 id="skills">9. Skills as executable specifications</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Part</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Applicability</td>
+              <td>the families and aspects it fits</td>
+            </tr>
+            <tr>
+              <td>Answer requirements</td>
+              <td>
+                what a satisfactory answer must establish (coverage points)
+              </td>
             </tr>
             <tr>
               <td>Plan template</td>
-              <td>operations, slot bindings, budget profile</td>
-              <td>type check against the operation library</td>
+              <td>the operations that usually supply that evidence</td>
             </tr>
             <tr>
-              <td>Coverage checklist</td>
-              <td>the family's coverage point ids</td>
-              <td>ids exist in the C-box</td>
-            </tr>
-            <tr>
-              <td>Answer form</td>
+              <td>Output structure</td>
               <td>
-                a schema: e.g. a list form requires items, each with a passage
-              </td>
-              <td>compose output validated against it</td>
-            </tr>
-            <tr>
-              <td>Exemplars (2–3)</td>
-              <td>
-                reviewed question → outline → answer, from sources outside every
-                evaluation set
-              </td>
-              <td>
-                leakage check: no exemplar from a quarantined source; no eval
-                question
+                a <strong>direct-answer field</strong>, then explanation, then
+                necessary qualifications
               </td>
             </tr>
             <tr>
-              <td>Named queries</td>
-              <td>the graph queries its operations run</td>
-              <td>they exist on the data worker</td>
+              <td>Examples</td>
+              <td>
+                good answers and instructive failure cases, from sources outside
+                every evaluation set
+              </td>
             </tr>
             <tr>
-              <td>Evaluation cases</td>
+              <td>Tests</td>
               <td>
-                <code>ase:EvalCase</code> with assertions (coverage, form,
-                restraint)
+                cases that detect omission, overstatement and wrong attribution
               </td>
-              <td>run by the slice runner</td>
+            </tr>
+            <tr>
+              <td>Operational limits</td>
+              <td>context budget, permitted repairs, latency expectation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          Packaged as <code>ase:SkillPackage</code> (the
+          agent-skills-engineering context already models packages, cases and
+          assertions); versioned; compiled into the agent; refused by preflight
+          when a part does not check.
+        </li>
+        <li>
+          <em>(rev 2)</em> Improved <strong>offline</strong> from execution
+          traces and natural-language feedback (GEPA, §16), with the evidence
+          policy, source permissions and release rules frozen; the optimiser may
+          change permitted instructions and examples only; results are tested on
+          held-out questions.
+        </li>
+        <li>
+          <em>(rev 2)</em> No keyword-based opening-sentence gate: repeating the
+          question's words does not show it was answered. The direct-answer
+          field is assessed for supplying the requested information.
+        </li>
+      </ul>
+
+      <h2 id="models">10. Our own models, for bounded jobs <em>(rev 2)</em></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Training input → output</th>
+              <th>Why first / later</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Offline evidence extraction</strong></td>
+              <td>
+                passage → attributed propositions, qualifications, source spans
+              </td>
+              <td>
+                first: improves the knowledge every answer draws on; uncertain
+                outputs reviewed before runtime
+              </td>
+            </tr>
+            <tr>
+              <td>Plan selection</td>
+              <td>question + context → template and parameters (validated)</td>
+              <td>small, measurable</td>
+            </tr>
+            <tr>
+              <td>Passage relevance</td>
+              <td>question → useful passages, including disagreement</td>
+              <td>replaces or complements the stock reranker</td>
+            </tr>
+            <tr>
+              <td>Ask composition</td>
+              <td>
+                question + sufficient evidence → complete, concise, attributed
+                answer
+              </td>
+              <td>
+                later: train against the new evidence representation; include
+                incomplete packets, conflicts, false premises, legitimate
+                synthesis
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
       <p>
-        Exported into the agent by the existing exporter, extended to compile
-        the package; preflight refuses a package whose parts do not check.
+        Training targets are reviewed for completeness as well as support — not
+        simply answers that passed the current checker and judge, which may
+        carry their omissions, padding or confessional assumptions. Each job has
+        one capability objective; "learn all our writings" is too broad to
+        measure.
       </p>
 
-      <h2 id="ontology">9. Ontology extensions (T-box, C-box, A-box)</h2>
-      <h3>9.1 Concepts that teach (<code>scr:</code>)</h3>
-      <p>
-        Today's 184 <code>scr:TheologicalConcept</code>s carry rendering rules
-        for translation. Add teaching facets:
-        <code>scr:teachingGloss</code> (what the concept means, in two
-        sentences), <code>scr:keyPassage</code> (concept → passage with a role:
-        defining, illustrating, developing), <code>scr:relatedConcept</code> /
-        <code>skos:broader</code> / <code>skos:narrower</code>,
-        <code>scr:Distinction</code> (two concepts and the difference, e.g.
-        justification / sanctification), <code>scr:Misreading</code> (a common
-        confusion, stated). Coverage target: all 184 concepts plus the loci's
-        core concepts.
-      </p>
-      <h3>9.2 Doctrine that answers (<code>sdo:</code>)</h3>
+      <h2 id="ontology">11. Ontology extensions and the extraction run</h2>
+      <h3>11.1 What to add (after exposing what exists)</h3>
       <ul>
         <li>
-          <strong><code>sdo:Locus</code></strong> (C-box): the systematic loci —
-          God, Trinity, Scripture, creation, providence, sin, Christ's person
-          and work, atonement, justification, sanctification, perseverance,
-          Church, sacraments, last things, law and the Decalogue, prayer,
-          worship — about 40 values; every
-          <code>sdo:DoctrineProposition</code> placed in one or more.
+          <strong>Doctrine:</strong> <code>sdo:SupportLink</code>,
+          <code>sdo:Argument</code>, <code>sdo:Qualification</code>,
+          <code>sdo:stance</code>; <code>sdo:Locus</code> (C-box, ~40 loci);
+          propositions a teaching answer needs per locus (~600); tradition
+          statements linked to the held confessional unit that states them.
         </li>
         <li>
-          <strong><code>sdo:ProofText</code></strong
-          >: proposition → passage, with a role (primary, supporting,
-          illustrative) and a basis (the text says it · a tradition reads it
-          so).
+          <strong>Precepts:</strong> <code>sdo:Precept</code> with
+          <code>sdo:Duty</code> / <code>sdo:Prohibition</code> items, supports
+          and fulfilment; grounded on <code>dul:Norm</code> and
+          <code>scr:Command</code>.
         </li>
         <li>
-          <strong><code>sdo:TraditionStatement</code></strong
-          >: tradition × proposition → affirms · denies · qualifies, with the
-          held confessional text that says so (by locator in Schaff or the held
-          creeds), never quoted from memory.
+          <strong>Concepts:</strong> teaching facets for the 184
+          <code>scr:TheologicalConcept</code>s (today rendering rules): gloss,
+          key passages with role, related, distinctions, common misreadings.
         </li>
         <li>
-          Today's 162 propositions are the register's — when a position enters
-          the record. Add the propositions a teaching answer needs for the
-          common questions in each locus (expected ~600).
+          <strong>Cross-references:</strong> the 17,639 OpenBible pairs already
+          in <code>scripture.crossrefs.ttl</code> projected to the runtime
+          store; the Treasury of Scripture Knowledge ingested; relations typed
+          (quotes, alludes, parallels, explains, fulfils, contrasts).
+        </li>
+        <li>
+          <strong>Questions as data:</strong> frame vocabulary, coverage points,
+          exemplars and the question-form index's generated questions (marked as
+          search aids).
+        </li>
+        <li>
+          <strong>Data quality:</strong> a date audit of the writings index
+          (e.g. "Against the Arians c. AD 175–180", "the Diatessaron 1st century
+          BC – AD 70").
         </li>
       </ul>
-      <h3>
-        9.3 Precepts (<code>sdo:</code>, extending <code>scr:Command</code>)
-      </h3>
+      <h3>11.2 The extraction run</h3>
       <p>
-        <code>sdo:Precept</code> (a standing command: the ten commandments, the
-        great commandments, key New Testament imperatives) with
-        <code>sdo:Duty</code> and <code>sdo:Prohibition</code> items, each with
-        proof texts, and its fulfilment (e.g. Matt 5:27–28 for the seventh).
-        Grounded on <code>dul:Norm</code>.
-      </p>
-      <h3>9.4 Cross-references</h3>
-      <p>
-        Project the 17,639 OpenBible pairs (≥ 20 votes) already in
-        <code>scripture.crossrefs.ttl</code> to the runtime store; ingest the
-        Treasury of Scripture Knowledge (public domain); type each pair by
-        relation (quotes · alludes · parallels · explains · fulfils · contrasts)
-        — by code where a source says so (UBS quotations), otherwise proposed by
-        Haiku and labelled proposed.
-      </p>
-      <h3>9.5 Questions and answers as data</h3>
-      <p>
-        The frame vocabulary (§4), coverage points (§7) and exemplars (§8) live
-        in the new <code>ask</code> context, so a family is added by data, not
-        code.
-      </p>
-      <h3>9.6 Data quality</h3>
-      <p>
-        A date audit of the writings index (wrong dates found: "Against the
-        Arians c. AD 175–180"; "the Diatessaron 1st century BC – AD 70"), with
-        the chronology as the check.
+        Proposed by a model (Haiku, or our extraction adapter, §10), admitted by
+        code, reviewed in the order records most affect answers. Admission
+        rules: every span and verse resolves; an attributed position cites a
+        unit by that author or tradition; a tradition statement paraphrases a
+        held unit (similarity check); no record derived from a source
+        quarantined for the track it would be evaluated on; no 6-word run of a
+        held English Bible edition in generated text. Every record carries
+        <code>prov:wasDerivedFrom</code>, <code>prov:wasGeneratedBy</code> and a
+        review status.
       </p>
 
-      <h2 id="extraction">10. The extraction run</h2>
+      <h2 id="speed">12. Speed and reliability now <em>(rev 2)</em></h2>
+      <ul>
+        <li>
+          <strong>Prevent repair work.</strong> 44% of answers revise, at ~23 s
+          each (~10 s on average). Validate source ids, date eligibility,
+          quotation spans and required fields <em>before</em> drafting; repair
+          the affected claim or section instead of regenerating the answer.
+        </li>
+        <li>
+          <strong>Cache</strong> verified, immutable evidence bundles by source
+          and annotation version, keeping request-time access checks.
+        </li>
+        <li>
+          <strong>Batch</strong> passage reads and control concurrency at the
+          data worker; more retries alone do not solve overload.
+        </li>
+        <li>
+          <strong>One composition call</strong> after deterministic retrieval
+          for common, well-resolved questions; a planning call only when needed.
+          A 10–20 s routine-answer target is to be tested, not assumed.
+        </li>
+        <li>
+          <strong>Stream checked sections</strong>; progress messages alone do
+          not make an answer faster.
+        </li>
+      </ul>
+
+      <h2 id="eval">13. Evaluation: two tracks <em>(rev 2)</em></h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Track</th>
+              <th>What it tests</th>
+              <th>Source policy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Source-grounded explanation</td>
+              <td>
+                can Ask accurately explain a named source it may retrieve ("what
+                does the Heidelberg Catechism teach about…")
+              </td>
+              <td>the named source is allowed — retrieving it is correct</td>
+            </tr>
+            <tr>
+              <td>Independent synthesis</td>
+              <td>can Ask answer from other evidence</td>
+              <td>
+                the reference answer's source and its derivatives are excluded
+                (today 12 of 28 study-note answers cited their own reference
+                note)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          Systems are compared on the
+          <strong>same completed question ids</strong>, never one system's
+          partial set against another's full average.
+        </li>
+        <li>
+          The Haiku judge is kept for continuity and
+          <strong>calibrated against blinded human review</strong>.
+        </li>
+        <li>
+          The model comparison showed that changing the model alone did not
+          solve the problem; it does not prove model capability is irrelevant.
+        </li>
+        <li>
+          Each change is one tag, run from a frozen worktree of its commit;
+          ablations name the component.
+        </li>
+      </ul>
+
+      <h2 id="pilot">14. The pilot and the phases <em>(rev 2)</em></h2>
       <p>
-        The house pattern — Haiku proposes, code admits, a person reviews in
-        priority order — over held, licence-cleared sources.
+        One complete pilot before expanding the ontology or training broadly:
       </p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Target</th>
-              <th>Sources</th>
-              <th>Code admits only if</th>
-              <th>Expected size</th>
+              <th>Order</th>
+              <th>Deliverable</th>
+              <th>Evidence of success</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Concept teaching facets</td>
+              <td>1</td>
               <td>
-                Scripture (the concept's Strong's occurrences), held Fathers and
-                commentaries
+                A reviewed evaluation slice with explicit source and tradition
+                rules, both tracks
               </td>
-              <td>
-                every key passage is a verse of the canon containing one of the
-                concept's lemmas; no 6-word run of a held English Bible edition
-              </td>
-              <td>184 concepts × ~5 facets</td>
+              <td>trustworthy, paired comparisons</td>
             </tr>
             <tr>
-              <td>Loci and propositions</td>
-              <td>held confessions (Schaff), creeds, Fathers; Scripture</td>
+              <td>2</td>
               <td>
-                each proposition has ≥ 2 proof texts that resolve; placed in a
-                locus; source locator resolves
+                Queryable doctrine and interpretation records and reusable
+                evidence bundles
               </td>
-              <td>~600 propositions</td>
+              <td>previously missing central points reach the composer</td>
             </tr>
             <tr>
-              <td>Tradition statements</td>
-              <td>held confessions by tradition</td>
+              <td>3</td>
               <td>
-                the locator resolves to a held unit that the statement
-                paraphrases (similarity check), never invented
+                Typed plans for doctrine, passage explanation and factual
+                questions
               </td>
-              <td>~600 × 4 traditions</td>
+              <td>fewer calls and irrelevant sources</td>
             </tr>
             <tr>
-              <td>Precepts</td>
-              <td>Scripture, held expositions</td>
-              <td>every duty or prohibition has a proof text that resolves</td>
-              <td>~40 precepts × ~10 items</td>
-            </tr>
-            <tr>
-              <td>Cross-reference typing</td>
-              <td>OpenBible, TSK, UBS</td>
+              <td>4</td>
               <td>
-                both ends resolve; relation from the source where it exists
+                Claim types supporting attribution, synthesis and calculation
               </td>
-              <td>~50k pairs</td>
+              <td>more complete answers without weaker support</td>
             </tr>
             <tr>
-              <td>Exemplars</td>
-              <td>questions outside every evaluation set</td>
-              <td>leakage check; reviewer approval</td>
-              <td>2–3 per family</td>
+              <td>5</td>
+              <td>Question-form indexing and contextual retrieval</td>
+              <td>additional relevant evidence on unseen questions</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Offline skill optimisation and targeted model training</td>
+              <td>gains persist on held-out families and under load</td>
             </tr>
           </tbody>
         </table>
       </div>
       <p>
-        Every admitted fact carries <code>prov:wasDerivedFrom</code> (its source
-        unit), <code>prov:wasGeneratedBy</code> (the run), and a review status.
-        Cost: Haiku only, a few dollars per thousand facts; GraphDB is the
-        reconstitutable store, D1 the runtime projection.
+        <strong>The first major experiment</strong> combines 2–4: give the
+        existing Haiku composer a compact, attributed explanation with its
+        supporting passages, assembled by a small validated plan — directly
+        testing whether the missing knowledge connections and the uniform
+        workflow cause the largest remaining quality gap.
       </p>
-
-      <h2 id="verify">11. Verification</h2>
-      <ul>
-        <li>
-          <strong>Coverage check</strong> (code): every required coverage point
-          is an outline entry with evidence, or an explicit "not held" line.
-        </li>
-        <li>
-          <strong>Form check</strong> (code): the answer matches the family's
-          form schema (a list has items, each with a passage).
-        </li>
-        <li>
-          <strong>Claim → node</strong>: each claim names the graph node it
-          states (a proposition, a precept item, a concept facet); a claim that
-          contradicts its node's reviewed statement is flagged.
-        </li>
-        <li>
-          Existing checks stay: evidence ids, layers, dates, quotations, claims
-          about the evidence itself.
-        </li>
-      </ul>
-
-      <h2 id="runtime">12. Runtime and latency</h2>
-      <ul>
-        <li>
-          Every graph an operation reads is projected to D1 (the runtime store);
-          GraphDB stays the source of record.
-        </li>
-        <li>
-          Precomputed dossiers: per verse (exists), per concept, per
-          proposition, per precept — one read each.
-        </li>
-        <li>
-          The brief profile merges outline and compose into one call; plans run
-          in parallel waves; the answer streams.
-        </li>
-        <li>
-          Target: brief questions under 20 s, standard under 45 s, with
-          verification unchanged.
-        </li>
-      </ul>
-
-      <h2 id="eval">13. Evaluation and leakage quarantine</h2>
-      <ul>
-        <li>
-          <strong>Quarantine.</strong> Each evaluation set names the sources its
-          references came from (Reformation Study Bible notes for the study-note
-          sets; the Westminster, Heidelberg, 1689, Baltimore and Beddome texts
-          for the catechism sets; CREDO's sources). In evaluation, every
-          operation drops evidence and graph facts derived from them (by
-          provenance) for that set's questions. Measured today: 12 of 28
-          study-note answers cited their own reference note.
-        </li>
-        <li>
-          <strong>Gates</strong> on the 80-question slice, blind Haiku judge,
-          quarantine on: addresses the question ≥ 0.88; covers the reference ≥
-          0.65; restraint ≥ 0.92; Scripture support ≥ 0.90; strict good answer ≥
-          0.40 — each above Apologist and Bonfire. Confirm on the 477-question
-          suite before release.
-        </li>
-        <li>
-          <strong>Ablations</strong>: frames only; + plan library; + coverage; +
-          doctrine layer; + skill packages — one tag per commit, run from a
-          frozen worktree.
-        </li>
-      </ul>
-
-      <h2 id="phases">14. Phases and gates</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Phase</th>
-              <th>Build</th>
-              <th>Gate</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>P0</td>
-              <td>
-                Quarantine in the eval; re-baseline ours, Apologist, Bonfire
-              </td>
-              <td>honest numbers on the slice</td>
-            </tr>
-            <tr>
-              <td>P1</td>
-              <td>
-                Frames + coverage points + form schemas for the six largest
-                families; skill packages for them
-              </td>
-              <td>intent and coverage rise; nothing falls</td>
-            </tr>
-            <tr>
-              <td>P2</td>
-              <td>
-                Operation library over existing tools (dossier, cross-references
-                projected, interpretations, confessional text); plan templates;
-                re-planning
-              </td>
-              <td>catechism coverage ≥ 0.5; latency not worse</td>
-            </tr>
-            <tr>
-              <td>P3</td>
-              <td>
-                Extraction run: concept facets, loci, propositions, proof texts,
-                tradition statements, precepts; review queue
-              </td>
-              <td>doctrine and precept families ≥ Apologist</td>
-            </tr>
-            <tr>
-              <td>P4</td>
-              <td>
-                Dynamic plan proposals with type checking; brief profile;
-                streaming
-              </td>
-              <td>all gates in §13; brief questions &lt; 20 s</td>
-            </tr>
-            <tr>
-              <td>P5</td>
-              <td>Confirm on the 477 suite; deploy</td>
-              <td>above both apps on every headline measure</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <p>
+        <strong>Release gates</strong> (independent-synthesis track, same
+        question ids, blind judge calibrated): addresses the question ≥ 0.88,
+        covers the reference ≥ 0.65, restraint ≥ 0.92, Scripture support ≥ 0.90,
+        strict good answer ≥ 0.40 — each above Apologist and Bonfire; confirmed
+        on the 477-question suite.
+      </p>
 
       <h2 id="risks">15. Risks and open questions</h2>
       <ul>
         <li>
-          <strong>Tradition.</strong> The references are mostly Reformed.
-          Tradition statements let an answer state the common Christian reading
-          and then each tradition's — but which framing leads by default, and
-          for whom?
+          <strong>Prepared doctrine as authority.</strong> A model-extracted
+          proposition must never read as what Scripture says; records keep
+          stance, attribution and review status, and answers cite the spans.
         </li>
         <li>
-          <strong>Graph as authority.</strong> A proposed doctrine fact must not
-          be presented as what Scripture says. Claims still rest on held text;
-          graph facts plan and check.
+          <strong>Extraction quality</strong> matters more than volume; review
+          order follows answer impact.
         </li>
         <li>
-          <strong>Extraction quality.</strong> Model-proposed doctrine is the
-          riskiest data we would hold; admission rules and review order matter
-          more than volume.
+          <strong>Over-planning</strong> is bounded by budgets, type checks and
+          template fallback.
         </li>
         <li>
-          <strong>Over-planning.</strong> Dynamic plans can grow; budgets and
-          type checks bound them, and the template is always the fallback.
+          <strong>Optimiser overfitting</strong> to the judge: held-out
+          questions and frozen policies guard it; human review samples answers.
         </li>
         <li>
-          <strong>Open:</strong> should frames be shown to the reader ("you
-          asked what the seventh commandment requires")? Should the doctrine
-          layer serve other surfaces (the Seed reader's Discover)?
+          <strong>Open:</strong> which perspective leads when a reader sets none
+          and a question is disputed; whether bundles and propositions also
+          serve the Seed reader's Discover panel.
         </li>
       </ul>
-    </main>
 
-    <!-- arch-sitemap:start -->
-    <footer>
-      <div class="wrap">
-        <nav class="sitemap" aria-label="All architecture pages">
-          <div>
-            <h2>The architecture</h2>
-            <ul>
-              <li><a href="/architecture/">Overview</a></li>
-              <li>
-                <a href="/architecture/information/"
-                  >Information Architecture</a
-                >
-              </li>
-              <li><a href="/architecture/agentic/">Agents</a></li>
-              <li><a href="/architecture/ux/">Reader Experience</a></li>
-              <li><a href="/architecture/ontology/">Ontology</a></li>
-            </ul>
-          </div>
-          <div>
-            <h2>The Scripture agent’s ask</h2>
-            <ul>
-              <li><a href="/architecture/harness/">Scripture harness</a></li>
-              <li>
-                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
-              </li>
-              <li><a href="/architecture/writings/">Period writings</a></li>
-              <li>
-                <a href="/architecture/ask-writings-design/"
-                  >ask-writings design</a
-                >
-              </li>
-              <li>
-                <a href="/architecture/ask-writings-test-report/"
-                  >ask-writings test report</a
-                >
-              </li>
-              <li>
-                <a href="/architecture/ask-writings-harness/"
-                  >ask-writings harness</a
-                >
-              </li>
-              <li>
-                <a href="/architecture/ask-writings-v2/"
-                  >ask-writings v2 design</a
-                >
-              </li>
-              <li>
-                <a href="/architecture/ask-writings-next/"
-                  >ask-writings: measured, built, next</a
-                >
-              </li>
-              <li>
-                <a href="/architecture/ask-writings-brief/"
-                  >ask-writings planning brief</a
-                >
-              </li>
-              <li><span aria-current="page">ask-writings v3 spec</span></li>
-              <li>
-                <a href="/architecture/trained-models/"
-                  >Our own models in the harness</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2>Reader</h2>
-            <ul>
-              <li><a href="/">Open the reader</a></li>
-            </ul>
-          </div>
-        </nav>
-        <p class="credit">
-          Built on the agenticprimitives substrate · faithnet estate ·
-          <a href="/">seed-reader.faithnet.io</a>
-        </p>
-      </div>
-    </footer>
-    <!-- arch-sitemap:end -->
+      <h2 id="refs">16. Precedents</h2>
+      <p>
+        Research precedents, not predicted gains for this system:
+        <strong>Dense X Retrieval</strong> (propositions as retrieval units);
+        <strong>PropRAG</strong> (paths through context-rich propositions, no
+        generative calls online); <strong>HippoRAG 2</strong> (passage retrieval
+        integrated with knowledge relationships);
+        <strong>LLMCompiler</strong> (planning separated from execution,
+        concurrent operations);
+        <strong>document expansion by query prediction</strong> (doc2query);
+        Anthropic's <strong>contextual retrieval</strong> (context added before
+        embedding and lexical indexing); <strong>GEPA</strong> (prompt evolution
+        from traces and natural-language feedback).
+      </p>
+    </main>
   </body>
 </html>
