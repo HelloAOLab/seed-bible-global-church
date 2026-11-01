@@ -30,6 +30,7 @@ const SECTIONS = [
       "ask-writings-harness",
       "ask-writings-v2",
       "ask-writings-next",
+      "ask-writings-brief",
       "trained-models",
     ],
   ],
