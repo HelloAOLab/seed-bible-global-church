@@ -399,16 +399,136 @@
         against the graph.
       </p>
 
-      <h2 id="policy">4b. The evidence policy: when each layer comes in</h2>
+      <h2 id="policy">4b. The evidence policy: tiers × standpoint × kind</h2>
+      <p class="note">
+        <strong>Revision 5 (1 Nov 2026, decided).</strong> The owner's rule: a
+        tradition's "terms and thinking" belong in an answer only when the ask
+        is made under that tradition — and the words for it should be the ones
+        theologians and church leaders use, not ours. "Denomination" was the
+        wrong word: a denomination (PCA, SBC, ELCA) is an institution that
+        <em>adopts</em> a standard, never a source of teaching. The gate is now
+        stated in three terms, and each is decided by code or by data, not by
+        the model's taste.
+      </p>
+      <h3>The tiers of teaching — by who holds it</h3>
       <p>
-        The owner has kept denominational and doctrinal material out of Ask, in
-        favour of Scripture and the writings of its own period. Bringing it in
-        must not blur that: the ontology says, as data,
-        <strong
-          >which layer an ask may draw on, in which order, for which kind of
-          question</strong
-        >, and the frame carries the fields that decide it. The layers, with WSC
-        18 as the worked example:
+        This is the distinction the church has always drawn (dogma · doctrine ·
+        opinion; today's "theological triage"), cut by <em>who holds</em> a
+        teaching — which the doctrine graph's adoption assertions record, so the
+        tier of a formulation is <strong>derived</strong>, never typed.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>What it is</th>
+              <th>Where it may appear</th>
+              <th>How it is said</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>scripture</code></td>
+              <td>
+                the text and its own period: Scripture, versions, witnesses, the
+                period writings
+              </td>
+              <td>the ground of every answer</td>
+              <td>cited and, where quoted, in the reader's edition's words</td>
+            </tr>
+            <tr>
+              <td><code>ecumenical</code></td>
+              <td>
+                what the undivided church confessed: the ecumenical creeds and
+                the first councils' definitions (Apostles',
+                Nicene-Constantinopolitan, Chalcedon, Athanasian) — a
+                formulation adopted across every tradition
+              </td>
+              <td>every standpoint, including none</td>
+              <td>attributed to the creed: "the Nicene Creed confesses…"</td>
+            </tr>
+            <tr>
+              <td><code>confessional</code></td>
+              <td>
+                a <em>tradition's</em> standard (catechism, confession,
+                articles), its characteristic positions and its technical
+                vocabulary — adopted by one tradition or some
+              </td>
+              <td>
+                only inside that tradition's standpoint, or where a comparison
+                asks for the traditions
+              </td>
+              <td>
+                attributed to the standard: "Westminster teaches…"; never as
+                what Scripture says
+              </td>
+            </tr>
+            <tr>
+              <td><code>theologian</code></td>
+              <td>
+                a named teacher's view (Augustine, Aquinas, Calvin, Wesley)
+              </td>
+              <td>where the question kind allows a later reader</td>
+              <td>as that person's, dated by century</td>
+            </tr>
+            <tr>
+              <td><code>interpretation</code></td>
+              <td>
+                the readings of a passage: the interpretation layer's questions
+                and paths
+              </td>
+              <td>passage, word-study and history questions</td>
+              <td>
+                as alternatives, with this edition's decision named — never as
+                the plain sense
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>The standpoint of an ask</h3>
+      <p>
+        <strong>Standpoint</strong> is the tradition an ask is made
+        <em>from</em>. It is read in this order and nothing else opens the
+        confessional tier: (1) the reader's chosen tradition — the UX setting
+        <em
+          >Tradition: none · Reformed · Lutheran · Anglican · Baptist ·
+          Anabaptist · Wesleyan/Methodist · Pentecostal · Roman Catholic ·
+          Eastern Orthodox</em
+        >, where <em>none</em> means Scripture and the early church and is the
+        default; (2) the tradition the question itself names or whose own
+        practice it asks about ("why is a saint's name given at baptism" is a
+        Roman Catholic practice and is answered as the Roman Catholic Church
+        explains it); (3) the tradition of a standard the question names (a
+        Westminster question is Reformed). With no standpoint, the answer names
+        no tradition, standard or school and uses none of their technical terms;
+        a biblical word a tradition also uses (justification, covenant,
+        election, grace) is Scripture's and stays, and Trinity and incarnation
+        are the creeds' and stay.
+      </p>
+      <p>
+        <strong>What the reader sees.</strong> Every answer says its standpoint
+        in one line ("Reading from: Reformed" / "No tradition chosen — Scripture
+        and the early church"), and each paragraph carries the tier of what it
+        rests on: <em>Scripture</em> · <em>the creeds</em> ·
+        <em>Reformed standard (Westminster)</em> · <em>Augustine's view</em> ·
+        <em>a disputed reading</em>. Changing the tradition re-asks; it never
+        silently re-colours an answer already given.
+      </p>
+      <p>
+        <strong>How it is enforced.</strong> The prompt states the tiers and the
+        standpoint. After the draft, code lists every confessional-tier term
+        that appears with no standpoint (a term list by tradition — the seed is
+        in code, the ontology will carry it as <code>sdo:</code> tradition
+        terms); the slice counts those escapes before a revise call is spent on
+        them. The policy below is read from the ontology's
+        <code>sdo:AskEvidencePolicy</code> rows, one per kind × tier.
+      </p>
+      <p>
+        The layers the first cut named, with WSC 18 as the worked example, for
+        the record (the ontology terms are unchanged; only the gate's vocabulary
+        moved to the tiers above):
       </p>
       <div class="table-wrap">
         <table>
@@ -497,10 +617,12 @@
           Catholics hold", "the Reformed view").
         </li>
         <li>
-          <code>perspective</code>: the reader's chosen profile, if any — new in
-          the ask context (<code>context.perspective</code>, beside
-          <code>role</code>); the default is <em>none</em>, which is
-          Scripture-and-period.
+          <code>perspective</code> → the reader's chosen
+          <strong>tradition</strong> (<code>context.perspective</code> in the
+          ask context, beside <code>role</code>; the UX calls it Tradition); the
+          default is <em>none</em>, which is Scripture-and-period. Together with
+          <code>source</code> and <code>tradition</code> it yields the
+          <code>standpoint</code> (above), which is what the gate reads.
         </li>
         <li>
           <code>kind</code> decides the answer the question requests:
@@ -521,6 +643,21 @@
         decisions): for each layer, <em>required · allowed · excluded</em>, and
         the order of presentation. The frame step reads it; the prove step
         enforces it; preflight holds every kind to one policy.
+        <strong>As loaded (revision 5):</strong> the rows are keyed kind × tier
+        (<code
+          >scripture · ecumenical · confessional · theologian ·
+          interpretation</code
+        >), the rule <em>allowed-under-perspective</em> is renamed
+        <em>allowed-under-standpoint</em>, and the first cut's columns below
+        read as: formulation + tradition profiles → <code>confessional</code>,
+        later readers → <code>theologian</code>; <code>ecumenical</code> is
+        allowed in every kind but factual, after Scripture;
+        <code>interpretation</code> is allowed for passage, word-study and
+        history questions. Under the owner's rule <code>confessional</code> is
+        allowed-under-standpoint for every kind except
+        <em>explain a named formulation</em> (required — the named standard is
+        the standpoint) and <em>compare</em> (required — the question names the
+        traditions).
       </p>
       <div class="table-wrap">
         <table>
@@ -1056,5 +1193,89 @@
         </li>
       </ul>
     </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li><span aria-current="page">ask-writings v3 spec</span></li>
+              <li>
+                <a href="/architecture/doctrinal-collection-brief/"
+                  >Doctrinal collection brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
   </body>
 </html>
