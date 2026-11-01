@@ -45,12 +45,63 @@ export interface Turn {
   suggestions?: string[];
   question?: string;
   slow?: boolean;
+  /** which standpoint answered: the agent's `standpoint.tradition` (null = Scripture and the early church); absent until the
+   *  agent says, so an answer from a path that does not report it shows no line */
+  standpoint?: string | null;
+  /** the agent's `frame.kind` — how it read the question (passage, doctrine, …) */
+  frameKind?: string | null;
 }
 
 const turns = signal<Turn[]>([]);
 const streaming = signal(false);
 const who = signal<string | null>(null);
 const error = signal<string | null>(null);
+
+/** READING FROM — the tradition the reader asks from. Sent as the agent's `context.perspective`; under it the answer is written from
+ *  that standpoint and may use its standards; "" (none) keeps the answer on Scripture and the early church. A preference, so it lives
+ *  in localStorage like the reader's other settings (state/chrome/settings.ts) — read on first use, never at boot. */
+export const TRADITIONS = [
+  "Reformed",
+  "Lutheran",
+  "Anglican",
+  "Baptist",
+  "Anabaptist",
+  "Wesleyan/Methodist",
+  "Pentecostal",
+  "Roman Catholic",
+  "Eastern Orthodox",
+] as const;
+export type Tradition = (typeof TRADITIONS)[number] | "";
+const PERSPECTIVE_KEY = "sbr.companion.perspective";
+export const perspective = signal<Tradition>("");
+let perspectiveRead = false;
+/** The saved choice, or none — a value that is not one of the traditions reads as none. */
+export function cleanTradition(v: unknown): Tradition {
+  return (TRADITIONS as readonly string[]).includes(String(v))
+    ? (v as Tradition)
+    : "";
+}
+export function readPerspective(): Tradition {
+  if (perspectiveRead) return perspective.value;
+  perspectiveRead = true;
+  try {
+    perspective.value = cleanTradition(localStorage.getItem(PERSPECTIVE_KEY));
+  } catch {
+    /* storage blocked: the choice lives for this page */
+  }
+  return perspective.value;
+}
+export function setPerspective(v: unknown) {
+  perspectiveRead = true;
+  perspective.value = cleanTradition(v);
+  try {
+    if (perspective.value)
+      localStorage.setItem(PERSPECTIVE_KEY, perspective.value);
+    else localStorage.removeItem(PERSPECTIVE_KEY);
+  } catch {
+    /* storage blocked */
+  }
+}
 
 /** One agent event: the data part of a JSON-RPC result on an SSE `data:` line (`who`, `dossier`, `delta`, `check`, `done`, `error`). */
 export type AgentEvent = { event: string; [k: string]: unknown };
@@ -108,6 +159,7 @@ export async function ask(
     .filter((t) => t.text)
     .slice(-6)
     .map((t) => ({ role: t.role, text: t.text }));
+  const tradition = readPerspective();
   turns.value = [
     ...turns.value,
     { role: "user", text: question },
@@ -126,6 +178,7 @@ export async function ask(
         ...target(state),
         question,
         history,
+        ...(tradition ? { perspective: tradition } : {}),
         ...(opts.slow ? { mode: "writings" } : {}),
       }),
       ...(opts.signal ? { signal: opts.signal } : {}),
@@ -140,12 +193,15 @@ export async function ask(
       const j = (await res.json()) as {
         answer?: string;
         agent?: { name?: string; model?: string } | null;
+        standpoint?: { tradition?: string | null } | null;
+        frame?: { kind?: string | null } | null;
       };
       setLast({
         text: j.answer ?? "",
         who: j.agent
           ? `${j.agent.name} · ${j.agent.model} · ask-writings`
           : "ask-writings",
+        ...standpointOf(j),
       });
       return;
     }
@@ -172,6 +228,7 @@ export async function ask(
             crossRefs: (e.crossReferences as Turn["crossRefs"]) ?? [],
             writings: (e.writings as Turn["writings"]) ?? [],
             suggestions: (e.suggestions as string[]) ?? [],
+            ...standpointOf(e),
           });
         } else if (e.event === "error")
           throw new Error(String(e.message ?? "the agent could not answer"));
@@ -182,6 +239,26 @@ export async function ask(
   } finally {
     streaming.value = false;
   }
+}
+
+/** Which standpoint answered, as the agent's payload says it (`standpoint.tradition`, `frame.kind`); nothing when the payload
+ *  carries no `standpoint` — the line is shown only where the agent said. */
+export function standpointOf(
+  d: Record<string, unknown>
+): Pick<Turn, "standpoint" | "frameKind"> {
+  const sp = d.standpoint;
+  if (!sp || typeof sp !== "object") return {};
+  const tradition = (sp as { tradition?: unknown }).tradition;
+  const frame = d.frame;
+  const kind =
+    frame && typeof frame === "object"
+      ? (frame as { kind?: unknown }).kind
+      : undefined;
+  return {
+    standpoint:
+      typeof tradition === "string" && tradition.trim() ? tradition : null,
+    frameKind: typeof kind === "string" && kind ? kind : null,
+  };
 }
 
 /** The answer's prose with each [E…] tag as a source number and each ~~struck~~ span struck through with its reason. */
@@ -224,8 +301,30 @@ export function renderAnswer(
 function Pane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const [q, setQ] = useState("");
+  readPerspective();
   return (
     <div className="sb-companion">
+      <label className="sb-small sb-muted sb-companion-reading-from">
+        {t("companion-reading-from", { defaultValue: "Reading from" })}{" "}
+        <select
+          className="sb-companion-reading-from-select"
+          value={perspective.value}
+          onChange={(e) =>
+            setPerspective((e.target as HTMLSelectElement).value)
+          }
+        >
+          <option value="">
+            {t("companion-tradition-none", {
+              defaultValue: "Scripture and the early church",
+            })}
+          </option>
+          {TRADITIONS.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className="sb-session-chat sb-companion-log">
         {turns.value.map((m, i) => (
           <div
@@ -341,6 +440,22 @@ function Pane({ state }: { state: ReaderState }) {
                   ))}
                 </div>
               )}
+            {m.standpoint !== undefined && m.text && !streaming.value && (
+              <p className="sb-small sb-muted sb-companion-standpoint">
+                {m.standpoint
+                  ? t("companion-answered-from", {
+                      tradition: m.standpoint,
+                      defaultValue: `Answered from: ${m.standpoint}`,
+                    })
+                  : t("companion-answered-from-none", {
+                      defaultValue:
+                        "Answered from Scripture and the early church",
+                    })}
+                {m.frameKind ? (
+                  <span className="sb-companion-layer"> ({m.frameKind})</span>
+                ) : null}
+              </p>
+            )}
             {m.struck ? (
               <p className="sb-small sb-muted">
                 {t("companion-struck", {

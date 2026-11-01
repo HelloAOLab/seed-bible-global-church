@@ -2508,3 +2508,18 @@ html[data-sb-line="loose"] .sb-bible-reader {
   gap: 6px;
   margin-top: 6px;
 }
+
+/* The study companion's "Reading from": the tradition the reader asks from, kept with their other preferences. */
+.sb-companion-reading-from {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+}
+.sb-companion-reading-from-select {
+  font: inherit;
+  max-width: 100%;
+}
+.sb-companion-standpoint {
+  margin: 6px 0 2px;
+}

@@ -30,7 +30,59 @@ export interface CompanionAsk {
   question?: string;
   history?: Array<{ role: string; text: string }>;
   role?: string;
+  /** The reader's chosen tradition ("Reading from"): the agent answers from that standpoint and may use its standards. Absent =
+   *  Scripture and the early church (the agent's `context.perspective`, spec v3 §4b.1). */
+  perspective?: string;
   mode?: "verse" | "writings";
+}
+
+/** The perspective as the agent accepts it — a short plain string — or nothing. */
+export function companionPerspective(b: CompanionAsk): string | undefined {
+  const p = typeof b.perspective === "string" ? b.perspective.trim() : "";
+  return p ? p.slice(0, 80) : undefined;
+}
+
+/** The A2A message parts for an ask: the `ask-verse` skill call (streamed), or the question with its `context` for the
+ *  orchestrated writings ask. The perspective rides in both — as a skill arg, and inside `context` where the agent reads it. */
+export function companionParts(
+  b: CompanionAsk,
+  target: { edition: string; reference: string },
+  question: string,
+  history: Array<{ role: string; text: string }>
+): Array<Record<string, unknown>> {
+  const perspective = companionPerspective(b);
+  if (b.mode !== "writings")
+    return [
+      {
+        data: {
+          skill: "ask-verse",
+          args: {
+            edition: target.edition,
+            reference: target.reference,
+            question,
+            history,
+            ...(b.role ? { role: b.role } : {}),
+            ...(perspective ? { perspective } : {}),
+          },
+        },
+        mediaType: "application/json",
+      },
+    ];
+  return [
+    { text: `${question} (About ${target.reference}.)` },
+    {
+      data: {
+        context: {
+          role: b.role ?? "growing",
+          history,
+          ...(perspective ? { perspective } : {}),
+        },
+        edition: target.edition,
+        mode: "writings",
+      },
+      mediaType: "application/json",
+    },
+  ];
 }
 
 /** The edition and the OSIS reference the agent is asked about: the selection (≤ 5 verses), else the chapter's first verse. */
@@ -74,45 +126,17 @@ export async function askCompanion(
       { ok: false, error: "a question and the verse it is about are required" },
       { status: 400 }
     );
-  const history = (b.history ?? [])
-    .slice(-6)
-    .map((h) => ({
-      role: h.role === "assistant" ? "agent" : "user",
-      text: String(h.text ?? "").slice(0, 1500),
-    }));
+  const history = (b.history ?? []).slice(-6).map((h) => ({
+    role: h.role === "assistant" ? "agent" : "user",
+    text: String(h.text ?? "").slice(0, 1500),
+  }));
   const fetcher = env.SCRIPTURE
     ? (input: RequestInfo | URL, init?: RequestInit) =>
         env.SCRIPTURE!.fetch(input, init)
     : fetch;
   const endpoint = env.SCRIPTURE_A2A_URL ?? DEFAULT_ENDPOINT;
   const streaming = b.mode !== "writings";
-  const parts = streaming
-    ? [
-        {
-          data: {
-            skill: "ask-verse",
-            args: {
-              edition: target.edition,
-              reference: target.reference,
-              question,
-              history,
-              ...(b.role ? { role: b.role } : {}),
-            },
-          },
-          mediaType: "application/json",
-        },
-      ]
-    : [
-        { text: `${question} (About ${target.reference}.)` },
-        {
-          data: {
-            context: { role: b.role ?? "growing", history },
-            edition: target.edition,
-            mode: "writings",
-          },
-          mediaType: "application/json",
-        },
-      ];
+  const parts = companionParts(b, target, question, history);
   const res = await fetcher(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json", "A2A-Version": "1.0" },
@@ -155,6 +179,9 @@ export async function askCompanion(
         d.answer ?? j.result?.message?.parts?.find((p) => p.text)?.text ?? "",
       agent: d.agent ?? null,
       evidence: d.evidence ?? [],
+      // which standpoint answered (`standpoint.tradition` is null when none) and how the question was framed
+      standpoint: d.standpoint ?? null,
+      frame: d.frame ?? null,
     });
   }
   // the agent's events, piped as they come; the pane reads the JSON-RPC result's data part
