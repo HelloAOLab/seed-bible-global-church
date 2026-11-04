@@ -273,7 +273,8 @@ function errorText(e: unknown): string {
       m
     )
   )
-    return "Your agent needs a quick update before it can save your prayers, journey and milestones. Open your Home at www.faithnet.me once while signed in, then come back here and try again.";
+    // The agent's own words go along: "update the playbook" and "refresh the grant" are different presses at the Home.
+    return `Your agent needs a quick update before it can save your prayers, journey and milestones. Open your Home at www.faithnet.me once while signed in, then come back here and try again. (Your agent said: "${m.slice(0, 240)}")`;
   return m;
 }
 
