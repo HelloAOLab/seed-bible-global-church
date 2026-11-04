@@ -158,7 +158,8 @@ export function createSettings(deps: SettingsDeps = {}) {
     saved.bookOrder === "tanakh" ? "tanakh" : "traditional"
   );
   /** The Discover card beside the chapter (the old reader's "Show discovered content"). */
-  const showDiscovered = signal(saved.showDiscovered !== false);
+  // seedbible.org reads in one centred column; the Discover card in the chapter waits until the reader turns it on.
+  const showDiscovered = signal(saved.showDiscovered === true);
   const selectionEffects = signal<SelectionEffects>(
     saved.selectionEffects === "enabled" ||
       saved.selectionEffects === "disabled"

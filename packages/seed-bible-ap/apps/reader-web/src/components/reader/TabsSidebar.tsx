@@ -532,7 +532,8 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           ) : (
             <span className="material-symbols-outlined">account_circle</span>
           )}
-          {state.outbox.pending.value > 0 && (
+          {/* Changes waiting to send — only someone signed in has anywhere to send them. */}
+          {!!state.session.value && state.outbox.pending.value > 0 && (
             <span className="sb-reader-toolbar-unread-indicator">
               {state.outbox.pending.value}
             </span>
