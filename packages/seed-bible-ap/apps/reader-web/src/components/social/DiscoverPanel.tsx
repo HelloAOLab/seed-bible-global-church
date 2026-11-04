@@ -46,9 +46,9 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
   ]);
 
   const notes = state.annotations.forChapter(chapterRef).value;
-  const released = state.discover.forChapter(chapterRef).value?.offerings ?? [];
   const sources = providers.filter((p) => (found[p.id]?.length ?? 0) > 0);
-  const hasNotes = notes.length > 0 || released.length > 0;
+  // As seedbible.org's card: the reader's own notes on the chapter (what others published is in the Discover pane).
+  const hasNotes = notes.length > 0;
   const hasContent = hasNotes || sources.length > 0;
   // The header's Discover-content button shows only while there is a card to place.
   useEffect(() => {
@@ -119,7 +119,7 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
         )}
         <div className="sb-discover-content-panel-scroll">
           {(f === "all" || f === "notes") && hasNotes && (
-            <ChapterNotes state={state} />
+            <ChapterNotes state={state} ownOnly />
           )}
           {sources
             .filter((p) => f === "all" || f === p.id)
@@ -174,9 +174,12 @@ export function createNote(state: ReaderState) {
 export function ChapterNotes({
   state,
   empty,
+  ownOnly,
 }: {
   state: ReaderState;
   empty?: boolean;
+  /** Only the reader's own notes (the card beside the chapter, as seedbible.org's). */
+  ownOnly?: boolean;
 }) {
   const { t } = useI18n();
   const { reading, ui } = state;
@@ -189,7 +192,9 @@ export function ChapterNotes({
   const isFriends = (o: { owner: string; shelf: string }) =>
     friendSet.has((o.owner || o.shelf).toLowerCase());
   const released = [
-    ...(state.discover.forChapter(chapterRef).value?.offerings ?? []),
+    ...(ownOnly
+      ? []
+      : (state.discover.forChapter(chapterRef).value?.offerings ?? [])),
   ].sort((a, b) => Number(isFriends(b)) - Number(isFriends(a)));
   if (!notes.length && !released.length && !empty) return null;
   const ref = (start: number, end: number) =>

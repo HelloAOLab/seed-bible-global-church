@@ -452,7 +452,16 @@ export class FlowContext {
     const available = view.getByRole("tab", { name: /available/i });
     if (await available.count()) await available.click();
     for (const name of names) {
-      const row = view.locator(".sb-extension-row", { hasText: name }).first();
+      // By its exact name: "Places" is also in "People, places and events".
+      const row = view
+        .locator(".sb-extension-row", {
+          has: page.locator(".sb-extension-name", {
+            hasText: new RegExp(
+              `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`
+            ),
+          }),
+        })
+        .first();
       const install = row.getByRole("button", { name: "Install" });
       if (await install.count()) {
         await install.click();

@@ -23,6 +23,9 @@ export function discoverItemOf(m: PublishedMedia): DiscoverItem {
 const defaultContent: ExtensionRegistration = {
   id: "default-content",
   label: "Videos and articles",
+  // seedbible.org installs its Discover sources only when the reader asks (autoinstall off), so a first visit
+  // reads the chapter alone; Settings → Extensions turns it on.
+  defaultEnabled: false,
   description:
     "Videos and articles published about the chapter on screen (BibleProject's overviews, curated videos), in Discover.",
   init: function* (ctx) {
