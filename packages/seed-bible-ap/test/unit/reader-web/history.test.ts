@@ -184,7 +184,9 @@ describe("reading history", () => {
     await until(async () => (await state.history.recent()).length > 0);
     const [r] = await state.history.recent();
     expect(r!.chapterRef).toBe(state.reading.chapterRef.value);
-    expect(r!.edition).toBe("BSB");
+    // the edition read: a new device opens English on AAB, as seedbible.org does
+    expect(r!.edition).toBe(state.reading.translationId.value);
+    expect(r!.edition).toBe("AAB");
     stop();
   });
 });
