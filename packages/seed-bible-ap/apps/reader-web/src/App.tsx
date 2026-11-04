@@ -111,7 +111,7 @@ export function App({ state }: { state: ReaderState }) {
   }, [pane, collapsed, embed]);
   if (embed)
     return (
-      <div className="sb-app sb-app-embed">
+      <div className="sb-app sb-app-root sb-app-embed sb-embed-minimal">
         <main className="sb-app-main" ref={mainRef}>
           <PanesLayout state={state} />
         </main>
@@ -127,7 +127,7 @@ export function App({ state }: { state: ReaderState }) {
     );
   return (
     <div
-      className={`sb-app${full ? " sb-app-with-full-pane" : pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
+      className={`sb-app sb-app-root${full ? " sb-app-with-full-pane" : pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
     >
       <TabsSidebar state={state} />
       {state.ui.sidebarDrawer.value && (

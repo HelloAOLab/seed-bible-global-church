@@ -81,8 +81,8 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             className="sb-sidebar-top-icon-button sb-sidebar-collapse-button"
             aria-label={
               collapsed
-                ? t("open-sidebar", { defaultValue: "Open sidebar" })
-                : t("close-sidebar", { defaultValue: "Close sidebar" })
+                ? t("expand-sidebar", { defaultValue: "Expand sidebar" })
+                : t("collapse-sidebar", { defaultValue: "Collapse sidebar" })
             }
             onClick={() =>
               drawer
@@ -91,7 +91,11 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             }
           >
             <span className="material-symbols-outlined rtl-mirror">
-              {collapsed || drawer ? "menu" : "menu_open"}
+              {drawer
+                ? "menu"
+                : collapsed
+                  ? "left_panel_open"
+                  : "left_panel_close"}
             </span>
           </button>
         </div>

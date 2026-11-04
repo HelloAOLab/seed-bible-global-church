@@ -27,7 +27,6 @@
   "logo": "Logo",
   "extensions": "Extensions",
   "language": "Language",
-  "close-sidebar": "Close sidebar",
   "pane-layout": "Pane layout",
   "back": "Back",
   "close-footnote": "Close footnote",
@@ -179,7 +178,6 @@
   "read-from-device": "Read from this device",
   "live-session": "Live session",
   "listen": "Listen",
-  "open-sidebar": "Open sidebar",
   "session-show-everyone": "Show everyone",
   "share-verses": "Share",
   "annotation-conflict": "This note was edited on two devices. Both versions are kept until you choose one.",
@@ -1378,5 +1376,7 @@
   "account": "Account",
   "app-version": "v{{version}} · {{commit}}",
   "report-a-bug": "Report a bug",
-  "scripture-verified-tooltip": "{{name}} · Verified against its publisher's text"
+  "scripture-verified-tooltip": "{{name}} · Verified against its publisher's text",
+  "expand-sidebar": "Expand sidebar",
+  "collapse-sidebar": "Collapse sidebar"
 }
