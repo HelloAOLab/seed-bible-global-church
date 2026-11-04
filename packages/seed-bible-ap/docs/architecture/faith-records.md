@@ -111,9 +111,12 @@ any text leaves, and nothing is inferred. Three points need joining up:
 
 ## Not done yet
 
-- **The runtime is not deployed.** The live faithnet runtime was uploaded on 2026-11-04 at 00:24 UTC from a tree
-  that is not master. The next deploy should come from a tree that includes master. Until then, the Faith page says
-  the Home's agent cannot keep faith records yet.
+- **Each person's playbook needs re-pinning.** Live since 2026-11-04: the runtime (deployed from the Church app's
+  branch, which includes master), the Home's faith scope, and the reader. Seed Reader passes PY1–PY3 on the live
+  site. Anyone else needs a grant that carries `vault:faith.*` (the Home re-issues it at sign-in) and a person-steward
+  playbook at definition `0x83970be5…` or later (`scripts/assign-playbook.mjs <handle>` for a sample person).
+- **The contract and runtime actions differ.** The registry's contracts say `action=execute`; the runtime's tools say
+  `record`/`save`/`request`, so the contract text is not merged into them. Align them on the next runtime deploy.
 - **Old records are not moved yet.** Moving ChurchCore's journey data and the Church app's `church.journey` /
   `church.prayer` records is not done.
 - **YouVersion features still to come.** Guided Prayer, a prayer-time streak, and friends praying for each other

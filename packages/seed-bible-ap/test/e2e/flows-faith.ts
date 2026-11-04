@@ -16,7 +16,7 @@ async function openFaith(c: FlowContext, tab: "Prayer" | "Journey" | "Care") {
 
 export const FAITH_FLOWS: Flow[] = [
   {
-    id: "FA1",
+    id: "PY1",
     section: "10a. Prayer, faith journey and care",
     title: "Keep a prayer, pray for it, mark it answered",
     rows: ["Prayer list"],
@@ -27,7 +27,7 @@ export const FAITH_FLOWS: Flow[] = [
       await c.open(CH);
       await c.signInAsSample();
       const pane = await openFaith(c, "Prayer");
-      const label = `FA1 prayer ${stamp()}`;
+      const label = `PY1 prayer ${stamp()}`;
       await pane.locator("#faith-prayer-label").fill(label);
       await pane.locator("#faith-praying-for").fill("my neighbour");
       await pane.getByRole("button", { name: "Add" }).click();
@@ -58,7 +58,7 @@ export const FAITH_FLOWS: Flow[] = [
     },
   },
   {
-    id: "FA2",
+    id: "PY2",
     section: "10a. Prayer, faith journey and care",
     title: "Say where you are on your journey; add a milestone",
     rows: ["Your faith journey"],
@@ -80,7 +80,7 @@ export const FAITH_FLOWS: Flow[] = [
       await pane
         .locator(".sb-faith-steps", { hasText: "Reading the Bible" })
         .waitFor({ timeout: 5000 });
-      const place = `FA2 place ${stamp()}`;
+      const place = `PY2 place ${stamp()}`;
       await pane.locator("#faith-milestone").selectOption("Baptized");
       await pane.locator("#faith-milestone-place").fill(place);
       await pane
@@ -95,7 +95,7 @@ export const FAITH_FLOWS: Flow[] = [
     },
   },
   {
-    id: "FA3",
+    id: "PY3",
     section: "10a. Prayer, faith journey and care",
     title: "Ask your church for care; withdraw it",
     rows: ["Ask your church for care"],
@@ -107,7 +107,7 @@ export const FAITH_FLOWS: Flow[] = [
       await c.signInAsSample();
       const pane = await openFaith(c, "Care");
       await pane.getByText(/not for emergencies/).waitFor({ timeout: 5000 });
-      const label = `FA3 please call ${stamp()}`;
+      const label = `PY3 please call ${stamp()}`;
       await pane.locator("#faith-care-label").fill(label);
       await pane.getByRole("button", { name: "Ask for care" }).click();
       const card = pane.locator(".sb-faith-card", { hasText: label });
