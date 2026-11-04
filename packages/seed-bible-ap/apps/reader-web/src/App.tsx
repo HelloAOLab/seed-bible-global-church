@@ -1,6 +1,7 @@
 // THE SHELL — the tabs sidebar, the panes (one reader per slot), a side pane (notes, Your Content or account), the
 // verse toolbar, the floating reader toolbar and the selector overlay. Replaces the hello page.
 import { EditProfilePane, ProfilePane } from "./components/chrome/ProfilePane";
+import { ShareWithFriend } from "./components/social/ShareWithFriend";
 import { FullScreenHelp } from "./components/chrome/FullScreenHelp";
 import { ActivityBar } from "./components/chrome/ActivityBar";
 import { Toast } from "./components/chrome/Toast";
@@ -266,6 +267,7 @@ export function App({ state }: { state: ReaderState }) {
       <SessionCloseConfirm state={state} />
       <BibleSelector state={state} />
       <ShareDialog state={state} />
+      <ShareWithFriend state={state} />
       {state.ui.shared.value && <SharedPageView state={state} />}
       <Tour state={state} />
       <FullScreenHelp state={state} />

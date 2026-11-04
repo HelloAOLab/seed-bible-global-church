@@ -9090,6 +9090,176 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
+    id: "FS1",
+    timeoutMs: 1_800_000,
+    section: "8. Today, Discover and publishing",
+    title: "Share a note with one friend",
+    rows: ["Share with a friend"],
+    checks:
+      "Seed Reader and Ruth Bankole become friends. Seed Reader writes a note on John 3:16, opens its menu → Share with a friend → Ruth: the first time he signs twice at his Home (Grant & continue: the read grant, then the message); the window says Shared with Ruth and offers the link. Ruth opens the link: her Today shows Shared with you, Seed Reader, the note's words. He shares a second note: no Home window this time, and it reaches her Today. Notes deleted and friends removed after, whatever happens.",
+    run: async (c) => {
+      const k = friendKit(c);
+      const SR = /reader/i;
+      const ctxR = await c.browser.newContext();
+      const ruth = await ctxR.newPage();
+      c.watch(ruth);
+      const first = `shared with Ruth ${stamp()}`;
+      const second = `second share ${stamp()}`;
+      // Every window the reader opens, in order (the second may open while the first is still being closed).
+      const windows: import("playwright").Page[] = [];
+      const nextWindow = async () => {
+        const t0 = Date.now();
+        while (!windows.length) {
+          if (Date.now() - t0 > 120000) {
+            const said = await c.page
+              .getByRole("dialog", { name: "Share with a friend" })
+              .innerText()
+              .catch(() => "no dialog");
+            await k.shot(c.page, "no-window");
+            throw new Error(
+              `no Home window opened; the dialog says: ${said.replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          }
+          await c.page.waitForTimeout(250);
+        }
+        return windows.shift()!;
+      };
+      /** Grant & continue in each Home window the share opens, then close it. */
+      const sign = async (label: string) => {
+        const home = await nextWindow();
+        await home.waitForLoadState().catch(() => {});
+        const grant = home.getByTestId("ask-grant");
+        await grant.waitFor({ timeout: 90000 }).catch(async () => {
+          await k.shot(home, `${label}-no-card`);
+          throw new Error(
+            `${label}: no authority card: ${await k.words(home)}`
+          );
+        });
+        await k.shot(home, `${label}-card`);
+        await grant.click();
+        await home.waitForTimeout(8000);
+        await k.shot(home, `${label}-after`);
+        await home.close().catch(() => {});
+      };
+      const shareNote = async (text: string) => {
+        await c.pressToolbar("Notes");
+        const card = c.page
+          .locator(".sb-note-card:not(.sb-note-card-draft)", { hasText: text })
+          .first();
+        await card.waitFor({ timeout: 30000 });
+        await c.noteAction(card, /share with a friend/i);
+        const dialog = c.page.getByRole("dialog", {
+          name: "Share with a friend",
+        });
+        await dialog.waitFor({ timeout: 10000 });
+        await dialog.getByRole("button", { name: /ruth/i }).first().click();
+        return dialog;
+      };
+      try {
+        await k.signIn(c.page, c.context, /seed ?reader/i, "sr");
+        await k.signIn(ruth, ctxR, /ruth bankole/i, "ruth");
+        await k.removeAll(
+          c.page,
+          c.context,
+          /ruth|@example\.invalid/i,
+          "sr-pre"
+        );
+        await k.removeAll(ruth, ctxR, SR, "ruth-pre");
+        const pane = await k.openFriends(c.page);
+        await pane.getByLabel("Add a friend").fill("ruth.me");
+        const w = c.context.waitForEvent("page", { timeout: 15000 });
+        w.catch(() => undefined);
+        await pane.getByRole("button", { name: /send request/i }).click();
+        await k.answer(await w, /yes, add them/i, "sr-asks");
+        await k.expectRow(ruth, "Friend requests", SR, "ruth-request");
+        const p2 = await k.openFriends(ruth);
+        const w2 = ctxR.waitForEvent("page", { timeout: 15000 });
+        w2.catch(() => undefined);
+        await p2
+          .locator(".sb-friends-row", { hasText: SR })
+          .getByRole("button", { name: /^accept/i })
+          .click();
+        await k.answer(await w2, /yes, add them/i, "ruth-accepts");
+        await k.expectRow(c.page, "Friends", /ruth/i, "sr-friends");
+
+        await c.open("/en/BSB/john/3");
+        await deleteAllNotes(c);
+        await writeNote(c, 16, first);
+        await synced(c);
+        const collect = (pg: import("playwright").Page) =>
+          void windows.push(pg);
+        c.context.on("page", collect);
+        const dialog = await shareNote(first);
+        // A grant that still holds from an earlier run means no window at all; else up to two (grant, message).
+        let signed = 0;
+        for (let t0 = Date.now(); Date.now() - t0 < 300000; ) {
+          const said = await dialog.innerText().catch(() => "");
+          if (
+            /Shared with/i.test(said) ||
+            /did not|not signed|refus|error/i.test(said)
+          )
+            break;
+          if (windows.length) await sign(`sign-${++signed}`);
+          else await c.page.waitForTimeout(500);
+        }
+        c.context.off("page", collect);
+        await c.waitText(dialog, /Shared with/i, 30000);
+        const link = await dialog
+          .locator(".sb-share-friend-copy")
+          .getAttribute("data-link");
+        if (!link) throw new Error("no link once shared");
+        await k.shot(c.page, "sr-shared");
+        await c.page.keyboard.press("Escape").catch(() => {});
+
+        console.log(`  FS1 link: ${link.slice(0, 120)}`);
+        await ruth.goto(link);
+        const today = c.pane(ruth);
+        await today.waitFor({ timeout: 20000 });
+        await c
+          .waitText(
+            today,
+            new RegExp(`Shared with you[\\s\\S]*${first}`),
+            120000
+          )
+          .catch(async (e) => {
+            await k.shot(ruth, "ruth-no-share");
+            const shared = await ruth
+              .locator(".sb-today-titled-section", {
+                hasText: "Shared with you",
+              })
+              .innerText()
+              .catch(() => "no Shared with you section");
+            throw new Error(
+              `${(e as Error).message.slice(0, 60)} — Shared with you says: ${shared.replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          });
+        await k.shot(ruth, "ruth-shared-with-you");
+
+        await writeNote(c, 17, second);
+        await synced(c);
+        let opened = false;
+        const onPage = () => (opened = true);
+        c.context.on("page", onPage);
+        const d2 = await shareNote(second);
+        await c.waitText(d2, /Shared with/i, 120000);
+        c.context.off("page", onPage);
+        if (opened) throw new Error("the second share opened a Home window");
+        await c.page.keyboard.press("Escape").catch(() => {});
+        await ruth.reload();
+        await c.waitText(c.pane(ruth), new RegExp(second), 120000);
+        return "two Home signatures the first time; Ruth read it from the link on Today; the second share reached her with no window";
+      } finally {
+        await c.open("/en/BSB/john/3").catch(() => {});
+        await deleteAllNotes(c).catch(() => {});
+        await k
+          .removeAll(c.page, c.context, /ruth/i, "sr-post")
+          .catch(() => {});
+        await k.removeAll(ruth, ctxR, SR, "ruth-post").catch(() => {});
+        await ctxR.close().catch(() => {});
+      }
+    },
+  },
+  {
     id: "FX1",
     timeoutMs: 3_600_000,
     section: "8. Today, Discover and publishing",

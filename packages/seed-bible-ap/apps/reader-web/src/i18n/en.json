@@ -1381,5 +1381,15 @@
   "verse-of-the-day-loading": "Loading the verse of the day…",
   "less": "Less",
   "selected-year": "Year: {{year}}",
-  "read-that-day": "Read that day"
+  "read-that-day": "Read that day",
+  "share-with-friend": "Share with a friend",
+  "share-friend-saving": "Keeping it for {{name}}…",
+  "share-friend-sign-grant": "Sign at your Home to let {{name}} read what you share with them. A window has opened.",
+  "share-friend-sign-message": "Last step: sign at your Home to send {{name}} the link.",
+  "share-friend-done": "Shared with {{name}}. They'll see it in Seed Bible.",
+  "share-friend-signed-out": "Sign in to share with a friend.",
+  "share-friend-none": "Add a friend first: only your friends can be shared with.",
+  "shared-with-you": "Shared with you",
+  "shared-unreadable": "This can't be read right now. They may have stopped sharing it.",
+  "shared-empty": "Nothing shared yet."
 }

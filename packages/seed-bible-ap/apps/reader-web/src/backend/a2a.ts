@@ -1,6 +1,7 @@
 // THE LIVE BACKEND — one harness run on reader-a2a per call, as the signed-in reader (the id_token is the
 // session; the workspace plans the pinned `skill:seed/*` skill and the reader's own agent does the Library work).
 // reader-a2a never writes a person's record itself; a stranger is refused in words (BackendError "signed-out").
+import type { SharedItem } from "../state/social/share";
 import type {
   BucketDocument,
   Collection,
@@ -350,6 +351,57 @@ export function createA2aBackend(
           agent: a.agent!,
           name: a.displayName || a.name || a.agent!,
         }));
+    },
+    async sharePut(friend, item) {
+      const r = await ask(
+        "seed.share.put",
+        "remove" in item
+          ? { friend, key: item.key, remove: "yes" }
+          : { friend, ...item },
+        "share this with my friend"
+      );
+      return { shelf: String(r.shelf ?? "") };
+    },
+    async shareGrants(friend) {
+      const r = await ask(
+        "seed.share.grants",
+        { friend },
+        "the read grant I gave my friend"
+      );
+      return { grant: r.grant ?? null };
+    },
+    async shareGrant(friend) {
+      const r = await ask(
+        "seed.share.grant",
+        { friend },
+        "let my friend read what I share"
+      );
+      return r.parked
+        ? {
+            parked: true as const,
+            runRef: String(r.runRef ?? ""),
+            ...(typeof r.prompt === "string" ? { prompt: r.prompt } : {}),
+          }
+        : { grant: r.grant };
+    },
+    async shareNotify(friend, message) {
+      const r = await ask(
+        "seed.share.notify",
+        { friend, message },
+        "tell my friend I shared something"
+      );
+      return r.parked
+        ? { parked: true as const, runRef: String(r.runRef ?? "") }
+        : { sent: true as const };
+    },
+    async shareFetch(publisher, id, grant) {
+      const r = await ask(
+        "seed.share.fetch",
+        { publisher, id, grant },
+        "what my friend shared with me"
+      );
+      const shelf = (r.shelf ?? {}) as { items?: SharedItem[] };
+      return { items: Array.isArray(shelf.items) ? shelf.items : [] };
     },
     async faithChurches() {
       const r = await ask(

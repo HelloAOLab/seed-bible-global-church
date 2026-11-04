@@ -33,6 +33,8 @@ type Reply = {
   result?: unknown;
   results?: Array<{ toolId: string; result: unknown }>;
   prompt?: { prompt?: string };
+  /** An act parked for the person's signature: what it is, in a line (`library.grant.issue on 0x…`). */
+  summary?: string;
   runRef?: string;
 };
 
@@ -69,7 +71,12 @@ export class PersonAgent {
   async run<T>(
     steps: PlanStep[],
     message: string,
-    opts: { addressee?: string } = {}
+    opts: {
+      addressee?: string;
+      /** An act that needs the person's own signature at their Home (a read grant, a message): its parked step comes
+       *  back as `{ parked: true, runRef, prompt }` for the app to send them to `/you?run=`, not as a refusal. */
+      parkedOk?: boolean;
+    } = {}
   ): Promise<PersonAgentOutcome<T>> {
     const nonce = [...crypto.getRandomValues(new Uint8Array(8))]
       .map((b) => b.toString(16).padStart(2, "0"))
@@ -152,6 +159,19 @@ export class PersonAgent {
         409,
         reply.error ?? reply.text ?? "your agent refused"
       );
+    if (
+      opts.parkedOk &&
+      (reply.kind === "authority_required" || reply.kind === "prompt") &&
+      runRef
+    )
+      return {
+        runRef,
+        result: {
+          parked: true,
+          runRef,
+          prompt: reply.prompt?.prompt ?? reply.summary ?? reply.text ?? "",
+        } as unknown as T,
+      };
     if (reply.kind === "authority_required" || reply.kind === "prompt")
       throw new WireRefusal(
         409,

@@ -2,6 +2,7 @@
 // from the Home and what they released lately. Dressed by the copied `today.css` / `friends.css` where the
 // classes match, and `app.css` for the rest.
 import { useEffect, useState } from "preact/hooks";
+import { SharedWithMe } from "./SharedWithMe";
 import { YearOfReading } from "./YearOfReading";
 import { VerseOfTheDay } from "./VerseOfTheDay";
 import type { RecentReading } from "../../state/records/history";
@@ -70,6 +71,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
           {recentRead && <TodayWelcome state={state} hasReading={hasReading} />}
           {/* As on seedbible.org, the verse of the day is for a signed-in reader. */}
           {signedIn && <VerseOfTheDay state={state} onOpen={open} />}
+          {signedIn && <SharedWithMe state={state} onOpen={(c) => open(c)} />}
           <div className="sb-content-section">
             <div className="sb-content-section-head">
               <h3 className="sb-content-section-title">

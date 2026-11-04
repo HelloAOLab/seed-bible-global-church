@@ -13,6 +13,7 @@ import type { Offering } from "../state/social/discover";
 import type { HuddleAnswer, HuddleOp } from "../state/sessions/huddle";
 import type { Contact } from "../state/social/today";
 import type { FaithBackend } from "../state/faith/faith";
+import type { ShareBackend } from "../state/social/share";
 
 export interface PublishSliceArgs {
   kind: string;
@@ -126,7 +127,7 @@ export interface ReaderIdentity {
 }
 
 /** The reader's faith records (journey, prayers, care) are their agent's person.faith.* tools — FaithBackend. */
-export interface ReaderBackend extends FaithBackend {
+export interface ReaderBackend extends FaithBackend, ShareBackend {
   readonly kind: "a2a" | "dev";
   /** Who is signed in, or null — a stranger reads the Bible and nothing of theirs leaves the device. */
   identity(): ReaderIdentity | null;
