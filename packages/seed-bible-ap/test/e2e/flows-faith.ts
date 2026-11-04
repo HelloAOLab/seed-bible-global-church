@@ -119,4 +119,33 @@ export const FAITH_FLOWS: Flow[] = [
       return "the emergency note shows; the request was kept under Your requests, then withdrawn";
     },
   },
+  {
+    id: "PY4",
+    section: "10a. Prayer, faith journey and care",
+    title: "Find your church on FaithNet and choose it",
+    rows: ["Ask your church for care"],
+    timeoutMs: 240_000,
+    checks:
+      "Care, with no church linked at the Home: searching 'Fort Morgan' finds Fort Morgan household church on FaithNet; choosing it says requests go to its leaders; Change clears it again.",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await openFaith(c, "Care");
+      const change = pane.getByRole("button", { name: "Change" });
+      if (await change.count()) await change.click();
+      await pane.locator("#faith-church-search").fill("Fort Morgan");
+      await pane.getByRole("button", { name: "Find" }).click();
+      const pick = pane.getByRole("button", {
+        name: /Fort Morgan household church is my church/,
+      });
+      await pick.waitFor({ timeout: 60000 });
+      await pick.click();
+      await pane
+        .getByText(/Goes to the leaders of Fort Morgan household church/)
+        .waitFor({ timeout: 5000 });
+      await pane.getByRole("button", { name: "Change" }).click();
+      await pane.locator("#faith-church-search").waitFor({ timeout: 5000 });
+      return "found Fort Morgan household church on FaithNet, chose it (requests go to its leaders), then cleared it";
+    },
+  },
 ];

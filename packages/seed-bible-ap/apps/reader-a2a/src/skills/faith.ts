@@ -63,6 +63,8 @@ const FORWARD = {
     args: [],
     fixed: { type: "church" },
   },
+  // A church on FaithNet by its name, from the public registry (the reader's agent searches; it authorizes nothing).
+  "seed.faith.church.find": { to: "discovery.agents.find", args: ["intent"] },
 } as const;
 type FaithToolId = keyof typeof FORWARD;
 
@@ -116,6 +118,12 @@ export const FAITH_TOOLS: ToolSpec[] = [
     ["ask my church to call me"]
   ),
   spec(
+    "seed.faith.church.find",
+    "Finds a church on FaithNet by its name, from the public registry (discovery.agents.find) — for a reader not yet linked to one. Args: intent (the church's name, in their words).",
+    false,
+    ["find my church"]
+  ),
+  spec(
     "seed.faith.churches",
     "The churches the signed-in reader belongs to, from their own links at their Home (person.affiliations.list, type church) — who a prayer or a care request can be shared with. No args.",
     false,
@@ -137,6 +145,7 @@ const MESSAGE: Record<FaithToolId, string> = {
   "seed.faith.care.request": "keep my care request",
   "seed.faith.shared": "what of my faith life may this audience see",
   "seed.faith.churches": "which churches do I belong to",
+  "seed.faith.church.find": "find a church on FaithNet",
 };
 
 /** Only the arguments the person runtime declares, as strings; everything else the browser sent is dropped. */

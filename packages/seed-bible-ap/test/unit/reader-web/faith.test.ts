@@ -3,6 +3,7 @@
 // milestone removed; a failed call is said in words, never thrown at the page.
 import { describe, expect, it } from "vitest";
 import { createDevBackend } from "../../../apps/reader-web/src/backend/dev";
+import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
 import { createFaith } from "../../../apps/reader-web/src/state/faith/faith";
 
 const ME = { agent: "0x" + "a1".repeat(20), name: "Ruth", wire: true };
@@ -74,5 +75,28 @@ describe("the reader's faith records", () => {
       error: true,
     });
     expect(faith.prayers.value.prayers.map((p) => p.label)).toEqual(["Kept"]);
+  });
+
+  it("a church found by name is chosen, offered for care, and remembered on this device", async () => {
+    const backend = createDevBackend(ME);
+    const fort = {
+      agent: "0x" + "f".repeat(40),
+      name: "Fort Morgan household church",
+    };
+    backend.churchDirectory.push(fort, {
+      agent: "0x" + "e".repeat(40),
+      name: "Evans Somali house church",
+    });
+    const prefs = memoryStores().prefs;
+    const faith = createFaith(backend, () => !!backend.identity(), prefs);
+    expect(await faith.findChurches("fort")).toEqual([fort]);
+    expect(await faith.findChurches("  ")).toEqual([]);
+    await faith.chooseChurch(fort);
+    expect(faith.churches.value).toEqual([fort]);
+    const again = createFaith(backend, () => !!backend.identity(), prefs);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(again.churches.value).toEqual([fort]);
+    await again.chooseChurch(null);
+    expect(again.churches.value).toEqual([]);
   });
 });

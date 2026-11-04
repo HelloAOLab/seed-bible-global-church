@@ -120,6 +120,97 @@ function WhoCanSee(props: {
           ))}
         </select>
       )}
+      {!props.churches.length && (
+        <p className="sb-faith-hint">
+          {t("faith-share-church-hint", {
+            defaultValue:
+              "To share with your church, choose it on the Care tab first.",
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Find your church on FaithNet by its name and choose it, when your Home links you to none. */
+function ChurchFinder({ state }: { state: ReaderState }) {
+  const { t } = useI18n();
+  const { faith } = state;
+  const [q, setQ] = useState("");
+  const [found, setFound] = useState<Church[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="sb-faith-finder">
+      <p className="sb-faith-hint">
+        {t("faith-find-church-hint", {
+          defaultValue:
+            "Your Home does not link you to a church yet. Find yours on FaithNet:",
+        })}
+      </p>
+      <div className="sb-faith-form-row">
+        <input
+          id="faith-church-search"
+          aria-label={t("faith-church-name", {
+            defaultValue: "Your church's name",
+          })}
+          placeholder={t("faith-church-name", {
+            defaultValue: "Your church's name",
+          })}
+          value={q}
+          onInput={(e) => setQ((e.target as HTMLInputElement).value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              (
+                e.currentTarget.nextElementSibling as HTMLButtonElement | null
+              )?.click();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="sb-faith-button"
+          disabled={!q.trim() || busy}
+          onClick={() => {
+            setBusy(true);
+            void faith.findChurches(q).then((r) => {
+              setFound(r);
+              setBusy(false);
+            });
+          }}
+        >
+          {t("faith-find", { defaultValue: "Find" })}
+        </button>
+      </div>
+      {found && !found.length && (
+        <p className="sb-faith-empty">
+          {t("faith-no-church-found", {
+            defaultValue: "No church by that name on FaithNet yet.",
+          })}
+        </p>
+      )}
+      {found && found.length > 0 && (
+        <ul className="sb-faith-list">
+          {found.map((c) => (
+            <li key={c.agent}>
+              <button
+                type="button"
+                className="sb-faith-button"
+                onClick={() => {
+                  void faith.chooseChurch(c);
+                  setFound(null);
+                  setQ("");
+                }}
+              >
+                {t("faith-this-is-my-church", {
+                  defaultValue: "{{church}} is my church",
+                  church: c.name,
+                })}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -664,15 +755,19 @@ function CareTab({ state }: { state: ReaderState }) {
             {t("faith-care-to", {
               defaultValue: "Goes to the leaders of {{church}}.",
               church: churches[0]!.name,
-            })}
+            })}{" "}
+            {faith.chosenChurch.value?.agent === churches[0]!.agent && (
+              <button
+                type="button"
+                className="sb-faith-button sb-faith-button-quiet"
+                onClick={() => void faith.chooseChurch(null)}
+              >
+                {t("faith-change-church", { defaultValue: "Change" })}
+              </button>
+            )}
           </p>
         ) : (
-          <p className="sb-faith-hint">
-            {t("faith-care-no-church", {
-              defaultValue:
-                "You are not linked to a church at your Home yet. Your request is kept for you until you are.",
-            })}
-          </p>
+          <ChurchFinder state={state} />
         )}
         <label className="sb-faith-check">
           <input

@@ -3,7 +3,7 @@
 // vault as the faith ontology's records (person.faith.* — faith.ttl "The person's own faith records"); this module
 // holds the last answer to show and sends the reader's acts. Nothing here decides who may see what: each record
 // carries its own visibility, and the reader's agent applies it.
-import { signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 
 /** fci:FaithJourneyStageValue notations, in journey order (faith.data.ttl). */
 export const STAGES = [
@@ -143,6 +143,8 @@ export interface FaithBackend {
   faithSavePrayer(args: PrayerSaveArgs): Promise<{ answer?: string }>;
   faithRequestCare(args: CareRequestArgs): Promise<{ answer?: string }>;
   faithChurches(): Promise<Church[]>;
+  /** Churches on FaithNet by name, from the public registry. */
+  faithFindChurches(name: string): Promise<Church[]>;
 }
 
 const EMPTY_JOURNEY: JourneyView = {
@@ -152,10 +154,39 @@ const EMPTY_JOURNEY: JourneyView = {
   nextSteps: [],
 };
 
-export function createFaith(backend: FaithBackend, signedIn: () => boolean) {
+/** A church the reader chose on this device (not yet a link at their Home), so care and sharing can name it. */
+const CHOSEN_KEY = "faith:chosen-church";
+type Prefs = {
+  get(k: string): Promise<unknown>;
+  set(k: string, v: unknown): Promise<void>;
+  delete(k: string): Promise<void>;
+};
+
+export function createFaith(
+  backend: FaithBackend,
+  signedIn: () => boolean,
+  prefs?: Prefs
+) {
   const journey = signal<JourneyView>(EMPTY_JOURNEY);
   const prayers = signal<PrayersView>({ prayers: [], care: [] });
-  const churches = signal<Church[]>([]);
+  /** The churches the reader's Home links them to. */
+  const linked = signal<Church[]>([]);
+  /** A church the reader found and chose here, when their Home links them to none. */
+  const chosen = signal<Church | null>(null);
+  const churches = computed<Church[]>(() => {
+    const c = chosen.value;
+    return c && !linked.value.some((l) => l.agent === c.agent)
+      ? [...linked.value, c]
+      : linked.value;
+  });
+  void prefs
+    ?.get(CHOSEN_KEY)
+    .then((v) => {
+      const c = v as Church | undefined;
+      if (c && typeof c.agent === "string" && typeof c.name === "string")
+        chosen.value = c;
+    })
+    .catch(() => {});
   const loading = signal(false);
   const loaded = signal(false);
   /** What the reader's agent said about the last act (or why it failed), in its words. */
@@ -177,7 +208,7 @@ export function createFaith(backend: FaithBackend, signedIn: () => boolean) {
       ]);
       journey.value = j;
       prayers.value = p;
-      churches.value = c;
+      linked.value = c;
       loaded.value = true;
     } catch (e) {
       message.value = { text: errorText(e), error: true };
@@ -213,16 +244,36 @@ export function createFaith(backend: FaithBackend, signedIn: () => boolean) {
       act(() => backend.faithSavePrayer(args)),
     requestCare: (args: CareRequestArgs) =>
       act(() => backend.faithRequestCare(args)),
+    chosenChurch: chosen,
+    /** Churches on FaithNet whose name matches; an empty list when none, a failure said in `message`. */
+    async findChurches(name: string): Promise<Church[]> {
+      if (!name.trim()) return [];
+      try {
+        return await backend.faithFindChurches(name.trim());
+      } catch (e) {
+        message.value = { text: errorText(e), error: true };
+        return [];
+      }
+    },
+    async chooseChurch(c: Church | null) {
+      chosen.value = c;
+      await (c ? prefs?.set(CHOSEN_KEY, c) : prefs?.delete(CHOSEN_KEY))?.catch(
+        () => {}
+      );
+    },
   };
 }
 
 function errorText(e: unknown): string {
   const m = e instanceof Error ? e.message : String(e);
-  // A runtime that does not offer the faith tools yet answers in its own words; say what that means.
+  // An agent whose playbook or storage grant predates faith records answers in its own words. Opening the Home once
+  // moves both forward (its ensure-playbook self-heal and grant coverage check), so say that, plainly.
   if (
-    /not a capability|unknown tool|no tool|not offered|person\.faith/i.test(m)
+    /not a capability|unknown[_ ]tool|no tool|not offered|person\.faith|grant predates|record_scope_denied|session_leaf_required/i.test(
+      m
+    )
   )
-    return "Your Home's agent cannot keep faith records yet. Please try again later.";
+    return "Your agent needs a quick update before it can keep prayers. Open your Home at www.faithnet.me once, then come back and try again.";
   return m;
 }
 

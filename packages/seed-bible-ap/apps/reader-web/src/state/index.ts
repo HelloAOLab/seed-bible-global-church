@@ -179,7 +179,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     refresh: () => today.refreshContacts(),
     homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
   });
-  const faith = createFaith(backend, () => !!backend.identity());
+  const faith = createFaith(backend, () => !!backend.identity(), stores.prefs);
   const invites = createInvites({
     base: A2A_BASE,
     bearer: () => {

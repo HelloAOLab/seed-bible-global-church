@@ -31,6 +31,7 @@ const WORKSPACE_LOCAL = new Set([
   "seed.faith.care.request",
   "seed.faith.shared",
   "seed.faith.churches",
+  "seed.faith.church.find",
 ]);
 
 describe("pinned skills", () => {

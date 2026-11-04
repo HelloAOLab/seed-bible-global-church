@@ -59,6 +59,8 @@ const PRACTICE_LABEL: Record<string, string> = {
 export interface DevFaith extends FaithBackend {
   /** The churches the fake Home says the reader belongs to. */
   churchList: Church[];
+  /** The churches the fake registry knows, for the finder. */
+  churchDirectory: Church[];
 }
 
 export function createDevFaith(guard: () => void): DevFaith {
@@ -71,6 +73,14 @@ export function createDevFaith(guard: () => void): DevFaith {
   const now = () => new Date().toISOString();
   return {
     churchList: [],
+    churchDirectory: [],
+    async faithFindChurches(name) {
+      guard();
+      const q = name.toLowerCase();
+      return this.churchDirectory.filter((c) =>
+        c.name.toLowerCase().includes(q)
+      );
+    },
     async faithJourney() {
       guard();
       const current = [...stages].sort((a, b) =>

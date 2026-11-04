@@ -251,3 +251,14 @@
 .sb-faith-steps .material-symbols-outlined {
   color: var(--sb-primary-color);
 }
+
+.sb-faith-finder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-faith-finder input {
+  flex: 1;
+  min-width: 0;
+}

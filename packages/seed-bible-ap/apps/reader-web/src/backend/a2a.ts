@@ -323,6 +323,34 @@ export function createA2aBackend(
       );
       return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
     },
+    async faithFindChurches(name) {
+      const r = await ask(
+        "seed.faith.church.find",
+        { intent: `${name} church` },
+        "find a church on FaithNet"
+      );
+      const agents =
+        (r.agents as
+          | Array<{
+              agent: string | null;
+              name: string | null;
+              displayName?: string;
+              agentType?: string;
+            }>
+          | undefined) ?? [];
+      // A church agent: typed so by the registry, or named under the .church root.
+      return agents
+        .filter(
+          (a) =>
+            a.agent &&
+            (/church/i.test(a.agentType ?? "") ||
+              /\.church$/i.test(a.name ?? ""))
+        )
+        .map((a) => ({
+          agent: a.agent!,
+          name: a.displayName || a.name || a.agent!,
+        }));
+    },
     async faithChurches() {
       const r = await ask(
         "seed.faith.churches",

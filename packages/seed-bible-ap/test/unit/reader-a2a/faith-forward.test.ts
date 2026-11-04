@@ -31,6 +31,7 @@ describe("faith forwarding", () => {
     const byId = Object.fromEntries(FAITH_TOOLS.map((t) => [t.id, t]));
     expect(Object.keys(byId).sort()).toEqual([
       "seed.faith.care.request",
+      "seed.faith.church.find",
       "seed.faith.churches",
       "seed.faith.journey",
       "seed.faith.journey.record",

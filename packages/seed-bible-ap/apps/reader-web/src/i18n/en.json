@@ -1333,7 +1333,6 @@
   "faith-care-normal": "This week",
   "faith-care-high": "As soon as possible",
   "faith-care-to": "Goes to the leaders of {{church}}.",
-  "faith-care-no-church": "You are not linked to a church at your Home yet. Your request is kept for you until you are.",
   "faith-care-text-ok": "It's OK to text me about this",
   "faith-care-send": "Ask for care",
   "faith-care-yours": "Your requests",
@@ -1370,5 +1369,12 @@
   "faith-milestone-JoinedGroup": "Joined a group",
   "faith-milestone-FoundationsClass": "Took a foundations class",
   "faith-milestone-StartedServing": "Started serving",
-  "faith-milestone-SharedTestimony": "Shared my story"
+  "faith-milestone-SharedTestimony": "Shared my story",
+  "faith-share-church-hint": "To share with your church, choose it on the Care tab first.",
+  "faith-find-church-hint": "Your Home does not link you to a church yet. Find yours on FaithNet:",
+  "faith-church-name": "Your church's name",
+  "faith-find": "Find",
+  "faith-no-church-found": "No church by that name on FaithNet yet.",
+  "faith-this-is-my-church": "{{church}} is my church",
+  "faith-change-church": "Change"
 }
