@@ -180,9 +180,18 @@ export const FAITH_FLOWS: Flow[] = [
         .first()
         .click();
       const pane = await openFaith(c, "Care");
+      // With one church Care names it; with others followed it offers them, the default chosen.
+      const which = pane.locator("#faith-care-church");
       await pane
         .getByText(/Goes to the leaders of Calvary Bible Church/)
+        .or(which)
+        .first()
         .waitFor({ timeout: 30000 });
+      if (await which.count()) {
+        const to = await which.locator("option:checked").innerText();
+        if (to !== "Calvary Bible Church")
+          throw new Error(`Care goes to ${to}, not the default church`);
+      }
 
       ({ view, church, site } = await openCard());
       await church.selectOption("fort-morgan-household.church");
