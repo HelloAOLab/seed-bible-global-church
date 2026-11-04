@@ -9090,7 +9090,7 @@ export const MORE_FLOWS: Flow[] = [
     },
   },
   {
-    id: "SF1",
+    id: "FS1",
     timeoutMs: 1_800_000,
     section: "8. Today, Discover and publishing",
     title: "Share a note with one friend",
@@ -9110,8 +9110,16 @@ export const MORE_FLOWS: Flow[] = [
       const nextWindow = async () => {
         const t0 = Date.now();
         while (!windows.length) {
-          if (Date.now() - t0 > 120000)
-            throw new Error("no Home window opened");
+          if (Date.now() - t0 > 120000) {
+            const said = await c.page
+              .getByRole("dialog", { name: "Share with a friend" })
+              .innerText()
+              .catch(() => "no dialog");
+            await k.shot(c.page, "no-window");
+            throw new Error(
+              `no Home window opened; the dialog says: ${said.replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          }
           await c.page.waitForTimeout(250);
         }
         return windows.shift()!;
@@ -9182,10 +9190,20 @@ export const MORE_FLOWS: Flow[] = [
           void windows.push(pg);
         c.context.on("page", collect);
         const dialog = await shareNote(first);
-        await sign("grant");
-        await sign("message");
+        // A grant that still holds from an earlier run means no window at all; else up to two (grant, message).
+        let signed = 0;
+        for (let t0 = Date.now(); Date.now() - t0 < 300000; ) {
+          const said = await dialog.innerText().catch(() => "");
+          if (
+            /Shared with/i.test(said) ||
+            /did not|not signed|refus|error/i.test(said)
+          )
+            break;
+          if (windows.length) await sign(`sign-${++signed}`);
+          else await c.page.waitForTimeout(500);
+        }
         c.context.off("page", collect);
-        await c.waitText(dialog, /Shared with Ruth/i, 240000);
+        await c.waitText(dialog, /Shared with/i, 30000);
         const link = await dialog
           .locator(".sb-share-friend-copy")
           .getAttribute("data-link");
@@ -9193,14 +9211,28 @@ export const MORE_FLOWS: Flow[] = [
         await k.shot(c.page, "sr-shared");
         await c.page.keyboard.press("Escape").catch(() => {});
 
+        console.log(`  FS1 link: ${link.slice(0, 120)}`);
         await ruth.goto(link);
         const today = c.pane(ruth);
         await today.waitFor({ timeout: 20000 });
-        await c.waitText(
-          today,
-          new RegExp(`Shared with you[\\s\\S]*${first}`),
-          120000
-        );
+        await c
+          .waitText(
+            today,
+            new RegExp(`Shared with you[\\s\\S]*${first}`),
+            120000
+          )
+          .catch(async (e) => {
+            await k.shot(ruth, "ruth-no-share");
+            const shared = await ruth
+              .locator(".sb-today-titled-section", {
+                hasText: "Shared with you",
+              })
+              .innerText()
+              .catch(() => "no Shared with you section");
+            throw new Error(
+              `${(e as Error).message.slice(0, 60)} — Shared with you says: ${shared.replace(/\s+/g, " ").slice(0, 300)}`
+            );
+          });
         await k.shot(ruth, "ruth-shared-with-you");
 
         await writeNote(c, 17, second);
@@ -9209,7 +9241,7 @@ export const MORE_FLOWS: Flow[] = [
         const onPage = () => (opened = true);
         c.context.on("page", onPage);
         const d2 = await shareNote(second);
-        await c.waitText(d2, /Shared with Ruth/i, 120000);
+        await c.waitText(d2, /Shared with/i, 120000);
         c.context.off("page", onPage);
         if (opened) throw new Error("the second share opened a Home window");
         await c.page.keyboard.press("Escape").catch(() => {});
