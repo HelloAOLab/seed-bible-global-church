@@ -19,6 +19,7 @@ const ROWS = [
   "Install App",
   "Launch tutorial",
   "About Seed Bible",
+  "My church",
   "Toolbar",
   "Customize",
 ];

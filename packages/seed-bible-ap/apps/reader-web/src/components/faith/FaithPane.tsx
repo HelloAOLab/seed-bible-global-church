@@ -9,8 +9,6 @@ import {
   MILESTONES,
   STAGES,
   type Church,
-  type ChurchDescription,
-  type ChurchSite,
   type Milestone,
   type Prayer,
   type Stage,
@@ -128,7 +126,7 @@ function WhoCanSee(props: {
         <p className="sb-faith-hint">
           {t("faith-share-church-hint", {
             defaultValue:
-              "To share with your church, choose it on the Care tab first.",
+              "To share with your church, choose it in Settings → My church first.",
           })}
         </p>
       )}
@@ -136,223 +134,32 @@ function WhoCanSee(props: {
   );
 }
 
-const siteAddress = (s: ChurchSite) =>
-  [
-    s.address?.streetAddress,
-    [s.address?.addressLocality, s.address?.addressRegion]
-      .filter(Boolean)
-      .join(" "),
-  ]
-    .filter(Boolean)
-    .join(", ");
-const siteServices = (s: ChurchSite) => {
-  const byDay = new Map<string, string[]>();
-  for (const v of s.services ?? [])
-    byDay.set(v.day, [...(byDay.get(v.day) ?? []), v.time]);
-  return [...byDay].map(([d, ts]) => `${d} ${ts.join(", ")}`).join(" · ");
-};
-
-/**
- * Your church and site (ap-church spec 203): the churches are FaithNet's `.church` names, the sites are what the
- * chosen church says of itself, and the choice is kept by your own agent — the same record the Church app reads.
- */
-function MyChurch({ state }: { state: ReaderState }) {
+/** Your church is chosen in Settings → My church; this takes you there from where it is needed. */
+function ChooseChurchLink({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const { faith } = state;
-  const home = faith.churchHome.value;
-  const current =
-    home.churches.find((c) => c.agent === home.defaultChurch) ??
-    home.churches[0];
-  const [editing, setEditing] = useState(false);
-  const [q, setQ] = useState("");
-  const [picked, setPicked] = useState<ChurchDescription | null>(null);
-  const [site, setSite] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const open = !current || editing;
-  useEffect(() => {
-    if (open) void faith.loadDirectory();
-  }, [open]);
-  const reset = () => {
-    setEditing(false);
-    setPicked(null);
-    setSite(null);
-    setQ("");
-  };
-  const save = (d: ChurchDescription, s: string | null) => {
-    setBusy(true);
-    void faith
-      .chooseChurch({ agent: d.church.agent, name: d.church.name }, s)
-      .then((ok) => {
-        setBusy(false);
-        if (ok) reset();
-      });
-  };
-  const pick = (name: string) => {
-    setBusy(true);
-    void faith.describeChurch(name).then((d) => {
-      setBusy(false);
-      if (!d) return;
-      // One place or none: nothing to choose, so it is saved as it is.
-      if (d.sites.length <= 1) return save(d, d.sites[0]?.id ?? null);
-      setPicked(d);
-      setSite(d.sites[0]!.id);
-    });
-  };
-
-  if (!open && current)
-    return (
-      <div className="sb-faith-church">
-        <p className="sb-faith-church-name">
-          {current.displayName ?? current.name}
-        </p>
-        <p className="sb-faith-here-sub">
-          {current.site
-            ? current.site.name
-            : t("faith-all-sites", { defaultValue: "All sites" })}
-        </p>
-        <button
-          type="button"
-          className="sb-faith-button sb-faith-here-change"
-          onClick={() => setEditing(true)}
-        >
-          {t("faith-change-church", { defaultValue: "Change" })}
-        </button>
-      </div>
-    );
-
-  if (picked)
-    return (
-      <form
-        className="sb-faith-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save(picked, site);
+  return (
+    <p className="sb-faith-hint">
+      {t("faith-no-church-yet", {
+        defaultValue: "You have not chosen your church yet.",
+      })}{" "}
+      <button
+        type="button"
+        className="sb-faith-button sb-faith-button-quiet"
+        onClick={() => {
+          state.setSidebarCollapsed(false);
+          // On a phone the sidebar is a drawer, and this pane would sit over it.
+          if (window.matchMedia("(max-width: 720px)").matches) {
+            state.ui.pane.value = "none";
+            state.ui.sidebarDrawer.value = true;
+          }
+          state.ui.settingsView.value = "church";
         }}
       >
-        <p className="sb-faith-church-name">{picked.church.displayName}</p>
-        <fieldset className="sb-faith-sites">
-          <legend>
-            {t("faith-which-site", {
-              defaultValue: "Which site do you go to?",
-            })}
-          </legend>
-          {picked.sites.map((s) => (
-            <label key={s.id} className="sb-faith-site">
-              <input
-                type="radio"
-                name="faith-site"
-                value={s.id}
-                checked={site === s.id}
-                onChange={() => setSite(s.id)}
-              />
-              <span>
-                <span className="sb-faith-site-name">{s.name}</span>
-                {siteAddress(s) && (
-                  <span className="sb-faith-site-detail">{siteAddress(s)}</span>
-                )}
-                {siteServices(s) && (
-                  <span className="sb-faith-site-detail">
-                    {siteServices(s)}
-                  </span>
-                )}
-              </span>
-            </label>
-          ))}
-          <label className="sb-faith-site">
-            <input
-              type="radio"
-              name="faith-site"
-              checked={site === null}
-              onChange={() => setSite(null)}
-            />
-            <span className="sb-faith-site-name">
-              {t("faith-all-sites", { defaultValue: "All sites" })}
-            </span>
-          </label>
-        </fieldset>
-        <div className="sb-faith-form-row">
-          <button
-            type="submit"
-            className="sb-faith-button sb-faith-button-primary"
-            disabled={busy}
-          >
-            {t("faith-save", { defaultValue: "Save" })}
-          </button>
-          <button
-            type="button"
-            className="sb-faith-button sb-faith-button-quiet"
-            onClick={() => setPicked(null)}
-          >
-            {t("back", { defaultValue: "Back" })}
-          </button>
-        </div>
-      </form>
-    );
-
-  const all = faith.directory.value;
-  const shown = (all ?? []).filter((c) =>
-    `${c.displayName} ${c.name}`.toLowerCase().includes(q.trim().toLowerCase())
-  );
-  return (
-    <div className="sb-faith-finder">
-      <p className="sb-faith-hint">
-        {t("faith-choose-church-hint", {
-          defaultValue:
-            "Choose your church from the churches on FaithNet. It is kept by your own agent, so the Church app sees the same choice.",
+        {t("faith-choose-in-settings", {
+          defaultValue: "Choose it in Settings",
         })}
-      </p>
-      {(all?.length ?? 0) > 6 && (
-        <input
-          id="faith-church-search"
-          aria-label={t("faith-church-name", {
-            defaultValue: "Your church's name",
-          })}
-          placeholder={t("faith-church-name", {
-            defaultValue: "Your church's name",
-          })}
-          value={q}
-          onInput={(e) => setQ((e.target as HTMLInputElement).value)}
-        />
-      )}
-      {all === null ? (
-        <p className="sb-faith-empty">
-          {t("loading", { defaultValue: "Loading…" })}
-        </p>
-      ) : !shown.length ? (
-        <p className="sb-faith-empty">
-          {t("faith-no-church-found", {
-            defaultValue: "No church by that name on FaithNet yet.",
-          })}
-        </p>
-      ) : (
-        <ul className="sb-faith-list sb-faith-churches">
-          {shown.map((c) => (
-            <li key={c.agent}>
-              <button
-                type="button"
-                className="sb-faith-stage"
-                disabled={busy || !c.describable}
-                onClick={() => pick(c.name)}
-              >
-                <span className="sb-faith-stage-name">{c.displayName}</span>
-                <span className="sb-faith-stage-desc">
-                  {c.description ?? c.name}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {current && (
-        <button
-          type="button"
-          className="sb-faith-button sb-faith-button-quiet"
-          onClick={reset}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-      )}
-    </div>
+      </button>
+    </p>
   );
 }
 
@@ -781,10 +588,6 @@ function JourneyTab({ state }: { state: ReaderState }) {
         {saved}
       </p>
       <h3 className="sb-faith-heading">
-        {t("faith-your-church", { defaultValue: "Your church" })}
-      </h3>
-      <MyChurch state={state} />
-      <h3 className="sb-faith-heading">
         {t("faith-milestones", { defaultValue: "Milestones" })}
       </h3>
       <p className="sb-faith-hint">
@@ -1068,7 +871,7 @@ function CareTab({ state }: { state: ReaderState }) {
             })}
           </p>
         ) : (
-          <MyChurch state={state} />
+          <ChooseChurchLink state={state} />
         )}
         <label className="sb-faith-check">
           <input

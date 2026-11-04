@@ -348,53 +348,13 @@
   font-size: 0.875rem;
 }
 
-.sb-faith-church {
+.sb-my-church {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--sb-faith-ring);
-  border-radius: 8px;
+  gap: 6px;
 }
 
-.sb-faith-church-name {
-  margin: 0;
-  font-weight: 600;
-}
-
-.sb-faith-churches {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sb-faith-sites {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.sb-faith-sites legend {
-  margin-bottom: 4px;
-  font-weight: 600;
-}
-
-.sb-faith-site {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  min-height: 44px;
-}
-
-.sb-faith-site > span {
-  display: flex;
-  flex-direction: column;
-}
-
-.sb-faith-site-name {
+.sb-my-church label {
   font-weight: 600;
 }
 

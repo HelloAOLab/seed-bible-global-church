@@ -5,6 +5,7 @@
 import { useState } from "preact/hooks";
 import { ExtensionsIcon, InstallAppsIcon, ThemeIcon } from "./seedIcons";
 import { HighlightColorsCard } from "./HighlightColorsCard";
+import { MyChurchCard } from "../faith/MyChurchCard";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import type { SettingsPage } from "../../state";
@@ -86,6 +87,11 @@ export function SettingsView({ state }: { state: ReaderState }) {
   // What this reader adds to the old reader's list — after About, so the list reads as seedbible.org's.
   const extras: Row[] = [
     {
+      id: "church",
+      icon: "church",
+      label: t("my-church", { defaultValue: "My church" }),
+    },
+    {
       id: "toolbar",
       icon: "tune",
       label: t("toolbar", { defaultValue: "Toolbar" }),
@@ -126,6 +132,8 @@ export function SettingsView({ state }: { state: ReaderState }) {
             <ListeningCard state={state} />
           </>
         );
+      case "church":
+        return <MyChurchCard state={state} />;
       case "toolbar":
         return <ToolbarCard state={state} />;
       case "extensions":

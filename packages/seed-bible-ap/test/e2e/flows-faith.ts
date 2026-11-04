@@ -129,47 +129,67 @@ export const FAITH_FLOWS: Flow[] = [
   {
     id: "PY4",
     section: "10a. Prayer, faith journey and care",
-    title: "Choose your church and site from FaithNet's churches",
+    title: "Choose your church and site in Settings",
     rows: ["Ask your church for care", "Your church and site"],
     timeoutMs: 240_000,
     checks:
-      "Journey → Your church lists FaithNet's .church churches; Calvary Bible Church says its own sites (Boulder, Erie, Thornton, with addresses and service times); choosing Erie saves Calvary Bible Church · Erie through the reader's agent; Care then says requests go to Calvary's leaders; choosing Fort Morgan (no sites) makes it the church without a site question.",
+      "Settings → My church lists FaithNet's .church churches. Calvary Bible Church shows a Site dropdown (Boulder, Erie, Thornton, All sites); choosing Erie saves it and shows its address and service times; after a reload the dropdown still shows Erie; Care says requests go to Calvary's leaders. Saved as All sites the dropdown stays. Fort Morgan (no sites) saves without a site question.",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
-      const pane = await openFaith(c, "Journey");
-      const card = pane.locator(".sb-faith-church");
-      if (await card.count())
-        await card.getByRole("button", { name: "Change" }).click();
-      const calvary = pane.locator(".sb-faith-churches button", {
-        hasText: "Calvary Bible Church",
-      });
-      await calvary.waitFor({ timeout: 60000 });
-      await calvary.click();
-      const erie = pane.locator(".sb-faith-site", { hasText: "Erie" });
-      await erie.waitFor({ timeout: 60000 });
-      if (!/615 Evans/.test(await erie.innerText()))
-        throw new Error(`Erie shows no address: ${await erie.innerText()}`);
-      await erie.locator("input").check();
-      await pane.getByRole("button", { name: "Save" }).click();
-      await card
-        .filter({ hasText: "Calvary Bible Church" })
-        .filter({ hasText: "Erie" })
-        .waitFor({ timeout: 60000 });
-      await pane.getByRole("tab", { name: "Care" }).click();
+      const openCard = async () => {
+        const view = await c.openSettings();
+        await view.getByText("My church", { exact: true }).first().click();
+        const church = view.locator("#my-church-select");
+        await church.waitFor({ timeout: 10000 });
+        await view
+          .locator('#my-church-select option[value="calvary-bible-co.church"]')
+          .waitFor({ state: "attached", timeout: 60000 });
+        return { view, church, site: view.locator("#my-church-site") };
+      };
+      let { view, church, site } = await openCard();
+      await church.selectOption("calvary-bible-co.church");
+      await site.waitFor({ timeout: 60000 });
+      const names = await site.locator("option").allInnerTexts();
+      for (const n of ["Boulder", "Erie", "Thornton", "All sites"])
+        if (!names.includes(n)) throw new Error(`no ${n}: ${names.join("|")}`);
+      await site.selectOption("campus_erie");
+      await view.getByText("Saved.").waitFor({ timeout: 60000 });
+      await view.getByText(/615 Evans St\./).waitFor({ timeout: 5000 });
+
+      await c.page.reload({ waitUntil: "domcontentloaded" });
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      ({ view, church, site } = await openCard());
+      await site.waitFor({ timeout: 60000 });
+      if ((await site.inputValue()) !== "campus_erie")
+        throw new Error(
+          `after a reload the site is ${await site.inputValue()}`
+        );
+
+      await site.selectOption("all");
+      await view.getByText("Saved.").waitFor({ timeout: 60000 });
+      if ((await site.inputValue()) !== "all" || !(await site.isVisible()))
+        throw new Error("All sites hid the site dropdown");
+      await site.selectOption("campus_erie");
+      await view.getByText("Saved.").waitFor({ timeout: 60000 });
+
+      await c.page
+        .locator('button[aria-label="Close Settings"]:visible')
+        .first()
+        .click();
+      const pane = await openFaith(c, "Care");
       await pane
         .getByText(/Goes to the leaders of Calvary Bible Church/)
-        .waitFor({ timeout: 10000 });
-      await pane.getByRole("tab", { name: "Journey" }).click();
-      await card.getByRole("button", { name: "Change" }).click();
-      await pane
-        .locator(".sb-faith-churches button", { hasText: "Fort Morgan" })
-        .click();
-      await card
-        .filter({ hasText: "Fort Morgan" })
-        .filter({ hasText: "All sites" })
-        .waitFor({ timeout: 60000 });
-      return "Calvary Bible Church listed its sites; Erie was saved and Care sends to Calvary's leaders; Fort Morgan (no sites) was chosen without a site question";
+        .waitFor({ timeout: 30000 });
+
+      ({ view, church, site } = await openCard());
+      await church.selectOption("fort-morgan-household.church");
+      await view.getByText("Saved.").waitFor({ timeout: 60000 });
+      if (await site.count())
+        throw new Error("Fort Morgan, with no sites, asked for a site");
+      return "Calvary showed its sites; Erie was saved and held after a reload; All sites kept the dropdown; Care sends to Calvary's leaders; Fort Morgan saved without a site question";
     },
   },
   {

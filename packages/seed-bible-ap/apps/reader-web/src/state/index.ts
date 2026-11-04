@@ -96,7 +96,8 @@ export type SettingsPage =
   | "extensions"
   | "install"
   | "tutorial"
-  | "customize";
+  | "customize"
+  | "church";
 
 export interface ReaderStateOptions {
   backend?: ReaderBackend;
