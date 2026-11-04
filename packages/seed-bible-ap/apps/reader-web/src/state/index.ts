@@ -602,6 +602,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     sidebarCollapsed: signal(true),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
+    /** The chapter's Discover card has something to show (seedbible.org's getDiscoverPanelContent().hasAny). */
+    discoverCardHasContent: signal(false),
     /** An extension's pane (the Places map) expanded to the full page, from its header's button. */
     paneWide: signal(false),
     /** The bookmarks and saves panels above the sidebar's tab list (opened from its header, or the phone's More). */
@@ -848,6 +850,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.
   let tabsRestored = false;
+  /** A device's very first visit, still on the default Bible it was given (nothing restored, no address). */
+  const firstVisit = signal(false);
   let tabsSaveTimer: ReturnType<typeof setTimeout> | undefined;
   let tabsPending: SavedTabs | null = null;
   const saveTabsNow = () => {
@@ -953,6 +957,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         target ?? { translationId: defaultTranslationFor(language.value) }
       );
     tabsRestored = true;
+    firstVisit.value = !restored && !target;
     if (atHome && !ui.embed.value) ui.pane.value = "today";
     if (offering) {
       discover.focus.value = offering;
@@ -1138,6 +1143,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
 
   const stateObject = {
+    firstVisit,
     offline,
     toolbar,
     tours,

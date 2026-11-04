@@ -719,6 +719,33 @@ export function BibleReader({
     </>
   );
   // seedbible.org's quick tool: Share in its toolbar item (the header's `sb-quick-toolbar`).
+  // seedbible.org's "discover-content-panel" quick tool: the card beside the text (lit) or below it; shown only on a
+  // desktop while the card has something in it.
+  const discoverItem = (
+    <div className="sb-quick-toolbar-item">
+      <button
+        type="button"
+        className="sb-quick-toolbar-button"
+        aria-label={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+        title={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+        aria-pressed={settings.discoverInline.value}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          settings.discoverInline.value = !settings.discoverInline.value;
+        }}
+      >
+        <span
+          className={`material-symbols-outlined${settings.discoverInline.value ? " sb-quick-tool-icon-active" : ""}`}
+        >
+          explore
+        </span>
+      </button>
+    </div>
+  );
   const shareItem = (
     <div className="sb-quick-toolbar-item">
       <button
@@ -913,6 +940,11 @@ export function BibleReader({
             {extensionButtons}
             {!embed && (
               <div className="sb-quick-toolbar sb-quick-toolbar-reader">
+                {active &&
+                  settings.showDiscovered.value &&
+                  ui.pane.value === "none" &&
+                  ui.discoverCardHasContent.value &&
+                  discoverItem}
                 {shareItem}
                 {active && canPlay && (
                   <div className="sb-quick-toolbar-item">
@@ -976,7 +1008,9 @@ export function BibleReader({
             )}
           </div>
         </div>
-        <div className="sb-bible-reader-content">
+        <div
+          className={`sb-bible-reader-content${settings.discoverInline.value ? "" : " sb-bible-reader-content--discover-below"}`}
+        >
           <div className="sb-bible-reader-main-content">
             <h2
               className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"

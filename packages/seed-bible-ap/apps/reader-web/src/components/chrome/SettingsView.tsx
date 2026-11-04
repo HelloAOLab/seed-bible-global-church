@@ -3,6 +3,7 @@
 // App, Launch tutorial, Customize, About Seed Bible, then Language and the version — and each row opens its page in
 // the sidebar, with ← back to the list. The pages hold the same cards as the Account settings pane.
 import { useState } from "preact/hooks";
+import { ExtensionsIcon, InstallAppsIcon, ThemeIcon } from "./seedIcons";
 import { HighlightColorsCard } from "./HighlightColorsCard";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
@@ -195,9 +196,17 @@ export function SettingsView({ state }: { state: ReaderState }) {
                       onClick={() => go(r.id)}
                     >
                       <span className="sb-settings-nav-icon">
-                        <span className="material-symbols-outlined">
-                          {r.icon}
-                        </span>
+                        {r.id === "display" ? (
+                          <ThemeIcon />
+                        ) : r.id === "extensions" ? (
+                          <ExtensionsIcon />
+                        ) : r.id === "install" ? (
+                          <InstallAppsIcon size={24} />
+                        ) : (
+                          <span className="material-symbols-outlined">
+                            {r.icon}
+                          </span>
+                        )}
                       </span>
                       <span className="sb-settings-nav-label">{r.label}</span>
                       <span className="material-symbols-outlined rtl-mirror">
@@ -271,6 +280,12 @@ export function SettingsView({ state }: { state: ReaderState }) {
                     </option>
                   ))}
                 </select>
+                <span
+                  className="material-symbols-outlined sb-settings-language-chevron"
+                  aria-hidden="true"
+                >
+                  expand_more
+                </span>
               </div>
             </section>
             <section className="sb-settings-section">
@@ -310,7 +325,7 @@ export function SettingsView({ state }: { state: ReaderState }) {
         </h3>
         <button
           onClick={() => go(null)}
-          className="sb-sidebar-settings-close-button"
+          className="sb-sidebar-tabs-header-icon-button"
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >

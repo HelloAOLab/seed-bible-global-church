@@ -308,7 +308,7 @@ export function PhoneNav({ state }: { state: ReaderState }) {
             : { icon: "account_circle" })}
           active={active === "you"}
           badge={state.session.value ? state.outbox.pending.value : 0}
-          onClick={() => show(signedIn ? "profile" : "account")}
+          onClick={() => show("profile")}
         />
         <Tab
           label={t("bible", { defaultValue: "Bible" })}

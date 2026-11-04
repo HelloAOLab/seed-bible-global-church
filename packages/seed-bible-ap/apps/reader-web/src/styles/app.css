@@ -341,7 +341,6 @@ body {
   font-weight: 600;
 }
 .sb-reader-toolbar-item-arrow .sb-reader-toolbar-button:disabled {
-  opacity: 0.35;
   cursor: default;
 }
 
@@ -1849,6 +1848,18 @@ html[data-sb-line="loose"] .sb-bible-reader {
   overflow-y: visible;
   padding-bottom: 6rem;
 }
+/* Today as the whole screen: seedbible.org's .sb-today-container — the full height, its welcome centred in it above a
+   4rem foot. */
+.sb-app-pane-full > .sb-pane.sb-today-container {
+  display: flex;
+  justify-content: center;
+  align-items: safe center;
+  height: 100%;
+  min-height: 100%;
+  padding: 0 0 4rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
 /* A notice in a pane section: what is wrong in words, and the one thing to do about it. */
 .sb-pane-notice {
   margin: 0.25rem 0 0.5rem;
@@ -2312,7 +2323,7 @@ html[data-sb-line="loose"] .sb-bible-reader {
 }
 
 /* In the Discover card the items are compact rows, as the old reader lists them there: the icon beside the title. */
-.sb-discover-content-panel .sb-discover-item {
+.sb-discover-content-panel .sb-discover-item:not(.sb-content-card) {
   padding: 0;
 }
 .sb-discover-content-panel .sb-discover-item-main {
@@ -2535,14 +2546,6 @@ html[data-sb-line="loose"] .sb-bible-reader {
     background: var(--sb-reader-background, var(--sb-background));
     z-index: 99;
   }
-  .sb-app-pane-full > .sb-pane.sb-today-container {
-    display: flex;
-    align-items: safe center;
-    justify-content: center;
-    min-height: 100%;
-    padding: 0;
-    box-sizing: border-box;
-  }
 }
 
 /* seedbible.org's phone chapter: the text starts below the 40px header (its header takes its place in the flow), the
@@ -2554,5 +2557,47 @@ html[data-sb-line="loose"] .sb-bible-reader {
   }
   .sb-bible-reader {
     padding-top: 2.5rem;
+  }
+}
+
+/* seedbible.org centres .sb-panes-layout (margin-left: -10px) in its flex .sb-main-content, which gives back half of
+   that margin; this reader's .sb-app-main is a block, so the same 5px is set here. */
+@media (min-width: 721px) {
+  .sb-app-root:not(.sb-embed-minimal) .sb-app-main > .sb-panes-layout {
+    margin-left: -5px;
+  }
+}
+
+/* seedbible.org's side pane (PaneLayout.css .sb-pane-side-shell, PaneHeader.css): 480px on the reader's background
+   with a hairline and a soft shadow, and a 42px header bar over a rule, its title 16px semibold 12px in. Every side
+   pane here draws its own <header class="sb-pane-header">, so they all take the bar from this one place. */
+@media (min-width: 721px) {
+  .sb-app-with-pane {
+    grid-template-columns: auto minmax(0, 1fr) min(30rem, 40vw);
+  }
+  .sb-app-pane:not(.sb-app-pane-full) {
+    z-index: 2;
+    border-inline-start: none;
+    background: var(--sb-reader-background, var(--sb-background));
+    color: var(--sb-reader-font-color, var(--sb-font-color));
+    box-shadow:
+      0 0 0 1px var(--sb-divider-color),
+      0 22px 40px #0000002c;
+  }
+  .sb-app-pane:not(.sb-app-pane-full) > .sb-pane {
+    padding-top: 0;
+  }
+  .sb-app-pane:not(.sb-app-pane-full) > .sb-pane > .sb-pane-header {
+    height: 42px;
+    box-sizing: border-box;
+    margin: 0 -1.125rem 0.75rem;
+    padding: 0 12px;
+    gap: 8px;
+    border-bottom: 1px solid var(--sb-divider-color);
+  }
+  .sb-app-pane:not(.sb-app-pane-full) > .sb-pane > .sb-pane-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 }

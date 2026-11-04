@@ -6,8 +6,6 @@
 export const HIGHLIGHT_MARKERS = /<hl>|<\/hl>/;
 
 export const WELCOME_VERSE_MAP: Readonly<Record<string, string>> = {
-  // This reader's English default (seedbible.org opens English on AAB, which the Scripture agent does not serve yet).
-  BSB: "In the <hl>beginning</hl> was the Word, and the Word was with God, and the <hl>Word was God.</hl>",
   // English — AAB (Ancients Accessible Bible)
   AAB: "In the <hl>beginning</hl> was the Word, and the Word was with God, and the <hl>Word was God.</hl>",
   // Amharic — amh_amh

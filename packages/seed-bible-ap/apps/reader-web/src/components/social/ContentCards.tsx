@@ -1,8 +1,9 @@
 // VIDEOS AND ARTICLES — the old reader's content cards (packages/seed-bible DiscoverPane ContentSection): grouped
 // under their author (BibleProject, Expedition Bible…), each with its picture, title, a description that opens with
-// Read more, and the video playing in place (or the page opening, for an article).
+// Read more, the video playing in place from its picture and the title opening the publisher's page.
 import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n";
+import { ExpandableText } from "../chrome/ExpandableText";
 import type { DiscoverItem } from "../../extensions/host";
 
 /** Items with an author, grouped by it in the order they come; the rest are for the plain list. */
@@ -25,9 +26,7 @@ export function byAuthor(items: DiscoverItem[]): {
 function ContentCard({ it }: { it: DiscoverItem }) {
   const { t } = useI18n();
   const [playing, setPlaying] = useState(false);
-  const [more, setMore] = useState(false);
   const text = it.longText ?? it.description ?? "";
-  const long = text.length > 140;
   return (
     <li className="sb-discover-item sb-content-card" data-content-id={it.id}>
       {playing && it.embedUrl ? (
@@ -75,39 +74,20 @@ function ContentCard({ it }: { it: DiscoverItem }) {
       <button
         type="button"
         className="sb-discover-item-title sb-content-card-title"
-        onClick={() => (it.embedUrl ? setPlaying(true) : it.onOpen?.())}
+        // As on seedbible.org the entry opens the publisher's page; the picture plays a video in place.
+        onClick={() => (it.onOpen ? it.onOpen() : setPlaying(true))}
       >
         {it.title}
       </button>
       {text && (
-        <p
-          className={`sb-discover-item-description${long && !more ? " sb-content-card-clamped" : ""}`}
+        <ExpandableText
+          className="sb-discover-item-description"
+          readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+          readLessLabel={t("read-less", { defaultValue: "Read less" })}
         >
           {text}
-        </p>
+        </ExpandableText>
       )}
-      <div className="sb-content-card-actions">
-        {long && (
-          <button
-            type="button"
-            className="sb-content-see-all"
-            onClick={() => setMore(!more)}
-          >
-            {more
-              ? t("read-less", { defaultValue: "Read less" })
-              : t("read-more", { defaultValue: "Read more" })}
-          </button>
-        )}
-        {it.onOpen && (
-          <button
-            type="button"
-            className="sb-content-see-all"
-            onClick={() => it.onOpen?.()}
-          >
-            {t("open-page", { defaultValue: "Open page" })}
-          </button>
-        )}
-      </div>
     </li>
   );
 }

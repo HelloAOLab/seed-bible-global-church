@@ -4476,17 +4476,17 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "G17",
     section: "12. Extensions",
-    title: "Videos and articles in Discover",
+    title: "Videos and articles in Discover (Content)",
     rows: ["Videos and articles"],
     checks:
-      "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
+      "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; its title opens its own page in a new tab, as seedbible.org's entry does",
     run: async (c) => {
       let step = "";
       try {
         step = "cards";
         await c.open("/en/BSB/matthew/26");
         await c.pressToolbar("Discover");
-        await c.openSource("Videos and articles");
+        await c.openSource(/^\s*Content\b/);
         const pane = c.pane();
         const eb = pane
           .locator(".sb-content-cards", { hasText: /Expedition Bible/i })
@@ -4507,10 +4507,10 @@ export const MORE_FLOWS: Flow[] = [
           await more.click();
           await card.getByRole("button", { name: /read less/i }).waitFor();
         }
-        step = "Open page";
+        step = "the title opens its page";
         const [popup] = await Promise.all([
           c.page.waitForEvent("popup", { timeout: 10000 }),
-          card.getByRole("button", { name: /open page/i }).click(),
+          card.locator(".sb-content-card-title").click(),
         ]);
         const url = popup.url();
         await popup.close();
@@ -8352,22 +8352,40 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "DW1",
     section: "3. Reading",
-    title: "Hide Discover; the chapter fills the window",
+    title:
+      "The Discover card: beside or below, hidden; the chapter fills the window",
     rows: ["Margins, line height, UI scale, custom fonts"],
     checks:
-      "On a 1580px-wide desktop at Ephesians 5: the Discover card's ✕ hides it and says how to bring it back; Account → Scripture Width → Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
+      "On a 1580px-wide desktop at Ephesians 5 the Discover card sits beside the chapter, as on seedbible.org; the header's lit compass (Discover content) moves it below the text and back; Account → Show discovered content off hides it and Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
     run: async (c) => {
       await c.page.setViewportSize({ width: 1580, height: 850 });
       await c.open("/en/BSB/ephesians/5");
       await c.useExtensions(EXTRAS);
-      await c.showDiscovered();
       await c.settleTours();
       const card = c.page.locator(".sb-discover-content-panel");
       await card.waitFor({ timeout: 20000 });
-      await card.getByRole("button", { name: "Hide Discover" }).click();
-      await card.waitFor({ state: "detached", timeout: 3000 });
-      await c.waitText(c.page.locator("body"), /Discover is hidden/, 3000);
+      const content = c.page.locator(
+        ".sb-bible-reader-active .sb-bible-reader-content"
+      );
+      const compass = c.page
+        .locator(".sb-bible-reader-active .sb-quick-toolbar-reader")
+        .getByRole("button", { name: "Discover content" });
+      await compass.click();
+      await c.page
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-content--discover-below"
+        )
+        .waitFor({ timeout: 3000 })
+        .catch(() => {
+          throw new Error("the compass did not move the card below the text");
+        });
+      await compass.click();
+      if (/discover-below/.test((await content.getAttribute("class")) ?? ""))
+        throw new Error(
+          "the compass did not put the card back beside the text"
+        );
       let pane = await c.openAccount();
+      await c.check(pane, /show discovered content/i).uncheck();
       await c.check(pane, /fit the window/i).check();
       await c.page.keyboard.press("Escape");
       const widths = () =>
@@ -8398,7 +8416,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.check(pane, /fit the window/i).uncheck();
       await c.check(pane, /show discovered content/i).check();
       await card.waitFor({ timeout: 10000 });
-      return `hidden with its note; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
+      return `beside, below and back with the compass; hidden; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
     },
   },
   {
@@ -8783,53 +8801,24 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "SI2",
     section: "1. Signing in",
-    title: "Sign in right where you are",
+    title: "Sign in from Profile",
     rows: ["Signing in and out"],
     checks:
-      "Signed out, the Profile and Today each show the sign-in itself — the terms and Sign in with Faithnet — instead of a Log in button that leads to Account",
+      "Signed out, Profile is seedbible.org's card — the circle, 'Sign in to keep your highlights…' and Log in; Log in opens the sign-in itself — the terms and Sign in with Faithnet",
     run: async (c) => {
       await c.open(CH);
       await c.settleTours();
-      const seen: string[] = [];
-      const check = async (
-        open: () => Promise<void>,
-        where: string,
-        pane: string
-      ) => {
-        await open();
-        const p = c.page.locator(pane);
-        await p.waitFor({ timeout: 8000 });
-        await p
-          .getByRole("button", { name: /sign in with faithnet/i })
-          .waitFor({ timeout: 5000 });
-        await p.getByText(/I agree to the/).waitFor({ timeout: 2000 });
-        if (await p.getByRole("button", { name: /^log in$/i }).count())
-          throw new Error(`${where} still has Log in`);
-        seen.push(where);
-      };
-      await check(
-        async () => {
-          await c.page
-            .locator(".sb-tabs-sidebar")
-            .getByRole("button", { name: /profile|account/i })
-            .last()
-            .click();
-        },
-        "Profile",
-        ".sb-profile-screen"
-      );
-      await check(
-        async () => {
-          await c.page
-            .locator(".sb-reader-toolbar-desk")
-            .getByRole("button", { name: "More", exact: true })
-            .click();
-          await c.page.getByRole("menuitem", { name: "Today" }).click();
-        },
-        "Today",
-        ".sb-app-pane"
-      );
-      return `the sign-in itself in ${seen.join(", ")}`;
+      await c.page.locator(".sb-sidebar-profile-button").click();
+      const card = c.page.locator(".sb-profile-screen .sb-profile-identity");
+      await card.waitFor({ timeout: 8000 });
+      await c.waitText(card, /sign in to keep your highlights/i, 3000);
+      await card.getByRole("button", { name: /^log in$/i }).click();
+      const p = c.pane();
+      await p
+        .getByRole("button", { name: /sign in with faithnet/i })
+        .waitFor({ timeout: 5000 });
+      await p.getByText(/I agree to the/).waitFor({ timeout: 2000 });
+      return "Profile's card → Log in → the terms and Sign in with Faithnet";
     },
   },
   {

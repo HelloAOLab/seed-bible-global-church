@@ -624,3 +624,16 @@
 .sb-discover-show-all {
   margin-top: 6px;
 }
+
+/* The content card's title is a button (it opens the page); it reads as seedbible.org's plain title text. */
+.sb-content-card-title {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}

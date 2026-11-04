@@ -28,7 +28,8 @@ const defaultContent: ExtensionRegistration = {
   init: function* (ctx) {
     yield ctx.discover.registerProvider({
       id: "default-content",
-      label: "Videos and articles",
+      // seedbible.org's name for these in Discover (its Content filter and section).
+      label: "Content",
       discover: async (d) =>
         (
           (await loadPublished(

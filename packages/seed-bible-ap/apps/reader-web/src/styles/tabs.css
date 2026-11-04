@@ -1913,28 +1913,7 @@
   letter-spacing: 0.02em;
 }
 
-/* The collapsed rail's tiles, from the old reader (SidebarSearch.css). */
-.sb-collapsed-tab-tile {
-  position: relative;
-  width: 3.3125rem;
-  height: 3.3125rem;
-  flex-shrink: 0;
-  border-radius: 0.625rem;
-  background: var(--sb-tab-background);
-  color: var(--sb-tab-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: baseline;
-  align-content: center;
-  justify-content: center;
-  padding: 0 0.125rem;
-  line-height: 1;
-  column-gap: 0.3125rem;
-  row-gap: 0.125rem;
-  border: 1px solid;
-}
+/* The collapsed rail's Shared-session tiles, from the old reader (SidebarSearch.css); the tile itself is seedbible.org's. */
 
 /* A shared-session tile reserves room for the "Shared" tag at the top and
    the presence dots along the bottom edge. */
@@ -1996,12 +1975,6 @@
   color: color-mix(in srgb, var(--sb-tab-font-color), transparent 25%);
 }
 
-.sb-collapsed-tab-tile-selected {
-  background: var(--sb-selected-tab-background);
-  color: var(--sb-selected-tab-font-color);
-  border: var(--sb-selected-tab-border);
-}
-
 .sb-collapsed-tab-audio-icon {
   font-size: 0.875rem;
   color: var(--sb-primary-color);
@@ -2009,14 +1982,6 @@
 
 .sb-collapsed-tab-tile-selected .sb-collapsed-tab-audio-icon {
   color: currentColor;
-}
-
-.sb-collapsed-tab-title {
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 /* ── KEPT from this reader's earlier copy: classes seedbible.org 1.16 no longer styles here, still used by this

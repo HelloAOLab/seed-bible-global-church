@@ -469,7 +469,7 @@ export class FlowContext {
       .catch(() => undefined);
   }
 
-  /** The Discover card in the chapter (Settings → Display & Theme → Show discovered content), which starts off. */
+  /** The Discover card in the chapter (Settings → Display & Theme → Show discovered content): on unless turned off. */
   async showDiscovered(page: Page = this.page): Promise<void> {
     const view = await this.openSettings(page);
     await view.getByText("Display & Theme", { exact: true }).first().click();

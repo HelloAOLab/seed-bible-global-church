@@ -18,6 +18,7 @@ import { AudioScrubber } from "./AudioScrubber";
 import { Avatar } from "../chrome/ConnectedChip";
 import { itemTitle } from "../library/PlaylistNote";
 import { SeedBibleIcon } from "../chrome/icons";
+import { TasksIcon } from "./SidebarPanels";
 import type { ComponentChildren } from "preact";
 import { chatBadge } from "../sessions/ChatPanel";
 
@@ -447,6 +448,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       {today && (
         <Item
           icon={today.icon}
+          render={() => <TasksIcon />}
           className="sb-reader-toolbar-desk-only"
           label={today.label}
           labeled

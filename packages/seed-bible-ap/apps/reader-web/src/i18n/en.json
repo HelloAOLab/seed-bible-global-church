@@ -887,7 +887,6 @@
   "discover-people": "People",
   "discover-places": "Places",
   "open-content": "Open {{title}}",
-  "open-page": "Open page",
   "play-video": "Play {{title}}",
   "read-less": "Read less",
   "read-more": "Read more",
@@ -1008,7 +1007,6 @@
   "send-friend-invitation": "Send invitation",
   "decrease-scripture-width": "Decrease scripture width",
   "discover-panel-hidden": "Discover is hidden. Show it again in Settings → Show discovered content, or open it from Discover in the bar.",
-  "discover-panel-hide": "Hide Discover",
   "increase-scripture-width": "Increase scripture width",
   "scripture-width": "Scripture Width",
   "scripture-width-fit": "Fit the window",
@@ -1057,7 +1055,6 @@
   "discover-widened": "Nothing at the verse you selected. Here is what this chapter has.",
   "show-all-count": "Show all {{count}}",
   "show-fewer": "Show fewer",
-  "discover-book": "Discover {{book}}",
   "discover-sources": "What to show",
   "interp-belief": "Not part of the translation: a later belief about the verse, shown so you know it exists.",
   "interp-decided": "{{edition}} has recorded a decision for one reading.",
@@ -1378,5 +1375,6 @@
   "scripture-verified-tooltip": "{{name}} · Verified against its publisher's text",
   "expand-sidebar": "Expand sidebar",
   "collapse-sidebar": "Collapse sidebar",
-  "more-in-this-reader": "More in this reader"
+  "more-in-this-reader": "More in this reader",
+  "log-in": "Log in"
 }
