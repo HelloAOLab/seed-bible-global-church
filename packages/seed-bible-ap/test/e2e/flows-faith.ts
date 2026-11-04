@@ -64,19 +64,25 @@ export const FAITH_FLOWS: Flow[] = [
     rows: ["Your faith journey"],
     timeoutMs: 240_000,
     checks:
-      "Journey: tapping New believer makes it the current stage and Next steps lists Reading the Bible. Add a milestone, Baptized with a place, lists it under Milestones with the place; Remove takes it away.",
+      "Journey: tapping New believer (after Change my step, when a step is set) makes it the You are here card and closes the list, and Next steps lists Reading the Bible. Add a milestone, Baptized with a place, lists it under Milestones with the place; Remove takes it away.",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
       const pane = await openFaith(c, "Journey");
-      const stage = pane.locator(".sb-faith-stage", {
-        hasText: "New believer",
-      });
-      if ((await stage.getAttribute("aria-pressed")) !== "true")
-        await stage.click();
-      await pane
-        .locator(".sb-faith-stage-current", { hasText: "New believer" })
+      // With a step already chosen the page shows only "You are here"; the steps open from Change my step.
+      const here = pane.locator(".sb-faith-here-name");
+      if (!(await here.filter({ hasText: "New believer" }).count())) {
+        const change = pane.getByRole("button", { name: "Change my step" });
+        if (await change.count()) await change.click();
+        await pane
+          .locator(".sb-faith-stage", { hasText: "New believer" })
+          .click();
+      }
+      await here
+        .filter({ hasText: "New believer" })
         .waitFor({ timeout: 60000 });
+      if (await pane.locator(".sb-faith-stages").count())
+        throw new Error("the steps list stayed open after a step was saved");
       await pane
         .locator(".sb-faith-steps", { hasText: "Reading the Bible" })
         .waitFor({ timeout: 5000 });

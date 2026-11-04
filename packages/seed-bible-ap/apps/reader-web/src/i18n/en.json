@@ -1312,6 +1312,7 @@
   "faith-stage-tap": "Tap the step that fits you today. It is saved as soon as you tap, and you can change it whenever you like.",
   "faith-stage-saved": "Saved. You are now at: {{stage}}.",
   "faith-you-are-here": "You are here",
+  "faith-change-step": "Change my step",
   "faith-since": "Since {{date}}",
   "faith-not-set": "You have not chosen a step yet. Tap the one below that fits you today.",
   "faith-who-sees-step": "Who can see where I am?",

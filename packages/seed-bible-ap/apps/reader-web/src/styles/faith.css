@@ -301,6 +301,11 @@
   font-size: 0.875rem;
 }
 
+.sb-faith-here-change {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
 .sb-faith-stage {
   min-height: 44px;
 }

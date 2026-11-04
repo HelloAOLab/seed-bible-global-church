@@ -498,6 +498,7 @@ function JourneyTab({ state }: { state: ReaderState }) {
   const [stageWho, setStageWho] = useState<Visibility | null>(null);
   const [stageChurch, setStageChurch] = useState("");
   const [saved, setSaved] = useState("");
+  const [changing, setChanging] = useState(false);
   const current = j.stage?.stage;
   const stageVis: Visibility =
     stageWho ?? j.stage?.visibility ?? "Confidential";
@@ -509,13 +510,14 @@ function JourneyTab({ state }: { state: ReaderState }) {
   });
   const chooseStage = (s: Stage, v: Visibility, c: string) =>
     faith.recordJourney({ stage: s, ...shareArgs(v, c) }).then((ok) => {
-      if (ok)
-        setSaved(
-          t("faith-stage-saved", {
-            defaultValue: "Saved. You are now at: {{stage}}.",
-            stage: stageName(s),
-          })
-        );
+      if (!ok) return;
+      setChanging(false);
+      setSaved(
+        t("faith-stage-saved", {
+          defaultValue: "Saved. You are now at: {{stage}}.",
+          stage: stageName(s),
+        })
+      );
     });
   // Newest first, with repeats of the same step folded into one line.
   const path = [...j.history]
@@ -546,6 +548,18 @@ function JourneyTab({ state }: { state: ReaderState }) {
             {" · "}
             {whoLabel(t, j.stage.visibility)}
           </p>
+          {!changing && (
+            <button
+              type="button"
+              className="sb-faith-button sb-faith-here-change"
+              onClick={() => {
+                setSaved("");
+                setChanging(true);
+              }}
+            >
+              {t("faith-change-step", { defaultValue: "Change my step" })}
+            </button>
+          )}
         </div>
       ) : (
         <p className="sb-faith-here sb-faith-here-empty">
@@ -555,95 +569,78 @@ function JourneyTab({ state }: { state: ReaderState }) {
           })}
         </p>
       )}
-      <p className="sb-faith-hint">
-        {t("faith-stage-tap", {
-          defaultValue:
-            "Tap the step that fits you today. It is saved as soon as you tap, and you can change it whenever you like.",
-        })}
-      </p>
-      <ol className="sb-faith-stages">
-        {STAGES.map((s) => (
-          <li key={s}>
-            <button
-              type="button"
-              className={`sb-faith-stage${current === s ? " sb-faith-stage-current" : ""}`}
-              aria-pressed={current === s}
-              onClick={() =>
-                current !== s &&
-                void chooseStage(
-                  s,
-                  stageVis,
-                  stageChurch || churches[0]?.agent || ""
-                )
-              }
-            >
-              <span className="sb-faith-stage-name">
-                {stageName(s)}
-                {current === s && (
-                  <span className="sb-faith-chip sb-faith-stage-badge">
-                    {t("faith-you-are-here", { defaultValue: "You are here" })}
-                  </span>
-                )}
-              </span>
-              <span className="sb-faith-stage-desc">
-                {t(`faith-stage-${s}-desc`, { defaultValue: STAGE_TEXT[s][1] })}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <p className="sb-faith-message" role="status" aria-live="polite">
-        {saved}
-      </p>
-      <WhoCanSee
-        value={stageVis}
-        church={stageChurch}
-        churches={churches}
-        idPrefix="faith-stage"
-        label={t("faith-who-sees-step", {
-          defaultValue: "Who can see where I am?",
-        })}
-        onChange={(v, c) => {
-          setStageWho(v);
-          setStageChurch(c);
-          if (current && v !== j.stage?.visibility)
-            void chooseStage(current, v, c);
-        }}
-      />
-      {path.length > 1 && (
+      {(!current || changing) && (
         <>
-          <h3 className="sb-faith-heading">
-            {t("faith-path", { defaultValue: "Your path so far" })}
-          </h3>
-          <ol className="sb-faith-path">
-            {path.map((h) => (
-              <li key={`${h.stage}:${h.assertedAt}`}>
-                <span className="sb-faith-path-date">
-                  {shortDate(h.assertedAt)}
-                </span>
-                {stageName(h.stage)}
+          <p className="sb-faith-hint">
+            {t("faith-stage-tap", {
+              defaultValue:
+                "Tap the step that fits you today. It is saved as soon as you tap, and you can change it whenever you like.",
+            })}
+          </p>
+          <ol className="sb-faith-stages">
+            {STAGES.map((s) => (
+              <li key={s}>
+                <button
+                  type="button"
+                  className={`sb-faith-stage${current === s ? " sb-faith-stage-current" : ""}`}
+                  aria-pressed={current === s}
+                  onClick={() =>
+                    current !== s &&
+                    void chooseStage(
+                      s,
+                      stageVis,
+                      stageChurch || churches[0]?.agent || ""
+                    )
+                  }
+                >
+                  <span className="sb-faith-stage-name">
+                    {stageName(s)}
+                    {current === s && (
+                      <span className="sb-faith-chip sb-faith-stage-badge">
+                        {t("faith-you-are-here", {
+                          defaultValue: "You are here",
+                        })}
+                      </span>
+                    )}
+                  </span>
+                  <span className="sb-faith-stage-desc">
+                    {t(`faith-stage-${s}-desc`, {
+                      defaultValue: STAGE_TEXT[s][1],
+                    })}
+                  </span>
+                </button>
               </li>
             ))}
           </ol>
+          <WhoCanSee
+            value={stageVis}
+            church={stageChurch}
+            churches={churches}
+            idPrefix="faith-stage"
+            label={t("faith-who-sees-step", {
+              defaultValue: "Who can see where I am?",
+            })}
+            onChange={(v, c) => {
+              setStageWho(v);
+              setStageChurch(c);
+              if (current && v !== j.stage?.visibility)
+                void chooseStage(current, v, c);
+            }}
+          />
+          {current && (
+            <button
+              type="button"
+              className="sb-faith-button sb-faith-button-quiet"
+              onClick={() => setChanging(false)}
+            >
+              {t("cancel", { defaultValue: "Cancel" })}
+            </button>
+          )}
         </>
       )}
-      {j.nextSteps.length > 0 && (
-        <>
-          <h3 className="sb-faith-heading">
-            {t("faith-next-steps", { defaultValue: "Next steps" })}
-          </h3>
-          <ul className="sb-faith-steps">
-            {j.nextSteps.map((s) => (
-              <li key={`${s.kind}:${s.value}`}>
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {s.kind === "milestone" ? "flag" : "self_improvement"}
-                </span>
-                {s.label}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <p className="sb-faith-message" role="status" aria-live="polite">
+        {saved}
+      </p>
       <h3 className="sb-faith-heading">
         {t("faith-milestones", { defaultValue: "Milestones" })}
       </h3>
@@ -794,6 +791,40 @@ function JourneyTab({ state }: { state: ReaderState }) {
             </button>
           </div>
         </form>
+      )}
+      {path.length > 1 && (
+        <>
+          <h3 className="sb-faith-heading">
+            {t("faith-path", { defaultValue: "Your path so far" })}
+          </h3>
+          <ol className="sb-faith-path">
+            {path.map((h) => (
+              <li key={`${h.stage}:${h.assertedAt}`}>
+                <span className="sb-faith-path-date">
+                  {shortDate(h.assertedAt)}
+                </span>
+                {stageName(h.stage)}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+      {j.nextSteps.length > 0 && (
+        <>
+          <h3 className="sb-faith-heading">
+            {t("faith-next-steps", { defaultValue: "Next steps" })}
+          </h3>
+          <ul className="sb-faith-steps">
+            {j.nextSteps.map((s) => (
+              <li key={`${s.kind}:${s.value}`}>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  {s.kind === "milestone" ? "flag" : "self_improvement"}
+                </span>
+                {s.label}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
