@@ -229,6 +229,8 @@ export class FlowContext {
     item: RegExp,
     page: Page = this.page
   ): Promise<void> {
+    // seedbible.org shows a card's ⋮ only while the pointer is over it (or on touch): hover first, as a person does.
+    await card.hover().catch(() => undefined);
     await card.locator(".sb-annotation-item-menu").first().click();
     await page.getByRole("menuitem", { name: item }).first().click();
     if (item.test("Delete")) {

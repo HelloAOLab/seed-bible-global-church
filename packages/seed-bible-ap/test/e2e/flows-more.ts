@@ -1181,7 +1181,7 @@ export const MORE_FLOWS: Flow[] = [
       try {
         await c.open(CH, page);
         await page
-          .getByRole("button", { name: "Text settings" })
+          .getByRole("button", { name: "Settings" })
           .filter({ visible: true })
           .first()
           .tap();
@@ -5067,7 +5067,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Customize the bottom toolbar",
     rows: ["Customize the bottom toolbar"],
     checks:
-      "Account → Toolbar: tick Today into the bar, move Discover up twice; the bar shows Discover then Today and More no longer lists Today; kept after a reload; Reset puts Today back under More",
+      "Account → Toolbar: tick Notes into the bar, move it up twice; the bar shows Notes before Discover and More no longer lists Notes; kept after a reload; Reset puts Notes back under More",
     run: async (c) => {
       await c.open(CH);
       const labels = () =>
@@ -5093,37 +5093,36 @@ export const MORE_FLOWS: Flow[] = [
       };
       const before = await labels();
       if (
-        before.includes("Today") ||
-        !(await inMore()).some((n) => /today/i.test(n))
+        before.some((l) => /^notes/i.test(l ?? "")) ||
+        !(await inMore()).some((n) => /notes/i.test(n))
       )
         throw new Error(
-          `a new bar: ${before.join(", ")}; Today should be under More`
+          `a new bar: ${before.join(", ")}; Notes should be under More`
         );
       let pane = await c.openAccount();
       const card = pane.locator(".sb-toolbar-card");
-      await c.check(card, "Today").check();
+      await c.check(card, "Notes").check();
       for (let i = 0; i < 2; i++)
-        await card.locator('button[aria-label="Move up Discover"]').click();
+        await card.locator('button[aria-label="Move up Notes"]').click();
       // With a pane open the reading area is narrower and the bar folds under More; read it with the pane closed.
       await pane.locator(".sb-pane-close").first().click();
       await c.page
         .locator(".sb-reader-toolbar-desk:not(.sb-reader-toolbar-folded)")
         .waitFor({ timeout: 5000 });
       const after = await labels();
-      if (
-        !after.includes("Today") ||
-        after.indexOf("Discover") > after.indexOf("Today")
-      )
+      const notesAt = after.findIndex((l) => /^notes/i.test(l ?? ""));
+      if (notesAt < 0 || notesAt > after.indexOf("Discover"))
         throw new Error(`toolbar: ${after.join(", ")}`);
-      if ((await inMore()).some((n) => /^today/i.test(n)))
-        throw new Error("Today is both in the bar and under More");
+      if ((await inMore()).some((n) => /notes/i.test(n)))
+        throw new Error("Notes is both in the bar and under More");
       await c.page.reload();
       await c.page
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(500);
       const kept = await labels();
-      if (!kept.includes("Today")) throw new Error("not kept after a reload");
+      if (!kept.some((l) => /^notes/i.test(l ?? "")))
+        throw new Error("not kept after a reload");
       pane = await c.openAccount();
       await pane
         .locator(".sb-toolbar-card")
@@ -5136,9 +5135,9 @@ export const MORE_FLOWS: Flow[] = [
       const reset = await labels();
       if (reset.join() !== before.join())
         throw new Error(`after reset: ${reset.join(", ")}`);
-      if (!(await inMore()).some((n) => /today/i.test(n)))
-        throw new Error("after Reset, Today is not under More");
-      return `bar ${before.join(", ")}; Today ticked in, Discover moved before it, kept after a reload; Reset put it back under More`;
+      if (!(await inMore()).some((n) => /notes/i.test(n)))
+        throw new Error("after Reset, Notes is not under More");
+      return `bar ${before.join(", ")}; Notes ticked in and moved before Discover, kept after a reload; Reset put it back under More`;
     },
   },
   {
@@ -5396,7 +5395,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The old reader's bottom bar; every action within reach",
     rows: ["Every action within reach"],
     checks:
-      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
+      "On a desktop the bar is seedbible.org's ‹ Today · Books · Search · Discover · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More), the More menu, or the chapter header's Settings (Themes)",
     run: async (c) => {
       const all = [
         "Live session",
@@ -5443,14 +5442,20 @@ export const MORE_FLOWS: Flow[] = [
           );
         await page.locator(".sb-phone-more-tab > button").click();
         const inMore = (
-          await page
-            .locator(".sb-mobile-more-menu button:visible")
-            .allInnerTexts()
+          await page.locator(".sb-more-menu button:visible").allInnerTexts()
         ).map((t) => t.replace(/\s+/g, " ").trim());
         await page.locator(".sb-phone-more-tab > button").click();
+        // Themes are in Settings, which is the chapter header's button on a phone, as on seedbible.org.
+        const header = await page
+          .locator(".sb-quick-toolbar-mobile-header button:visible")
+          .evaluateAll((bs) =>
+            bs.map((b) => b.getAttribute("aria-label") ?? "")
+          );
+        tabs.push(...header);
         const via: Record<string, string> = {
           "Sign in": "You",
           "Your content": "You",
+          Themes: "Settings",
         };
         const missing = all.filter(
           (a) =>
@@ -5462,7 +5467,7 @@ export const MORE_FLOWS: Flow[] = [
       const words = await c.page
         .locator(".sb-reader-toolbar .sb-reader-toolbar-button-label:visible")
         .allInnerTexts();
-      if (words.slice(0, 3).join() !== "Books,Search,Discover")
+      if (words.slice(0, 4).join() !== "Today,Books,Search,Discover")
         throw new Error(`the bar reads: ${words.join(", ")}`);
       const desk = await reachable(c.page);
       if (desk.missing.length)
@@ -5510,7 +5515,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The chapter header's actions",
     rows: ["Chapter actions in the header"],
     checks:
-      "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "At the top right of the chapter, in seedbible.org's order: ☆ Save chapter fills when tapped, Bookmark, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause (Discover is the bar's)",
     run: async (c) => {
       await c.open(CH);
       const head = c.page.locator(
@@ -5519,13 +5524,7 @@ export const MORE_FLOWS: Flow[] = [
       const order = await head
         .locator("button:visible")
         .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
-      const want = [
-        "Save chapter",
-        "Bookmark this chapter",
-        "Discover",
-        "Share",
-        "Listen",
-      ];
+      const want = ["Save chapter", "Bookmark this chapter", "Share", "Listen"];
       if (order.join() !== want.join())
         throw new Error(`header: ${order.join(", ")}`);
       await head.getByRole("button", { name: "Save chapter" }).click();
@@ -5535,10 +5534,6 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 5000 });
       await head.getByRole("button", { name: "Save chapter" }).click();
       await c.savePicker({ remove: true });
-      await head.getByRole("button", { name: "Discover" }).click();
-      await c.pane().waitFor({ timeout: 5000 });
-      if (!/discover/i.test(await c.paneText()))
-        throw new Error("Discover did not open the Discover pane");
       await head.getByRole("button", { name: "Share" }).click();
       const dialog = c.page.getByRole("dialog");
       await dialog.waitFor({ timeout: 5000 });
@@ -5554,7 +5549,7 @@ export const MORE_FLOWS: Flow[] = [
           throw new Error("Listen did not start the recording");
         });
       await head.getByRole("button", { name: "Pause" }).click();
-      return `header: ${order.join(" · ")}; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused`;
+      return `header: ${order.join(" · ")}; Save filled and cleared; Share opened the dialog; Listen played and paused`;
     },
   },
   {
@@ -5563,7 +5558,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Settings in the sidebar",
     rows: ["Settings"],
     checks:
-      "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — Account settings, Display & Theme, Toolbar, Extensions, Install App, Launch tutorial, Customize, About Seed Bible, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
+      "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — seedbible.org's Account, Display & Theme, Extensions, Install App, Launch tutorial, About Seed Bible, then this reader's Toolbar and Customize, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
     run: async (c) => {
       await c.open(CH);
       const side = c.page.locator(".sb-tabs-sidebar");
@@ -5572,14 +5567,14 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-settings-nav-label")
         .allInnerTexts();
       const want = [
-        "Account settings",
+        "Account",
         "Display & Theme",
-        "Toolbar",
         "Extensions",
         "Install App",
         "Launch tutorial",
-        "Customize",
         "About Seed Bible",
+        "Toolbar",
+        "Customize",
       ];
       if (labels.join() !== want.join())
         throw new Error(`Settings lists: ${labels.join(", ")}`);
@@ -5997,7 +5992,7 @@ export const MORE_FLOWS: Flow[] = [
           "Save chapter",
           "Bookmark this chapter",
           "Share",
-          "Text settings",
+          "Settings",
         ];
         if (
           !wantHead.every((w) => actions.includes(w)) ||
@@ -6650,7 +6645,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The embed's own controls",
     rows: ["Embed in another site"],
     checks:
-      "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+      "John 3 embedded (?embed=minimal) has only Open in New Tab and Settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
     run: async (c) => {
       const page = c.page;
       await c.open(`${CH}?embed=minimal`);
@@ -6660,7 +6655,7 @@ export const MORE_FLOWS: Flow[] = [
       const actions = await head
         .locator("button:visible")
         .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
-      if (actions.join() !== "Open in New Tab,Text settings")
+      if (actions.join() !== "Open in New Tab,Settings")
         throw new Error(`header: ${actions.join(", ")}`);
       const bar = page.locator(".sb-reader-toolbar-wrap-embed");
       await c.waitText(bar, /john\s*3/i, 5000);
@@ -6697,7 +6692,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-verse-toolbar")
         .waitFor({ state: "detached", timeout: 3000 })
         .catch(() => undefined);
-      await head.getByRole("button", { name: "Text settings" }).click();
+      await head.getByRole("button", { name: "Settings" }).click();
       const sheet = page.locator(".sb-mobile-settings-sheet");
       await sheet.waitFor({ timeout: 3000 });
       if (await sheet.getByText(/go to all settings/i).count())
@@ -7186,6 +7181,11 @@ export const MORE_FLOWS: Flow[] = [
           .catch(() => sheet.locator(".sb-verse-toolbar-handle-area").click());
         const notes = sheet.locator(".sb-verse-toolbar-notes");
         await c.waitText(notes, /John 3:16[\s\S]*a note in the sheet/, 5000);
+        await notes
+          .locator(".sb-annotation-item")
+          .first()
+          .hover()
+          .catch(() => undefined);
         await notes.locator(".sb-annotation-item-menu").first().click();
         for (const name of [/^edit$/i, /^delete$/i])
           await page

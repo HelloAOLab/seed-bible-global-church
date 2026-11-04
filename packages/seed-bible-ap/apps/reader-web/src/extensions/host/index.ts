@@ -114,7 +114,7 @@ export interface HeaderButton {
   icon: string;
   /** Lower comes first. */
   priority?: number;
-  /** Also shown in an embed, where the header is otherwise just Open in New Tab and Text settings. */
+  /** Also shown in an embed, where the header is otherwise just Open in New Tab and Settings. */
   showInEmbedded?: boolean;
   isVisible?: (chapterRef: string) => boolean;
   onSelect: (chapterRef: string) => void;

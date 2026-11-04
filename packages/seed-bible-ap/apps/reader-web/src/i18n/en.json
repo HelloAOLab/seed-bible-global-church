@@ -593,7 +593,6 @@
   "huddle-camera-start": "Start video",
   "bible": "Bible",
   "chapter-navigation": "Chapter navigation",
-  "text-settings": "Text settings",
   "open-in-new-tab": "Open in New Tab",
   "search-failed": "Unable to search verses.",
   "search-verses": "Search verses",
@@ -1378,5 +1377,6 @@
   "report-a-bug": "Report a bug",
   "scripture-verified-tooltip": "{{name}} · Verified against its publisher's text",
   "expand-sidebar": "Expand sidebar",
-  "collapse-sidebar": "Collapse sidebar"
+  "collapse-sidebar": "Collapse sidebar",
+  "more-in-this-reader": "More in this reader"
 }

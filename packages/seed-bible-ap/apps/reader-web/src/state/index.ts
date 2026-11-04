@@ -400,12 +400,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       )
         await extensions.setEnabled(id, true);
   });
-  // Moving to another chapter tells friends at once rather than at the next beat.
-  effect(() => {
-    readingOf().chapterRef.value;
-    readingOf().chapterData.value;
-    if (session.value) void presence.beat();
-  });
   // A session lives in the tab it was started or joined in (the old reader's Shared tab): that tab follows the room
   // and moves it, whichever tab is on screen.
   const sessionTabId = signal<string | null>(null);
@@ -417,6 +411,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     reading: sessionReading,
     identity: () => backend.identity(),
     selectionEffects: () => settings.selectionEffects.value,
+  });
+  // Moving to another chapter tells friends at once rather than at the next beat.
+  effect(() => {
+    readingOf().chapterRef.value;
+    readingOf().chapterData.value;
+    if (session.value) void presence.beat();
   });
   // Starting or ending a session tells friends at once ("Ruth is sharing — Join"), not at the next beat.
   effect(() => {

@@ -19,9 +19,20 @@ const VIEWPORTS = {
 
 async function settle(page: Page) {
   await page.waitForLoadState("networkidle").catch(() => {});
-  for (const name of [/maybe later/i, /^skip$/i, /^not now$/i]) {
+  // seedbible.org offers its tour a moment after load; wait for it so both apps are dismissed alike.
+  await page.waitForTimeout(1500);
+  for (const name of [
+    /maybe later/i,
+    /^skip$/i,
+    /^not now$/i,
+    /^no, thanks$/i,
+    /^just this one$/i,
+  ]) {
     const b = page.getByRole("button", { name });
-    if (await b.isVisible().catch(() => false)) await b.click().catch(() => {});
+    if (await b.isVisible().catch(() => false)) {
+      await b.click().catch(() => {});
+      await page.waitForTimeout(500);
+    }
   }
   await page.waitForTimeout(600);
 }
@@ -58,7 +69,17 @@ const SCREENS: Array<{
     },
   },
   { id: "08-settings", act: tap(/settings/i) },
-  { id: "09-profile", act: tap(/^(profile|you|account|log in)$/i) },
+  {
+    id: "09-profile",
+    // The phone's You tab first (the sidebar's hidden profile button would match too), then the desktop's.
+    act: async (p) => {
+      const you = p.getByRole("button", { name: /^you$/i }).first();
+      if (await you.isVisible().catch(() => false)) {
+        await you.click();
+        await settle(p);
+      } else await tap(/^(profile|account|log in)$/i)(p);
+    },
+  },
 ];
 
 const out = process.env["PARITY_OUT"] ?? "parity";

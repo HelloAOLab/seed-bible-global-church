@@ -172,7 +172,7 @@ export function PhoneNav({ state }: { state: ReaderState }) {
     if (!moreOpen) return;
     const onDown = (e: PointerEvent) => {
       const el = e.target as Element | null;
-      if (!el?.closest?.(".sb-mobile-more-menu, .sb-phone-more-tab"))
+      if (!el?.closest?.(".sb-more-menu, .sb-phone-more-tab"))
         setMoreOpen(false);
     };
     // Esc closes More and nothing else (caught before the reader's keys, which would close a pane).
@@ -307,7 +307,7 @@ export function PhoneNav({ state }: { state: ReaderState }) {
             ? { node: <Avatar state={state} /> }
             : { icon: "account_circle" })}
           active={active === "you"}
-          badge={state.outbox.pending.value}
+          badge={state.session.value ? state.outbox.pending.value : 0}
           onClick={() => show(signedIn ? "profile" : "account")}
         />
         <Tab
@@ -368,37 +368,63 @@ export function PhoneNav({ state }: { state: ReaderState }) {
             )}
           </button>
           {moreOpen && (
-            <div className="sb-mobile-more-menu" role="menu">
-              {[
-                ...actions.filter((a) => a.id === "discover"),
-                ...extras.filter((a) => a.id !== "settings"),
-                ...actions.filter((a) => a.id !== "discover"),
-                ...extras.filter((a) => a.id === "settings"),
-              ].map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  role="menuitem"
-                  className="sb-mobile-more-menu-item"
-                  onClick={() => {
-                    setMoreOpen(false);
-                    a.onClick();
-                  }}
-                >
-                  <span
-                    className="material-symbols-outlined sb-mobile-more-menu-icon"
-                    aria-hidden="true"
+            // seedbible.org's More (its BibleReaderToolbar MoreMenu): Tabs, Bookmarks, Saves and Discover, Discover
+            // nearest the button; what this reader adds sits above them under its own title. Settings is the
+            // header's, Themes are in Settings, so neither is here.
+            <div className="sb-more-menu" role="menu">
+              {(() => {
+                const ours = actions.filter(
+                  (a) => a.id !== "discover" && a.id !== "theme"
+                );
+                const theirs = [
+                  ...["tabs", "bookmarks", "saves"].map(
+                    (id) => extras.find((a) => a.id === id)!
+                  ),
+                  ...extras.filter((a) => a.id === "search"),
+                  ...actions.filter((a) => a.id === "discover"),
+                ].filter(Boolean);
+                const item = (a: (typeof theirs)[number]) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    role="menuitem"
+                    className="sb-more-menu-item"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      a.onClick();
+                    }}
                   >
-                    {a.icon}
-                  </span>
-                  <span className="sb-mobile-more-menu-label">{a.label}</span>
-                  {"badge" in a && a.badge ? (
-                    <span className="sb-mobile-more-menu-unread-indicator">
-                      {a.badge}
+                    <span
+                      className="material-symbols-outlined sb-more-menu-icon"
+                      aria-hidden="true"
+                    >
+                      {a.icon}
                     </span>
-                  ) : null}
-                </button>
-              ))}
+                    <span className="sb-more-menu-label">{a.label}</span>
+                    {"badge" in a && a.badge ? (
+                      <span className="sb-more-menu-unread-indicator">
+                        {a.badge}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+                return (
+                  <>
+                    {ours.length > 0 && (
+                      <div
+                        className="sb-more-menu-group-title"
+                        role="presentation"
+                      >
+                        {t("more-in-this-reader", {
+                          defaultValue: "More in this reader",
+                        })}
+                      </div>
+                    )}
+                    {ours.map(item)}
+                    {theirs.map(item)}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

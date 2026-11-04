@@ -123,7 +123,7 @@ const BASE_FLOWS: Flow[] = [
       await row.waitFor({ timeout: 40000 });
       const label = (await row.innerText()).replace(/\s+/g, " ");
       await row.click();
-      await c.page.waitForURL(/\/read\/(?!BSB\/)[A-Za-z0-9_]+\/JHN\/3$/, {
+      await c.page.waitForURL(/\/[a-z]{2}\/(?!BSB\/)[A-Za-z0-9_]+\/john\/3$/, {
         timeout: 15000,
       });
       await c.verse(16).waitFor({ timeout: 20000 });

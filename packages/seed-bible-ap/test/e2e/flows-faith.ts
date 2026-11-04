@@ -2,7 +2,7 @@
 // Each flow tidies up after itself: its prayer is removed, its milestone removed, its care request withdrawn.
 import type { Flow, FlowContext } from "./harness";
 
-const CH = "/read/BSB/JHN/3";
+const CH = "/en/BSB/john/3";
 const stamp = () => new Date().toISOString().slice(11, 19).replace(/:/g, "");
 
 async function openFaith(c: FlowContext, tab: "Prayer" | "Journey" | "Care") {

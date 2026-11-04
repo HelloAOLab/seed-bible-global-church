@@ -415,7 +415,6 @@ body {
 .sb-app-main {
   height: 100dvh;
   overflow: hidden;
-  padding: 0.5rem;
   box-sizing: border-box;
   background: var(--sb-background);
 }
@@ -423,10 +422,12 @@ body {
   display: flex;
   flex-direction: column;
   overflow: auto;
-  border: 1px solid transparent;
 }
-.sb-pane-shell-active {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+/* Which of several panes the toolbar acts on; an outline, so a single pane sits exactly where seedbible.org's does. */
+.sb-panes-layout:has(.sb-pane-shell ~ .sb-pane-shell) .sb-pane-shell-active {
+  outline: 1px solid
+    color-mix(in srgb, var(--sb-primary-color), transparent 60%);
+  outline-offset: -1px;
 }
 .sb-pane-reader-outer,
 .sb-pane-reader {
@@ -2522,4 +2523,36 @@ html[data-sb-line="loose"] .sb-bible-reader {
 }
 .sb-companion-standpoint {
   margin: 6px 0 2px;
+}
+
+/* seedbible.org's phone: a full-width screen (Today, You) keeps the tab bar under it — the screen stops above the bar,
+   on the reader's own background — and Today's Welcome sits centred in it (its `.sb-today-container`). Side panes keep
+   their own full screen above. */
+@media (max-width: 720px) {
+  .sb-app-pane.sb-app-pane-full {
+    inset: 0 0 calc(4.375rem + env(safe-area-inset-bottom, 0px)) 0;
+    padding-bottom: 0;
+    background: var(--sb-reader-background, var(--sb-background));
+    z-index: 99;
+  }
+  .sb-app-pane-full > .sb-pane.sb-today-container {
+    display: flex;
+    align-items: safe center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* seedbible.org's phone chapter: the text starts below the 40px header (its header takes its place in the flow), the
+   title 32px under it, and the pane has no frame. */
+@media (max-width: 720px) {
+  .sb-pane-shell,
+  .sb-pane-shell-active {
+    border-width: 0;
+  }
+  .sb-bible-reader {
+    padding-top: 2.5rem;
+  }
 }
