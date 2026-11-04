@@ -527,6 +527,8 @@ const companion: ExtensionRegistration = {
   label: "Study companion",
   description:
     "Ask about a verse; the Scripture agent answers from what it holds about it, cited and checked, and says who answered.",
+  // Not in seedbible.org: off until the reader turns it on in Settings → Extensions.
+  defaultEnabled: false,
   init: function* (ctx) {
     const { state } = ctx;
     yield ctx.panes.register({

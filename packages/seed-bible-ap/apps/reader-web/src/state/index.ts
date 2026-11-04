@@ -590,7 +590,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
-    sidebarCollapsed: signal(false),
+    // seedbible.org opens on the rail (its sb-sidebar-collapsed); the reader's own choice is kept (setSidebarCollapsed).
+    sidebarCollapsed: signal(true),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
     /** An extension's pane (the Places map) expanded to the full page, from its header's button. */
@@ -824,6 +825,19 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     }
   }
 
+  /** The rail or the open sidebar, as the reader chose it — remembered on this device, as the old reader did. */
+  const SIDEBAR_KEY = "sidebar:collapsed";
+  void stores.prefs
+    .get(SIDEBAR_KEY)
+    .then((v) => {
+      if (typeof v === "boolean") ui.sidebarCollapsed.value = v;
+    })
+    .catch(() => {});
+  const setSidebarCollapsed = (collapsed: boolean) => {
+    ui.sidebarCollapsed.value = collapsed;
+    void stores.prefs.set(SIDEBAR_KEY, collapsed).catch(() => {});
+  };
+
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.
   let tabsRestored = false;
   let tabsSaveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -898,6 +912,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         return null;
       }
     })();
+    // seedbible.org's home page is Today (its Welcome card on a first visit): the reader opens there from "/".
+    const atHome =
+      typeof location !== "undefined" &&
+      location.pathname === "/" &&
+      !location.search;
     // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
     if (typeof location !== "undefined") {
       const legacy = legacyTarget(location.pathname, location.search);
@@ -926,6 +945,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         target ?? { translationId: defaultTranslationFor(language.value) }
       );
     tabsRestored = true;
+    if (atHome && !ui.embed.value) ui.pane.value = "today";
     if (offering) {
       discover.focus.value = offering;
       ui.pane.value = "discover";
@@ -1137,6 +1157,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     profile,
     friendship,
     faith,
+    setSidebarCollapsed,
     invites,
     homeProfile,
     presence,

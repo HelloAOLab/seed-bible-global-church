@@ -269,20 +269,6 @@ export function BibleReader({
       bookName: reading.bookName.value,
     });
   };
-  const bookPicker = (className: string) => (
-    <button
-      type="button"
-      className={className}
-      aria-label={t("change-book", { defaultValue: "Change book" })}
-      title={t("change-book", { defaultValue: "Change book" })}
-      onClick={(e: MouseEvent) => {
-        e.stopPropagation();
-        ui.selector.value = ui.selector.value === "books" ? null : "books";
-      }}
-    >
-      <span className="material-symbols-outlined">menu_book</span>
-    </button>
-  );
 
   /** Others' marks in the live session, verse by verse, for the off-screen cues. */
   const sessionCues = (): CueMark[] => {
@@ -857,7 +843,6 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
-            {bookPicker("sb-bible-reader-book-picker")}
             <button
               type="button"
               className="sb-bible-reader-translation"
@@ -865,6 +850,14 @@ export function BibleReader({
                 name: translationLabel,
                 defaultValue: `Change translation (${translationLabel})`,
               })}
+              title={
+                check?.status === "verified"
+                  ? t("scripture-verified-tooltip", {
+                      name: translationLabel,
+                      defaultValue: `${translationLabel} · Verified against its publisher's text`,
+                    })
+                  : undefined
+              }
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 ui.selector.value = "translations";
@@ -872,13 +865,17 @@ export function BibleReader({
             >
               {translationLabel}
             </button>
-            <ScriptureCheckBadge
-              check={check}
-              translationName={
-                reading.translation.value?.name ?? translationLabel
-              }
-              chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
-            />
+            {/* seedbible.org's header has no badge: a verified text says so on the translation's tooltip, and only a
+                failed check shows here. */}
+            {check?.status === "differs" && (
+              <ScriptureCheckBadge
+                check={check}
+                translationName={
+                  reading.translation.value?.name ?? translationLabel
+                }
+                chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
+              />
+            )}
           </div>
           <div className="sb-bible-reader-actions">
             {embed ? embedActions : null}
@@ -894,22 +891,6 @@ export function BibleReader({
             )}
             {/* The old reader's chapter actions, in its order. */}
             {!embed && saveButtons}
-            {!embed && (
-              <button
-                type="button"
-                className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
-                aria-label={t("discover", { defaultValue: "Discover" })}
-                title={t("discover", { defaultValue: "Discover" })}
-                aria-pressed={ui.pane.value === "discover"}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  ui.pane.value =
-                    ui.pane.value === "discover" ? "none" : "discover";
-                }}
-              >
-                <span className="material-symbols-outlined">explore</span>
-              </button>
-            )}
             {extensionButtons}
             {!embed && shareButton}
             {!embed && active && canPlay && (
@@ -951,9 +932,6 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
-            {bookPicker(
-              "sb-bible-reader-book-picker sb-bible-reader-book-picker-mobile"
-            )}
             {body()}
           </div>
           {/* The old reader's Discover card in the chapter — not while a side pane is open: it would repeat the pane

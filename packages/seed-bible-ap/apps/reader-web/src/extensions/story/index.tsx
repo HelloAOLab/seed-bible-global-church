@@ -12,6 +12,8 @@ const story: ExtensionRegistration = {
   label: "Story",
   description:
     "Tap a section heading or the chapter's title: what has been published about it, then who, where and what happens — and a person's oikos and generations.",
+  // Not in seedbible.org: off until the reader turns it on in Settings → Extensions.
+  defaultEnabled: false,
   init: function* (ctx) {
     yield ctx.panes.register({
       id: "explore",

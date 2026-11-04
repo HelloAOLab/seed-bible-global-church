@@ -1672,3 +1672,24 @@
 .sb-customization-translation-picker .searchbar {
   width: 100%;
 }
+
+/* The old reader's language picker: the language's flag inside the field, before its name. */
+.sb-settings-language-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sb-settings-language-flag {
+  position: absolute;
+  left: 0.875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.sb-settings-language-flag + .sb-settings-language-select {
+  padding-left: 2.75rem;
+}

@@ -84,6 +84,8 @@ const elsewhere: ExtensionRegistration = {
   label: "Elsewhere",
   description:
     "Where the New Testament quotes a verse, the passages parallel to it, and the verse in Greek (the Septuagint) — in Discover.",
+  // Not in seedbible.org: off until the reader turns it on in Settings → Extensions.
+  defaultEnabled: false,
   init: function* (ctx) {
     const state: ReaderState = ctx.state;
     yield ctx.panes.register({

@@ -265,12 +265,12 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
   const chatFirst = ui.chatFirst.value
     ? secondary.filter((a) => a.id === "chat")
     : [];
-  const shown = [
-    ...chatFirst,
-    ...arrange(secondary, state.toolbar.layout.value).filter(
-      (a) => !chatFirst.includes(a)
-    ),
-  ];
+  const arranged = arrange(secondary, state.toolbar.layout.value).filter(
+    (a) => !chatFirst.includes(a)
+  );
+  // seedbible.org's bar starts with Today, before Books and Search.
+  const today = arranged.find((a) => a.id === "today");
+  const shown = [...chatFirst, ...arranged.filter((a) => a !== today)];
   const more = underMore(secondary, state.toolbar.layout.value).filter(
     (a) => !chatFirst.includes(a)
   );
@@ -444,6 +444,16 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           onClick={() => void reading.next()}
         />
       )}
+      {today && (
+        <Item
+          icon={today.icon}
+          className="sb-reader-toolbar-desk-only"
+          label={today.label}
+          labeled
+          active={today.active}
+          onClick={today.onClick}
+        />
+      )}
       <Item
         icon="books"
         render={() => <SeedBibleIcon size={24} />}
@@ -531,15 +541,6 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
           ))}
         </div>
       )}
-      {/* The old reader's credit under the bar (its "below the toolbar" tool). */}
-      <div className="sb-reader-toolbar-powered-by" aria-hidden="true">
-        <SeedBibleIcon size={12} />
-        <span>
-          {t("powered-by-seed-bible-api", {
-            defaultValue: "Powered by Seed Bible API",
-          })}
-        </span>
-      </div>
     </nav>
   );
 }

@@ -892,7 +892,6 @@
   "open-content": "Open {{title}}",
   "open-page": "Open page",
   "play-video": "Play {{title}}",
-  "powered-by-seed-bible-api": "Powered by Seed Bible API",
   "read-less": "Read less",
   "read-more": "Read more",
   "available-extensions": "Available",
@@ -1231,7 +1230,6 @@
   "story-view-appears": "Appears in",
   "story-in-passages": "In {{count}} passages",
   "published-signed": "signed by the publisher",
-  "change-book": "Change book",
   "story-oikos-extended": "Extended family",
   "story-oikos-walked-with": "Walked with",
   "story-family-grandparents": "Grandparents",
@@ -1376,5 +1374,9 @@
   "faith-find": "Find",
   "faith-no-church-found": "No church by that name on FaithNet yet.",
   "faith-this-is-my-church": "{{church}} is my church",
-  "faith-change-church": "Change"
+  "faith-change-church": "Change",
+  "account": "Account",
+  "app-version": "v{{version}} · {{commit}}",
+  "report-a-bug": "Report a bug",
+  "scripture-verified-tooltip": "{{name}} · Verified against its publisher's text"
 }

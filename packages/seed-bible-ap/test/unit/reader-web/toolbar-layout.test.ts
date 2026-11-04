@@ -1,6 +1,6 @@
-// THE TOOLBAR CUSTOMIZER: the reader's order and the buttons taken out of the bar apply; a button never placed (a new
-// extension's) comes after the placed ones; a button out of the bar is under More, never gone, and can be put back;
-// a new device starts with the old reader's short bar; the choice is kept on the device.
+// THE TOOLBAR CUSTOMIZER: the reader's order and the buttons taken out of the bar apply; a button the old reader never
+// had (an extension's) starts under More until the reader places it; a button out of the bar is under More, never gone,
+// and can be put back; a new device starts with seedbible.org's bar (Today, Books, Search, Discover); the choice is kept.
 import { describe, expect, it } from "vitest";
 import { memoryStores } from "../../../apps/reader-web/src/backend/offline/db";
 import {
@@ -13,7 +13,7 @@ const ids = ["session", "today", "discover", "notes", "theme"];
 const items = ids.map((id) => ({ id }));
 
 describe("toolbar layout", () => {
-  it("applies the order and the hidden set; unplaced buttons follow in their own order", () => {
+  it("applies the order and the hidden set; an extension's button waits under More until it is placed", () => {
     expect(
       arrange(items, { order: ["notes", "today"], hidden: ["session"] }).map(
         (x) => x.id
@@ -24,22 +24,48 @@ describe("toolbar layout", () => {
         order: ["theme"],
         hidden: [],
       }).map((x) => x.id)
-    ).toEqual(["theme", "session", "today", "discover", "notes", "ext:watch"]);
+    ).toEqual(["theme", "session", "today", "discover", "notes"]);
+    expect(
+      underMore([...items, { id: "ext:watch" }], {
+        order: ["theme"],
+        hidden: [],
+      }).map((x) => x.id)
+    ).toEqual(["ext:watch"]);
+    expect(
+      arrange([...items, { id: "ext:watch" }], {
+        order: ["ext:watch"],
+        hidden: [],
+      }).map((x) => x.id)
+    ).toEqual(["ext:watch", "session", "today", "discover", "notes", "theme"]);
   });
 
-  it("starts as the old reader's bar: Discover in it, the rest under More, none lost", () => {
+  it("starts as seedbible.org's bar: Today and Discover in it, the rest under More, none lost", () => {
     const t = createToolbarLayout(memoryStores().prefs);
-    const all = [...items, { id: "ext:watch" }];
+    const all = [...items, { id: "ext:watch" }, { id: "faith" }];
     expect(arrange(all, t.layout.value).map((x) => x.id)).toEqual([
+      "today",
       "discover",
-      "ext:watch",
     ]);
     expect(underMore(all, t.layout.value).map((x) => x.id)).toEqual([
       "session",
-      "today",
       "notes",
       "theme",
+      "ext:watch",
+      "faith",
     ]);
+  });
+
+  it("an extension's button put in the bar stays there", () => {
+    const t = createToolbarLayout(memoryStores().prefs);
+    const all = [...items, { id: "ext:watch" }];
+    t.setHidden("ext:watch", false);
+    expect(arrange(all, t.layout.value).map((x) => x.id)).toContain(
+      "ext:watch"
+    );
+    t.setHidden("ext:watch", true);
+    expect(underMore(all, t.layout.value).map((x) => x.id)).toContain(
+      "ext:watch"
+    );
   });
 
   it("moves, takes out, puts back, resets — and keeps it on the device", async () => {
@@ -73,6 +99,7 @@ describe("toolbar layout", () => {
     expect(again.layout.value.order.slice(0, 2)).toEqual(["session", "notes"]);
     again.reset();
     expect(arrange(items, again.layout.value).map((x) => x.id)).toEqual([
+      "today",
       "discover",
     ]);
   });

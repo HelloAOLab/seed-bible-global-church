@@ -2,12 +2,14 @@
 // sidebar turns the sidebar into the Settings list — Account settings, Display & Theme, Toolbar, Extensions, Install
 // App, Launch tutorial, Customize, About Seed Bible, then Language and the version — and each row opens its page in
 // the sidebar, with ← back to the list. The pages hold the same cards as the Account settings pane.
+import { useState } from "preact/hooks";
 import { HighlightColorsCard } from "./HighlightColorsCard";
 import type { ComponentChildren } from "preact";
 import type { ReaderState } from "../../state";
 import type { SettingsPage } from "../../state";
 import { AVAILABLE_LANGUAGES, setLanguage, useI18n } from "../../i18n";
-import { BUILD_ID } from "../../build";
+import { APP_VERSION, BUILD_ID } from "../../build";
+import { LANG_META } from "../../i18n/languageMeta";
 import {
   install,
   installPrompt,
@@ -53,17 +55,12 @@ export function SettingsView({ state }: { state: ReaderState }) {
     {
       id: "account",
       icon: "person",
-      label: t("account-settings", { defaultValue: "Account settings" }),
+      label: t("account", { defaultValue: "Account" }),
     },
     {
       id: "display",
       icon: "contrast",
       label: t("display-and-theme", { defaultValue: "Display & Theme" }),
-    },
-    {
-      id: "toolbar",
-      icon: "tune",
-      label: t("toolbar", { defaultValue: "Toolbar" }),
     },
     {
       id: "extensions",
@@ -84,6 +81,14 @@ export function SettingsView({ state }: { state: ReaderState }) {
       icon: "school",
       label: t("launch-tutorial", { defaultValue: "Launch tutorial" }),
     },
+  ];
+  // What this reader adds to the old reader's list — after About, so the list reads as seedbible.org's.
+  const extras: Row[] = [
+    {
+      id: "toolbar",
+      icon: "tune",
+      label: t("toolbar", { defaultValue: "Toolbar" }),
+    },
     {
       id: "customize",
       icon: "palette",
@@ -91,7 +96,9 @@ export function SettingsView({ state }: { state: ReaderState }) {
     },
   ];
   const title =
-    page === "main" ? "" : (rows.find((r) => r.id === page)?.label ?? "");
+    page === "main"
+      ? ""
+      : ([...rows, ...extras].find((r) => r.id === page)?.label ?? "");
 
   const body = (): ComponentChildren => {
     switch (page) {
@@ -215,6 +222,24 @@ export function SettingsView({ state }: { state: ReaderState }) {
                     </span>
                   </button>
                 </li>
+                {extras.map((r) => (
+                  <li key={r.id}>
+                    <button
+                      className="sb-settings-nav-item"
+                      onClick={() => go(r.id)}
+                    >
+                      <span className="sb-settings-nav-icon">
+                        <span className="material-symbols-outlined">
+                          {r.icon}
+                        </span>
+                      </span>
+                      <span className="sb-settings-nav-label">{r.label}</span>
+                      <span className="material-symbols-outlined rtl-mirror">
+                        chevron_right
+                      </span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </section>
             <section className="sb-settings-section">
@@ -224,22 +249,40 @@ export function SettingsView({ state }: { state: ReaderState }) {
               >
                 {t("language", { defaultValue: "Language" })}
               </label>
-              <select
-                id="sb-settings-language"
-                className="sb-settings-language-select"
-                value={language}
-                onChange={(e) =>
-                  void setLanguage((e.target as HTMLSelectElement).value)
-                }
-              >
-                {AVAILABLE_LANGUAGES.map((l) => (
-                  <option key={l} value={l}>
-                    {languageName(l)}
-                  </option>
-                ))}
-              </select>
+              <div className="sb-settings-language-row">
+                {LANG_META[language]?.cc && (
+                  <img
+                    className="sb-settings-language-flag"
+                    src={`https://flagcdn.com/w40/${LANG_META[language]!.cc}.png`}
+                    alt=""
+                  />
+                )}
+                <select
+                  id="sb-settings-language"
+                  className="sb-settings-language-select"
+                  value={language}
+                  onChange={(e) =>
+                    void setLanguage((e.target as HTMLSelectElement).value)
+                  }
+                >
+                  {AVAILABLE_LANGUAGES.map((l) => (
+                    <option key={l} value={l}>
+                      {LANG_META[l]?.display ?? languageName(l)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </section>
-            <p className="sb-settings-version">v{BUILD_ID}</p>
+            <section className="sb-settings-section">
+              <button
+                type="button"
+                className="sb-settings-action-button"
+                onClick={() => window.open(REPORT_A_BUG, "_blank")}
+              >
+                {t("report-a-bug", { defaultValue: "Report a bug" })}
+              </button>
+            </section>
+            <VersionFooter />
           </div>
         );
     }
@@ -276,5 +319,39 @@ export function SettingsView({ state }: { state: ReaderState }) {
       </div>
       <div className="sb-sidebar-settings-content">{body()}</div>
     </div>
+  );
+}
+
+/** seedbible.org's bug report form (its Settings → Report a bug). */
+const REPORT_A_BUG =
+  "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform";
+
+/** The old reader's version line, "v1.16.0 · e89b23c": tapping it copies the version. */
+function VersionFooter() {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="sb-settings-version"
+      title={t("copy", { defaultValue: "Copy" })}
+      onClick={() =>
+        void navigator.clipboard
+          ?.writeText(`v${APP_VERSION} (${BUILD_ID})`)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          })
+          .catch(() => {})
+      }
+    >
+      {copied
+        ? t("copied", { defaultValue: "Copied" })
+        : t("app-version", {
+            version: APP_VERSION,
+            commit: BUILD_ID.slice(0, 7),
+            defaultValue: "v{{version}} · {{commit}}",
+          })}
+    </button>
   );
 }

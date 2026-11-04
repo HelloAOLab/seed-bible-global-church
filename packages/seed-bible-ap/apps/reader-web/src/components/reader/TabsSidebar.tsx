@@ -87,7 +87,7 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             onClick={() =>
               drawer
                 ? (state.ui.sidebarDrawer.value = false)
-                : (state.ui.sidebarCollapsed.value = !collapsed)
+                : state.setSidebarCollapsed(!collapsed)
             }
           >
             <span className="material-symbols-outlined rtl-mirror">

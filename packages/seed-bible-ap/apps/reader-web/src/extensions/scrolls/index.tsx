@@ -254,6 +254,8 @@ const scrolls: ExtensionRegistration = {
   label: "Dead Sea Scrolls",
   description:
     "The Dead Sea Scroll lines at the verses on screen — Hebrew and an English draft — in Discover.",
+  // Not in seedbible.org: off until the reader turns it on in Settings → Extensions.
+  defaultEnabled: false,
   init: function* (ctx) {
     const state: ReaderState = ctx.state;
     yield ctx.panes.register({
