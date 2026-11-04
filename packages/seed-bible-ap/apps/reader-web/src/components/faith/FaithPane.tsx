@@ -78,12 +78,14 @@ function WhoCanSee(props: {
   churches: Church[];
   onChange: (v: Visibility, church: string) => void;
   idPrefix: string;
+  label?: string;
 }) {
   const { t } = useI18n();
   return (
     <div className="sb-faith-who">
       <label htmlFor={`${props.idPrefix}-who`}>
-        {t("faith-who-can-see", { defaultValue: "Who can see this?" })}
+        {props.label ??
+          t("faith-who-can-see", { defaultValue: "Who can see this?" })}
       </label>
       <select
         id={`${props.idPrefix}-who`}
@@ -469,6 +471,17 @@ function PrayerTab({ state }: { state: ReaderState }) {
   );
 }
 
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso.slice(0, 10)
+    : d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+}
+
 function JourneyTab({ state }: { state: ReaderState }) {
   const { t } = useI18n();
   const { faith } = state;
@@ -480,11 +493,34 @@ function JourneyTab({ state }: { state: ReaderState }) {
   const [note, setNote] = useState("");
   const [who, setWho] = useState<Visibility>("Confidential");
   const [church, setChurch] = useState("");
+  const [adding, setAdding] = useState(false);
+  // The "who sees where I am" choice belongs to the stage, not to the milestone form, so it has its own state.
+  const [stageWho, setStageWho] = useState<Visibility | null>(null);
+  const [stageChurch, setStageChurch] = useState("");
+  const [saved, setSaved] = useState("");
   const current = j.stage?.stage;
-  const shareArgs = () => ({
-    visibility: who,
-    ...(needsChurch(who) && church ? { sharedWith: [church] } : {}),
+  const stageVis: Visibility =
+    stageWho ?? j.stage?.visibility ?? "Confidential";
+  const stageName = (s: Stage) =>
+    t(`faith-stage-${s}`, { defaultValue: STAGE_TEXT[s][0] });
+  const shareArgs = (v: Visibility, c: string) => ({
+    visibility: v,
+    ...(needsChurch(v) && c ? { sharedWith: [c] } : {}),
   });
+  const chooseStage = (s: Stage, v: Visibility, c: string) =>
+    faith.recordJourney({ stage: s, ...shareArgs(v, c) }).then((ok) => {
+      if (ok)
+        setSaved(
+          t("faith-stage-saved", {
+            defaultValue: "Saved. You are now at: {{stage}}.",
+            stage: stageName(s),
+          })
+        );
+    });
+  // Newest first, with repeats of the same step folded into one line.
+  const path = [...j.history]
+    .sort((a, b) => b.assertedAt.localeCompare(a.assertedAt))
+    .filter((h, i, all) => i === 0 || all[i - 1]!.stage !== h.stage);
 
   return (
     <div className="sb-faith-tab">
@@ -493,10 +529,36 @@ function JourneyTab({ state }: { state: ReaderState }) {
           defaultValue: "Where are you on your journey?",
         })}
       </h3>
+      {j.stage && current ? (
+        <div className="sb-faith-here">
+          <span className="sb-faith-here-tag">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              place
+            </span>
+            {t("faith-you-are-here", { defaultValue: "You are here" })}
+          </span>
+          <p className="sb-faith-here-name">{stageName(current)}</p>
+          <p className="sb-faith-here-sub">
+            {t("faith-since", {
+              defaultValue: "Since {{date}}",
+              date: shortDate(j.stage.assertedAt),
+            })}
+            {" · "}
+            {whoLabel(t, j.stage.visibility)}
+          </p>
+        </div>
+      ) : (
+        <p className="sb-faith-here sb-faith-here-empty">
+          {t("faith-not-set", {
+            defaultValue:
+              "You have not chosen a step yet. Tap the one below that fits you today.",
+          })}
+        </p>
+      )}
       <p className="sb-faith-hint">
-        {t("faith-stage-hint", {
+        {t("faith-stage-tap", {
           defaultValue:
-            "Choose what fits you today. Each choice is kept with its date, so you can see how far you have come.",
+            "Tap the step that fits you today. It is saved as soon as you tap, and you can change it whenever you like.",
         })}
       </p>
       <ol className="sb-faith-stages">
@@ -508,11 +570,20 @@ function JourneyTab({ state }: { state: ReaderState }) {
               aria-pressed={current === s}
               onClick={() =>
                 current !== s &&
-                void faith.recordJourney({ stage: s, ...shareArgs() })
+                void chooseStage(
+                  s,
+                  stageVis,
+                  stageChurch || churches[0]?.agent || ""
+                )
               }
             >
               <span className="sb-faith-stage-name">
-                {t(`faith-stage-${s}`, { defaultValue: STAGE_TEXT[s][0] })}
+                {stageName(s)}
+                {current === s && (
+                  <span className="sb-faith-chip sb-faith-stage-badge">
+                    {t("faith-you-are-here", { defaultValue: "You are here" })}
+                  </span>
+                )}
               </span>
               <span className="sb-faith-stage-desc">
                 {t(`faith-stage-${s}-desc`, { defaultValue: STAGE_TEXT[s][1] })}
@@ -521,6 +592,41 @@ function JourneyTab({ state }: { state: ReaderState }) {
           </li>
         ))}
       </ol>
+      <p className="sb-faith-message" role="status" aria-live="polite">
+        {saved}
+      </p>
+      <WhoCanSee
+        value={stageVis}
+        church={stageChurch}
+        churches={churches}
+        idPrefix="faith-stage"
+        label={t("faith-who-sees-step", {
+          defaultValue: "Who can see where I am?",
+        })}
+        onChange={(v, c) => {
+          setStageWho(v);
+          setStageChurch(c);
+          if (current && v !== j.stage?.visibility)
+            void chooseStage(current, v, c);
+        }}
+      />
+      {path.length > 1 && (
+        <>
+          <h3 className="sb-faith-heading">
+            {t("faith-path", { defaultValue: "Your path so far" })}
+          </h3>
+          <ol className="sb-faith-path">
+            {path.map((h) => (
+              <li key={`${h.stage}:${h.assertedAt}`}>
+                <span className="sb-faith-path-date">
+                  {shortDate(h.assertedAt)}
+                </span>
+                {stageName(h.stage)}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
       {j.nextSteps.length > 0 && (
         <>
           <h3 className="sb-faith-heading">
@@ -541,6 +647,12 @@ function JourneyTab({ state }: { state: ReaderState }) {
       <h3 className="sb-faith-heading">
         {t("faith-milestones", { defaultValue: "Milestones" })}
       </h3>
+      <p className="sb-faith-hint">
+        {t("faith-milestones-hint", {
+          defaultValue:
+            "Moments worth remembering, like your baptism. Add them when you want to.",
+        })}
+      </p>
       {j.milestones.length ? (
         <ul className="sb-faith-list">
           {j.milestones.map((m) => (
@@ -580,85 +692,109 @@ function JourneyTab({ state }: { state: ReaderState }) {
           {t("faith-no-milestones", { defaultValue: "No milestones yet." })}
         </p>
       )}
-      <form
-        className="sb-faith-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void faith
-            .recordJourney({
-              milestone,
-              ...(date ? { occurredOn: date } : {}),
-              ...(place.trim() ? { place: place.trim() } : {}),
-              ...(note.trim() ? { note: note.trim() } : {}),
-              ...shareArgs(),
-            })
-            .then((ok) => {
-              if (!ok) return;
-              setDate("");
-              setPlace("");
-              setNote("");
-            });
-        }}
-      >
-        <label htmlFor="faith-milestone">
-          {t("faith-add-milestone", { defaultValue: "Add a milestone" })}
-        </label>
-        <select
-          id="faith-milestone"
-          value={milestone}
-          onChange={(e) =>
-            setMilestone((e.target as HTMLSelectElement).value as Milestone)
-          }
-        >
-          {MILESTONES.map((m) => (
-            <option key={m} value={m}>
-              {t(`faith-milestone-${m}`, { defaultValue: MILESTONE_TEXT[m] })}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="faith-milestone-date">
-          {t("faith-when", { defaultValue: "When (optional)" })}
-        </label>
-        <input
-          id="faith-milestone-date"
-          type="date"
-          value={date}
-          onInput={(e) => setDate((e.target as HTMLInputElement).value)}
-        />
-        <label htmlFor="faith-milestone-place">
-          {t("faith-where", { defaultValue: "Where (optional)" })}
-        </label>
-        <input
-          id="faith-milestone-place"
-          value={place}
-          onInput={(e) => setPlace((e.target as HTMLInputElement).value)}
-        />
-        <label htmlFor="faith-milestone-note">
-          {t("faith-your-story", { defaultValue: "Your story (optional)" })}
-        </label>
-        <textarea
-          id="faith-milestone-note"
-          rows={2}
-          value={note}
-          onInput={(e) => setNote((e.target as HTMLTextAreaElement).value)}
-        />
-        <WhoCanSee
-          value={who}
-          church={church}
-          churches={churches}
-          idPrefix="faith-journey"
-          onChange={(v, c) => {
-            setWho(v);
-            setChurch(c);
-          }}
-        />
+      {!adding && (
         <button
-          type="submit"
-          className="sb-faith-button sb-faith-button-primary"
+          type="button"
+          className="sb-faith-button"
+          onClick={() => setAdding(true)}
         >
-          {t("faith-save", { defaultValue: "Save" })}
+          <span className="material-symbols-outlined" aria-hidden="true">
+            add
+          </span>
+          {t("faith-add-milestone", { defaultValue: "Add a milestone" })}
         </button>
-      </form>
+      )}
+      {adding && (
+        <form
+          className="sb-faith-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void faith
+              .recordJourney({
+                milestone,
+                ...(date ? { occurredOn: date } : {}),
+                ...(place.trim() ? { place: place.trim() } : {}),
+                ...(note.trim() ? { note: note.trim() } : {}),
+                ...shareArgs(who, church),
+              })
+              .then((ok) => {
+                if (!ok) return;
+                setDate("");
+                setPlace("");
+                setNote("");
+                setAdding(false);
+              });
+          }}
+        >
+          <label htmlFor="faith-milestone">
+            {t("faith-which-milestone", { defaultValue: "What happened?" })}
+          </label>
+          <select
+            id="faith-milestone"
+            value={milestone}
+            onChange={(e) =>
+              setMilestone((e.target as HTMLSelectElement).value as Milestone)
+            }
+          >
+            {MILESTONES.map((m) => (
+              <option key={m} value={m}>
+                {t(`faith-milestone-${m}`, { defaultValue: MILESTONE_TEXT[m] })}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="faith-milestone-date">
+            {t("faith-when", { defaultValue: "When (optional)" })}
+          </label>
+          <input
+            id="faith-milestone-date"
+            type="date"
+            value={date}
+            onInput={(e) => setDate((e.target as HTMLInputElement).value)}
+          />
+          <label htmlFor="faith-milestone-place">
+            {t("faith-where", { defaultValue: "Where (optional)" })}
+          </label>
+          <input
+            id="faith-milestone-place"
+            value={place}
+            onInput={(e) => setPlace((e.target as HTMLInputElement).value)}
+          />
+          <label htmlFor="faith-milestone-note">
+            {t("faith-your-story", { defaultValue: "Your story (optional)" })}
+          </label>
+          <textarea
+            id="faith-milestone-note"
+            rows={2}
+            value={note}
+            onInput={(e) => setNote((e.target as HTMLTextAreaElement).value)}
+          />
+          <WhoCanSee
+            value={who}
+            church={church}
+            churches={churches}
+            idPrefix="faith-journey"
+            onChange={(v, c) => {
+              setWho(v);
+              setChurch(c);
+            }}
+          />
+          <div className="sb-faith-form-row">
+            <button
+              type="submit"
+              className="sb-faith-button sb-faith-button-primary"
+            >
+              {t("faith-save", { defaultValue: "Save" })}
+            </button>
+            <button
+              type="button"
+              className="sb-faith-button sb-faith-button-quiet"
+              onClick={() => setAdding(false)}
+            >
+              {t("cancel", { defaultValue: "Cancel" })}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
@@ -837,7 +973,8 @@ function CareTab({ state }: { state: ReaderState }) {
 
 export function FaithPane({ state }: { state: ReaderState }) {
   const { t } = useI18n();
-  const [tab, setTab] = useState<Tab>("prayer");
+  const tab: Tab = state.ui.faithTab.value;
+  const setTab = (next: Tab) => (state.ui.faithTab.value = next);
   const { faith } = state;
   const signedIn = !!state.session.value;
   useEffect(() => {

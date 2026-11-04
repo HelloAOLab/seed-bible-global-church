@@ -273,7 +273,7 @@ function errorText(e: unknown): string {
       m
     )
   )
-    return "Your agent needs a quick update before it can keep prayers. Open your Home at www.faithnet.me once, then come back and try again.";
+    return "Your agent needs a quick update before it can save your prayers, journey and milestones. Open your Home at www.faithnet.me once while signed in, then come back here and try again.";
   return m;
 }
 

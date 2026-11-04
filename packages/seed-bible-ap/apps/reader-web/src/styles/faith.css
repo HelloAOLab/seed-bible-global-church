@@ -262,3 +262,83 @@
   flex: 1;
   min-width: 0;
 }
+
+.sb-faith-here {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px;
+  border: 2px solid var(--sb-primary-color);
+  border-radius: var(--sb-faith-radius);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-faith-here-empty {
+  border: 1px dashed var(--sb-faith-ring);
+  background: transparent;
+  line-height: 1.45;
+}
+
+.sb-faith-here-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sb-primary-color);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.sb-faith-here-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sb-faith-here-sub {
+  margin: 0;
+  color: var(--sb-faith-muted);
+  font-size: 0.875rem;
+}
+
+.sb-faith-stage {
+  min-height: 44px;
+}
+
+.sb-faith-stage-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-faith-stage-badge {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-faith-message:empty {
+  display: none;
+}
+
+.sb-faith-message {
+  margin: 0;
+}
+
+.sb-faith-path {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-faith-path-date {
+  display: inline-block;
+  min-width: 108px;
+  color: var(--sb-faith-muted);
+  font-size: 0.875rem;
+}

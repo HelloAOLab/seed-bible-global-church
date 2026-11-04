@@ -148,4 +148,45 @@ export const FAITH_FLOWS: Flow[] = [
       return "found Fort Morgan household church on FaithNet, chose it (requests go to its leaders), then cleared it";
     },
   },
+  {
+    id: "PY5",
+    section: "10a. Prayer, faith journey and care",
+    title: "Open your faith journey from the top menu",
+    rows: ["Your faith journey"],
+    timeoutMs: 120_000,
+    checks:
+      "The sidebar's ⋮ More menu lists Journey under Friends; choosing it opens the Faith page on its Journey tab. The toolbar's Prayer button still opens on Prayer.",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      await c.page
+        .locator(".sb-sidebar-top-row")
+        .getByRole("button", { name: "More" })
+        .click();
+      const items = await c.page.getByRole("menuitem").allInnerTexts();
+      const friends = items.findIndex((i) => /Friends/.test(i));
+      if (friends < 0 || !/Journey/.test(items[friends + 1] ?? ""))
+        throw new Error(`Journey is not under Friends: ${items.join(" | ")}`);
+      await c.page.getByRole("menuitem", { name: "Journey" }).click();
+      const pane = c.page.locator(".sb-faith");
+      await pane.waitFor({ timeout: 10000 });
+      if (
+        (await pane
+          .getByRole("tab", { name: "Journey" })
+          .getAttribute("aria-selected")) !== "true"
+      )
+        throw new Error("the Faith page did not open on Journey");
+      await c.pressToolbar("Prayer");
+      await pane.waitFor({ state: "detached", timeout: 5000 });
+      await c.pressToolbar("Prayer");
+      await pane.waitFor({ timeout: 10000 });
+      if (
+        (await pane
+          .getByRole("tab", { name: "Prayer" })
+          .getAttribute("aria-selected")) !== "true"
+      )
+        throw new Error("the Prayer button did not open on Prayer");
+      return "More → Journey (under Friends) opened the Journey tab; the Prayer button opened on Prayer";
+    },
+  },
 ];

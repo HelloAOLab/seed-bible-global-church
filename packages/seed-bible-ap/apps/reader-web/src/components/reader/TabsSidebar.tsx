@@ -138,6 +138,15 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                   {t("friends", { defaultValue: "Friends" })}
                 </MenuItem>
                 <MenuItem
+                  icon="route"
+                  onSelect={() => {
+                    state.ui.faithTab.value = "journey";
+                    state.ui.pane.value = "faith";
+                  }}
+                >
+                  {t("faith-tab-journey", { defaultValue: "Journey" })}
+                </MenuItem>
+                <MenuItem
                   icon="grid_view"
                   onSelect={() => (state.ui.pane.value = "map")}
                 >

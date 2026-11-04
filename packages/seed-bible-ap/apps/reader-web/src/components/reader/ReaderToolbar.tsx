@@ -132,7 +132,10 @@ export function toolbarActions(
       icon: "volunteer_activism",
       label: t("faith-toolbar", { defaultValue: "Prayer" }),
       active: ui.pane.value === "faith",
-      onClick: () => togglePane("faith"),
+      onClick: () => {
+        if (ui.pane.value !== "faith") ui.faithTab.value = "prayer";
+        togglePane("faith");
+      },
     },
     {
       id: "discover",
