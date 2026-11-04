@@ -38,6 +38,22 @@ describe("tours", () => {
     expect(again.startContextual("selector")).toBe(false);
   });
 
+  it("a first-use tip waits for someone who asked for tours, as on seedbible.org", async () => {
+    const stores = memoryStores();
+    const tours = createTours({ prefs: stores.prefs });
+    await tick();
+    expect(tours.startContextual("selector")).toBe(false);
+    expect(tours.active.value).toBeNull();
+    tours.start("introduction");
+    for (let i = 0; i < 10 && tours.active.value; i++) tours.next();
+    expect(tours.startContextual("selector")).toBe(true);
+    tours.done();
+    await tick();
+    const again = createTours({ prefs: stores.prefs });
+    await tick();
+    expect(again.startContextual("search")).toBe(true);
+  });
+
   it("Skip can turn contextual tours off; Account turns them on again; a button still starts one", async () => {
     const stores = memoryStores();
     const tours = createTours({ prefs: stores.prefs });
