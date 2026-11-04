@@ -28,6 +28,7 @@ import {
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { HuddleAnswer } from "../state/sessions/huddle";
+import type { JourneyView, PrayersView } from "../state/faith/faith";
 import type { Contact } from "../state/social/today";
 import { agentAddress } from "../state/records/marks";
 
@@ -277,6 +278,61 @@ export function createA2aBackend(
         ended: (r.ended as FriendsView["ended"] | undefined) ?? [],
       };
     },
+    async faithJourney() {
+      const r = await ask(
+        "seed.faith.journey",
+        {},
+        "where am I on my faith journey"
+      );
+      return {
+        stage: (r.stage as JourneyView["stage"] | undefined) ?? null,
+        history: (r.history as JourneyView["history"] | undefined) ?? [],
+        milestones:
+          (r.milestones as JourneyView["milestones"] | undefined) ?? [],
+        nextSteps: (r.nextSteps as JourneyView["nextSteps"] | undefined) ?? [],
+      };
+    },
+    async faithRecordJourney(args) {
+      const r = await ask(
+        "seed.faith.journey.record",
+        faithArgs(args),
+        "record a step of my faith journey"
+      );
+      return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
+    },
+    async faithPrayers() {
+      const r = await ask("seed.faith.prayers", {}, "my prayers");
+      return {
+        prayers: (r.prayers as PrayersView["prayers"] | undefined) ?? [],
+        care: (r.care as PrayersView["care"] | undefined) ?? [],
+      };
+    },
+    async faithSavePrayer(args) {
+      const r = await ask(
+        "seed.faith.prayer.save",
+        faithArgs(args),
+        "keep my prayer"
+      );
+      return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
+    },
+    async faithRequestCare(args) {
+      const r = await ask(
+        "seed.faith.care.request",
+        faithArgs(args),
+        "keep my care request"
+      );
+      return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
+    },
+    async faithChurches() {
+      const r = await ask(
+        "seed.faith.churches",
+        {},
+        "which churches do I belong to"
+      );
+      const links =
+        (r.links as Array<{ agent: string; name: string }> | undefined) ?? [];
+      return links.map((l) => ({ agent: l.agent, name: l.name }));
+    },
     async sessionStart(passage: SessionPassageArgs): Promise<SessionTicket> {
       const r = await ask(
         "seed.session.start",
@@ -389,4 +445,20 @@ export function createA2aBackend(
       return r as unknown as SessionTicket;
     },
   };
+}
+
+/** The person runtime takes its faith arguments as words: lists comma-separated, yes/no for flags. */
+function faithArgs(args: object): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(args)) {
+    if (v === undefined || v === null || v === "") continue;
+    out[k] = Array.isArray(v)
+      ? v.join(",")
+      : typeof v === "boolean"
+        ? v
+          ? "yes"
+          : "no"
+        : String(v);
+  }
+  return out;
 }

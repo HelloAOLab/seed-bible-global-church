@@ -32,6 +32,7 @@ import "./styles/pane-layout.css";
 import "./styles/today.css";
 import "./styles/discover.css";
 import "./styles/friends.css";
+import "./styles/faith.css";
 import "./styles/huddle.css";
 import "./styles/floating-search.css";
 import "./styles/chat.css";

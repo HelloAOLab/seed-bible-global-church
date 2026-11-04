@@ -28,6 +28,7 @@ import {
   parseFriendLink,
   type FriendInvite,
 } from "./social/friendship";
+import { createFaith } from "./faith/faith";
 
 const INVITE_KEY = "sbr.invite";
 import { A2A_BASE } from "../api";
@@ -178,6 +179,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     refresh: () => today.refreshContacts(),
     homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
   });
+  const faith = createFaith(backend, () => !!backend.identity());
   const invites = createInvites({
     base: A2A_BASE,
     bearer: () => {
@@ -188,6 +190,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   effect(() => {
     if (!session.value) return;
+    void faith.refresh();
     void invites.refresh();
     void invites.loadFindable();
   });
@@ -579,6 +582,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "about"
       | "map"
       | "friends"
+      | "faith"
       | "profile"
       | "edit-profile"
       | `ext:${string}`
@@ -1132,6 +1136,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     today,
     profile,
     friendship,
+    faith,
     invites,
     homeProfile,
     presence,

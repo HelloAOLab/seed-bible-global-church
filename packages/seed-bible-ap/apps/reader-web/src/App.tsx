@@ -9,6 +9,7 @@ import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
 import { FriendsPane } from "./components/social/FriendsPane";
+import { FaithPane } from "./components/faith/FaithPane";
 import { FriendInviteDialog } from "./components/social/FriendInviteDialog";
 import { ShareDialog } from "./components/chrome/ShareDialog";
 import { useEffect, useRef } from "preact/hooks";
@@ -56,6 +57,7 @@ const FULL_WIDTH_PANES: readonly string[] = [
   "profile",
   "edit-profile",
   "friends",
+  "faith",
 ];
 
 export function App({ state }: { state: ReaderState }) {
@@ -218,6 +220,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "map" && (
         <aside className={paneClass}>
           <ScriptureMapPane state={state} />
+        </aside>
+      )}
+      {pane === "faith" && (
+        <aside className={paneClass}>
+          <FaithPane state={state} />
         </aside>
       )}
       {pane === "friends" && (

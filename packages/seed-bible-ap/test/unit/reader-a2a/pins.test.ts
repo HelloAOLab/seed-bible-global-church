@@ -22,6 +22,15 @@ const WORKSPACE_LOCAL = new Set([
   "seed.work.read",
   "seed.file.put",
   "seed.workspace.preview",
+  // Forwarders to the reader's own agent: their contracts are skill:faith/person-* on the person-steward playbook
+  // (person.faith.*), not seed skills this workspace pins.
+  "seed.faith.journey",
+  "seed.faith.journey.record",
+  "seed.faith.prayers",
+  "seed.faith.prayer.save",
+  "seed.faith.care.request",
+  "seed.faith.shared",
+  "seed.faith.churches",
 ]);
 
 describe("pinned skills", () => {

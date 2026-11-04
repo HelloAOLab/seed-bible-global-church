@@ -3,6 +3,7 @@
 // devices in a session. Add a flow for every new feature row; the runner writes the marks the manual carries.
 import type { Flow } from "./harness";
 import { MORE_FLOWS } from "./flows-more";
+import { FAITH_FLOWS } from "./flows-faith";
 
 const CH = "/read/BSB/JHN/3";
 
@@ -1404,4 +1405,4 @@ const BASE_FLOWS: Flow[] = [
   },
 ];
 
-export const FLOWS: Flow[] = [...BASE_FLOWS, ...MORE_FLOWS];
+export const FLOWS: Flow[] = [...BASE_FLOWS, ...MORE_FLOWS, ...FAITH_FLOWS];

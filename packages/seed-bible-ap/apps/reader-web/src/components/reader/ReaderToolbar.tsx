@@ -81,7 +81,8 @@ type PaneId =
   | "today"
   | "discover"
   | "session"
-  | "library";
+  | "library"
+  | "faith";
 
 /**
  * Every button that can sit after the chapter controls, in the default order — what the toolbar shows (arranged by
@@ -124,6 +125,13 @@ export function toolbarActions(
       label: t("today", { defaultValue: "Today" }),
       active: ui.pane.value === "today",
       onClick: () => togglePane("today"),
+    },
+    {
+      id: "faith",
+      icon: "volunteer_activism",
+      label: t("faith-toolbar", { defaultValue: "Prayer" }),
+      active: ui.pane.value === "faith",
+      onClick: () => togglePane("faith"),
     },
     {
       id: "discover",
@@ -207,6 +215,7 @@ export function ReaderToolbar({ state }: { state: ReaderState }) {
       | "discover"
       | "session"
       | "library"
+      | "faith"
   ) => (ui.pane.value = ui.pane.value === p ? "none" : p);
   const pb = state.playback.value;
   const audioPlaying = pb.isPlaying.value;
