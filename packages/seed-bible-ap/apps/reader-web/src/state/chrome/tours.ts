@@ -273,6 +273,8 @@ export function createTours(deps: TourDeps) {
     /** The first time a feature is used: show its tour once, unless tours are turned off. */
     startContextual(id: string): boolean {
       if (off.value || active.value || seen.value.includes(id)) return false;
+      // Opt-in, as on seedbible.org: a feature's tip shows only to someone who took the introduction.
+      if (!seen.value.includes("introduction")) return false;
       return show(id, 0);
     },
     next() {
