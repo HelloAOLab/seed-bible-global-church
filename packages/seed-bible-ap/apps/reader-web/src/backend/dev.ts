@@ -31,6 +31,7 @@ import type { Contact } from "../state/social/today";
 import { chapterOf } from "@seed/seed-protocol";
 import { agentAddress } from "../state/records/marks";
 import { createDevFaith, type DevFaith } from "./devFaith";
+import { createDevShare, type DevShare } from "./devShare";
 
 export interface DevCall {
   op: "read" | "put" | "merge" | "list" | "beat";
@@ -38,7 +39,7 @@ export interface DevCall {
   opId?: string;
 }
 
-export interface DevBackend extends ReaderBackend, DevFaith {
+export interface DevBackend extends ReaderBackend, DevFaith, DevShare {
   readonly buckets: Map<string, BucketDocument>;
   readonly calls: DevCall[];
   /** The in-memory registry: what was published and not withdrawn. */
@@ -85,6 +86,7 @@ export function createDevBackend(
   };
   return {
     ...createDevFaith(guard),
+    ...createDevShare(() => who?.agent ?? null, guard),
     kind: "dev",
     buckets,
     calls,

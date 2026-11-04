@@ -32,6 +32,13 @@ const WORKSPACE_LOCAL = new Set([
   "seed.faith.shared",
   "seed.faith.churches",
   "seed.faith.church.find",
+  // Sharing with a friend forwards to the reader's own agent's built-in Library and messaging tools (ap-home
+  // library.file.save / library.grants.list / library.grant.issue / library.granted.fetch, messaging.direct.send).
+  "seed.share.put",
+  "seed.share.grants",
+  "seed.share.grant",
+  "seed.share.notify",
+  "seed.share.fetch",
 ]);
 
 describe("pinned skills", () => {

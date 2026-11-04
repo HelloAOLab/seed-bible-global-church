@@ -5,6 +5,7 @@
 // A note that came back twice from a merge (edited on two devices) shows as a conflict the reader settles. A verse
 // reference typed into a note is a link that opens the chapter.
 import { routeOf } from "../../state/reading/route";
+import { noteText } from "./noteHtml";
 import { lazy, Suspense } from "preact/compat";
 import { Component, type ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
@@ -357,6 +358,22 @@ function NoteItem({
               }}
             >
               {t("copy-link", { defaultValue: "Copy link" })}
+            </MenuItem>
+          )}
+          {!!state.session.value && !note.conflictOf && (
+            <MenuItem
+              icon="person_add"
+              onSelect={() =>
+                (state.ui.shareWithFriend.value = {
+                  key: note.id,
+                  kind: "note",
+                  title: ref,
+                  passage: chapterRef,
+                  text: noteText(note.note),
+                })
+              }
+            >
+              {t("share-with-friend", { defaultValue: "Share with a friend" })}
             </MenuItem>
           )}
           <MenuItem

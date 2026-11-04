@@ -1150,3 +1150,17 @@
 .sb-today-content.sb-today-content-sections {
   align-items: stretch;
 }
+
+/* What a friend shared, under their name: the passage it is on, then its words. */
+.sb-shared-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.sb-shared-item-text {
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+}

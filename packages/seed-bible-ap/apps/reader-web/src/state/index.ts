@@ -2,6 +2,7 @@
 // the outbox and every manager, and hands the tree to the components. `createReaderState` takes a backend so
 // tests and local pages run on the in-memory one.
 import type { PlaylistItem } from "@seed/seed-schema";
+import { createShare, readShareLink, type SharedItem } from "./social/share";
 import { parseSharedPath, type SharedRef } from "./social/sharedPage";
 import { createTours, parseTutorialLink } from "./chrome/tours";
 import { createToolbarLayout } from "./chrome/toolbarLayout";
@@ -194,6 +195,20 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   // Every address is written in the interface language (`/en/…`, `/fr/…`), as seedbible.org's are.
   effect(() => setRouteLanguage(language.value));
   const faith = createFaith(backend, () => !!backend.identity(), stores.prefs);
+  const share = createShare({
+    backend,
+    prefs: stores.prefs,
+    me: () => {
+      const i = backend.identity();
+      return i ? { agent: i.agent, ...(i.name ? { name: i.name } : {}) } : null;
+    },
+    homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
+    origin: typeof location !== "undefined" ? location.origin : "",
+  });
+  // What friends shared is read again whenever the reader signs in (their agent reads it under each grant).
+  effect(() => {
+    if (session.value) void share.refresh();
+  });
   const invites = createInvites({
     base: A2A_BASE,
     bearer: () => {
@@ -677,6 +692,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** What the Share dialog is sharing (components/chrome/ShareDialog.tsx); null when closed. */
     /** The Share window: what it shares, and the words to send with the link (Share via…) when it is verses. */
     share: signal<{ title: string; url: string; text?: string } | null>(null),
+    /** Something being shared with one friend (the friend picker): what it is, in the share's own shape. */
+    shareWithFriend: signal<SharedItem | null>(null),
     /** The verse toolbar opened as a menu at the pointer (a right-click on a verse); null when docked. */
     verseMenuAt: signal<{ x: number; y: number } | null>(null),
     /** The shared page open over the reader (`/shared/<shelf>/<kind>/<slug>`); null when none. */
@@ -928,6 +945,17 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         return null;
       }
     })();
+    // A friend's share (`/shared-with-me?from=&shelf=&g=`): kept on the device at once, then the reader opens on Today.
+    const sharedWithMe =
+      typeof location !== "undefined"
+        ? readShareLink(
+            new URL(
+              `${location.pathname}${location.search}`,
+              "https://reader.invalid"
+            )
+          )
+        : null;
+    if (sharedWithMe) history.replaceState(null, "", "/");
     // seedbible.org's home page is Today (its Welcome card on a first visit): the reader opens there from "/".
     const atHome =
       typeof location !== "undefined" &&
@@ -961,7 +989,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         target ?? { translationId: defaultTranslationFor(language.value) }
       );
     tabsRestored = true;
-    if (atHome && !ui.embed.value) ui.pane.value = "today";
+    if ((atHome || sharedWithMe) && !ui.embed.value) ui.pane.value = "today";
+    if (sharedWithMe) void share.accept(sharedWithMe);
     if (offering) {
       discover.focus.value = offering;
       ui.pane.value = "discover";
@@ -1171,6 +1200,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     settings,
     discover,
     publishing,
+    sharing: share,
     today,
     profile,
     friendship,
