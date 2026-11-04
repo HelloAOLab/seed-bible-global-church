@@ -77,7 +77,14 @@ const SCREENS: Array<{
       if (await you.isVisible().catch(() => false)) {
         await you.click();
         await settle(p);
-      } else await tap(/^(profile|account|log in)$/i)(p);
+      } else {
+        // The sidebar's profile circle on both (theirs "Open profile (Anonymous)", ours "Open profile").
+        await p
+          .getByRole("button", { name: /^open profile/i })
+          .first()
+          .click();
+        await settle(p);
+      }
     },
   },
 ];

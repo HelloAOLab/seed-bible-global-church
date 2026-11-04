@@ -5,6 +5,7 @@
 // connected. Dressed by the copied
 // `tabs.css` / `pane-layout.css`.
 import { handleGridKeyNav } from "../keyboardNav";
+import { SettingsIcon } from "../chrome/seedIcons";
 import { useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -512,13 +513,13 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
             state.ui.settingsView.value = settingsOpen ? null : "main";
           }}
         >
-          <span className="material-symbols-outlined">settings</span>
+          <SettingsIcon />
         </button>
         {/* The old reader's profile circle: your picture (or the account icon) opens Profile; changes still to send
             are a count on its corner. */}
         <button
           type="button"
-          className={`sb-sidebar-icon-button sb-sidebar-profile-button${state.session.value ? " sb-sidebar-profile-button-in" : ""}${state.ui.pane.value === "profile" ? " sb-sidebar-icon-button-selected" : ""}`}
+          className={`sb-sidebar-self-avatar sb-sidebar-profile-button${state.session.value ? " sb-sidebar-profile-button-in" : ""}${state.ui.pane.value === "profile" ? " sb-sidebar-icon-button-selected" : ""}`}
           aria-label={
             state.session.value
               ? t("open-profile-named", {
@@ -539,7 +540,10 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           {state.session.value ? (
             <Avatar state={state} />
           ) : (
-            <span className="material-symbols-outlined">account_circle</span>
+            // seedbible.org's signed-out circle (its SelfAvatarButton's generic avatar).
+            <span className="sb-tab-user-icon sb-tab-user-icon-generic">
+              <span className="material-symbols-outlined">account_circle</span>
+            </span>
           )}
           {/* Changes waiting to send — only someone signed in has anywhere to send them. */}
           {!!state.session.value && state.outbox.pending.value > 0 && (

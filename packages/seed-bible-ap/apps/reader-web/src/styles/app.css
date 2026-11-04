@@ -1308,7 +1308,9 @@ html[data-sb-line="loose"] .sb-bible-reader {
   height: 1.75rem;
 }
 /* The old reader's bottom row: ⚙ Settings, then who is connected taking the rest. */
-.sb-sidebar-footer.sb-sidebar-bottom-actions {
+.sb-sidebar-footer.sb-sidebar-bottom-actions:not(
+    .sb-sidebar-bottom-actions-collapsed
+  ) {
   gap: 0.25rem;
 }
 .sb-sidebar-bottom-actions .sb-connected-chip {
@@ -1934,9 +1936,6 @@ html[data-sb-line="loose"] .sb-bible-reader {
   .sb-mobile-more-menu {
     max-height: calc(100dvh - 8rem);
     overflow-y: auto;
-  }
-  .sb-floating-search-panel {
-    bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
   }
   /* On a phone the chapter and the Discover card stack at the screen's width (the old reader lays them out as plain
      blocks there); a centred column would let either grow to its widest line and run off the edge. */
@@ -2596,6 +2595,29 @@ html[data-sb-line="loose"] .sb-bible-reader {
     border-bottom: 1px solid var(--sb-divider-color);
   }
   .sb-app-pane:not(.sb-app-pane-full) > .sb-pane > .sb-pane-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* A phone's panes (seedbible.org's fullscreen PaneShell): the same 42px header bar over a rule, the title 12px in. */
+@media (max-width: 720px) {
+  .sb-app-pane {
+    background: var(--sb-reader-background, var(--sb-background));
+  }
+  .sb-app-pane > .sb-pane:not(.sb-today-container) {
+    padding-top: 0;
+  }
+  .sb-app-pane > .sb-pane:not(.sb-today-container) > .sb-pane-header {
+    height: 42px;
+    box-sizing: border-box;
+    margin: 0 -1.125rem 0.25rem;
+    padding: 0 12px;
+    gap: 8px;
+    border-bottom: 1px solid var(--sb-divider-color);
+  }
+  .sb-app-pane > .sb-pane:not(.sb-today-container) > .sb-pane-header h2 {
     font-size: 1rem;
     font-weight: 600;
     letter-spacing: 0.02em;
