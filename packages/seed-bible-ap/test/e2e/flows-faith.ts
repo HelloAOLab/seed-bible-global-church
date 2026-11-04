@@ -129,30 +129,47 @@ export const FAITH_FLOWS: Flow[] = [
   {
     id: "PY4",
     section: "10a. Prayer, faith journey and care",
-    title: "Find your church on FaithNet and choose it",
-    rows: ["Ask your church for care"],
+    title: "Choose your church and site from FaithNet's churches",
+    rows: ["Ask your church for care", "Your church and site"],
     timeoutMs: 240_000,
     checks:
-      "Care, with no church linked at the Home: searching 'Fort Morgan' finds Fort Morgan household church on FaithNet; choosing it says requests go to its leaders; Change clears it again.",
+      "Journey → Your church lists FaithNet's .church churches; Calvary Bible Church says its own sites (Boulder, Erie, Thornton, with addresses and service times); choosing Erie saves Calvary Bible Church · Erie through the reader's agent; Care then says requests go to Calvary's leaders; choosing Fort Morgan (no sites) makes it the church without a site question.",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
-      const pane = await openFaith(c, "Care");
-      const change = pane.getByRole("button", { name: "Change" });
-      if (await change.count()) await change.click();
-      await pane.locator("#faith-church-search").fill("Fort Morgan");
-      await pane.getByRole("button", { name: "Find" }).click();
-      const pick = pane.getByRole("button", {
-        name: /Fort Morgan household church is my church/,
+      const pane = await openFaith(c, "Journey");
+      const card = pane.locator(".sb-faith-church");
+      if (await card.count())
+        await card.getByRole("button", { name: "Change" }).click();
+      const calvary = pane.locator(".sb-faith-churches button", {
+        hasText: "Calvary Bible Church",
       });
-      await pick.waitFor({ timeout: 60000 });
-      await pick.click();
+      await calvary.waitFor({ timeout: 60000 });
+      await calvary.click();
+      const erie = pane.locator(".sb-faith-site", { hasText: "Erie" });
+      await erie.waitFor({ timeout: 60000 });
+      if (!/615 Evans/.test(await erie.innerText()))
+        throw new Error(`Erie shows no address: ${await erie.innerText()}`);
+      await erie.locator("input").check();
+      await pane.getByRole("button", { name: "Save" }).click();
+      await card
+        .filter({ hasText: "Calvary Bible Church" })
+        .filter({ hasText: "Erie" })
+        .waitFor({ timeout: 60000 });
+      await pane.getByRole("tab", { name: "Care" }).click();
       await pane
-        .getByText(/Goes to the leaders of Fort Morgan household church/)
-        .waitFor({ timeout: 5000 });
-      await pane.getByRole("button", { name: "Change" }).click();
-      await pane.locator("#faith-church-search").waitFor({ timeout: 5000 });
-      return "found Fort Morgan household church on FaithNet, chose it (requests go to its leaders), then cleared it";
+        .getByText(/Goes to the leaders of Calvary Bible Church/)
+        .waitFor({ timeout: 10000 });
+      await pane.getByRole("tab", { name: "Journey" }).click();
+      await card.getByRole("button", { name: "Change" }).click();
+      await pane
+        .locator(".sb-faith-churches button", { hasText: "Fort Morgan" })
+        .click();
+      await card
+        .filter({ hasText: "Fort Morgan" })
+        .filter({ hasText: "All sites" })
+        .waitFor({ timeout: 60000 });
+      return "Calvary Bible Church listed its sites; Erie was saved and Care sends to Calvary's leaders; Fort Morgan (no sites) was chosen without a site question";
     },
   },
   {

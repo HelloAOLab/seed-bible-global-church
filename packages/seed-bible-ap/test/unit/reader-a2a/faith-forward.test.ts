@@ -22,6 +22,25 @@ describe("faith forwarding", () => {
       sharedWith: `0x${"c".repeat(40)},0x${"d".repeat(40)}`,
     });
   });
+  it("a church choice travels as JSON, so its sites reach the person agent whole", () => {
+    const churches = [
+      {
+        agent: "0x" + "a".repeat(40),
+        name: "calvary-bible-co.church",
+        site: "campus_erie",
+      },
+    ];
+    const out = forwardedArgs("seed.faith.church.home.save", {
+      churches,
+      defaultChurch: "0x" + "a".repeat(40),
+      heldBy: "0x" + "e".repeat(40),
+    });
+    expect(JSON.parse(out.churches!)).toEqual(churches);
+    expect(out).toEqual({
+      churches: out.churches,
+      defaultChurch: "0x" + "a".repeat(40),
+    });
+  });
   it("the churches list asks for churches, whatever was sent", () => {
     expect(forwardedArgs("seed.faith.churches", { type: "treasury" })).toEqual({
       type: "church",
@@ -32,6 +51,8 @@ describe("faith forwarding", () => {
     expect(Object.keys(byId).sort()).toEqual([
       "seed.faith.care.request",
       "seed.faith.church.find",
+      "seed.faith.church.home",
+      "seed.faith.church.home.save",
       "seed.faith.churches",
       "seed.faith.journey",
       "seed.faith.journey.record",
@@ -41,5 +62,7 @@ describe("faith forwarding", () => {
     ]);
     expect(byId["seed.faith.prayer.save"]!.establishes).toBeUndefined();
     expect(byId["seed.faith.prayers"]!.establishes).toBe("lookup");
+    expect(byId["seed.faith.church.home.save"]!.establishes).toBeUndefined();
+    expect(byId["seed.faith.church.home"]!.establishes).toBe("lookup");
   });
 });

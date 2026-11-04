@@ -3,6 +3,8 @@
 import type {
   CareRequest,
   Church,
+  ChurchDescription,
+  ChurchHome,
   FaithBackend,
   JourneyView,
   Milestone,
@@ -59,8 +61,8 @@ const PRACTICE_LABEL: Record<string, string> = {
 export interface DevFaith extends FaithBackend {
   /** The churches the fake Home says the reader belongs to. */
   churchList: Church[];
-  /** The churches the fake registry knows, for the finder. */
-  churchDirectory: Church[];
+  /** The churches the fake naming service lists, each with what it says of itself. */
+  churchesOnFaithNet: ChurchDescription[];
 }
 
 export function createDevFaith(guard: () => void): DevFaith {
@@ -68,18 +70,53 @@ export function createDevFaith(guard: () => void): DevFaith {
   const milestones: JourneyView["milestones"] = [];
   const prayers: Prayer[] = [];
   const care: CareRequest[] = [];
+  let home: ChurchHome = { churches: [], defaultChurch: null };
   let n = 0;
   const id = () => `dev-${Date.now().toString(36)}-${(n++).toString(36)}`;
   const now = () => new Date().toISOString();
   return {
     churchList: [],
-    churchDirectory: [],
-    async faithFindChurches(name) {
+    churchesOnFaithNet: [],
+    async churchDirectory() {
       guard();
-      const q = name.toLowerCase();
-      return this.churchDirectory.filter((c) =>
-        c.name.toLowerCase().includes(q)
-      );
+      return this.churchesOnFaithNet.map((d) => ({
+        agent: d.church.agent,
+        name: d.church.name,
+        displayName: d.church.displayName,
+        describable: true,
+      }));
+    },
+    async describeChurch(name) {
+      guard();
+      const d = this.churchesOnFaithNet.find((c) => c.church.name === name);
+      if (!d) throw new Error(`${name} is not a church on FaithNet`);
+      return d;
+    },
+    async faithChurchHome() {
+      guard();
+      return { ...home, churches: [...home.churches] };
+    },
+    async faithSaveChurchHome(args) {
+      guard();
+      // The agent's rule (spec 203 §3): the church must say the site is one of its own.
+      const churches: ChurchHome["churches"] = [];
+      for (const c of args.churches) {
+        const d = this.churchesOnFaithNet.find(
+          (x) => x.church.agent === c.agent
+        );
+        if (!d) throw new Error(`${c.name} is not a church on FaithNet`);
+        const site = c.site ? d.sites.find((s) => s.id === c.site) : null;
+        if (c.site && !site)
+          throw new Error(`${d.church.displayName} has no site ${c.site}`);
+        churches.push({
+          agent: c.agent,
+          name: d.church.name,
+          displayName: d.church.displayName,
+          site: site ? { id: site.id, name: site.name } : null,
+        });
+      }
+      home = { churches, defaultChurch: args.defaultChurch };
+      return { answer: "Kept — your church and site are saved." };
     },
     async faithJourney() {
       guard();

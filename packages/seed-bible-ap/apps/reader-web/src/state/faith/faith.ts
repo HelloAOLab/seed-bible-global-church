@@ -101,6 +101,58 @@ export interface Church {
   name: string;
 }
 
+/** A church on FaithNet: a `.church` name (ap-church spec 203 §1). */
+export interface DirectoryChurch {
+  agent: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  describable: boolean;
+}
+export interface ChurchSite {
+  id: string;
+  name: string;
+  address?: Partial<
+    Record<
+      | "streetAddress"
+      | "addressLocality"
+      | "addressRegion"
+      | "postalCode"
+      | "addressCountry",
+      string
+    >
+  >;
+  timezone?: string;
+  website?: string;
+  services?: Array<{ day: string; time: string; durationMinutes?: number }>;
+}
+/** What a church says of itself in `church.describe` (spec 203 §2). */
+export interface ChurchDescription {
+  church: {
+    agent: string;
+    name: string;
+    displayName: string;
+    description?: string;
+    website?: string;
+    timezone?: string;
+  };
+  sites: ChurchSite[];
+}
+/** The reader's church and site, kept by their agent — the record the Church app reads too (spec 203 §3). */
+export interface ChurchHome {
+  churches: Array<{
+    agent: string;
+    name: string;
+    displayName?: string;
+    site: { id: string; name: string } | null;
+  }>;
+  defaultChurch: string | null;
+}
+export interface ChurchHomeSaveArgs {
+  churches: Array<{ agent: string; name: string; site: string | null }>;
+  defaultChurch: string | null;
+}
+
 export interface JourneyRecordArgs {
   stage?: Stage;
   milestone?: Milestone;
@@ -143,9 +195,15 @@ export interface FaithBackend {
   faithSavePrayer(args: PrayerSaveArgs): Promise<{ answer?: string }>;
   faithRequestCare(args: CareRequestArgs): Promise<{ answer?: string }>;
   faithChurches(): Promise<Church[]>;
-  /** Churches on FaithNet by name, from the public registry. */
-  faithFindChurches(name: string): Promise<Church[]>;
+  /** FaithNet's churches: the `.church` names. */
+  churchDirectory(): Promise<DirectoryChurch[]>;
+  /** A church's own description and sites, asked of it. */
+  describeChurch(name: string): Promise<ChurchDescription>;
+  faithChurchHome(): Promise<ChurchHome>;
+  faithSaveChurchHome(args: ChurchHomeSaveArgs): Promise<{ answer?: string }>;
 }
+
+const EMPTY_HOME: ChurchHome = { churches: [], defaultChurch: null };
 
 const EMPTY_JOURNEY: JourneyView = {
   stage: null,
@@ -154,8 +212,6 @@ const EMPTY_JOURNEY: JourneyView = {
   nextSteps: [],
 };
 
-/** A church the reader chose on this device (not yet a link at their Home), so care and sharing can name it. */
-const CHOSEN_KEY = "faith:chosen-church";
 type Prefs = {
   get(k: string): Promise<unknown>;
   set(k: string, v: unknown): Promise<void>;
@@ -171,22 +227,25 @@ export function createFaith(
   const prayers = signal<PrayersView>({ prayers: [], care: [] });
   /** The churches the reader's Home links them to. */
   const linked = signal<Church[]>([]);
-  /** A church the reader found and chose here, when their Home links them to none. */
-  const chosen = signal<Church | null>(null);
+  /** The church and site the reader chose, as their agent keeps it. */
+  const home = signal<ChurchHome>(EMPTY_HOME);
+  /** Who a prayer or care request can go to: the churches they chose (default first), then their Home's links. */
   const churches = computed<Church[]>(() => {
-    const c = chosen.value;
-    return c && !linked.value.some((l) => l.agent === c.agent)
-      ? [...linked.value, c]
-      : linked.value;
+    const h = home.value;
+    const chosen = [...h.churches]
+      .sort(
+        (a, b) =>
+          Number(b.agent === h.defaultChurch) -
+          Number(a.agent === h.defaultChurch)
+      )
+      .map((c) => ({ agent: c.agent, name: c.displayName ?? c.name }));
+    return [
+      ...chosen,
+      ...linked.value.filter((l) => !chosen.some((c) => c.agent === l.agent)),
+    ];
   });
-  void prefs
-    ?.get(CHOSEN_KEY)
-    .then((v) => {
-      const c = v as Church | undefined;
-      if (c && typeof c.agent === "string" && typeof c.name === "string")
-        chosen.value = c;
-    })
-    .catch(() => {});
+  const directory = signal<DirectoryChurch[] | null>(null);
+  void prefs;
   const loading = signal(false);
   const loaded = signal(false);
   /** What the reader's agent said about the last act (or why it failed), in its words. */
@@ -201,14 +260,17 @@ export function createFaith(
     }
     loading.value = true;
     try {
-      const [j, p, c] = await Promise.all([
+      const [j, p, c, h] = await Promise.all([
         backend.faithJourney(),
         backend.faithPrayers(),
         backend.faithChurches().catch(() => [] as Church[]),
+        // An agent whose playbook predates church choice answers nothing here; the rest of the page still works.
+        backend.faithChurchHome().catch(() => EMPTY_HOME),
       ]);
       journey.value = j;
       prayers.value = p;
       linked.value = c;
+      home.value = h;
       loaded.value = true;
     } catch (e) {
       message.value = { text: errorText(e), error: true };
@@ -244,21 +306,44 @@ export function createFaith(
       act(() => backend.faithSavePrayer(args)),
     requestCare: (args: CareRequestArgs) =>
       act(() => backend.faithRequestCare(args)),
-    chosenChurch: chosen,
-    /** Churches on FaithNet whose name matches; an empty list when none, a failure said in `message`. */
-    async findChurches(name: string): Promise<Church[]> {
-      if (!name.trim()) return [];
+    churchHome: home,
+    directory,
+    /** FaithNet's churches, read once a session; a failure said in `message`. */
+    async loadDirectory(): Promise<DirectoryChurch[]> {
+      if (directory.value) return directory.value;
       try {
-        return await backend.faithFindChurches(name.trim());
+        directory.value = await backend.churchDirectory();
       } catch (e) {
         message.value = { text: errorText(e), error: true };
         return [];
       }
+      return directory.value;
     },
-    async chooseChurch(c: Church | null) {
-      chosen.value = c;
-      await (c ? prefs?.set(CHOSEN_KEY, c) : prefs?.delete(CHOSEN_KEY))?.catch(
-        () => {}
+    async describeChurch(name: string): Promise<ChurchDescription | null> {
+      try {
+        return await backend.describeChurch(name);
+      } catch (e) {
+        message.value = { text: errorText(e), error: true };
+        return null;
+      }
+    },
+    /** Make `church` (at `site`, or all its sites) the reader's church; the other churches they chose stay. */
+    chooseChurch(church: { agent: string; name: string }, site: string | null) {
+      const others = home.value.churches
+        .filter((c) => c.agent !== church.agent)
+        .map((c) => ({
+          agent: c.agent,
+          name: c.name,
+          site: c.site?.id ?? null,
+        }));
+      return act(() =>
+        backend.faithSaveChurchHome({
+          churches: [
+            { agent: church.agent, name: church.name, site },
+            ...others,
+          ],
+          defaultChurch: church.agent,
+        })
       );
     },
   };

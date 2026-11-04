@@ -57,6 +57,12 @@ const FORWARD = {
     to: "person.faith.shared.view",
     args: ["audience", "church", "friend", "purpose"],
   },
+  // The reader's church and site (ap-church spec 203 §3): one record their agent keeps, the same one the Church app reads.
+  "seed.faith.church.home": { to: "person.church.home.get", args: [] },
+  "seed.faith.church.home.save": {
+    to: "person.church.home.save",
+    args: ["churches", "defaultChurch"],
+  },
   // The churches the reader belongs to, from their own links — who a prayer or a care request can be shared with.
   "seed.faith.churches": {
     to: "person.affiliations.list",
@@ -124,6 +130,18 @@ export const FAITH_TOOLS: ToolSpec[] = [
     ["find my church"]
   ),
   spec(
+    "seed.faith.church.home",
+    "The signed-in reader's church and site — the churches they chose, the site at each, their default church — from their own agent (person.church.home.get). No args.",
+    false,
+    ["my church", "which site do I go to"]
+  ),
+  spec(
+    "seed.faith.church.home.save",
+    "Keeps the signed-in reader's church and site choice in their own vault, by their agent (person.church.home.save), checked against each church's own description. Args: churches (JSON list of {agent, name, site}), defaultChurch.",
+    true,
+    ["Calvary Erie is my church"]
+  ),
+  spec(
     "seed.faith.churches",
     "The churches the signed-in reader belongs to, from their own links at their Home (person.affiliations.list, type church) — who a prayer or a care request can be shared with. No args.",
     false,
@@ -144,6 +162,8 @@ const MESSAGE: Record<FaithToolId, string> = {
   "seed.faith.prayer.save": "keep my prayer",
   "seed.faith.care.request": "keep my care request",
   "seed.faith.shared": "what of my faith life may this audience see",
+  "seed.faith.church.home": "which church and site are mine",
+  "seed.faith.church.home.save": "keep my church and site",
   "seed.faith.churches": "which churches do I belong to",
   "seed.faith.church.find": "find a church on FaithNet",
 };
@@ -159,7 +179,14 @@ export function forwardedArgs(
   for (const a of route.args) {
     const v = args[a];
     if (v === undefined || v === null) continue;
-    out[a] = Array.isArray(v) ? v.map(String).join(",") : String(v);
+    // A list of plain words travels as "a,b"; a structured value (the churches of a church choice) as JSON.
+    out[a] =
+      typeof v === "object" &&
+      (!Array.isArray(v) || v.some((x) => typeof x === "object"))
+        ? JSON.stringify(v)
+        : Array.isArray(v)
+          ? v.map(String).join(",")
+          : String(v);
   }
   return out;
 }

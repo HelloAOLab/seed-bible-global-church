@@ -17,6 +17,7 @@ import {
 import { publishSlice, withdrawSlice, type PublishArgs } from "./publish";
 import { FAITH_TOOLS, faithInvokers } from "./faith";
 import { SHARE_TOOLS, shareInvokers } from "./share";
+import { CHURCH_TOOLS, churchInvokers, type ChurchEnv } from "./church";
 import {
   platformGet,
   platformSend,
@@ -316,6 +317,7 @@ export const TOOLS: ToolSpec[] = [
   PREVIEW,
   ...FAITH_TOOLS,
   ...SHARE_TOOLS,
+  ...CHURCH_TOOLS,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -333,7 +335,7 @@ const collectionOf = (raw: unknown): Collection => {
 };
 
 export interface SkillDeps {
-  env: VaultEnv & PlatformEnv & RoomsEnv;
+  env: VaultEnv & PlatformEnv & RoomsEnv & ChurchEnv;
   hello: (
     name: string | undefined
   ) => Promise<{ greeting: string; workspace: string }>;
@@ -365,6 +367,7 @@ export function invokers(
   return {
     ...faithInvokers(deps.env, () => readerOf(asker)),
     ...shareInvokers(deps.env, () => readerOf(asker)),
+    ...churchInvokers(deps.env),
     [HELLO_TOOL.id]: async (_t, args) => {
       const name =
         typeof args.name === "string" && args.name.trim()

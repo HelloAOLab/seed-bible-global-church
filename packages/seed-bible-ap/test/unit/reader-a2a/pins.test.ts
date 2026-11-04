@@ -32,6 +32,11 @@ const WORKSPACE_LOCAL = new Set([
   "seed.faith.shared",
   "seed.faith.churches",
   "seed.faith.church.find",
+  "seed.faith.church.home",
+  "seed.faith.church.home.save",
+  // The church directory reads the naming service and the church's own public church.describe (spec 203).
+  "seed.church.directory",
+  "seed.church.describe",
   // Sharing with a friend forwards to the reader's own agent's built-in Library and messaging tools (ap-home
   // library.file.save / library.grants.list / library.grant.issue / library.granted.fetch, messaging.direct.send).
   "seed.share.put",

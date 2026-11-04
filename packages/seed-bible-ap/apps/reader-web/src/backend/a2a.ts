@@ -29,7 +29,14 @@ import {
 } from "./ReaderBackend";
 import type { Offering } from "../state/social/discover";
 import type { HuddleAnswer } from "../state/sessions/huddle";
-import type { JourneyView, PrayersView } from "../state/faith/faith";
+import type {
+  ChurchDescription,
+  ChurchHome,
+  ChurchSite,
+  DirectoryChurch,
+  JourneyView,
+  PrayersView,
+} from "../state/faith/faith";
 import type { Contact } from "../state/social/today";
 import { agentAddress } from "../state/records/marks";
 
@@ -324,33 +331,45 @@ export function createA2aBackend(
       );
       return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
     },
-    async faithFindChurches(name) {
+    async churchDirectory() {
       const r = await ask(
-        "seed.faith.church.find",
-        { intent: `${name} church` },
-        "find a church on FaithNet"
+        "seed.church.directory",
+        {},
+        "which churches are on FaithNet"
       );
-      const agents =
-        (r.agents as
-          | Array<{
-              agent: string | null;
-              name: string | null;
-              displayName?: string;
-              agentType?: string;
-            }>
-          | undefined) ?? [];
-      // A church agent: typed so by the registry, or named under the .church root.
-      return agents
-        .filter(
-          (a) =>
-            a.agent &&
-            (/church/i.test(a.agentType ?? "") ||
-              /\.church$/i.test(a.name ?? ""))
-        )
-        .map((a) => ({
-          agent: a.agent!,
-          name: a.displayName || a.name || a.agent!,
-        }));
+      return (r.churches as DirectoryChurch[] | undefined) ?? [];
+    },
+    async describeChurch(name) {
+      const r = await ask(
+        "seed.church.describe",
+        { name },
+        "where does this church meet"
+      );
+      return {
+        church: r.church as ChurchDescription["church"],
+        sites: (r.sites as ChurchSite[] | undefined) ?? [],
+      };
+    },
+    async faithChurchHome() {
+      const r = await ask(
+        "seed.faith.church.home",
+        {},
+        "which church and site are mine"
+      );
+      const h = (r.home ?? r.record ?? r) as Partial<ChurchHome>;
+      return {
+        churches: Array.isArray(h.churches) ? h.churches : [],
+        defaultChurch:
+          typeof h.defaultChurch === "string" ? h.defaultChurch : null,
+      };
+    },
+    async faithSaveChurchHome(args) {
+      const r = await ask(
+        "seed.faith.church.home.save",
+        { churches: args.churches, defaultChurch: args.defaultChurch ?? "" },
+        "keep my church and site"
+      );
+      return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
     },
     async sharePut(friend, item) {
       const r = await ask(
