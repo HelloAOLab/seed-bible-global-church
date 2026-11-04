@@ -64,6 +64,8 @@ export interface ShareProgress {
   friendName: string;
   step: ShareStep;
   error?: string;
+  /** The link that opens this friend's shelf, once the grant is known (to copy, or to send another way). */
+  link?: string;
 }
 
 export interface ShareDeps {
@@ -173,6 +175,7 @@ export function createShare(deps: ShareDeps) {
     const me = deps.me();
     const who = friend.agent.toLowerCase();
     const friendName = friend.name || who;
+    let link: string | undefined;
     const step = (s: ShareStep, error?: string) =>
       (progress.value = {
         key: item.key,
@@ -180,6 +183,7 @@ export function createShare(deps: ShareDeps) {
         friendName,
         step: s,
         ...(error ? { error } : {}),
+        ...(link ? { link } : {}),
       });
     if (!me) {
       step("failed", "Sign in to share with a friend.");
@@ -190,6 +194,7 @@ export function createShare(deps: ShareDeps) {
       const { shelf } = await deps.backend.sharePut(who, item);
       let { grant } = await deps.backend.shareGrants(who);
       if (grant) {
+        link = shareLink(deps.origin, me.agent, shelf, grant, me.name);
         step("done");
         return true;
       }
@@ -208,7 +213,7 @@ export function createShare(deps: ShareDeps) {
         }
       } else grant = asked.grant;
       // And the message that carries them the link, signed there too.
-      const link = shareLink(deps.origin, me.agent, shelf, grant, me.name);
+      link = shareLink(deps.origin, me.agent, shelf, grant, me.name);
       const message = `${me.name ?? "A friend"} shared with you in Seed Bible: ${item.title}. Open it here: ${link}`;
       const sent = await deps.backend.shareNotify(who, message);
       if (isParked(sent)) {

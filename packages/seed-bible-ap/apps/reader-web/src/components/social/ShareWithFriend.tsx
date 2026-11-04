@@ -61,12 +61,27 @@ export function ShareWithFriend({ state }: { state: ReaderState }) {
         <div className="sb-footnote-modal-content">
           <p className="sb-muted">{item.title}</p>
           {mine ? (
-            <p
-              role="status"
-              className={mine.step === "failed" ? "sb-pane-error" : undefined}
-            >
-              {mine.step === "failed" ? mine.error : status[mine.step]}
-            </p>
+            <>
+              <p
+                role="status"
+                className={mine.step === "failed" ? "sb-pane-error" : undefined}
+              >
+                {mine.step === "failed" ? mine.error : status[mine.step]}
+              </p>
+              {mine.step === "done" && mine.link && (
+                <button
+                  type="button"
+                  className="sb-note-button sb-share-friend-copy"
+                  data-link={mine.link}
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(mine.link!);
+                    state.ui.toast.value = { key: "link-copied" };
+                  }}
+                >
+                  {t("copy-link", { defaultValue: "Copy link" })}
+                </button>
+              )}
+            </>
           ) : !state.session.value ? (
             <p>
               {t("share-friend-signed-out", {
