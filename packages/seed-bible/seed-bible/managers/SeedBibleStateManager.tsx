@@ -22,6 +22,7 @@ import {
 } from "../managers/TodayManager";
 import { isMinimalEmbedUrl } from "../managers/EmbedMode";
 import { TodayPane, TodayPaneTitle } from "../components/TodayPane/TodayPane";
+import { openExtensionConsentModal } from "../components/ExtensionConsentModal/ExtensionConsentModal";
 import { AboutPage, AboutPaneTitle } from "../components/AboutPage/AboutPage";
 import {
   SharedPageLoadFailedModalContent,
@@ -63,6 +64,10 @@ import {
   YourContentPaneTitle,
 } from "../components/YourContentPane/YourContentPane";
 import {
+  buildCustomizationTutorialSteps,
+  openCustomizationEditPane,
+} from "../components/CustomizationEditPane/CustomizationEditPane";
+import {
   PLAYLIST_HISTORY_PANE_ID,
   PlaylistHistoryPane,
   PlaylistHistoryPaneTitle,
@@ -77,6 +82,12 @@ import {
   FriendsPaneTitle,
 } from "../components/FriendsPane/FriendsPane";
 import { setupFriendLinks } from "../components/FriendsPane/FriendLinkPrompts";
+import {
+  EXTENSIONS_PANE_ID,
+  ExtensionsPage,
+  ExtensionsPaneBackButton,
+  ExtensionsPaneTitle,
+} from "../components/ExtensionsPage/ExtensionsPage";
 import {
   createYourContentManager,
   type YourContentManager,
@@ -95,6 +106,7 @@ import {
 } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import {
+  type ApiResponseCache,
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
   type TranslationBook,
@@ -631,6 +643,21 @@ export interface SeedBibleState {
   /** Closes Friends (clears `friends` from the URL). */
   closeFriends: () => void;
 
+  /** True when the full-screen Extensions page is showing (desktop). */
+  isExtensionsOpen: ReadonlySignal<boolean>;
+  /**
+   * The extension whose page is open on the Extensions page, or null while
+   * it lists them all.
+   */
+  extensionsPageEntryId: ReadonlySignal<string | null>;
+  /**
+   * Opens the Extensions page, at `extensionId`'s page when given (reflected
+   * in the URL as `?extensions=open&extension=<id>`).
+   */
+  openExtensions: (extensionId?: string | null) => void;
+  /** Closes the Extensions page (clears `extensions` and `extension`). */
+  closeExtensions: () => void;
+
   /** True when the Profile screen is showing. */
   isProfileOpen: ReadonlySignal<boolean>;
   /** Opens the Profile screen (reflected in the URL as `?profile=open`). */
@@ -746,6 +773,11 @@ export interface CreateSeedBibleStateOptions {
    */
   translationsCache?: TranslationsCache;
   /**
+   * Process-wide cache of chapter/book-catalog requests, SSR host only —
+   * see `standalone/ssrApiResponseCache.ts`.
+   */
+  apiResponseCache?: ApiResponseCache;
+  /**
    * A `FreeUseBibleAPI.snapshotResponseCache()` snapshot to seed the new
    * `FreeUseBibleAPI` instance with, so it doesn't refetch data another
    * instance already fetched. The client uses this to seed its own API cache
@@ -806,7 +838,8 @@ export function createSeedBibleState(
   const branding = options.config?.branding;
   const brandingThemes = branding?.whiteLabelThemes;
   const api = new FreeUseBibleAPI(
-    getDefaultAPIEndpoint(navigation.currentUrl.value)
+    getDefaultAPIEndpoint(navigation.currentUrl.value),
+    options.apiResponseCache
   );
   if (options.apiResponseSnapshot) {
     api.seedResponseCache(options.apiResponseSnapshot);
@@ -964,6 +997,13 @@ export function createSeedBibleState(
   );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
+    requestSandboxConsent: (request) =>
+      openExtensionConsentModal(modals, request, {
+        userId: login.userId,
+        friends,
+      }),
+    records: os,
+    fileRecords: os,
   });
   const extensionSettings = createExtensionSettingsManager(
     os,
@@ -1110,6 +1150,40 @@ export function createSeedBibleState(
     friendsOpen.value = false;
   };
 
+  // The full-screen Extensions page, bound to `?extensions=open` and, while
+  // one extension's page is showing, `?extension=<id>`.
+  const extensionsOpen = signal(
+    import.meta.env.SSR
+      ? false
+      : navigation.currentUrl.value.searchParams.get("extensions") === "open"
+  );
+  const extensionsPageEntry = signal<string | null>(
+    import.meta.env.SSR
+      ? null
+      : navigation.currentUrl.value.searchParams.get("extension")
+  );
+  const isExtensionsOpen = computed(() => extensionsOpen.value);
+  const extensionsPageEntryId = computed(() =>
+    extensionsOpen.value ? extensionsPageEntry.value : null
+  );
+  const openExtensions = (extensionId: string | null = null) => {
+    // Today's URL binding would otherwise turn it straight back on over this
+    // page; see `openProfile` below.
+    if (today.isOpen.peek()) {
+      today.close();
+    }
+    batch(() => {
+      extensionsOpen.value = true;
+      extensionsPageEntry.value = extensionId;
+    });
+  };
+  const closeExtensions = () => {
+    batch(() => {
+      extensionsOpen.value = false;
+      extensionsPageEntry.value = null;
+    });
+  };
+
   // The Profile screen. Two-way bound to `?profile=open` so it can be
   // deep-linked and so the browser's back button leaves it, mirroring Today.
   //
@@ -1184,6 +1258,22 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         friendsOpen.value = newValue === "open";
+      },
+    },
+    extensions: {
+      get value() {
+        return extensionsOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        extensionsOpen.value = newValue === "open";
+      },
+    },
+    extension: {
+      get value() {
+        return extensionsOpen.value ? extensionsPageEntry.value : null;
+      },
+      set value(newValue) {
+        extensionsPageEntry.value = newValue;
       },
     },
     "edit-profile": {
@@ -1326,8 +1416,8 @@ export function createSeedBibleState(
   // The flip side is that this effect can't see a move *within* a chapter, so any
   // path that jumps to a verse and must reveal the reader has to call
   // `closeFullscreenPanes` itself rather than rely on this: verse reference links
-  // (`handleOpenVerseReference` below), the floating panels' jump actions, and
-  // sidebar search results (`SidebarSearch`) all do. Selecting a tab
+  // (`handleOpenVerseReference` below) and the floating panels' jump actions
+  // both do. Selecting a tab
   // (`handleSelectTab`) closes them too, which covers most of the remaining
   // paths incidentally.
   let lastReadingLocation: string | null = null;
@@ -1397,6 +1487,23 @@ export function createSeedBibleState(
     return true;
   });
 
+  // Dialogs that cover the reader. Pop-ups opened through `modals` are only
+  // part of the list: sign-in, Terms, Privacy, Code of Conduct, and the
+  // onboarding cards are drawn on their own in `app/main.tsx`. A new dialog
+  // that does not go through `modals` has to be added here, or the offer card
+  // can show on top of it. `onboarding.step` starts at "done" and only leaves
+  // it while an onboarding card is actually up, so a normal first visit is
+  // not held back. `?tutorial=` links use `readerVisible` alone.
+  const modalCoveringReader = computed(
+    () =>
+      modals.modals.value.length > 0 ||
+      login.isLoginOpen.value ||
+      termsOpen.value ||
+      privacyOpen.value ||
+      codeOfConductOpen.value ||
+      onboarding.step.value !== "done"
+  );
+
   // Client-only: SSR can't run the tour, and launching it there would put
   // the overlay in the served HTML.
   const tutorialLink = import.meta.env.SSR
@@ -1411,7 +1518,8 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink,
     isMinimalEmbed,
-    tutorialLink
+    tutorialLink,
+    modalCoveringReader
   );
 
   if (!import.meta.env.SSR) {
@@ -1524,6 +1632,15 @@ export function createSeedBibleState(
   effect(() => {
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // The tabs drawer only exists on phones. Still "open" once the window is
+  // wider than that, it would hold the desktop sidebar expanded and stop the
+  // collapse button working, so close it on the way out of mobile.
+  effect(() => {
+    if (!isMobile.value) {
+      sidebar.isMobileOpen.value = false;
     }
   });
 
@@ -3534,6 +3651,10 @@ export function createSeedBibleState(
     isFriendsOpen,
     openFriends,
     closeFriends,
+    isExtensionsOpen,
+    extensionsPageEntryId,
+    openExtensions,
+    closeExtensions,
     isProfileOpen,
     openProfile,
     closeProfile,
@@ -3551,6 +3672,12 @@ export function createSeedBibleState(
     closeCodeOfConduct,
     features,
     dispose: () => {
+      // Aborts each tab's open chapter request. Without this an SSR render
+      // that hit its deadline leaves its fetch subscribed, so a hung request
+      // stays in the shared response cache for the next render to adopt.
+      for (const tab of tabs.tabs.value) {
+        tab.readingState.dispose();
+      }
       i18n.dispose();
       disposeReadingTicker();
     },
@@ -3696,6 +3823,7 @@ export function createSeedBibleState(
       onOpenPassage={(target) => openTodayPassage(state, today, target)}
       onOpenBookSelector={openTodayBookSelector}
       onTakeTour={() => tutorial.acceptPrompt()}
+      onClose={() => today.close()}
     />
   );
   const renderTodayPaneTitle = () => <TodayPaneTitle />;
@@ -3707,6 +3835,9 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
+        // Today's own close button (TodayCloseButton) stands in for the
+        // header's.
+        showHeader: false,
       });
     } else {
       panes.closePane(TODAY_PANE_ID); // no-op when already closed
@@ -3908,6 +4039,39 @@ export function createSeedBibleState(
     closeProfile();
     void playlists.createNewPlaylist();
   };
+  // The customization editor is a side pane beside the reader, so the
+  // fullscreen screens above it close first, as for the playlist editor.
+  const editCustomizationFromContent = (customizationId: string) => {
+    closeYourContent();
+    closeProfile();
+    openCustomizationEditPane(state, customizationId);
+  };
+  const createCustomizationFromContent = async () => {
+    closeYourContent();
+    closeProfile();
+    let created;
+    try {
+      created = await customizations.create();
+    } catch (error) {
+      console.error("Error creating customization:", error);
+      // Destructured for the translation lint rules, as in the toast above.
+      const { t } = i18n;
+      toast(
+        t("customization-create-failed", {
+          defaultValue:
+            "Couldn't create your Custom Branding. Please try again.",
+        })
+      );
+      return;
+    }
+    openCustomizationEditPane(state, created.id);
+    // First-time-only overview: the customization name and logo, then a
+    // deep-linked tour of the new theme's editor sections.
+    tutorial.startContextual(
+      "customization-created",
+      buildCustomizationTutorialSteps(state, created.defaultVariantId)
+    );
+  };
   // Both land in the plans pane, opened fullscreen the way the Profile card
   // opens it, and then drill straight into the plan so the user doesn't have
   // to find it in the list a second time.
@@ -3943,6 +4107,8 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onEditCustomization={editCustomizationFromContent}
+      onCreateCustomization={() => void createCustomizationFromContent()}
     />
   );
   const renderYourContentPaneTitle = () => <YourContentPaneTitle />;
@@ -4032,6 +4198,35 @@ export function createSeedBibleState(
     }
   });
 
+  const renderExtensionsPane = () => <ExtensionsPage state={state} />;
+  const renderExtensionsPaneTitle = () => <ExtensionsPaneTitle />;
+  const renderExtensionsPaneLeading = () => (
+    <ExtensionsPaneBackButton state={state} />
+  );
+
+  effect(() => {
+    if (isExtensionsOpen.value) {
+      panes.openPane({
+        id: EXTENSIONS_PANE_ID,
+        placement: "fullscreen",
+        title: renderExtensionsPaneTitle,
+        leading: renderExtensionsPaneLeading,
+        component: renderExtensionsPane,
+      });
+    } else {
+      panes.closePane(EXTENSIONS_PANE_ID); // no-op when already closed
+    }
+  });
+
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === EXTENSIONS_PANE_ID
+    );
+    if (!paneOpen && isExtensionsOpen.peek()) {
+      closeExtensions();
+    }
+  });
+
   const renderAboutPane = () => <AboutPage state={state} />;
   const renderAboutPaneTitle = () => <AboutPaneTitle />;
 
@@ -4042,6 +4237,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderAboutPaneTitle,
         component: renderAboutPane,
+        // The page's own hero card names it.
+        showHeader: false,
       });
     } else {
       panes.closePane(ABOUT_PANE_ID); // no-op when already closed

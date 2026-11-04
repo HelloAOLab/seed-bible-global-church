@@ -7,12 +7,18 @@ import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import {
-  decideHydration,
+  decideStartupHydration,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
 import { hydrateWithFallback } from "../app/hydrateWithFallback";
 import { waitForInitialChapterLoads } from "../app/initialChapterLoadWait";
+import {
+  recordPageLoadOutcome,
+  startWebVitalsBreakdownReporting,
+} from "../app/webVitalsBreakdown";
+
+startWebVitalsBreakdownReporting();
 
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
@@ -92,18 +98,25 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
     const decision: HydrationDecision =
       chapterLoads === "timed-out"
         ? { hydrate: false, reason: "chapter-load-timed-out" }
-        : decideHydration({
+        : decideStartupHydration({
             config,
-            pathname: location.pathname,
-            search: location.search,
+            navigation: state.navigation,
             container,
             clientCommit: __GIT_COMMIT__,
+            clientLanguage: state.i18n.language.peek(),
           });
 
     const app = <Main initialState={state} config={config} />;
 
     if (decision.hydrate) {
       const result = hydrateWithFallback(app, container);
+      recordPageLoadOutcome(
+        result.outcome === "hydrated"
+          ? "hydrated"
+          : result.outcome === "fell-back"
+            ? "hydration-fell-back"
+            : "hydration-failed"
+      );
       if (result.outcome !== "hydrated") {
         console.error(
           "Hydration failed; falling back to a full render():",
@@ -137,6 +150,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
       console.warn(
         `Hydration skipped (${decision.reason}); falling back to render().`
       );
+      recordPageLoadOutcome(`rendered:${decision.reason}`);
       render(app, container);
     }
   }
