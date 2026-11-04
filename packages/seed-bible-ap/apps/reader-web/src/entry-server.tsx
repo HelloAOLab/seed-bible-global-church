@@ -11,6 +11,7 @@ import { render } from "preact-render-to-string";
 import {
   FreeUseBibleAPI,
   BIBLE_API_ENDPOINT,
+  DIRECT_BIBLE_API_ENDPOINT,
   type TranslationBookChapter,
 } from "./backend/bible";
 import {
@@ -162,7 +163,11 @@ export async function renderChapterPage(
   endpoint = BIBLE_API_ENDPOINT,
   verses: [number, number] | null = null
 ): Promise<RenderedChapter | null> {
-  const api = new FreeUseBibleAPI(endpoint);
+  // Only the deployed endpoint has direct Bibles beside it; a test's own endpoint is served alone.
+  const api = new FreeUseBibleAPI(
+    endpoint,
+    endpoint === BIBLE_API_ENDPOINT ? DIRECT_BIBLE_API_ENDPOINT : null
+  );
   try {
     const [chapter] = await Promise.all([
       api.getTranslationBookChapter(

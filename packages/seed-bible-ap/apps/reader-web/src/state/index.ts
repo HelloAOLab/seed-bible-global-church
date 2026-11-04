@@ -11,7 +11,11 @@ import { defaultTranslationFor } from "./reading/defaultTranslation";
 import { bindWakeLock } from "./chrome/wakeLock";
 import { AVAILABLE_LANGUAGES, language, setLanguage } from "../i18n";
 import { signal } from "@preact/signals";
-import { BIBLE_API_ENDPOINT, FreeUseBibleAPI } from "../backend/bible";
+import {
+  BIBLE_API_ENDPOINT,
+  DIRECT_BIBLE_API_ENDPOINT,
+  FreeUseBibleAPI,
+} from "../backend/bible";
 import type { ReaderBackend } from "../backend/ReaderBackend";
 import { createA2aBackend } from "../backend/a2a";
 import { indexedDbStores, type ReaderStores } from "../backend/offline/db";
@@ -127,7 +131,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   );
   const backend = opts.backend ?? createA2aBackend(() => session.value);
   const stores = opts.stores ?? indexedDbStores();
-  const api = opts.api ?? new FreeUseBibleAPI(BIBLE_API_ENDPOINT);
+  const api =
+    opts.api ??
+    new FreeUseBibleAPI(BIBLE_API_ENDPOINT, DIRECT_BIBLE_API_ENDPOINT);
 
   const outbox = createOutbox({
     backend,
@@ -850,8 +856,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
 
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.
   let tabsRestored = false;
-  /** A device's very first visit, still on the default Bible it was given (nothing restored, no address). */
-  const firstVisit = signal(false);
   let tabsSaveTimer: ReturnType<typeof setTimeout> | undefined;
   let tabsPending: SavedTabs | null = null;
   const saveTabsNow = () => {
@@ -957,7 +961,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         target ?? { translationId: defaultTranslationFor(language.value) }
       );
     tabsRestored = true;
-    firstVisit.value = !restored && !target;
     if (atHome && !ui.embed.value) ui.pane.value = "today";
     if (offering) {
       discover.focus.value = offering;
@@ -1143,7 +1146,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
 
   const stateObject = {
-    firstVisit,
     offline,
     toolbar,
     tours,

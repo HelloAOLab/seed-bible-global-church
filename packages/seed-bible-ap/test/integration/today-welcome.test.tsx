@@ -1,6 +1,6 @@
-// TODAY'S WELCOME VERSE, AS seedbible.org COLOURS IT — its first visit is on AAB, whose John 1:1 its table marks
-// ("beginning", "the Word was God"); this reader's English default is BSB. On a first visit the words are coloured as
-// there; once the reader arrives on a chosen Bible (an address), BSB is shown plain, as seedbible.org shows it.
+// TODAY'S WELCOME VERSE, AS seedbible.org COLOURS IT — its table marks John 1:1's two anchors ("beginning", "the Word
+// was God") for each default translation. A first visit opens English on AAB, so the words are coloured as there; BSB
+// is not in the table, so a chapter opened in BSB shows it plain, as seedbible.org shows it.
 import { afterEach, describe, expect, it } from "vitest";
 import { waitFor } from "@testing-library/preact";
 import { TodayWelcome } from "../../apps/reader-web/src/components/social/TodayWelcome";
@@ -50,11 +50,11 @@ async function welcome(url?: string) {
 }
 
 describe("Today's welcome verse", () => {
-  it("colours seedbible.org's two anchors on a first visit", async () => {
+  it("colours seedbible.org's two anchors on a first visit (AAB)", async () => {
     expect(await welcome("/")).toEqual(["beginning", "Word was God."]);
   });
 
-  it("shows BSB plain once the reader came on a chosen Bible", async () => {
+  it("shows BSB plain, as seedbible.org does", async () => {
     expect(await welcome("/en/BSB/genesis/1")).toEqual([]);
   });
 });

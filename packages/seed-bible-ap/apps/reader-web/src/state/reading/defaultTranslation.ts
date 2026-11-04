@@ -1,10 +1,12 @@
 // THE FIRST TRANSLATION A DEVICE OPENS — by its interface language, copied from the old BibleReadingManager
 // `DEFAULT_TRANSLATIONS_BY_LANGUAGE` (packages/seed-bible, 2026-10-22; every id checked against the Bible API).
-// English keeps this reader's default (BSB); a language with no entry falls back to it too.
+// English opens on AAB, as seedbible.org does (read straight from the Bible API: the scripture agent does not serve it);
+// a language with no entry falls back to BSB, the agent's checked English.
 import { DEFAULT_TRANSLATION } from "./reading";
 
 export const DEFAULT_TRANSLATIONS_BY_LANGUAGE: ReadonlyMap<string, string> =
   new Map([
+    ["en", "AAB"],
     ["am", "amh_amh"],
     ["ar", "ARBNAV"],
     ["bn", "ben_ocv"],

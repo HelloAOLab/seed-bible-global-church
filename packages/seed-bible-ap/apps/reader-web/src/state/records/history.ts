@@ -100,7 +100,35 @@ export function createHistory(
     return out;
   }
 
-  return { record, recent, heat };
+  /**
+   * Time spent reading per local calendar day (`YYYY-MM-DD`), with the chapters read that day — the year grid on
+   * Today (seedbible.org's History). A chapter read counts at least a minute, as seedbible.org's grid does.
+   */
+  async function daily(): Promise<
+    Map<string, { seconds: number; chapters: RecentReading[] }>
+  > {
+    const out = new Map<
+      string,
+      { seconds: number; chapters: RecentReading[] }
+    >();
+    for (const it of await events()) {
+      const start = Date.parse(it.startedAt);
+      const end = Date.parse(it.endedAt ?? it.startedAt);
+      const d = new Date(start);
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const cur = out.get(day) ?? { seconds: 0, chapters: [] };
+      cur.seconds += Math.max(60, Math.round((end - start) / 1000));
+      cur.chapters.push({
+        chapterRef: chapterOf(it.aboutPassage),
+        ...(it.ofEdition ? { edition: it.ofEdition } : {}),
+        at: it.endedAt ?? it.startedAt,
+      });
+      out.set(day, cur);
+    }
+    return out;
+  }
+
+  return { record, recent, heat, daily };
 }
 
 export type History = ReturnType<typeof createHistory>;

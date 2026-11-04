@@ -1,4 +1,8 @@
 import { A2A_BASE } from "../api";
+import {
+  pickVerseOfTheDay,
+  type VerseOfTheDayHoliday,
+} from "../state/social/verseOfTheDay";
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -7,6 +11,8 @@ export interface AvailableTranslations {
 }
 
 export interface Translation {
+  /** "bible-api": read straight from the Free Use Bible API, not through the scripture agent (no verse check). */
+  source?: "bible-api";
   /**
    * The ID of the translation.
    */
@@ -1279,6 +1285,47 @@ export const BIBLE_API_ENDPOINT = (
     .env?.["VITE_BIBLE_API_URL"] ?? `${AGENT_ORIGIN}/bible/`
 ).replace(/\/?$/, "/");
 
+/**
+ * Where the Bibles the scripture agent does not serve come from: the Free Use Bible API itself (the one seedbible.org
+ * reads), straight from the browser. Those translations carry no verse commitments, so the reader shows them without
+ * the agent's check (scriptureCheck: "not checked"), and the agent's own features keyed to its editions do not apply.
+ * `VITE_DIRECT_BIBLE_API_URL` overrides it; an empty value turns direct Bibles off.
+ */
+export const DIRECT_BIBLE_API_ENDPOINT: string | null = (() => {
+  const v = (
+    import.meta as unknown as { env?: Record<string, string | undefined> }
+  ).env?.["VITE_DIRECT_BIBLE_API_URL"];
+  if (v === "") return null;
+  return (v ?? "https://bible.helloao.org/").replace(/\/?$/, "/");
+})();
+
+/** A verse in a categorised dataset (`/api/d/{dataset}/verses.json`). */
+export interface DatasetCategorizedVerse {
+  book: string;
+  chapter: number;
+  verse: number;
+  endVerse?: number;
+  categories?: string[];
+  addedIn?: number | null;
+  removedIn?: number | null;
+}
+export interface DatasetCategorizedVerses {
+  verses: DatasetCategorizedVerse[];
+  holidays?: VerseOfTheDayHoliday[];
+}
+
+const AVAILABLE_TRANSLATIONS_PATH = "api/available_translations.json";
+
+/** The translation a Bible API path is about (`api/AAB/GEN/1.json`, `/api/AAB/books.json`), or null. */
+function translationOfPath(path: string): string | null {
+  const m = /^(?:https?:\/\/[^/]+)?\/?(?:bible\/)?api\/([^/]+)\/[^/]+/.exec(
+    path
+  );
+  if (!m) return null;
+  const id = decodeURIComponent(m[1]!);
+  return id === "d" || id === "search" ? null : id;
+}
+
 /** The conventional path to a translation's complete-download file. */
 function completeTranslationPath(translationId: string): string {
   return `api/${encodeURIComponent(translationId)}/complete.json`;
@@ -1335,8 +1382,41 @@ export class FreeUseBibleAPI {
    */
   private _resolvedResponses = new Map<string, unknown>();
 
-  constructor(endpoint: string) {
+  /** The Free Use Bible API, for translations the scripture agent does not serve; null = agent only. */
+  direct: string | null;
+  /** The agent's translation ids once known (its list answered); until then everything goes to the agent. */
+  private _agentIds: Set<string> | null = null;
+  private _agentIdsLoading: Promise<void> | null = null;
+
+  constructor(endpoint: string, direct: string | null = null) {
     this.endpoint = endpoint;
+    this.direct = direct;
+  }
+
+  /** The agent's list, read once: it decides which translations are the agent's and which come straight from the API. */
+  private _loadAgentIds(): Promise<void> {
+    if (!this.direct || this._agentIds) return Promise.resolve();
+    this._agentIdsLoading ??= this._getJsonAt<AvailableTranslations>(
+      AVAILABLE_TRANSLATIONS_PATH,
+      this.endpoint
+    )
+      .then((list) => {
+        this._agentIds = new Set(list.translations.map((t) => t.id));
+      })
+      .catch(() => {
+        // An agent that cannot answer keeps everything on the agent (today's behaviour); a later call asks again.
+        this._agentIdsLoading = null;
+      });
+    return this._agentIdsLoading;
+  }
+
+  /** The endpoint a path goes to: the agent, unless it is a translation the agent does not serve. */
+  private _route(path: string, endpoint?: string): string | undefined {
+    if (endpoint || !this.direct || !this._agentIds) return endpoint;
+    const id = translationOfPath(path);
+    if (!id || this._agentIds.has(id)) return endpoint;
+    // A link the API gave (`/api/AAB/GEN/2.json`) is an absolute path on its own host.
+    return this.direct;
   }
 
   /**
@@ -1364,6 +1444,11 @@ export class FreeUseBibleAPI {
       this._responseCache.set(url, Promise.resolve(value));
       this._resolvedResponses.set(url, value);
     }
+    const agentList = responses[
+      this._buildUrl(AVAILABLE_TRANSLATIONS_PATH, this.endpoint)
+    ] as AvailableTranslations | undefined;
+    if (this.direct && agentList?.translations && !this._agentIds)
+      this._agentIds = new Set(agentList.translations.map((t) => t.id));
   }
 
   /**
@@ -1379,11 +1464,32 @@ export class FreeUseBibleAPI {
     endpoint?: string,
     options?: ApiRequestOptions
   ): Promise<AvailableTranslations> {
-    return this._getJson<AvailableTranslations>(
-      "api/available_translations.json",
+    const agent = this._getJsonAt<AvailableTranslations>(
+      AVAILABLE_TRANSLATIONS_PATH,
       endpoint,
       options
     );
+    if (endpoint || !this.direct) return agent;
+    // The agent's editions first (checked), then every other edition the Bible API carries.
+    const [mine, theirs] = await Promise.all([
+      agent,
+      this._getJsonAt<AvailableTranslations>(
+        AVAILABLE_TRANSLATIONS_PATH,
+        this.direct,
+        options
+      ).catch(() => null),
+    ]);
+    this._agentIds = new Set(mine.translations.map((t) => t.id));
+    if (!theirs) return mine;
+    return {
+      ...mine,
+      translations: [
+        ...mine.translations,
+        ...theirs.translations
+          .filter((t) => !this._agentIds!.has(t.id))
+          .map((t) => ({ ...t, source: "bible-api" as const })),
+      ],
+    };
   }
 
   async getTranslationBooks(
@@ -1427,10 +1533,8 @@ export class FreeUseBibleAPI {
     chapter: number | string,
     endpoint?: string
   ): TranslationBookChapter | undefined {
-    const url = this._buildUrl(
-      chapterPath(translation, book, chapter),
-      endpoint
-    );
+    const path = chapterPath(translation, book, chapter);
+    const url = this._buildUrl(path, this._route(path, endpoint));
     return this._resolvedResponses.get(url) as
       | TranslationBookChapter
       | undefined;
@@ -1457,7 +1561,8 @@ export class FreeUseBibleAPI {
         ? completeTranslationPath(translation)
         : (translation.completeTranslationApiLink ??
           completeTranslationPath(translation.id));
-    const url = this._buildUrl(path, options?.endpoint);
+    await this._loadAgentIds();
+    const url = this._buildUrl(path, this._route(path, options?.endpoint));
 
     const response = await fetch(url, { signal: options?.signal });
     if (response.status < 200 || response.status >= 300) {
@@ -1511,6 +1616,30 @@ export class FreeUseBibleAPI {
     return JSON.parse(text) as CompleteTranslation;
   }
 
+  /**
+   * The verses of a dataset whose verses have categories, such as "verse-of-the-day" — read from the Bible API
+   * itself (the scripture agent carries no such dataset), or from the agent when there is no direct API.
+   */
+  async getDatasetVerses(
+    dataset: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerses> {
+    return this._getJsonAt<DatasetCategorizedVerses>(
+      `api/d/${encodeURIComponent(dataset)}/verses.json`,
+      this.direct ?? undefined,
+      options
+    );
+  }
+
+  /** The verse of the day for a date (seedbible.org's pick: the same date, the same verse), or null. */
+  async getVerseOfTheDay(
+    date: Date | string = new Date(),
+    options?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerse | null> {
+    const data = await this.getDatasetVerses("verse-of-the-day", options);
+    return pickVerseOfTheDay(data.verses, date, { holidays: data.holidays });
+  }
+
   async getNextChapter(
     chapter: TranslationBookChapter,
     endpoint?: string,
@@ -1558,7 +1687,20 @@ export class FreeUseBibleAPI {
     return this._getJson<AudioTimings>(link, endpoint, options);
   }
 
+  /** A request, sent to the agent or (for a translation the agent does not serve) straight to the Bible API. */
   private _getJson<T>(
+    path: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<T> {
+    if (endpoint || !this.direct || this._agentIds || !translationOfPath(path))
+      return this._getJsonAt<T>(path, this._route(path, endpoint), options);
+    return this._loadAgentIds().then(() =>
+      this._getJsonAt<T>(path, this._route(path, endpoint), options)
+    );
+  }
+
+  private _getJsonAt<T>(
     path: string,
     endpoint?: string,
     options?: ApiRequestOptions

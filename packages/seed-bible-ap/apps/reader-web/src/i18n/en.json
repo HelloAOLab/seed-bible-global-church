@@ -1376,5 +1376,10 @@
   "expand-sidebar": "Expand sidebar",
   "collapse-sidebar": "Collapse sidebar",
   "more-in-this-reader": "More in this reader",
-  "log-in": "Log in"
+  "log-in": "Log in",
+  "verse-of-the-day": "VERSE OF THE DAY",
+  "verse-of-the-day-loading": "Loading the verse of the day…",
+  "less": "Less",
+  "selected-year": "Year: {{year}}",
+  "read-that-day": "Read that day"
 }
