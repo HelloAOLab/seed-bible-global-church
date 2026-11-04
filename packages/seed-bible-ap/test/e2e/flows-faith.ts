@@ -64,7 +64,7 @@ export const FAITH_FLOWS: Flow[] = [
     rows: ["Your faith journey"],
     timeoutMs: 240_000,
     checks:
-      "Journey: tapping New believer makes it the current stage and Next steps lists Reading the Bible. Adding the milestone Baptized with a place lists it under Milestones with the place; Remove takes it away.",
+      "Journey: tapping New believer makes it the current stage and Next steps lists Reading the Bible. Add a milestone, Baptized with a place, lists it under Milestones with the place; Remove takes it away.",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -81,6 +81,7 @@ export const FAITH_FLOWS: Flow[] = [
         .locator(".sb-faith-steps", { hasText: "Reading the Bible" })
         .waitFor({ timeout: 5000 });
       const place = `PY2 place ${stamp()}`;
+      await pane.getByRole("button", { name: "Add a milestone" }).click();
       await pane.locator("#faith-milestone").selectOption("Baptized");
       await pane.locator("#faith-milestone-place").fill(place);
       await pane
