@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ask-writings v3 spec</title>
+    <meta
+      name="description"
+      content="Specification for the next ask-writings, revised on a measurement: Haiku 5.5 alone beats our harness and both reference apps on the development slice. The design inverts the pipeline — draft what the model knows, then prove every claim against the signed Scripture corpus and the held writings, strike what cannot be proved, and enrich with what only our library has. The proposition graph anchored to the original languages becomes the proof substrate."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> /
+        <a href="/architecture/harness/">Scripture harness</a> / ask-writings v3
+        spec
+      </div>
+      <h1>ask-writings v3: know, then prove</h1>
+      <p class="lede">
+        Specification, for review. Revision 4, 1 November 2026. Status:
+        <strong>proposed</strong>, on a measurement made today. Revisions 2 and
+        3 improved retrieval. Before building either, we ran the control that
+        had never been run:
+        <strong
+          >Haiku 5.5 alone, one call, no retrieval, no evidence rule</strong
+        >, on the same 80-question development slice, under the same blind
+        judge. It beat our harness by a wide margin and beat both reference
+        apps. The harness, as shaped today, makes the model worse. That
+        measurement, not a paper, decides the design:
+        <strong>draft what the model knows, then prove every claim</strong>
+        against the signed Scripture corpus and the held writings, strike or
+        soften what cannot be proved, and add what only our library can add.
+        Retrieval-first survives where the model's knowledge is unreliable. The
+        proposition graph of revision 3 becomes the proof substrate.
+        <strong>Revision 4b</strong> (the same evening) adds the owner's
+        decision to bring the doctrinal sources in — until now held out in
+        favour of Scripture and the writings of its period — and the
+        <a href="#policy">evidence policy</a> that says, as ontology data, when
+        an ask may draw on each layer.
+      </p>
+
+      <p class="toc">
+        <a href="#finding">1. The finding</a>
+        <a href="#why">2. Why the harness loses</a>
+        <a href="#design">3. The design: know, then prove</a>
+        <a href="#route">4. Routing: when to trust the model</a>
+        <a href="#policy">4b. The evidence policy: when each layer comes in</a>
+        <a href="#prove">5. The proof substrate</a>
+        <a href="#enrich">6. What only we can add</a>
+        <a href="#holdings">7. Holdings</a>
+        <a href="#skills">8. Skills and our own models</a>
+        <a href="#eval">9. Evaluation: the bare model is the baseline</a>
+        <a href="#build">10. Build order and kill criteria</a>
+        <a href="#risks">11. Risks</a>
+        <a href="#refs">12. Precedents</a>
+      </p>
+
+      <h2 id="finding">1. The finding</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Dev slice, 80 questions, blind Haiku judge, one repeat</th>
+              <th>Our harness</th>
+              <th>Apologist</th>
+              <th>Bonfire</th>
+              <th><strong>Haiku alone</strong></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Addresses the question</td>
+              <td>0.66</td>
+              <td>0.86</td>
+              <td>0.82</td>
+              <td><strong>0.87</strong></td>
+            </tr>
+            <tr>
+              <td>Covers the reference answer's claims</td>
+              <td>0.37</td>
+              <td>0.62</td>
+              <td>0.54</td>
+              <td><strong>0.67</strong></td>
+            </tr>
+            <tr>
+              <td>Restraint (no overstatement)</td>
+              <td>0.69</td>
+              <td><strong>0.92</strong></td>
+              <td>0.58</td>
+              <td>0.85</td>
+            </tr>
+            <tr>
+              <td>Scripture support (as the judge reads it)</td>
+              <td>0.88</td>
+              <td>0.84</td>
+              <td>0.54</td>
+              <td><strong>0.98</strong></td>
+            </tr>
+            <tr>
+              <td>Strict "good answer"</td>
+              <td>0.22</td>
+              <td>0.33</td>
+              <td>0.31</td>
+              <td><strong>0.52</strong></td>
+            </tr>
+            <tr>
+              <td>Catechism questions, good answer</td>
+              <td>0.21</td>
+              <td>0.50</td>
+              <td>0.38</td>
+              <td><strong>0.59</strong></td>
+            </tr>
+            <tr>
+              <td>Study-note questions, good answer</td>
+              <td>0.22</td>
+              <td>0.18</td>
+              <td>0.26</td>
+              <td><strong>0.46</strong></td>
+            </tr>
+            <tr>
+              <td>Cost per answer</td>
+              <td>~$0.03 + 60–120 s</td>
+              <td>—</td>
+              <td>—</td>
+              <td>$0.0003, ~4 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          Verse references were checked by code against the versification table:
+          the bare model cited 7.9 references an answer, 4 of 629 nonexistent
+          (0.6%) — the same rate as the other arms. The judge's
+          Scripture-support number is its own reading and is not a verification;
+          see §9 for the check that replaces it.
+        </li>
+        <li>
+          One repeat. The slice is a diagnostic, not a quoted number; three
+          repeats and the 477-question suite follow (§9).
+        </li>
+        <li>
+          The arm is <code>haiku-bare</code> in
+          <code>scripts/christian-ask/run.py</code>; tag <code>bare1</code>.
+        </li>
+      </ul>
+
+      <h2 id="why">2. Why the harness loses</h2>
+      <ul>
+        <li>
+          <strong>The missing source, first.</strong> Asked WSC 18 ("wherein
+          consists the sinfulness of that estate whereinto man fell?"), Haiku,
+          Apologist and Bonfire all state <em>Westminster's</em> formulation —
+          the guilt of Adam's first sin, the want of original righteousness, the
+          corruption of the whole nature (the three together "original sin"),
+          and the actual transgressions that proceed from it. Our answer is a
+          careful Genesis 3 study that never states it. We do not hold the
+          Westminster, Heidelberg or 1689 catechisms (the library has the
+          Racovian), so nothing was retrieved to say it, and the evidence rule
+          forbade the model to say it unsourced. This is a
+          <strong>source-coverage and answer-policy</strong> failure before it
+          is a retrieval failure: "Westminster teaches X" is proved by the
+          catechism itself; only "these passages support X" needs the
+          interpretive argument. The harness must be able to establish the first
+          without reconstructing the doctrine from Scripture. (Not "the
+          formulation every catechism gives": Heidelberg explains the fall
+          differently, and Catholic teaching draws its own distinctions between
+          inherited sin, personal fault and the condition of nature. Related
+          formulations, with real differences — the answer names whose it is.)
+        </li>
+        <li>
+          <strong
+            >Retrieval helps on rare facts and can hurt on well-known
+            ones.</strong
+          >
+          Mallen et al. (2022) and Maekawa et al. (2024) measured this for
+          factual QA: for facts the model knows well, retrieved context
+          displaces correct knowledge with partial or distracting passages. They
+          do not show that Haiku knows catechism formulations; the bare run does
+          (claims-covered 0.73 on the catechism family, one repeat), and whether
+          retrieval itself harms those answers is what the 2×2 experiment in §10
+          measures.
+        </li>
+        <li>
+          <strong>The pool is not the argument.</strong> ~500 passages from
+          fifteen channels reach a composer that must reconstruct the teaching.
+          The model's own compressed knowledge of the teaching is better
+          organised than the pool.
+        </li>
+        <li>
+          <strong>Our strengths are real and narrow</strong>: citation
+          verification against a signed corpus, layer separation, exact
+          quotations, the period writings, the original languages, the story
+          layer. None of them requires evidence-first composition; all of them
+          can be applied to a draft.
+        </li>
+      </ul>
+
+      <h2 id="design">3. The design: know, then prove</h2>
+      <p>
+        One harness, one shape for every question. The model goes first; the
+        library proves, corrects and enriches.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>What happens</th>
+              <th>Who</th>
+              <th>Budget</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1 Frame</strong></td>
+              <td>
+                family, anchors (verses, lemmas, entities, concepts — resolved
+                to IRIs), lens (§4.2), answer form; the question only, no
+                catalog
+              </td>
+              <td>small call or our plan model + code</td>
+              <td>&lt; 1 s</td>
+            </tr>
+            <tr>
+              <td><strong>2 Draft</strong></td>
+              <td>
+                the answer the model knows, direct answer first, the lens's
+                rules applied, references to Scripture by chapter and verse,
+                each claim marked with its kind (§5.3)
+              </td>
+              <td>Haiku 5.5, one call</td>
+              <td>3–5 s</td>
+            </tr>
+            <tr>
+              <td><strong>3 Decompose</strong></td>
+              <td>
+                the draft split into claims (self-contained propositions) with
+                their stated support; typed: Scripture says · X teaches ·
+                tradition T holds · broadly held · word means · synthesis ·
+                fact/number
+              </td>
+              <td>code + our decomposer model</td>
+              <td>&lt; 1 s</td>
+            </tr>
+            <tr>
+              <td><strong>4 Prove</strong></td>
+              <td>
+                each claim checked against the substrate (§5) in parallel: a
+                Scripture claim → the verse resolved in the signed corpus and
+                its text in the reader's edition replaces any quotation from
+                memory; a teaching claim → the proposition graph and held
+                confessions; a tradition claim → that tradition's profile; a
+                fact → KB/chronology; a sense claim → lemma usage; entailment
+                judged by our verifier
+              </td>
+              <td>code + verifier model</td>
+              <td>3–6 s, parallel</td>
+            </tr>
+            <tr>
+              <td><strong>5 Decide</strong></td>
+              <td>
+                each claim: <em>proved</em> (cited) ·
+                <em>held by a named source</em> (attributed) ·
+                <em>unproved</em>. Unproved claims are softened ("some hold…")
+                or struck by rule, never silently kept; a struck claim that was
+                central triggers one targeted retrieval for that slot
+              </td>
+              <td>code</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>6 Enrich</strong></td>
+              <td>
+                only when the frame asks for it (§6): period writings, the
+                original-language note, the story-layer referent, the history of
+                reading — sourced paragraphs from today's retrieval, bounded
+              </td>
+              <td>retrieval + Haiku</td>
+              <td>0–10 s</td>
+            </tr>
+            <tr>
+              <td><strong>7 Render</strong></td>
+              <td>
+                the draft edited minimally (RARR's principle: preserve the
+                draft; change only what proof requires); verified citations
+                replace memory ones; each claim's status is carried in the
+                payload for the reader's UI
+              </td>
+              <td>
+                Haiku, one short call, or code when only citations changed
+              </td>
+              <td>2–4 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Target: 10–15 s for a common question, against 60–120 s today; cost ≈
+        $0.003 (the draft, the verifier, a short render), against ≈ $0.03.
+      </p>
+
+      <h2 id="route">4. Routing: when to trust the model</h2>
+      <h3>4.1 Draft-first or retrieve-first</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Family</th>
+              <th>Shape</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Doctrine, catechism, "what does the Bible teach about"</td>
+              <td>draft-first</td>
+              <td>
+                well-known; the model's formulation beat every retrieval arm
+              </td>
+            </tr>
+            <tr>
+              <td>Explain this verse / passage</td>
+              <td>
+                draft-first + enrich (context, cross-references, story
+                referents)
+              </td>
+              <td>bare 0.46 vs ours 0.22 on study notes</td>
+            </tr>
+            <tr>
+              <td>Who is "he" / "they" here</td>
+              <td>deterministic: story layer</td>
+              <td>the answer is a record</td>
+            </tr>
+            <tr>
+              <td>Word study</td>
+              <td>draft-first, proved by lemma usage (code)</td>
+              <td>counts beat recollection</td>
+            </tr>
+            <tr>
+              <td>What does Josephus / Augustine / the Didache say</td>
+              <td>retrieve-first in that work</td>
+              <td>
+                rare and attributable; the model paraphrases from memory and
+                mis-cites
+              </td>
+            </tr>
+            <tr>
+              <td>Period context, dates, manuscripts, history of reading</td>
+              <td>retrieve-first (chronology, writings, DSS)</td>
+              <td>the model invents dates; we hold the records</td>
+            </tr>
+            <tr>
+              <td>Factual (who, when, how many)</td>
+              <td>KB/chronology query + calculate; the model only phrases</td>
+              <td>exact</td>
+            </tr>
+            <tr>
+              <td>Pastoral, apologetic</td>
+              <td>draft-first; Scripture claims proved; restraint rules</td>
+              <td>the question is the person's</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        A <strong>popularity proxy</strong> refines the route inside a family
+        (Mallen's adaptive retrieval): an anchor with many holdings and many
+        independent assertions in the graph is well-known → draft-first; a rare
+        entity, work or verse → retrieve-first. The proxy is computed from the
+        graph, logged on every run, and tuned on the slice.
+      </p>
+      <h3>4.2 Lenses</h3>
+      <p>
+        Reader role, theological perspective and purpose are separate. A named
+        source or tradition sets the perspective and the answer explains it as
+        theirs; a reader-chosen perspective is stated; a question with none
+        named is <em>settled</em> when independent traditions in the graph agree
+        and <em>disputed</em> when they conflict — a computed fact, which
+        replaces the current "reading most Christians hold" rule. The draft step
+        receives the lens as instructions; the prove step checks "broadly held"
+        against the graph.
+      </p>
+
+      <h2 id="policy">4b. The evidence policy: tiers × standpoint × kind</h2>
+      <p class="note">
+        <strong>Revision 5 (1 Nov 2026, decided).</strong> The owner's rule: a
+        tradition's "terms and thinking" belong in an answer only when the ask
+        is made under that tradition — and the words for it should be the ones
+        theologians and church leaders use, not ours. "Denomination" was the
+        wrong word: a denomination (PCA, SBC, ELCA) is an institution that
+        <em>adopts</em> a standard, never a source of teaching. The gate is now
+        stated in three terms, and each is decided by code or by data, not by
+        the model's taste.
+      </p>
+      <h3>The tiers of teaching — by who holds it</h3>
+      <p>
+        This is the distinction the church has always drawn (dogma · doctrine ·
+        opinion; today's "theological triage"), cut by <em>who holds</em> a
+        teaching — which the doctrine graph's adoption assertions record, so the
+        tier of a formulation is <strong>derived</strong>, never typed.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>What it is</th>
+              <th>Where it may appear</th>
+              <th>How it is said</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>scripture</code></td>
+              <td>
+                the text and its own period: Scripture, versions, witnesses, the
+                period writings
+              </td>
+              <td>the ground of every answer</td>
+              <td>cited and, where quoted, in the reader's edition's words</td>
+            </tr>
+            <tr>
+              <td><code>ecumenical</code></td>
+              <td>
+                what the undivided church confessed: the ecumenical creeds and
+                the first councils' definitions (Apostles',
+                Nicene-Constantinopolitan, Chalcedon, Athanasian) — a
+                formulation adopted across every tradition
+              </td>
+              <td>every standpoint, including none</td>
+              <td>attributed to the creed: "the Nicene Creed confesses…"</td>
+            </tr>
+            <tr>
+              <td><code>confessional</code></td>
+              <td>
+                a <em>tradition's</em> standard (catechism, confession,
+                articles), its characteristic positions and its technical
+                vocabulary — adopted by one tradition or some
+              </td>
+              <td>
+                only inside that tradition's standpoint, or where a comparison
+                asks for the traditions
+              </td>
+              <td>
+                attributed to the standard: "Westminster teaches…"; never as
+                what Scripture says
+              </td>
+            </tr>
+            <tr>
+              <td><code>theologian</code></td>
+              <td>
+                a named teacher's view (Augustine, Aquinas, Calvin, Wesley)
+              </td>
+              <td>where the question kind allows a later reader</td>
+              <td>as that person's, dated by century</td>
+            </tr>
+            <tr>
+              <td><code>interpretation</code></td>
+              <td>
+                the readings of a passage: the interpretation layer's questions
+                and paths
+              </td>
+              <td>passage, word-study and history questions</td>
+              <td>
+                as alternatives, with this edition's decision named — never as
+                the plain sense
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>The standpoint of an ask</h3>
+      <p>
+        <strong>Standpoint</strong> is the tradition an ask is made
+        <em>from</em>. It is read in this order and nothing else opens the
+        confessional tier: (1) the reader's chosen tradition — the UX setting
+        <em
+          >Tradition: none · Reformed · Lutheran · Anglican · Baptist ·
+          Anabaptist · Wesleyan/Methodist · Pentecostal · Roman Catholic ·
+          Eastern Orthodox</em
+        >, where <em>none</em> means Scripture and the early church and is the
+        default; (2) the tradition the question itself names or whose own
+        practice it asks about ("why is a saint's name given at baptism" is a
+        Roman Catholic practice and is answered as the Roman Catholic Church
+        explains it); (3) the tradition of a standard the question names (a
+        Westminster question is Reformed). With no standpoint, the answer names
+        no tradition, standard or school and uses none of their technical terms;
+        a biblical word a tradition also uses (justification, covenant,
+        election, grace) is Scripture's and stays, and Trinity and incarnation
+        are the creeds' and stay.
+      </p>
+      <p>
+        <strong>What the reader sees.</strong> Every answer says its standpoint
+        in one line ("Reading from: Reformed" / "No tradition chosen — Scripture
+        and the early church"), and each paragraph carries the tier of what it
+        rests on: <em>Scripture</em> · <em>the creeds</em> ·
+        <em>Reformed standard (Westminster)</em> · <em>Augustine's view</em> ·
+        <em>a disputed reading</em>. Changing the tradition re-asks; it never
+        silently re-colours an answer already given.
+      </p>
+      <p>
+        <strong>How it is enforced.</strong> The prompt states the tiers and the
+        standpoint. After the draft, code lists every confessional-tier term
+        that appears with no standpoint (a term list by tradition — the seed is
+        in code, the ontology will carry it as <code>sdo:</code> tradition
+        terms); the slice counts those escapes before a revise call is spent on
+        them. The policy below is read from the ontology's
+        <code>sdo:AskEvidencePolicy</code> rows, one per kind × tier.
+      </p>
+      <p>
+        The layers the first cut named, with WSC 18 as the worked example, for
+        the record (the ontology terms are unchanged; only the gate's vocabulary
+        moved to the tiers above):
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>WSC 18</th>
+              <th>Ontology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture and its period witnesses</td>
+              <td>
+                Gen 3; Rom 5:12–19; Eph 2:3; Ps 51:5 — the LXX, the scrolls,
+                Philo on the fall
+              </td>
+              <td>
+                <code>scr:</code>, <code>txt:</code>, the writings domain's
+                period layer
+              </td>
+            </tr>
+            <tr>
+              <td>Doctrinal topic</td>
+              <td>original sin and humanity's fallen condition</td>
+              <td>
+                <code>sdo:Locus</code> (new C-box),
+                <code>scr:TheologicalConcept</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Doctrinal formulation</td>
+              <td>the particular explanation WSC 18 gives</td>
+              <td>
+                <code>sdo:DoctrinalFormulation</code> (exists) with a stable id
+                per question/article
+              </td>
+            </tr>
+            <tr>
+              <td>Source</td>
+              <td>the catechism's exact answer, edition, location</td>
+              <td>
+                <code>txt:Edition</code>, <code>txt:Span</code>,
+                <code>wrt:PublishedWriting</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Theological tradition</td>
+              <td>Reformed</td>
+              <td><code>sdo:DoctrinalProfile</code></td>
+            </tr>
+            <tr>
+              <td>Denominational association</td>
+              <td>the church bodies that adopt this catechism</td>
+              <td>
+                <code>sdo:AdoptionAssertion</code> (exists) — it identifies who
+                adopts; it never supplies the teaching
+              </td>
+            </tr>
+            <tr>
+              <td>Biblical interpretation</td>
+              <td>
+                the arguments connecting the formulation to the passages (WSC's
+                own proof texts, and the readers who argue them)
+              </td>
+              <td>
+                <code>sdo:Argument</code>, <code>sdo:SupportLink</code>,
+                <code>scr:InterpretationQuestion</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>4b.1 The frame's fields</h3>
+      <ul>
+        <li>
+          <code>source</code>: a work or formulation the question names ("WSC
+          18", "the Heidelberg", "Augustine on…").
+          <strong
+            >An explicit source in the question takes precedence over everything
+            else.</strong
+          >
+        </li>
+        <li>
+          <code>tradition</code>: a tradition the question names ("what do
+          Catholics hold", "the Reformed view").
+        </li>
+        <li>
+          <code>perspective</code> → the reader's chosen
+          <strong>tradition</strong> (<code>context.perspective</code> in the
+          ask context, beside <code>role</code>; the UX calls it Tradition); the
+          default is <em>none</em>, which is Scripture-and-period. Together with
+          <code>source</code> and <code>tradition</code> it yields the
+          <code>standpoint</code> (above), which is what the gate reads.
+        </li>
+        <li>
+          <code>kind</code> decides the answer the question requests:
+          <em>explain a named formulation</em> ("explain WSC 18") → that
+          source's teaching first; <em>doctrinal overview</em> ("what is
+          original sin?") → the topic across traditions, naming the significant
+          differences; <em>earliest teaching</em> ("what did the first
+          Christians teach about…") → dated period and early witnesses only;
+          <em>passage</em> ("what does Romans 5:12 mean") → Scripture and
+          period, doctrine only if the reader's perspective asks for it.
+        </li>
+      </ul>
+      <h3>4b.2 The policy, as data</h3>
+      <p>
+        One record per question kind in the doctrine data graph —
+        <code>sdo:AskEvidencePolicy</code> (⊑ <code>at:Norm</code>; the same
+        shape as <code>sdo:PolicyUse</code> already used by translation
+        decisions): for each layer, <em>required · allowed · excluded</em>, and
+        the order of presentation. The frame step reads it; the prove step
+        enforces it; preflight holds every kind to one policy.
+        <strong>As loaded (revision 5):</strong> the rows are keyed kind × tier
+        (<code
+          >scripture · ecumenical · confessional · theologian ·
+          interpretation</code
+        >), the rule <em>allowed-under-perspective</em> is renamed
+        <em>allowed-under-standpoint</em>, and the first cut's columns below
+        read as: formulation + tradition profiles → <code>confessional</code>,
+        later readers → <code>theologian</code>; <code>ecumenical</code> is
+        allowed in every kind but factual, after Scripture;
+        <code>interpretation</code> is allowed for passage, word-study and
+        history questions. Under the owner's rule <code>confessional</code> is
+        allowed-under-standpoint for every kind except
+        <em>explain a named formulation</em> (required — the named standard is
+        the standpoint) and <em>compare</em> (required — the question names the
+        traditions).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Question kind</th>
+              <th>Scripture + period</th>
+              <th>Formulation / source</th>
+              <th>Tradition profiles</th>
+              <th>Later readers</th>
+              <th>Order</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Explain a named formulation</td>
+              <td>required (its proof texts)</td>
+              <td>required: the named one</td>
+              <td>allowed: its own</td>
+              <td>allowed if asked</td>
+              <td>teaching → its terms → Scripture support → differences</td>
+            </tr>
+            <tr>
+              <td>Doctrinal overview</td>
+              <td>required</td>
+              <td>required: one per major tradition held</td>
+              <td>required, named</td>
+              <td>allowed</td>
+              <td>
+                direct answer → formulations named → Scripture → differences
+              </td>
+            </tr>
+            <tr>
+              <td>What does the Bible teach about X</td>
+              <td>required</td>
+              <td>allowed, attributed, after Scripture</td>
+              <td>allowed, named</td>
+              <td>allowed</td>
+              <td>Scripture → where traditions agree/differ</td>
+            </tr>
+            <tr>
+              <td>Explain a passage</td>
+              <td>required</td>
+              <td>excluded unless <code>perspective</code> set</td>
+              <td>excluded unless set</td>
+              <td>allowed, as theirs</td>
+              <td>meaning → context → readers</td>
+            </tr>
+            <tr>
+              <td>Earliest teaching / history of reading</td>
+              <td>required</td>
+              <td>allowed, dated</td>
+              <td>allowed, dated</td>
+              <td>required, by date</td>
+              <td>earliest first</td>
+            </tr>
+            <tr>
+              <td>Who / where / when (factual)</td>
+              <td>required</td>
+              <td>excluded</td>
+              <td>excluded</td>
+              <td>excluded</td>
+              <td>record → verse</td>
+            </tr>
+            <tr>
+              <td>Pastoral</td>
+              <td>required</td>
+              <td>allowed only under <code>perspective</code></td>
+              <td>same</td>
+              <td>allowed</td>
+              <td>Scripture → counsel</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Two rules hold across the table: a formulation is always
+        <strong>attributed</strong> ("Westminster teaches…"), never stated as
+        what Scripture says; and a neutral reading with no source, tradition or
+        perspective stays on Scripture and its period, reporting traditions only
+        where the question kind requires them. That keeps the line the owner
+        drew while letting a Westminster question get a Westminster answer.
+      </p>
+
+      <h2 id="prove">5. The proof substrate</h2>
+      <p>
+        Proving needs a store that answers "is this claim what this source says,
+        and who holds it?" faster and more exactly than passage search. That is
+        the proposition graph of revision 3, now justified by a measured need
+        and built in the order the prove step needs it.
+      </p>
+      <h3>5.1 What a claim is proved against</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Claim type</th>
+              <th>Proved against</th>
+              <th>Code decides</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture says</td>
+              <td>the signed corpus; the reader's edition</td>
+              <td>
+                the reference resolves; the verse's text (not a memory quote) is
+                shown; the verifier judges that the verse states or implies the
+                claim
+              </td>
+            </tr>
+            <tr>
+              <td>X teaches</td>
+              <td>X's assertions in the graph; X's held works</td>
+              <td>
+                an assertion by X with stance <em>holds</em>; otherwise
+                "unproved" even if the claim is true
+              </td>
+            </tr>
+            <tr>
+              <td>Tradition T holds</td>
+              <td>
+                T's profile (confessions, catechisms, representative authors)
+              </td>
+              <td>profile membership; date within range</td>
+            </tr>
+            <tr>
+              <td>Broadly held</td>
+              <td>the consensus lens</td>
+              <td>
+                ≥ 3 independent profiles, <code>dependsOn</code> respected
+              </td>
+            </tr>
+            <tr>
+              <td>The word means</td>
+              <td>lemma + usage across Scripture, LXX, period writings</td>
+              <td>
+                occurrence counts recomputed; a sense claim with no usage is
+                softened
+              </td>
+            </tr>
+            <tr>
+              <td>Taken together</td>
+              <td>≥ 2 proved claims and a stated connection</td>
+              <td>labelled synthesis</td>
+            </tr>
+            <tr>
+              <td>Fact / number / date</td>
+              <td>KB, chronology</td>
+              <td>recomputed; a date the records do not carry is struck</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>5.2 The graph (from revision 3, condensed)</h3>
+      <ul>
+        <li>
+          <strong>Nodes</strong>: proposition (<code>sdo:Proposition</code>,
+          decontextualised), assertion (speaker, stance holds · reports ·
+          rejects · qualifies, span, date), argument (<code>sdo:Argument</code>,
+          scheme), span (<code>txt:Span</code>), verse and token, lemma
+          (<code>scr:KeyTerm</code>), entity (KB), concept, interpretation
+          question, agent and tradition profile.
+        </li>
+        <li>
+          <strong>Edges</strong>: about (verse · lemma · entity · concept),
+          supports · attacks · qualifies, paraphrases/sameAs across sources,
+          quotes · alludes · parallels (OpenBible + TSK + scroll quotations),
+          dependsOn between sources, defeatedBy.
+        </li>
+        <li>
+          <strong>The original-language spine</strong>: a writing's words
+          aligned to the verse's tokens (citation, quotation matching at 0.989
+          precision on the scrolls, cross-lingual alignment), so a Greek homily,
+          a Hebrew midrash and an English note on one lemma meet at one node.
+          Today 25,397 original-language texts are in the index and about 10% of
+          gathered passages are in an original language, read as opaque text;
+          nothing joins them to the lemma.
+        </li>
+        <li>
+          <strong>Built offline</strong> on RunPod: segment → propositionise →
+          attribute → anchor → relate → admit by code (span resolves, anchor is
+          an IRI, no date the source lacks, no six-word run of a held English
+          Bible, licence allows). Haiku labels a few thousand units; our models
+          do the rest.
+        </li>
+        <li>
+          <strong>Stored</strong> in GraphDB as the authority and projected to a
+          new D1 database + Vectorize for the runtime (GraphDB Free is never
+          queried per question).
+        </li>
+        <li>
+          <strong>Read in waves</strong>: wave 0 projects what exists (162
+          doctrine propositions, 231 commitments, 65 chains, 2,861
+          interpretation claims, 17,639 cross-references, the story layer); wave
+          1 the confessions and catechisms, the Fathers' commentaries, the
+          period writings; wave 2 the rabbinic commentary and Targums; wave 3
+          the long tail by measured demand — a claim the prove step could not
+          settle is logged with its anchors and chooses what is read next.
+        </li>
+        <li>
+          <strong>Quarantine</strong>: a source that is a reference answer in an
+          evaluation set is extracted into its own named graph, never loaded on
+          the independent-synthesis track.
+        </li>
+      </ul>
+      <h3>5.3 Claim marks in the draft</h3>
+      <p>
+        The draft prompt asks the model to mark each claim's kind inline (a
+        light syntax the decomposer reads: <code>[S Rom 5:12]</code> a Scripture
+        claim, <code>[A Augustine]</code> an author claim,
+        <code>[T Reformed]</code> a tradition claim, <code>[F]</code> a fact,
+        <code>[Y]</code> a synthesis). Measured on the slice first: if marking
+        lowers the draft's quality, the decomposer infers kinds instead.
+      </p>
+
+      <h2 id="enrich">6. What only we can add</h2>
+      <p>
+        Enrichment is where the library earns its place in the answer, bounded
+        and only when the frame calls for it:
+      </p>
+      <ul>
+        <li>
+          <strong>The original languages</strong>: the lemma, its gloss, the
+          usage count, one or two period uses — a sentence, proved by code.
+        </li>
+        <li>
+          <strong>The story layer</strong>: who is on stage, who "he" is, where
+          and when — a record, not a search.
+        </li>
+        <li>
+          <strong>The period writings</strong>: what the Septuagint, the
+          scrolls, Philo, Josephus or the Targums do with this verse, as theirs,
+          dated by the chronology.
+        </li>
+        <li>
+          <strong>The history of reading</strong>: first attestation, the
+          traditions' positions, ordered by date, dependence respected.
+        </li>
+        <li>
+          <strong>The reader's edition</strong>: every verse shown in the
+          edition the reader chose, with its commitment — the thing no other Ask
+          app does at all.
+        </li>
+      </ul>
+      <p>
+        Each enrichment is a sourced paragraph with its own budget; the direct
+        answer never waits for it, and the answer streams the proved core first.
+      </p>
+
+      <h2 id="holdings">7. Holdings</h2>
+      <ul>
+        <li>
+          <strong>A small, authoritative doctrinal collection first</strong>
+          (the owner's decision, 1 November): the Westminster Shorter and Larger
+          Catechisms and Confession, the Heidelberg Catechism and the 1689
+          Baptist Confession, from their public-domain editions, stored as
+          complete questions/answers or articles with
+          <strong>stable identifiers</strong> (<code>wsc.18</code>,
+          <code>wcf.6.4</code>, <code>heidelberg.7</code>), edition and source
+          attribution, confessions distinguished from catechisms. Then across
+          traditions as the product requires: Augsburg and Luther's Small
+          Catechism, the Thirty-Nine Articles, the Belgic Confession and the
+          Canons of Dort, the Catechism of Trent and Baltimore. Each is
+          published as a writing (so Ask quotes it with a commitment) and
+          projected as <code>sdo:DoctrinalFormulation</code>s under its
+          tradition's <code>sdo:DoctrinalProfile</code>; the denominations
+          adopting it are <code>sdo:AdoptionAssertion</code>s. Those that are
+          evaluation gold are also extracted into the quarantine graph (a
+          named-source question is open-book by policy; a synthesis question is
+          not).
+        </li>
+        <li>
+          If a named source is not held, the answer reports the verification gap
+          ("the catechism is not held here; the formulation is stated from the
+          model and not verified") or retrieves it through an approved external
+          path — never a silent unverified quotation.
+        </li>
+        <li>
+          Keep the detailed-English-search rule: a held edition is a
+          publishable, rights-stated one.
+        </li>
+        <li>
+          Fix the writings index dates the audit found wrong ("Against the
+          Arians c. AD 175–180") before any date is used as proof.
+        </li>
+      </ul>
+
+      <h2 id="skills">8. Skills and our own models</h2>
+      <ul>
+        <li>
+          <strong>Skills</strong> become draft-and-prove specifications
+          (<code>ase:SkillPackage</code>): the family's lens rules, the draft
+          prompt, the required slots (a direct answer, Scripture support, the
+          lens's positions), the enrichments allowed, examples including
+          failures, tests. Improved offline from traces (GEPA) with evidence and
+          permission rules frozen; no keyword gate on the opening sentence — a
+          direct-answer field, assessed.
+        </li>
+        <li>
+          <strong>Our models</strong>, each a bounded job with a held-out test,
+          on RunPod: the <strong>verifier</strong> (does this span state or
+          imply this claim? — the central model of the design, trained on
+          Haiku-labelled and reviewer-checked pairs, including incomplete,
+          conflicting and false-premise cases), the claim decomposer, the
+          propositioniser and attributor for the offline build, the
+          cross-lingual aligner, a reranker over propositions. Haiku 5.5 stays
+          the drafter and renderer. The 9B composer experiment is retired:
+          composition is not where the gap was.
+        </li>
+      </ul>
+
+      <h2 id="eval">9. Evaluation: the bare model is the baseline</h2>
+      <ul>
+        <li>
+          <strong
+            >Every harness change must beat <code>haiku-bare</code> on the same
+            question ids</strong
+          >, three repeats, paired. Beating Apologist and Bonfire is necessary,
+          not sufficient: a harness that scores below its own model is
+          subtracting value.
+        </li>
+        <li>
+          <strong>Two tracks</strong>: source-grounded (the named source may be
+          retrieved) and independent synthesis (the reference source's graph is
+          not loaded). The bare model is a third reading: what the model knows
+          without us.
+        </li>
+        <li>
+          <strong>Code checks replace the judge where code can decide</strong>:
+          every reference resolves in the corpus (done today for the four arms);
+          every quotation of Scripture matches the reader's edition (the harness
+          guarantees it; the bare model cannot — this is the proof step's first
+          measurable win); every date is carried by a record; every author claim
+          has an assertion by that author.
+        </li>
+        <li>
+          <strong>Proposition-level coverage</strong>: reference answers
+          decomposed the same way as drafts; coverage = matched propositions;
+          auditable.
+        </li>
+        <li>
+          The judge is calibrated against blinded human review before any number
+          is quoted; judge and revise shape are named beside every number.
+        </li>
+      </ul>
+
+      <h2 id="build">10. Build order and kill criteria</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Deliverable</th>
+              <th>Gate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0</td>
+              <td>
+                <code>haiku-bare</code> × 3 repeats on the slice; the quotation
+                and reference code checks on all arms; every slice item labelled
+                with its intended source or perspective (a Westminster question
+                is graded against Westminster; a general question must not need
+                an unattributed Westminster answer to pass)
+              </td>
+              <td>
+                the baseline and its variance; source-fidelity graded apart from
+                coverage
+              </td>
+            </tr>
+            <tr>
+              <td>0b</td>
+              <td>
+                <strong>The 2×2</strong>: {current sources, + the doctrinal
+                collection} × {current harness, draft-then-prove}, model and
+                questions fixed, named-catechism items open-book, synthesis
+                items apart
+              </td>
+              <td>
+                how much comes from the missing sources and how much from the
+                shape — decided before either is generalised
+              </td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>
+                <strong>Draft → prove Scripture claims → render</strong>: the
+                draft, references resolved in the signed corpus, quotations
+                replaced by the reader's edition, unproved Scripture claims
+                softened; nothing else
+              </td>
+              <td>
+                ≥ bare on every judge measure, 100% verified references and
+                quotations, &lt; 15 s
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                Holdings: confessions and catechisms ingested (quarantined where
+                they are gold); tradition profiles; the lens rules in the draft
+                prompt
+              </td>
+              <td>catechism family ≥ 0.65 good on the independent track</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                Claim decomposition and typed proof for author · tradition ·
+                broadly-held · fact claims over wave 0 + wave 1 of the graph;
+                the verifier model
+              </td>
+              <td>
+                restraint ≥ 0.92 with claims-covered not below bare; verifier
+                agreement with reviewers ≥ 0.9
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>
+                Routing by family and popularity proxy; retrieve-first families
+                on today's retrieval; enrichment slots; streaming
+              </td>
+              <td>
+                retrieve-first families ≥ bare on their own ids; median time ≤
+                15 s
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>
+                The original-language spine; lemma proof for sense claims; waves
+                2–3 by demand; offline skill optimisation; the 477-question
+                suite against Apologist, Bonfire and bare
+              </td>
+              <td>release gate below</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>Kill criteria.</strong> If step 1 does not reach the bare
+        model's scores, the loss is in the render step and is fixed there before
+        anything else is built. If the verifier's agreement with reviewers is
+        below 0.85, proof falls back to code-only checks (references,
+        quotations, dates) and the graph build pauses. If the popularity proxy
+        does not separate the families where retrieval helps from where it
+        hurts, routing is by family alone.
+      </p>
+      <p>
+        <strong>Release gate</strong> (independent track, same ids, calibrated
+        judge): above bare on every measure; addresses ≥ 0.90, covers ≥ 0.70,
+        restraint ≥ 0.92, verified Scripture support 1.00 by code, strict good ≥
+        0.55.
+      </p>
+
+      <h2 id="risks">11. Risks</h2>
+      <ul>
+        <li>
+          <strong>Confident error from the draft.</strong> The model's knowledge
+          includes mistakes it states fluently. Proof covers Scripture, author,
+          tradition, fact and sense claims; syntheses are labelled; what is left
+          unproved is softened. The residual risk is measured as restraint, and
+          it is already lower for bare Haiku (0.85) than for Apologist (0.92) —
+          step 3 exists to close that.
+        </li>
+        <li>
+          <strong>Memory quotations of Scripture.</strong> The draft quotes from
+          recollection in some edition; step 1 replaces every quotation with the
+          reader's edition, so no memory wording reaches the reader.
+        </li>
+        <li>
+          <strong>Tradition bias in "broadly held".</strong> Computed only from
+          independent profiles the library actually holds; holdings per
+          tradition are reported.
+        </li>
+        <li>
+          <strong>Misattribution in the graph.</strong> Stance precision is
+          measured first and gates the build.
+        </li>
+        <li>
+          <strong>Losing what the harness does well.</strong> Step 1's gate
+          includes the code checks the current harness passes (verified
+          references, exact quotations, layer separation); a regression there
+          fails the step.
+        </li>
+      </ul>
+
+      <h2 id="refs">12. Precedents</h2>
+      <ul>
+        <li>
+          <strong>Mallen et al. 2022 (PopQA)</strong> and
+          <strong>Maekawa et al. 2024 (WiTQA)</strong>: retrieval helps on rare
+          facts and can hurt on well-known ones; adaptive retrieval by
+          popularity improves QA by up to 10 points.
+        </li>
+        <li>
+          <strong>RARR</strong> (Gao et al. 2023) and
+          <strong>ARE</strong> (2024): generate from the model, then research
+          and revise — attribute each claim post hoc, edit minimally, preserve
+          the draft; ARE decomposes long answers into units for precise editing.
+        </li>
+        <li>
+          <strong>Dense X Retrieval</strong> (EMNLP 2024) and
+          <strong>PropRAG</strong> (EMNLP 2025): propositions as retrieval
+          units; offline proposition graphs with LLM-free path search — the
+          proof substrate's shape.
+        </li>
+        <li>
+          <strong>HippoRAG 2</strong>, <strong>GraphRAG</strong>:
+          graph-integrated retrieval and community summaries, for the
+          history-of-reading family.
+        </li>
+        <li>
+          <strong>"Do We Still Need GraphRAG?"</strong> and
+          <strong>GraphRAG-Bench</strong> (2025–26): graph retrieval's gains on
+          multi-hop reasoning are modest (≈ 4.5 points on HotpotQA) at 2.3×
+          latency — the reason the graph is built for proof first, not for
+          retrieval.
+        </li>
+        <li>
+          <strong>PaperTrail</strong> (2026): a claim-evidence interface for
+          scholarly QA — atomic claims extracted offline, evidence retrieved per
+          claim, provenance shown to the reader.
+        </li>
+        <li>
+          <strong>GEPA</strong>, <strong>doc2query</strong>,
+          <strong>contextual retrieval</strong>, <strong>LLMCompiler</strong>,
+          <strong>competency questions</strong>, nanopublications and the
+          Argument Interchange Format, as in revisions 2–3.
+        </li>
+      </ul>
+    </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li><span aria-current="page">ask-writings v3 spec</span></li>
+              <li>
+                <a href="/architecture/doctrinal-collection-brief/"
+                  >Doctrinal collection brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
+  </body>
+</html>

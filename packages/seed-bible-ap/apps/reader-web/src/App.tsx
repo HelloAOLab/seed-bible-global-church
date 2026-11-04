@@ -9,6 +9,7 @@ import { watchActivity } from "./state/chrome/activity";
 import { SharedPageView } from "./components/social/SharedPageView";
 import { Tour } from "./components/chrome/Tour";
 import { FriendsPane } from "./components/social/FriendsPane";
+import { FaithPane } from "./components/faith/FaithPane";
 import { FriendInviteDialog } from "./components/social/FriendInviteDialog";
 import { ShareDialog } from "./components/chrome/ShareDialog";
 import { useEffect, useRef } from "preact/hooks";
@@ -56,6 +57,7 @@ const FULL_WIDTH_PANES: readonly string[] = [
   "profile",
   "edit-profile",
   "friends",
+  "faith",
 ];
 
 export function App({ state }: { state: ReaderState }) {
@@ -109,7 +111,7 @@ export function App({ state }: { state: ReaderState }) {
   }, [pane, collapsed, embed]);
   if (embed)
     return (
-      <div className="sb-app sb-app-embed">
+      <div className="sb-app sb-app-root sb-app-embed sb-embed-minimal">
         <main className="sb-app-main" ref={mainRef}>
           <PanesLayout state={state} />
         </main>
@@ -125,7 +127,7 @@ export function App({ state }: { state: ReaderState }) {
     );
   return (
     <div
-      className={`sb-app${full ? " sb-app-with-full-pane" : pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
+      className={`sb-app sb-app-root${full ? " sb-app-with-full-pane" : pane !== "none" ? " sb-app-with-pane" : ""}${collapsed ? " sb-app-sidebar-collapsed" : ""}`}
     >
       <TabsSidebar state={state} />
       {state.ui.sidebarDrawer.value && (
@@ -218,6 +220,11 @@ export function App({ state }: { state: ReaderState }) {
       {pane === "map" && (
         <aside className={paneClass}>
           <ScriptureMapPane state={state} />
+        </aside>
+      )}
+      {pane === "faith" && (
+        <aside className={paneClass}>
+          <FaithPane state={state} />
         </aside>
       )}
       {pane === "friends" && (

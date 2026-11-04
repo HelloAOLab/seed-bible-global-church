@@ -1,10 +1,10 @@
-// THE OLD READER'S LINKS (packages/seed-bible managers/ReadingUrlPath.ts and TabsManager): `/{lang}/{translation}/
-// {book-name}/{chapter}`, the same without the language, `?translation=&book=&chapter=`, and `?verse=16-18`, each
-// turned into this reader's `/read/{translation}/{BOOK}/{chapter}?v=16-18` — the book named by its slug ("1-samuel"),
-// any of its names, or a close misspelling, as the old reader allowed. The language becomes `?lang=`. The page
-// turns such a link into its own address as it starts; the edge redirects `?verse=` on a reading path.
+// LINKS THAT ARE NOT YET THE ADDRESS (route.ts writes seedbible.org's `/{lang}/{translation}/{book-slug}/{chapter}`):
+// the old reader's `/{lang}/{translation}/{any book name}/{chapter}`, the same without the language,
+// `?translation=&book=&chapter=`, `?verse=16-18`, and this reader's earlier `/read/{translation}/{BOOK}/{chapter}` —
+// each turned into the address, `?v=16-18` for its verses — the book named by its slug ("1-samuel"), any of its names,
+// or a close misspelling, as the old reader allowed. The edge redirects them; the page turns any that reach it.
 import { findClosestBookId, getBookId } from "@seed/scripture/books";
-import { routeOf } from "./route";
+import { parseRoute, routeOf } from "./route";
 
 /** First segments that are this reader's own pages, never an old reading link. */
 const OWN = new Set(["read", "shared", "friend", "api", "assets", "bible"]);
@@ -38,9 +38,12 @@ export function legacyTarget(pathname: string, search: string): string | null {
   let book: string | null = null;
   let chapter: string | null = null;
 
-  if (segs[0] === "read") {
-    // Already this reader's path: only an old `?verse=` needs turning into `?v=`.
+  const canonical = parseRoute(pathname);
+  if (canonical && segs[0] !== "read") {
+    // Already the address: only an old `?verse=` needs turning into `?v=`.
     if (!v) return null;
+  } else if (canonical) {
+    // This reader's earlier `/read/…`: the same chapter at the address.
   } else if (
     (segs.length === 4 || segs.length === 3) &&
     !OWN.has(segs[0]!.toLowerCase()) &&
@@ -67,16 +70,19 @@ export function legacyTarget(pathname: string, search: string): string | null {
   if (v) keep.set("v", v);
 
   let path = pathname;
-  if (segs[0] !== "read") {
+  if (canonical) path = routeOf(canonical);
+  else {
     const bookId = book ? bookOf(book) : null;
     if (!bookId || !chapter || !CHAPTER.test(chapter)) return null;
     if (translationId && !TRANSLATION.test(translationId)) return null;
-    path = routeOf({
-      translationId: translationId || "BSB",
-      bookId,
-      chapterNumber: Number(chapter),
-    });
-    if (lang && lang !== "en" && !keep.has("lang")) keep.set("lang", lang);
+    path = routeOf(
+      {
+        translationId: translationId || "BSB",
+        bookId,
+        chapterNumber: Number(chapter),
+      },
+      ...(lang ? [lang] : [])
+    );
   }
   const rest = keep.toString();
   return `${path}${rest ? `?${rest}` : ""}`;

@@ -40,6 +40,10 @@ export function TodayPane({ state }: { state: ReaderState }) {
     });
   }, [changed]);
 
+  // The chapter on screen does not count: everyone arrives on a chapter.
+  const hasReading =
+    recentRead && recent.some((r) => r.chapterRef !== reading.chapterRef.value);
+
   const open = (chapter: string, start?: number, end?: number) => {
     const [book, ch] = chapter.split(".");
     void reading
@@ -54,148 +58,134 @@ export function TodayPane({ state }: { state: ReaderState }) {
       className="sb-pane sb-today-container"
       aria-label={t("today", { defaultValue: "Today" })}
     >
-      <header className="sb-pane-header sb-today-header">
-        <h2>{t("today", { defaultValue: "Today" })}</h2>
-        <button
-          className="sb-pane-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
-      </header>
+      {recentRead && <TodayWelcome state={state} hasReading={hasReading} />}
 
-      {recentRead && (
-        // The chapter on screen does not count: everyone arrives on a chapter.
-        <TodayWelcome
-          state={state}
-          hasReading={recent.some(
-            (r) => r.chapterRef !== reading.chapterRef.value
-          )}
-        />
-      )}
-
-      <div className="sb-content-section">
-        <div className="sb-content-section-head">
-          <h3 className="sb-content-section-title">
-            {t("resume-reading", { defaultValue: "Continue reading" })}
-          </h3>
-        </div>
-        <button
-          className="sb-content-save"
-          onClick={() => (state.ui.pane.value = "none")}
-        >
-          <span className="sb-content-save-kind">
-            <span className="material-symbols-outlined">menu_book</span>
-          </span>
-          <span className="sb-content-save-name">
-            {reading.bookName.value} {reading.chapterNumber.value} ·{" "}
-            {reading.translation.value?.shortName ??
-              reading.translationId.value}
-          </span>
-        </button>
-      </div>
-
-      {recent.length > 0 && (
-        <div className="sb-content-section">
-          <div className="sb-content-section-head">
-            <h3 className="sb-content-section-title">
-              {t("recent-reading", { defaultValue: "Recent reading" })}
-            </h3>
+      {/* seedbible.org's Today is its Welcome alone until there is reading; the sections follow once there is. */}
+      {(hasReading || signedIn) && (
+        <>
+          <div className="sb-content-section">
+            <div className="sb-content-section-head">
+              <h3 className="sb-content-section-title">
+                {t("resume-reading", { defaultValue: "Continue reading" })}
+              </h3>
+            </div>
+            <button
+              className="sb-content-save"
+              onClick={() => (state.ui.pane.value = "none")}
+            >
+              <span className="sb-content-save-kind">
+                <span className="material-symbols-outlined">menu_book</span>
+              </span>
+              <span className="sb-content-save-name">
+                {reading.bookName.value} {reading.chapterNumber.value} ·{" "}
+                {reading.translation.value?.shortName ??
+                  reading.translationId.value}
+              </span>
+            </button>
           </div>
-          <div className="sb-recent-chips">
-            {recent.map((r) => (
+
+          {recent.length > 0 && (
+            <div className="sb-content-section">
+              <div className="sb-content-section-head">
+                <h3 className="sb-content-section-title">
+                  {t("recent-reading", { defaultValue: "Recent reading" })}
+                </h3>
+              </div>
+              <div className="sb-recent-chips">
+                {recent.map((r) => (
+                  <button
+                    key={r.chapterRef}
+                    className="sb-recent-chip"
+                    title={new Date(r.at).toLocaleString()}
+                    onClick={() => {
+                      const [book, ch] = r.chapterRef.split(".");
+                      void reading.goTo(
+                        r.edition ?? reading.translationId.value,
+                        book!,
+                        Number(ch)
+                      );
+                      state.ui.pane.value = "none";
+                    }}
+                  >
+                    {label(state, r.chapterRef)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="sb-content-section">
+            <div className="sb-content-section-head">
+              <h3 className="sb-content-section-title">
+                {t("bookmarks", { defaultValue: "Bookmarks" })}
+              </h3>
+            </div>
+            {!bookmarks.all.value.length && (
+              <p className="sb-content-empty">
+                {t("today-no-bookmarks", { defaultValue: "No bookmarks yet." })}
+              </p>
+            )}
+            {bookmarks.all.value.slice(0, 5).map((b) => (
               <button
-                key={r.chapterRef}
-                className="sb-recent-chip"
-                title={new Date(r.at).toLocaleString()}
-                onClick={() => {
-                  const [book, ch] = r.chapterRef.split(".");
-                  void reading.goTo(
-                    r.edition ?? reading.translationId.value,
-                    book!,
-                    Number(ch)
-                  );
-                  state.ui.pane.value = "none";
-                }}
+                key={b.id}
+                className="sb-content-save"
+                onClick={() => open(b.chapter)}
               >
-                {label(state, r.chapterRef)}
+                <span className="sb-content-save-kind">
+                  <BookmarkGlyph colorId={b.colorId} size={18} />
+                </span>
+                <span className="sb-content-save-name">{b.name}</span>
+                <span className="sb-content-save-date">
+                  {b.updatedAt.slice(0, 10)}
+                </span>
               </button>
             ))}
           </div>
-        </div>
+
+          <div className="sb-content-section">
+            <div className="sb-content-section-head">
+              <h3 className="sb-content-section-title">
+                {t("saves", { defaultValue: "Saves" })}
+              </h3>
+            </div>
+            {!saves.all.value.length && (
+              <p className="sb-content-empty">
+                {t("today-no-saves", { defaultValue: "No saves yet." })}
+              </p>
+            )}
+            {saves.all.value.slice(0, 5).map((s) => (
+              <button
+                key={s.id}
+                className="sb-content-save"
+                onClick={() =>
+                  open(s.chapter, s.start ?? undefined, s.end ?? undefined)
+                }
+              >
+                <span className="sb-content-save-kind">
+                  <span className="material-symbols-outlined">
+                    {s.start !== null ? "format_quote" : "archive"}
+                  </span>
+                </span>
+                <span className="sb-content-save-name">
+                  {s.label ??
+                    `${label(state, s.chapter)}${s.start !== null ? `:${s.start}${s.end !== s.start ? `–${s.end}` : ""}` : ""}`}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <FriendsSection state={state} />
+
+          <CommunityFeed state={state} />
+          <p className="sb-small sb-muted">
+            {t("today-how", {
+              defaultValue:
+                "Friends see only what you publish. Your private marks never leave your Library.",
+            })}{" "}
+            {parseRoute(location.pathname) ? "" : ""}
+          </p>
+        </>
       )}
-
-      <div className="sb-content-section">
-        <div className="sb-content-section-head">
-          <h3 className="sb-content-section-title">
-            {t("bookmarks", { defaultValue: "Bookmarks" })}
-          </h3>
-        </div>
-        {!bookmarks.all.value.length && (
-          <p className="sb-content-empty">
-            {t("today-no-bookmarks", { defaultValue: "No bookmarks yet." })}
-          </p>
-        )}
-        {bookmarks.all.value.slice(0, 5).map((b) => (
-          <button
-            key={b.id}
-            className="sb-content-save"
-            onClick={() => open(b.chapter)}
-          >
-            <span className="sb-content-save-kind">
-              <BookmarkGlyph colorId={b.colorId} size={18} />
-            </span>
-            <span className="sb-content-save-name">{b.name}</span>
-            <span className="sb-content-save-date">
-              {b.updatedAt.slice(0, 10)}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <div className="sb-content-section">
-        <div className="sb-content-section-head">
-          <h3 className="sb-content-section-title">
-            {t("saves", { defaultValue: "Saves" })}
-          </h3>
-        </div>
-        {!saves.all.value.length && (
-          <p className="sb-content-empty">
-            {t("today-no-saves", { defaultValue: "No saves yet." })}
-          </p>
-        )}
-        {saves.all.value.slice(0, 5).map((s) => (
-          <button
-            key={s.id}
-            className="sb-content-save"
-            onClick={() =>
-              open(s.chapter, s.start ?? undefined, s.end ?? undefined)
-            }
-          >
-            <span className="sb-content-save-kind">
-              <span className="material-symbols-outlined">
-                {s.start !== null ? "format_quote" : "archive"}
-              </span>
-            </span>
-            <span className="sb-content-save-name">
-              {s.label ??
-                `${label(state, s.chapter)}${s.start !== null ? `:${s.start}${s.end !== s.start ? `–${s.end}` : ""}` : ""}`}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <FriendsSection state={state} />
-
-      <CommunityFeed state={state} />
-      <p className="sb-small sb-muted">
-        {t("today-how", {
-          defaultValue:
-            "Friends see only what you publish. Your private marks never leave your Library.",
-        })}{" "}
-        {parseRoute(location.pathname) ? "" : ""}
-      </p>
     </section>
   );
 }

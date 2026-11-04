@@ -10,22 +10,31 @@ export interface ToolbarLayout {
   hidden: string[];
 }
 
-// A new key: layouts saved under "toolbar:layout" meant "hidden is gone", made before the bar took the old reader's
-// short shape.
-const KEY = "toolbar:layout:2";
-/** The old reader's bar: Books, Search and Discover (and each extension's button) in it; the rest under More. */
+// A new key: earlier layouts kept Today out of the bar and let each extension's button join it; seedbible.org's bar is
+// Today · Books · Search · Discover, so everyone starts again from that once.
+const KEY = "toolbar:layout:3";
+/** seedbible.org's bar: Today, Books, Search and Discover in it; everything else under More. */
 export const DEFAULT_LAYOUT: ToolbarLayout = {
   order: [],
   hidden: [
     "session",
-    "today",
     "notes",
     "library",
     "content",
     "fullscreen",
     "theme",
+    "faith",
   ],
 };
+
+/** What the old reader never had in its bar (an extension's button, Prayer) starts under More until the reader places it. */
+const underMoreUntilPlaced = (id: string) => id.startsWith("ext:");
+export function isHidden(id: string, layout: ToolbarLayout): boolean {
+  return (
+    layout.hidden.includes(id) ||
+    (underMoreUntilPlaced(id) && !layout.order.includes(id))
+  );
+}
 
 /** The buttons in the reader's order, the ones under More left out. */
 export function arrange<T extends { id: string }>(
@@ -40,7 +49,7 @@ export function arrange<T extends { id: string }>(
     .map((it, i) => ({ it, i }))
     .sort((a, b) => rank(a.it.id) - rank(b.it.id) || a.i - b.i)
     .map((x) => x.it)
-    .filter((it) => !layout.hidden.includes(it.id));
+    .filter((it) => !isHidden(it.id, layout));
 }
 
 /** The buttons under More, in the reader's order. */
@@ -48,9 +57,10 @@ export function underMore<T extends { id: string }>(
   items: readonly T[],
   layout: ToolbarLayout
 ): T[] {
-  return arrange(items, { ...layout, hidden: [] }).filter((it) =>
-    layout.hidden.includes(it.id)
-  );
+  return arrange(items, {
+    order: [...layout.order, ...items.map((it) => it.id)],
+    hidden: [],
+  }).filter((it) => isHidden(it.id, layout));
 }
 
 /** Every button in the reader's order, the ones under More included (for the customizer). */
@@ -60,7 +70,7 @@ export function ordered(
 ): string[] {
   return arrange(
     ids.map((id) => ({ id })),
-    { ...layout, hidden: [] }
+    { order: [...layout.order, ...ids], hidden: [] }
   ).map((x) => x.id);
 }
 
@@ -82,7 +92,12 @@ export function createToolbarLayout(prefs: KeyValueStore<unknown>) {
     layout,
     setHidden(id: string, hidden: boolean) {
       const h = layout.value.hidden.filter((x) => x !== id);
-      save({ ...layout.value, hidden: hidden ? [...h, id] : h });
+      // Placing a button the bar starts without puts it in the order, which is what "placed" means.
+      const order =
+        !hidden && underMoreUntilPlaced(id) && !layout.value.order.includes(id)
+          ? [...layout.value.order, id]
+          : layout.value.order;
+      save({ ...layout.value, order, hidden: hidden ? [...h, id] : h });
     },
     /** Move a button one place up (-1) or down (+1) among all the buttons there are. */
     move(allIds: readonly string[], id: string, by: -1 | 1) {

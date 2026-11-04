@@ -45,12 +45,20 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
     state.extensions.settings.value,
   ]);
 
-  if (ui.pane.value === "discover" || ui.embed.value) return null;
   const notes = state.annotations.forChapter(chapterRef).value;
   const released = state.discover.forChapter(chapterRef).value?.offerings ?? [];
   const sources = providers.filter((p) => (found[p.id]?.length ?? 0) > 0);
   const hasNotes = notes.length > 0 || released.length > 0;
-  if (!hasNotes && !sources.length) return null;
+  const hasContent = hasNotes || sources.length > 0;
+  // The header's Discover-content button shows only while there is a card to place.
+  useEffect(() => {
+    ui.discoverCardHasContent.value = hasContent;
+    return () => {
+      ui.discoverCardHasContent.value = false;
+    };
+  }, [hasContent]);
+  if (ui.pane.value === "discover" || ui.embed.value) return null;
+  if (!hasContent) return null;
 
   const chips = [
     { key: "all", label: t("all", { defaultValue: "All" }) },
@@ -89,20 +97,6 @@ export function DiscoverPanel({ state }: { state: ReaderState }) {
             onClick={() => createNote(state)}
           >
             + {t("create-playlist", { defaultValue: "Create" })}
-          </button>
-          <button
-            type="button"
-            className="sb-dcp-hide-btn"
-            aria-label={t("discover-panel-hide", {
-              defaultValue: "Hide Discover",
-            })}
-            title={t("discover-panel-hide", { defaultValue: "Hide Discover" })}
-            onClick={() => {
-              state.settings.showDiscovered.value = false;
-              ui.toast.value = { key: "discover-hidden" };
-            }}
-          >
-            <span className="material-symbols-outlined">close</span>
           </button>
         </div>
         {chips.length > 2 && (

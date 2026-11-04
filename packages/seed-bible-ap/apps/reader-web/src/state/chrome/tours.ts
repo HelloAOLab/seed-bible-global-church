@@ -172,7 +172,7 @@ export const TOURS: Record<
       ),
       step(
         "search",
-        ".sb-selector-panel .searchbar",
+        ".sb-selector-panel .sb-selector-book-search",
         "selectorSearch",
         "Search by",
         "Search by chapter, verse or book from here."
@@ -223,15 +223,28 @@ export function parseTutorialLink(
 
 const SEEN = "tours:seen";
 const OFF = "tours:off";
+/** The reader asked for tours (took the introduction, or turned tours on): only then do first-use tips show. */
+const OPTED_IN = "tours:opted-in";
 
 export function createTours(deps: TourDeps) {
   const active = signal<{ id: string; index: number } | null>(null);
   const seen = signal<string[]>([]);
   const off = signal(false);
-  void Promise.all([deps.prefs.get(SEEN), deps.prefs.get(OFF)])
-    .then(([s, o]) => {
+  const optedIn = signal(false);
+  const optIn = () => {
+    if (optedIn.value) return;
+    optedIn.value = true;
+    void deps.prefs.set(OPTED_IN, true).catch(() => undefined);
+  };
+  void Promise.all([
+    deps.prefs.get(SEEN),
+    deps.prefs.get(OFF),
+    deps.prefs.get(OPTED_IN),
+  ])
+    .then(([s, o, i]) => {
       seen.value = Array.isArray(s) ? (s as string[]) : [];
       off.value = o === true;
+      optedIn.value = i === true || seen.value.includes("introduction");
     })
     .catch(() => undefined);
 
@@ -273,6 +286,8 @@ export function createTours(deps: TourDeps) {
     /** The first time a feature is used: show its tour once, unless tours are turned off. */
     startContextual(id: string): boolean {
       if (off.value || active.value || seen.value.includes(id)) return false;
+      // Opt-in, as on seedbible.org: a feature's tip shows only to someone who asked for tours.
+      if (!optedIn.value) return false;
       return show(id, 0);
     },
     next() {
@@ -288,6 +303,7 @@ export function createTours(deps: TourDeps) {
     done() {
       const a = active.value;
       if (a) markSeen(a.id);
+      if (a?.id === "introduction") optIn();
       active.value = null;
     },
     /** Skip this tour; with `turnOffAll`, no contextual tour shows again (a link or a button still starts one). */
@@ -302,6 +318,7 @@ export function createTours(deps: TourDeps) {
     turnOn() {
       off.value = false;
       seen.value = [];
+      optIn();
       void deps.prefs.set(OFF, false).catch(() => undefined);
       void deps.prefs.set(SEEN, []).catch(() => undefined);
     },

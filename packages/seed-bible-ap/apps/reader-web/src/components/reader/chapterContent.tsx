@@ -501,6 +501,7 @@ export function renderChapterContent(
   // With verse numbers hidden adjacent verses would collide, so a real space goes between the spans.
   const needsVerseSpacing = !scriptureElements.showVerseNumbers;
   let previousWasVerse = false;
+  let seenVerse = false;
   const verseSeparator = (key: string) => <Fragment key={key}> </Fragment>;
 
   for (let i = 0; i < entries.length; ) {
@@ -570,6 +571,14 @@ export function renderChapterContent(
       continue;
     }
     if (isVerseEntry(entry)) {
+      // The Scripture agent's chapters lose the paragraph break between the opening heading (or subtitle) and the
+      // first verse; seedbible.org's source has it, so it goes back here.
+      if (!seenVerse && i > 0) {
+        const before = entries[i - 1] as { type?: string } | undefined;
+        if (before?.type === "heading" || before?.type === "hebrew_subtitle")
+          nodes.push(<div key={`break-lead-${i}`} className="sb-line-break" />);
+      }
+      seenVerse = true;
       const highlight = getVerseHighlight(entry.number);
       if (needsVerseSpacing && previousWasVerse)
         nodes.push(verseSeparator(`space-${i}`));

@@ -13,8 +13,11 @@ import {
 } from "../../../apps/reader-web/src/extensions/references";
 import {} from "../../../apps/reader-web/src/extensions/locations";
 import {
+  cleanTradition,
   parseSse,
   renderAnswer,
+  standpointOf,
+  TRADITIONS,
   type AgentEvent,
 } from "../../../apps/reader-web/src/extensions/companion";
 import { render } from "preact-render-to-string";
@@ -225,5 +228,27 @@ describe("the ported extensions' pure parts", () => {
     expect(html).toContain(
       '<del class="sb-companion-struck" title="Struck by the check: a later reading">The verse says he rebuked her .</del>'
     );
+  });
+
+  it("companion: the standpoint that answered is read off the agent's payload, and only where it says", () => {
+    expect(
+      standpointOf({
+        standpoint: { tradition: "Reformed", beforeDraft: "Reformed" },
+        frame: { kind: "passage" },
+      })
+    ).toEqual({ standpoint: "Reformed", frameKind: "passage" });
+    expect(standpointOf({ standpoint: { tradition: null } })).toEqual({
+      standpoint: null,
+      frameKind: null,
+    });
+    // the streamed ask-verse receipt carries no standpoint today: no line
+    expect(standpointOf({ ok: true, answer: "…" })).toEqual({});
+  });
+
+  it('companion: "Reading from" holds one of the traditions, or none', () => {
+    expect(TRADITIONS).toContain("Eastern Orthodox");
+    expect(cleanTradition("Lutheran")).toBe("Lutheran");
+    expect(cleanTradition("lutheran")).toBe("");
+    expect(cleanTradition(null)).toBe("");
   });
 });

@@ -5,6 +5,8 @@
     "^story-boundary-[a-z-]+$",
     "^story-oikos-(household|extended|walked-with|bodies)$",
     "^story-tie-[A-Za-z]+$",
-    "^story-family-(grandparents|parents|own|children|grandchildren)$"
+    "^story-family-(grandparents|parents|own|children|grandchildren)$",
+    "^faith-stage-[A-Za-z]+(-desc)?$",
+    "^faith-milestone-[A-Za-z]+$"
   ]
 }

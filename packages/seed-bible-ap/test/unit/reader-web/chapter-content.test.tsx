@@ -70,6 +70,14 @@ describe("chapter content", () => {
     expect(out).toContain('<div class="sb-line-break"></div>');
   });
 
+  it("puts a paragraph break between the opening heading and the first verse, as seedbible.org shows it", () => {
+    const out = html();
+    expect(out).toMatch(
+      /Jesus and Nicodemus<\/h3><div class="sb-line-break"><\/div><span[^>]*data-verse-number="1"/
+    );
+    expect(out.match(/sb-line-break/g)).toHaveLength(2);
+  });
+
   it("wraps contiguous same-colour prose verses in one highlight run and leaves the rest alone", () => {
     const out = html({
       highlights: [

@@ -74,131 +74,140 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
       className={`sb-tabs-sidebar${collapsed ? " sb-tabs-sidebar-collapsed" : ""}${drawer ? " sb-tabs-sidebar-drawer" : ""}`}
       onClick={(e: MouseEvent) => e.stopPropagation()}
     >
-      <div className="sb-sidebar-top-row">
-        <div className="sb-sidebar-top-start">
-          <button
-            type="button"
-            className="sb-sidebar-top-icon-button sb-sidebar-collapse-button"
-            aria-label={
-              collapsed
-                ? t("open-sidebar", { defaultValue: "Open sidebar" })
-                : t("close-sidebar", { defaultValue: "Close sidebar" })
-            }
-            onClick={() =>
-              drawer
-                ? (state.ui.sidebarDrawer.value = false)
-                : (state.ui.sidebarCollapsed.value = !collapsed)
-            }
-          >
-            <span className="material-symbols-outlined rtl-mirror">
-              {collapsed || drawer ? "menu" : "menu_open"}
-            </span>
-          </button>
-        </div>
-        {drawer && (
-          <button
-            type="button"
-            className="sb-sidebar-top-icon-button sb-sidebar-drawer-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={() => (state.ui.sidebarDrawer.value = false)}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        )}
-        {!collapsed && !drawer && (
-          <div className="sb-sidebar-top-actions sb-pane-layout-anchor">
+      {/* As on seedbible.org, Settings takes the whole sidebar: its own header replaces this row. */}
+      {!settingsOpen && (
+        <div className="sb-sidebar-top-row">
+          <div className="sb-sidebar-top-start">
             <button
               type="button"
-              className="sb-sidebar-top-icon-button"
-              aria-label={t("pane-layout", { defaultValue: "Pane layout" })}
-              title={t("panels", { defaultValue: "Panels" })}
-              aria-expanded={layoutOpen}
-              onClick={() => setLayoutOpen((o) => !o)}
+              className="sb-sidebar-top-icon-button sb-sidebar-collapse-button"
+              aria-label={
+                collapsed
+                  ? t("expand-sidebar", { defaultValue: "Expand sidebar" })
+                  : t("collapse-sidebar", { defaultValue: "Collapse sidebar" })
+              }
+              onClick={() =>
+                drawer
+                  ? (state.ui.sidebarDrawer.value = false)
+                  : state.setSidebarCollapsed(!collapsed)
+              }
             >
-              <span className="material-symbols-outlined">dashboard</span>
+              <span className="material-symbols-outlined rtl-mirror">
+                {drawer
+                  ? "menu"
+                  : collapsed
+                    ? "left_panel_open"
+                    : "left_panel_close"}
+              </span>
             </button>
-            <MenuButton
-              label={t("more", { defaultValue: "More" })}
-              buttonClassName="sb-sidebar-top-icon-button"
+          </div>
+          {drawer && (
+            <button
+              type="button"
+              className="sb-sidebar-top-icon-button sb-sidebar-drawer-close"
+              aria-label={t("close", { defaultValue: "Close" })}
+              onClick={() => (state.ui.sidebarDrawer.value = false)}
             >
-              <MenuItem icon="share" onSelect={shareTab}>
-                {t("share", { defaultValue: "Share" })}
-              </MenuItem>
-              <MenuItem
-                icon="group"
-                onSelect={() => (state.ui.pane.value = "friends")}
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
+          {!collapsed && !drawer && (
+            <div className="sb-sidebar-top-actions sb-pane-layout-anchor">
+              <button
+                type="button"
+                className="sb-sidebar-top-icon-button"
+                aria-label={t("pane-layout", { defaultValue: "Pane layout" })}
+                title={t("panels", { defaultValue: "Panels" })}
+                aria-expanded={layoutOpen}
+                onClick={() => setLayoutOpen((o) => !o)}
               >
-                {t("friends", { defaultValue: "Friends" })}
-              </MenuItem>
-              <MenuItem
-                icon="grid_view"
-                onSelect={() => (state.ui.pane.value = "map")}
+                <span className="material-symbols-outlined">dashboard</span>
+              </button>
+              <MenuButton
+                label={t("more", { defaultValue: "More" })}
+                buttonClassName="sb-sidebar-top-icon-button"
               >
-                {t("scripture-map", { defaultValue: "Scripture map" })}
-              </MenuItem>
-              {state.extensions.panes.value.some((p) => p.id === "explore") && (
-                <MenuItem
-                  icon="hub"
-                  onSelect={() => {
-                    state.ui.pane.value = "ext:explore" as never;
-                    state.ui.paneWide.value = true;
-                  }}
-                >
-                  {t("explore", { defaultValue: "Explore" })}
+                <MenuItem icon="share" onSelect={shareTab}>
+                  {t("share", { defaultValue: "Share" })}
                 </MenuItem>
-              )}
-              {wakeLockSupported() && (
                 <MenuItem
-                  icon="light_mode"
-                  checked={state.settings.keepScreenAwake.value}
-                  onSelect={() =>
-                    (state.settings.keepScreenAwake.value =
-                      !state.settings.keepScreenAwake.value)
+                  icon="group"
+                  onSelect={() => (state.ui.pane.value = "friends")}
+                >
+                  {t("friends", { defaultValue: "Friends" })}
+                </MenuItem>
+                <MenuItem
+                  icon="grid_view"
+                  onSelect={() => (state.ui.pane.value = "map")}
+                >
+                  {t("scripture-map", { defaultValue: "Scripture map" })}
+                </MenuItem>
+                {state.extensions.panes.value.some(
+                  (p) => p.id === "explore"
+                ) && (
+                  <MenuItem
+                    icon="hub"
+                    onSelect={() => {
+                      state.ui.pane.value = "ext:explore" as never;
+                      state.ui.paneWide.value = true;
+                    }}
+                  >
+                    {t("explore", { defaultValue: "Explore" })}
+                  </MenuItem>
+                )}
+                {wakeLockSupported() && (
+                  <MenuItem
+                    icon="light_mode"
+                    checked={state.settings.keepScreenAwake.value}
+                    onSelect={() =>
+                      (state.settings.keepScreenAwake.value =
+                        !state.settings.keepScreenAwake.value)
+                    }
+                  >
+                    {t("keep-screen-awake-short", {
+                      defaultValue: "Keep screen awake",
+                    })}
+                  </MenuItem>
+                )}
+              </MenuButton>
+              {layoutOpen && (
+                <div
+                  className="sb-pane-layout-menu"
+                  role="menu"
+                  onKeyDown={(e) =>
+                    handleGridKeyNav(
+                      e as KeyboardEvent,
+                      e.currentTarget as HTMLElement
+                    )
                   }
                 >
-                  {t("keep-screen-awake-short", {
-                    defaultValue: "Keep screen awake",
-                  })}
-                </MenuItem>
+                  <div className="sb-pane-layout-menu-title">
+                    {t("pane-layout", { defaultValue: "Pane layout" })}
+                  </div>
+                  <div className="sb-pane-layout-options">
+                    {LAYOUT_OPTIONS.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={tabs.layout.value === o.id}
+                        className={`sb-pane-layout-option${tabs.layout.value === o.id ? " sb-pane-layout-option-selected" : ""}`}
+                        title={o.label}
+                        onClick={() => {
+                          tabs.setLayout(o.id);
+                          setLayoutOpen(false);
+                        }}
+                      >
+                        <LayoutPreview layout={o.id} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </MenuButton>
-            {layoutOpen && (
-              <div
-                className="sb-pane-layout-menu"
-                role="menu"
-                onKeyDown={(e) =>
-                  handleGridKeyNav(
-                    e as KeyboardEvent,
-                    e.currentTarget as HTMLElement
-                  )
-                }
-              >
-                <div className="sb-pane-layout-menu-title">
-                  {t("pane-layout", { defaultValue: "Pane layout" })}
-                </div>
-                <div className="sb-pane-layout-options">
-                  {LAYOUT_OPTIONS.map((o) => (
-                    <button
-                      key={o.id}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={tabs.layout.value === o.id}
-                      className={`sb-pane-layout-option${tabs.layout.value === o.id ? " sb-pane-layout-option-selected" : ""}`}
-                      title={o.label}
-                      onClick={() => {
-                        tabs.setLayout(o.id);
-                        setLayoutOpen(false);
-                      }}
-                    >
-                      <LayoutPreview layout={o.id} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {settingsOpen && <SettingsView state={state} />}
       {!collapsed && !settingsOpen && (
@@ -532,7 +541,8 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
           ) : (
             <span className="material-symbols-outlined">account_circle</span>
           )}
-          {state.outbox.pending.value > 0 && (
+          {/* Changes waiting to send — only someone signed in has anywhere to send them. */}
+          {!!state.session.value && state.outbox.pending.value > 0 && (
             <span className="sb-reader-toolbar-unread-indicator">
               {state.outbox.pending.value}
             </span>

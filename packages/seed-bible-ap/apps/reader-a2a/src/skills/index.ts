@@ -15,6 +15,7 @@ import {
   type VaultEnv,
 } from "./vault";
 import { publishSlice, withdrawSlice, type PublishArgs } from "./publish";
+import { FAITH_TOOLS, faithInvokers } from "./faith";
 import {
   platformGet,
   platformSend,
@@ -312,6 +313,7 @@ export const TOOLS: ToolSpec[] = [
   WORK_READ,
   FILE_PUT,
   PREVIEW,
+  ...FAITH_TOOLS,
 ];
 
 const COLLECTIONS: ReadonlySet<string> = new Set([
@@ -359,6 +361,7 @@ export function invokers(
     async (_t, args) =>
       putMark(deps.env, readerOf(asker), collection, args.item);
   return {
+    ...faithInvokers(deps.env, () => readerOf(asker)),
     [HELLO_TOOL.id]: async (_t, args) => {
       const name =
         typeof args.name === "string" && args.name.trim()

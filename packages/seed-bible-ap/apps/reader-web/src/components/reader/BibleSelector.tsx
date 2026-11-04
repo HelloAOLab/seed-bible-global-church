@@ -247,7 +247,11 @@ export function BibleSelector({ state }: { state: ReaderState }) {
   }, [mode, bookPick]);
 
   if (!mode) return null;
-  if (mode === "translations") return <TranslationPicker state={state} />;
+  // A phone gives the translation list the whole screen; a desktop drops it down inside the book picker, under the
+  // translation button, as seedbible.org does.
+  if (mode === "translations" && width <= MOBILE_BREAKPOINT)
+    return <TranslationPicker state={state} />;
+  const listing = mode === "translations" ? "books" : mode;
   const close = () => (state.ui.selector.value = null);
   const q = search.trim().toLowerCase();
   const shortName =
@@ -333,7 +337,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
           if ((e as KeyboardEvent).key === "Escape") close();
         }}
       >
-        {phone && mode === "books" ? (
+        {phone && listing === "books" ? (
           // The old reader's phone header: close, the title, and the tabs.
           <div className="testament-selection">
             <button
@@ -375,20 +379,25 @@ export function BibleSelector({ state }: { state: ReaderState }) {
               <button
                 type="button"
                 className="sidebar-translation-selector flex-between-center"
-                aria-expanded={false}
+                aria-expanded={mode === "translations"}
                 aria-label={t("choose-translation", {
                   name: shortName,
                   defaultValue: "Translation: {{name}}",
                 })}
                 onClick={() => {
-                  state.ui.selector.value = "translations";
+                  state.ui.selector.value =
+                    mode === "translations" ? "books" : "translations";
                 }}
               >
                 <span className="sidebar-selected-title flex-align-center">
                   {shortName}
                 </span>
                 <span
-                  style={{ transition: "transform 0.3s" }}
+                  style={{
+                    transition: "transform 0.3s",
+                    transform:
+                      mode === "translations" ? "rotate(180deg)" : undefined,
+                  }}
                   className="material-symbols-outlined"
                   aria-hidden="true"
                 >
@@ -396,64 +405,72 @@ export function BibleSelector({ state }: { state: ReaderState }) {
                 </span>
               </button>
             )}
-            <div className="searchbar flex-align-center">
-              <span
-                className="search-icon material-symbols-outlined"
-                aria-hidden="true"
-              >
-                search
-              </span>
-              <input
-                className="sb-selector-search-input flex-1"
-                type="search"
-                value={search}
-                aria-label={
-                  mode === "books"
-                    ? t("search-books", { defaultValue: "Search books..." })
-                    : t("search-translation", {
-                        defaultValue: "Search translations...",
-                      })
-                }
-                placeholder={
-                  mode === "books"
-                    ? t("search-books", { defaultValue: "Search books..." })
-                    : t("search-translation", {
-                        defaultValue: "Search translations...",
-                      })
-                }
-                onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-                onKeyDown={(e) => {
-                  if ((e as KeyboardEvent).key !== "Enter" || mode !== "books")
-                    return;
-                  // "John 3": the book named exactly, else the top one (John before 1 John), at that chapter.
-                  // What is in the box now: Enter can come before the typing has re-rendered.
-                  const typed = (e.currentTarget as HTMLInputElement).value
-                    .trim()
-                    .toLowerCase();
-                  const found = matching(typed);
-                  const n = /\s(\d+)$/.exec(typed)?.[1];
-                  const top =
-                    found.find(
-                      (b) =>
-                        b.name.toLowerCase() === queryOf(typed) ||
-                        b.commonName.toLowerCase() === queryOf(typed)
-                    ) ?? found[0];
-                  if (
-                    top &&
-                    n &&
-                    Number(n) >= 1 &&
-                    Number(n) <= top.numberOfChapters
-                  )
-                    goTo(top.id, Number(n));
-                  else if (top) {
-                    setSearch(top.name);
-                    setBookPick(top.id);
+            {/* seedbible.org's SearchBar: the icon inside a grey field that fills the row. */}
+            <div className="sb-selector-book-search">
+              <label className="sb-search-bar sb-search-bar-filled">
+                <span
+                  className="material-symbols-outlined sb-search-bar-icon"
+                  aria-hidden="true"
+                >
+                  search
+                </span>
+                <input
+                  className="sb-search-bar-input sb-selector-search-input"
+                  type="search"
+                  value={search}
+                  aria-label={
+                    listing === "books"
+                      ? t("search-books", { defaultValue: "Search books..." })
+                      : t("search-translation", {
+                          defaultValue: "Search translations...",
+                        })
                   }
-                }}
-                autoFocus
-              />
+                  placeholder={
+                    listing === "books"
+                      ? t("search-books", { defaultValue: "Search books..." })
+                      : t("search-translation", {
+                          defaultValue: "Search translations...",
+                        })
+                  }
+                  onInput={(e) =>
+                    setSearch((e.target as HTMLInputElement).value)
+                  }
+                  onKeyDown={(e) => {
+                    if (
+                      (e as KeyboardEvent).key !== "Enter" ||
+                      mode !== "books"
+                    )
+                      return;
+                    // "John 3": the book named exactly, else the top one (John before 1 John), at that chapter.
+                    // What is in the box now: Enter can come before the typing has re-rendered.
+                    const typed = (e.currentTarget as HTMLInputElement).value
+                      .trim()
+                      .toLowerCase();
+                    const found = matching(typed);
+                    const n = /\s(\d+)$/.exec(typed)?.[1];
+                    const top =
+                      found.find(
+                        (b) =>
+                          b.name.toLowerCase() === queryOf(typed) ||
+                          b.commonName.toLowerCase() === queryOf(typed)
+                      ) ?? found[0];
+                    if (
+                      top &&
+                      n &&
+                      Number(n) >= 1 &&
+                      Number(n) <= top.numberOfChapters
+                    )
+                      goTo(top.id, Number(n));
+                    else if (top) {
+                      setSearch(top.name);
+                      setBookPick(top.id);
+                    }
+                  }}
+                  autoFocus
+                />
+              </label>
             </div>
-            {mode === "books" && (
+            {listing === "books" && (
               <div className="dropdown">
                 <select
                   className="dropdown-select sb-selector-testament-select"
@@ -476,7 +493,7 @@ export function BibleSelector({ state }: { state: ReaderState }) {
           </div>
         )}
 
-        {mode === "books" ? (
+        {listing === "books" ? (
           <div
             className="sidebar-results flex-wrap-start"
             onKeyDown={(e) =>
@@ -486,6 +503,12 @@ export function BibleSelector({ state }: { state: ReaderState }) {
               )
             }
           >
+            {mode === "translations" && (
+              <TranslationPicker
+                state={state}
+                onClose={() => (state.ui.selector.value = "books")}
+              />
+            )}
             {!books.length ? (
               <p className="testament-title">
                 {t("no-search-results", { defaultValue: "Nothing matches." })}

@@ -2,9 +2,19 @@
 // observable result. Signed-out flows first (device-only marks), then the sample person (the vault), then two
 // devices in a session. Add a flow for every new feature row; the runner writes the marks the manual carries.
 import type { Flow } from "./harness";
-import { MORE_FLOWS } from "./flows-more";
 
-const CH = "/read/BSB/JHN/3";
+/** The extensions this reader adds that seedbible.org lacks — off until turned on, so flows that use them turn them on. */
+const EXTRAS = [
+  "Dead Sea Scrolls",
+  "Elsewhere",
+  "Interpretations & writings",
+  "Story",
+  "Study companion",
+];
+import { MORE_FLOWS } from "./flows-more";
+import { FAITH_FLOWS } from "./flows-faith";
+
+const CH = "/en/BSB/john/3";
 
 const BASE_FLOWS: Flow[] = [
   // ── 3. Reading ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -14,7 +24,7 @@ const BASE_FLOWS: Flow[] = [
     section: "3. Reading",
     title: "Open a chapter",
     checks:
-      "/read/BSB/JHN/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
+      "/en/BSB/john/3 is rendered on the edge (verse 16 in the HTML) and the app takes over without clearing it",
     run: async (c) => {
       const res = await c.page.goto(
         `https://seed-reader.faithnet.io${CH}`.replace(
@@ -52,7 +62,7 @@ const BASE_FLOWS: Flow[] = [
       await c.page
         .locator('.sb-reader-toolbar button[aria-label="Next Chapter"]')
         .click();
-      await c.page.waitForURL(/\/read\/BSB\/JHN\/4$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/john\/4$/, { timeout: 15000 });
       await c.waitText(
         c.page.locator(".sb-bible-reader-active .sb-bible-reader-title"),
         /John\s*4/
@@ -60,9 +70,9 @@ const BASE_FLOWS: Flow[] = [
       await c.page
         .locator('.sb-reader-toolbar button[aria-label="Previous Chapter"]')
         .click();
-      await c.page.waitForURL(/\/read\/BSB\/JHN\/3$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/john\/3$/, { timeout: 15000 });
       await c.page.goBack();
-      await c.page.waitForURL(/\/read\/BSB\/JHN\/4$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/john\/4$/, { timeout: 15000 });
       return "John 3 → 4 → 3, and browser back → 4";
     },
   },
@@ -86,7 +96,9 @@ const BASE_FLOWS: Flow[] = [
       if ((await psalms.getAttribute("aria-expanded")) !== "true")
         await psalms.click();
       await c.page.getByRole("button", { name: /^23$/ }).first().click();
-      await c.page.waitForURL(/\/read\/BSB\/PSA\/23$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/psalms\/23$/, {
+        timeout: 15000,
+      });
       await c.verse(1).waitFor({ timeout: 20000 });
       return "Psalm 23 opened from the selector";
     },
@@ -111,7 +123,7 @@ const BASE_FLOWS: Flow[] = [
       await row.waitFor({ timeout: 40000 });
       const label = (await row.innerText()).replace(/\s+/g, " ");
       await row.click();
-      await c.page.waitForURL(/\/read\/(?!BSB\/)[A-Za-z0-9_]+\/JHN\/3$/, {
+      await c.page.waitForURL(/\/[a-z]{2}\/(?!BSB\/)[A-Za-z0-9_]+\/john\/3$/, {
         timeout: 15000,
       });
       await c.verse(16).waitFor({ timeout: 20000 });
@@ -401,7 +413,7 @@ const BASE_FLOWS: Flow[] = [
       const clip = await c.page
         .evaluate(() => navigator.clipboard.readText())
         .catch(() => "");
-      if (!/\/read\/BSB\/JHN\/3\?v=16$/.test(clip))
+      if (!/\/[a-z]{2}\/BSB\/john\/3\?v=16$/.test(clip))
         throw new Error(`clipboard: "${clip.slice(0, 80)}"`);
       // Verse 16 is still chosen after the link was copied.
       if (
@@ -515,7 +527,7 @@ const BASE_FLOWS: Flow[] = [
       ])
         if (!w.test(text)) throw new Error(`welcome: ${text.slice(0, 160)}`);
       await welcome.getByRole("button", { name: /read john 1/i }).click();
-      await c.page.waitForURL(/\/JHN\/1(\?|$)/, { timeout: 10000 });
+      await c.page.waitForURL(/\/john\/1(\?|$)/, { timeout: 10000 });
       return `full page beside the sidebar, the bar stayed at x=${before}; ${text.slice(0, 80)}…; Read John 1 opened John 1`;
     },
   },
@@ -528,7 +540,7 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/12");
+      await c.open("/en/BSB/genesis/12");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -558,7 +570,7 @@ const BASE_FLOWS: Flow[] = [
         await new Promise((r) => setTimeout(r, 3000));
         await route.continue();
       });
-      await c.open("/read/rbs/DEU/32");
+      await c.open("/en/rbs/deuteronomy/32");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -572,7 +584,7 @@ const BASE_FLOWS: Flow[] = [
       );
       const before = await canvas.getAttribute("data-drawn");
       await c.page.evaluate(() => {
-        history.pushState({}, "", "/read/rbs/JHN/1");
+        history.pushState({}, "", "/en/rbs/john/1");
         dispatchEvent(new PopStateEvent("popstate"));
       });
       const want = [
@@ -613,7 +625,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 6, tap verse 1 and Content: the pane shows the published note about the Hellenists (Greek-speaking Jewish Christians) with its picture and its fields, read from Source Publishing",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/6");
+      await c.open("/en/BSB/acts/6");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(1);
       // By its label, not its text: the Copy button's icon ligature reads "content_copy".
       const content = c.page.locator(".sb-verse-toolbar-action", {
@@ -667,7 +681,7 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/8");
+      await c.open("/en/BSB/acts/8");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -716,7 +730,7 @@ const BASE_FLOWS: Flow[] = [
           await route.continue().catch(() => undefined);
         }
       });
-      await c.open("/read/BSB/ACT/6");
+      await c.open("/en/BSB/acts/6");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -750,7 +764,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Genesis 1 (BSB), tap verse 2 and Content: the pane's 'Study notes on this verse' shows the Reformation Study Bible's note '1:2 The earth.' with its words and Ligonier's attribution, read from Source Publishing; the Interpretations pane shows the same notes under the verse as a later reader's understanding",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(2);
       const content = c.page.locator(".sb-verse-toolbar-action", {
         has: c.page.locator(".sb-verse-toolbar-action-label", {
@@ -794,7 +810,7 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 8 open the Places map, press Expand on its header: the map fills the page beside a details column; tap 'Samaritan believers' in the list: the column shows the group's picture, period and summary and the verses naming it; Shrink puts the map back beside the chapter",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/8");
+      await c.open("/en/BSB/acts/8");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -842,7 +858,7 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 6 open the Places map and tap 'Alexandria' in the list under it: verse 9 (the Synagogue of the Freedmen) is selected and scrolled into view",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/6");
+      await c.open("/en/BSB/acts/6");
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -881,7 +897,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Genesis 1 open Writings (the bottom toolbar): under 'Commentary on the chapter — later readers' the Reformation Study Bible's study notes are listed as a later reading (Reformed confessional) with their note count and Ligonier's attribution; 'Show … notes' opens the notes, each with a link to the whole note at the publisher",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.pressToolbar("Writings");
       const work = c.page.locator(".sb-writing", {
         hasText: /Reformation Study Bible/,
@@ -924,7 +942,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Genesis 1 tap the heading 'The First Day': the pane at the right is titled 'The First Day' and opens on Published, listing BibleProject's 'Genesis 1-11' section from the publishing app (signed); Overview shows what the story layer holds for 1:3–5 (God speaks light into being) with God on stage; Cast lists God under deity",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.page
         .locator(".sb-bible-reader-active .sb-chapter-heading", {
           hasText: "The First Day",
@@ -976,7 +996,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 16 tap the heading 'Lydia’s Conversion in Philippi' → Setting: the map draws Philippi; Cast → Lydia opens her card; Back; tap 'Paul’s Vision of the Macedonian' → Cast → Paul: his Oikos draws rings (Barnabas, Silas among those he walked with) and Generations draws the churches he planted, Church at Philippi among them, and Epaphras's Church at Colossae a generation further",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/16");
+      await c.open("/en/BSB/acts/16");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       const heading = (text: RegExp) =>
         c.page.locator(".sb-bible-reader-active .sb-chapter-heading", {
           hasText: text,
@@ -1040,7 +1062,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Genesis 1 tap the title: the pane is titled 'Genesis' and opens on Published with BibleProject's two Genesis overviews from the publishing app; About names the Old Testament, Hebrew and the authorship claims; References → Scripture lists the books Genesis points to; the book icon beside the title opens the book picker",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.page
         .locator(
           ".sb-bible-reader-active .sb-bible-reader-title:visible, .sb-bible-reader-active .sb-bible-reader-mobile-content-title:visible"
@@ -1096,7 +1120,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Matthew 26, tap verse 26 and Content: under 'Videos and articles about this verse' the pane lists Expedition Bible's 'The Last Supper and Pentecost' and BibleProject's section of Matthew 14-28, from the work 'Videos and articles about the Bible' on the publishing app",
     run: async (c) => {
-      await c.open("/read/BSB/MAT/26");
+      await c.open("/en/BSB/matthew/26");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(26);
       await c.page
         .locator(".sb-verse-toolbar-action", {
@@ -1124,7 +1150,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Ruth 4 tap 'Boaz Marries Ruth' → Cast → Ruth: her card opens on Family, with Boaz among her spouses, Obed her child and Jesse her grandchild, and Naomi a parent-in-law; Oikos draws the household and extended-family rings, and turning the extended family off in the legend takes its ring away",
     run: async (c) => {
-      await c.open("/read/BSB/RUT/4");
+      await c.open("/en/BSB/ruth/4");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.page
         .locator(".sb-bible-reader-active .sb-chapter-heading", {
           hasText: "Boaz Marries Ruth",
@@ -1164,7 +1192,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "On Acts 16 tap 'Lydia’s Conversion in Philippi' → Cast → Lydia → Oikos: her household is in the bodies ring and the ties list it with Acts 16:15; opening Lydia's household shows Lydia as its head, its verses and that it became the Church at Philippi, whose card says it was gathered from Lydia's household and planted by Paul",
     run: async (c) => {
-      await c.open("/read/BSB/ACT/16");
+      await c.open("/en/BSB/acts/16");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.page
         .locator(".sb-bible-reader-active .sb-chapter-heading", {
           hasText: /Lydia/,
@@ -1221,7 +1251,9 @@ const BASE_FLOWS: Flow[] = [
     checks:
       "From the sidebar's More menu open Explore: the canon wheel draws all 66 books and Genesis's sections under the BSB headings ('The Creation', 'The First Day'); a section opens beside the chapter in the Story pane; Voices draws who speaks to whom in Jonah; Sendings draws the commissions and plantings on the map; Churches draws Paul's plantings; Find 'Lydia' opens her card",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.page
         .locator(".sb-tabs-sidebar")
         .getByRole("button", { name: "More" })
@@ -1398,10 +1430,10 @@ const BASE_FLOWS: Flow[] = [
       await c.page
         .locator('.sb-reader-toolbar button[aria-label="Next Chapter"]')
         .click();
-      await guest.waitForURL(/\/read\/BSB\/JHN\/4$/, { timeout: 20000 });
+      await guest.waitForURL(/\/[a-z]{2}\/BSB\/john\/4$/, { timeout: 20000 });
       return `code ${code}; the guest followed to John 4`;
     },
   },
 ];
 
-export const FLOWS: Flow[] = [...BASE_FLOWS, ...MORE_FLOWS];
+export const FLOWS: Flow[] = [...BASE_FLOWS, ...MORE_FLOWS, ...FAITH_FLOWS];

@@ -5,6 +5,7 @@ import { Mark, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { MarkType } from "@tiptap/pm/model";
 import { scanVerseReferencesInText, type VerseRef } from "@seed/scripture";
+import { routeOf } from "../../../state/reading/route";
 
 let linkTranslation = "BSB";
 /** Which translation a verse link opens — the one the reader has open. */
@@ -13,7 +14,11 @@ export const setVerseLinkTranslation = (id: string) => {
 };
 
 export const verseLinkHref = (ref: VerseRef) =>
-  `/read/${encodeURIComponent(linkTranslation)}/${ref.book}/${ref.chapter}`;
+  routeOf({
+    translationId: linkTranslation,
+    bookId: ref.book,
+    chapterNumber: ref.chapter,
+  });
 const verseAttr = (ref: VerseRef) =>
   ref.verse
     ? ref.endVerse && ref.endVerse !== ref.verse

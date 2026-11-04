@@ -321,17 +321,18 @@ export function FloatingSearch({ state }: { state: ReaderState }) {
           )}
         </div>
       )}
-      <div className="sb-floating-search-input-wrap">
+      {/* seedbible.org's SearchBar, its panel look. */}
+      <label className="sb-search-bar sb-search-bar-panel sb-floating-search-input-wrap">
         <span
-          className="material-symbols-outlined sb-floating-search-icon"
+          className="material-symbols-outlined sb-search-bar-icon sb-floating-search-icon"
           aria-hidden="true"
         >
           search
         </span>
         <input
           ref={input}
-          type="text"
-          className="sb-floating-search-input"
+          type="search"
+          className="sb-search-bar-input sb-floating-search-input"
           placeholder={t("search-verses", { defaultValue: "Search verses" })}
           aria-label={t("search-verses", { defaultValue: "Search verses" })}
           value={query}
@@ -356,7 +357,7 @@ export function FloatingSearch({ state }: { state: ReaderState }) {
         {hasQuery && (
           <button
             type="button"
-            className="sb-floating-search-clear"
+            className="sb-search-clear-button sb-floating-search-clear"
             aria-label={t("clear-search", { defaultValue: "Clear search" })}
             title={t("clear-search", { defaultValue: "Clear search" })}
             onClick={() => {
@@ -367,7 +368,7 @@ export function FloatingSearch({ state }: { state: ReaderState }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         )}
-      </div>
+      </label>
     </div>
   );
 }

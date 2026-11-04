@@ -2,3 +2,6 @@
 // tell whether the markup it was handed came from its own build (hydrate.tsx). `scripts/build-id.mjs` writes
 // the git short hash here before a build; "dev" is what a checkout and the tests see.
 export const BUILD_ID = "dev";
+
+/** The reader's version, shown as the old reader did ("v0.0.1 · <commit>"); package.json's. */
+export const APP_VERSION = "0.0.1";

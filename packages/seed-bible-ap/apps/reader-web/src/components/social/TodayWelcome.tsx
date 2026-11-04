@@ -6,6 +6,7 @@ import type { ChapterVerse } from "../../backend/bible";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
 import { SeedBibleIcon } from "../chrome/icons";
+import { HIGHLIGHT_MARKERS, WELCOME_VERSE_MAP } from "./welcomeVerse";
 
 function plain(verse: ChapterVerse): string {
   return verse.content
@@ -40,6 +41,16 @@ export function TodayWelcome({
   const [verse, setVerse] = useState("");
   useEffect(() => {
     if (hasReading || !book) return;
+    // The table is the common case and needs no round trip, as on seedbible.org; the chapter is the fallback.
+    // seedbible.org's first visit is on AAB, which its table marks; this reader's English default is BSB (the
+    // Scripture agent has no AAB), whose John 1:1 reads the same. Once a Bible is chosen, BSB shows plain, as there.
+    const key =
+      state.firstVisit.value && translationId === "BSB" ? "AAB" : translationId;
+    const mapped = book.id === "JHN" ? WELCOME_VERSE_MAP[key] : undefined;
+    if (mapped !== undefined) {
+      setVerse(mapped);
+      return;
+    }
     let live = true;
     void state.api
       .getTranslationBookChapter(translationId, book.id, 1)
@@ -53,7 +64,7 @@ export function TodayWelcome({
     return () => {
       live = false;
     };
-  }, [hasReading, translationId, book?.id]);
+  }, [hasReading, translationId, book?.id, state.firstVisit.value]);
 
   if (hasReading) {
     const hour = new Date().getHours();
@@ -89,6 +100,18 @@ export function TodayWelcome({
       <div className="sb-today-header">
         <span>{dateLabel(language)}</span>
         <h1>{greeting}</h1>
+        {/* seedbible.org's TodayCloseButton: Today has no header bar, so this is the way out. */}
+        <button
+          type="button"
+          className="sb-today-close-button"
+          onClick={() => (state.ui.pane.value = "none")}
+          aria-label={t("close", { defaultValue: "Close" })}
+          title={t("close", { defaultValue: "Close" })}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
       </div>
     );
   }
@@ -120,7 +143,20 @@ export function TodayWelcome({
             </span>
           </span>
           <div className="sb-today-welcome-screen-verse sb-today-welcome-screen-passage-visible">
-            <div className="sb-today-welcome-screen-reveal">“{verse}”</div>
+            <div className="sb-today-welcome-screen-reveal">
+              {`"${verse}"`.split(HIGHLIGHT_MARKERS).map((part, index) =>
+                index % 2 === 1 ? (
+                  <span
+                    className="sb-today-welcome-screen-verse-highlight"
+                    key={index}
+                  >
+                    {part}
+                  </span>
+                ) : (
+                  part
+                )
+              )}
+            </div>
           </div>
         </>
       )}

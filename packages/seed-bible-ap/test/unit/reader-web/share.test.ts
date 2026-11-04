@@ -43,10 +43,10 @@ describe("share links", () => {
   it("build the link on this origin", () => {
     const r = { translationId: "BSB", bookId: "JHN", chapterNumber: 3 };
     expect(shareUrl("https://seed-reader.faithnet.io", r, 16)).toBe(
-      "https://seed-reader.faithnet.io/read/BSB/JHN/3?v=16"
+      "https://seed-reader.faithnet.io/en/BSB/john/3?v=16"
     );
     expect(shareUrl("https://x.test", r, 16, 18)).toBe(
-      "https://x.test/read/BSB/JHN/3?v=16-18"
+      "https://x.test/en/BSB/john/3?v=16-18"
     );
   });
 

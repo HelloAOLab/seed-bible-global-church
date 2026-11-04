@@ -168,6 +168,35 @@
   cursor: pointer;
 }
 
+/* Annotations can run for pages, which would leave the centred ⋮ off-screen
+   while reading the card. Sticky to both edges, it stays centred on short
+   cards and on long ones stays within view, but never leaves its card. */
+.sb-annotation-item > .sb-context-menu-anchor {
+  position: sticky;
+  top: 0.5rem;
+  bottom: 0.5rem;
+}
+
+/* The ⋮ follows the sidebar tab rows' rules (see Tabs.css): shown on hover,
+   keyboard focus or while its menu is open, always on touch and phone
+   widths, fading in and out with `visibility` flipped at the visible end. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-annotation-item > .sb-context-menu-anchor {
+    transition:
+      opacity 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-annotation-item:not(:hover, :has(:focus-visible))
+    > .sb-context-menu-anchor:not(:has([aria-expanded="true"])) {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}
+
 .sb-annotation-item-preview {
   font-size: 0.9rem;
 
@@ -594,4 +623,17 @@
 }
 .sb-discover-show-all {
   margin-top: 6px;
+}
+
+/* The content card's title is a button (it opens the page); it reads as seedbible.org's plain title text. */
+.sb-content-card-title {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
 }

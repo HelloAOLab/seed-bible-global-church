@@ -1,0 +1,264 @@
+/* FAITH — the reader's Prayer, Journey and Care page (components/faith/FaithPane.tsx). */
+.sb-faith {
+  --sb-faith-muted: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  --sb-faith-ring: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 40%
+  );
+  --sb-faith-radius: 12px;
+}
+
+.sb-faith-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.sb-faith-heading {
+  margin: 12px 0 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.sb-faith-hint,
+.sb-faith-empty {
+  margin: 0;
+  color: var(--sb-faith-muted);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.sb-faith-emergency {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--sb-error-color);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-error-color), transparent 90%);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.sb-faith-message {
+  margin: 8px 16px 0;
+  color: var(--sb-primary-color);
+  font-size: 0.9375rem;
+}
+
+.sb-faith-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--sb-faith-radius);
+  box-shadow: 0 0 0 1px var(--sb-faith-ring);
+}
+
+.sb-faith-form label {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-faith-form input,
+.sb-faith-form textarea,
+.sb-faith-form select,
+.sb-faith-answer-form textarea,
+.sb-faith-who select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--sb-faith-ring);
+  border-radius: 8px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font: inherit;
+}
+
+.sb-faith-form .sb-faith-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.sb-faith-form .sb-faith-check input {
+  width: auto;
+}
+
+.sb-faith-kind,
+.sb-faith-form-row,
+.sb-faith-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-faith-who {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-faith-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--sb-faith-ring);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.sb-faith-button .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-faith-button-primary {
+  align-self: flex-start;
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-faith-button-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sb-faith-button-quiet {
+  border-color: transparent;
+  color: var(--sb-faith-muted);
+}
+
+.sb-faith-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-faith-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--sb-faith-radius);
+  box-shadow: 0 0 0 1px var(--sb-faith-ring);
+}
+
+.sb-faith-card-main p {
+  margin: 0;
+}
+
+.sb-faith-card-title {
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.sb-faith-card-sub,
+.sb-faith-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--sb-faith-muted);
+  font-size: 0.875rem;
+}
+
+.sb-faith-card-answer {
+  margin-top: 6px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.sb-faith-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 80%);
+}
+
+.sb-faith-answer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-faith-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-faith-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--sb-faith-ring);
+  border-radius: var(--sb-faith-radius);
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sb-faith-stage-current {
+  border: 2px solid var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-faith-stage-name {
+  font-weight: 600;
+}
+
+.sb-faith-stage-desc {
+  color: var(--sb-faith-muted);
+  font-size: 0.875rem;
+}
+
+.sb-faith-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-faith-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-faith-steps .material-symbols-outlined {
+  color: var(--sb-primary-color);
+}
+
+.sb-faith-finder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-faith-finder input {
+  flex: 1;
+  min-width: 0;
+}

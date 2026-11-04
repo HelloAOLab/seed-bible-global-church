@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Doctrinal collection brief</title>
+    <meta
+      name="description"
+      content="What the ask-writings harness needs from the publishing developer and the ontology developer to bring the confessions and catechisms into Ask under an explicit evidence policy: the documents, their order and rights, the unit shape with stable identifiers and proof texts as notes, the doctrine-ontology projection, the per-question-kind evidence policy as data, the quarantine tag, and what done looks like."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> /
+        <a href="/architecture/ask-writings-v3-spec/">ask-writings v3 spec</a> /
+        Doctrinal collection brief
+      </div>
+      <h1>Bringing the confessions and catechisms into Ask</h1>
+      <p class="lede">
+        A work brief, 1 November 2026, for two people: the
+        <strong>publishing developer</strong> (§2) and the
+        <strong>ontology developer</strong>
+        (§3). §1 is the shared ground; §4 is what the harness side does with the
+        result; §5 is the handoff. It follows the
+        <a href="/architecture/ask-writings-v3-spec/">ask-writings v3 spec</a>,
+        §4b and §7.
+      </p>
+
+      <p class="toc">
+        <a href="#why">1. Why, and the one rule</a>
+        <a href="#publishing">2. Publishing developer</a>
+        <a href="#ontology">3. Ontology developer</a>
+        <a href="#harness">4. What the harness does with it</a>
+        <a href="#handoff">5. Handoff and sequencing</a>
+      </p>
+
+      <h2 id="why">1. Why, and the one rule</h2>
+      <p>
+        On the Christian Ask development slice, Haiku 5.5 alone beats the
+        ask-writings harness and both reference apps. The largest single cause
+        is a missing source. Asked Westminster Shorter Catechism 18 ("wherein
+        consists the sinfulness of that estate whereinto man fell?"), every
+        other system states Westminster's formulation — the guilt of Adam's
+        first sin, the want of original righteousness, the corruption of the
+        whole nature, and the actual transgressions that proceed from it. Ours
+        gives a Genesis 3 study and never states it, because the library holds
+        no Westminster, Heidelberg or 1689 text (only the Racovian Catechism)
+        and the evidence rule forbids the model to state a teaching it cannot
+        source. "Westminster teaches X" is proved by the catechism itself; only
+        "these passages support X" needs the interpretive argument. We need the
+        first without reconstructing the second.
+      </p>
+      <p>
+        <strong>The rule the owner set.</strong> Ask has stayed with Scripture
+        and the writings of its own period. Bringing doctrinal sources in must
+        not blur that: a formulation is always <em>attributed</em> ("Westminster
+        teaches…"), never stated as what Scripture says; it is brought in only
+        for the question kinds whose evidence policy allows it; and a question
+        with no source, tradition or reader perspective stays on Scripture and
+        its period. The layers, with WSC 18 as the worked example:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>WSC 18</th>
+              <th>Where it lives</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture and its period witnesses</td>
+              <td>
+                Gen 3; Rom 5:12–19; Eph 2:3; Ps 51:5; the LXX, the scrolls,
+                Philo on the fall
+              </td>
+              <td>
+                <code>scr:</code>, <code>txt:</code>, the writings domain's
+                period layer
+              </td>
+            </tr>
+            <tr>
+              <td>Doctrinal topic</td>
+              <td>original sin and humanity's fallen condition</td>
+              <td><code>sdo:Doctrine</code></td>
+            </tr>
+            <tr>
+              <td>Doctrinal formulation</td>
+              <td>the particular explanation WSC 18 gives</td>
+              <td>
+                <code>sdo:DoctrineFormulation</code>, one per question or
+                section, stable id
+              </td>
+            </tr>
+            <tr>
+              <td>Source</td>
+              <td>the catechism's exact answer, edition, location</td>
+              <td>
+                a published writing's unit: <code>wrt:PublishedWriting</code>,
+                <code>txt:Span</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Theological tradition</td>
+              <td>Reformed</td>
+              <td><code>sdo:DoctrineProfile</code></td>
+            </tr>
+            <tr>
+              <td>Denominational association</td>
+              <td>the bodies that adopt this catechism</td>
+              <td>
+                <code>sdo:AdoptionAssertion</code> — says who adopts; never
+                supplies the teaching
+              </td>
+            </tr>
+            <tr>
+              <td>Biblical interpretation</td>
+              <td>
+                the catechism's proof texts, and the readers who argue them
+              </td>
+              <td>
+                <code>sdo:citesPassage</code>, <code>sdo:throughArgument</code>,
+                <code>scr:InterpretationQuestion</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="publishing">2. Publishing developer — the collection</h2>
+      <h3>2.1 The source, already snapshotted</h3>
+      <p>
+        <code>~/eval-store/sources/creeds-json/2026-11-01/repo</code> —
+        NonlinearFruit/Creeds.json at commit <code>2ae21a4c</code> (2026-08-26).
+        <strong>The repository as a whole is not licensed</strong>; each
+        document is taken by its own <code>Metadata.SourceAttribution</code>.
+        Import only documents that state <code>Public Domain</code> (with or
+        without a named translator). <strong>Do not import</strong> the eight
+        that state a copyright: Chicago Statement; Christ Hymn of Colossians,
+        Christ Hymn of Philippians, Christian Shema, Confession of Peter, Shema
+        Yisrael (Crossway); Helvetic Consensus (Klauber 1990); Savoy Declaration
+        (Reformed Standards).
+      </p>
+      <h3>2.2 Order</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Wave</th>
+              <th>Documents (<code>creeds/*.json</code>)</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>A — needed for the first experiment</strong></td>
+              <td>
+                <code>westminster_shorter_catechism</code> (107 Q),
+                <code>westminster_larger_catechism</code> (196, with Proofs),
+                <code>westminster_confession_of_faith</code> (33 ch.),
+                <code>heidelberg_catechism</code> (129, with Proofs),
+                <code>london_baptist_1689</code> (32 ch.),
+                <code>1695_baptist_catechism</code> (114, with Proofs)
+              </td>
+              <td>the Reformed and Baptist standards the slice asks about</td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td>
+                <code>belgic_confession_of_faith</code>,
+                <code>canons_of_dort</code>,
+                <code>second_helvetic_confession</code>,
+                <code>scots_confession</code>,
+                <code>french_confession_of_faith</code>,
+                <code>council_of_orange</code>, and the creeds:
+                <code>apostles_creed</code>, <code>nicene_creed</code>,
+                <code>athanasian_creed</code>,
+                <code>chalcedonian_definition</code>,
+                <code>gregorys_declaration_of_faith</code>,
+                <code>ignatius_creed</code>,
+                <code>irenaeus_rule_of_faith</code>,
+                <code>tertullians_rule_of_faith</code>
+              </td>
+              <td>the ecumenical creeds and the other Reformed confessions</td>
+            </tr>
+            <tr>
+              <td>C</td>
+              <td>
+                the remaining public-domain documents: Keach's, the Puritan
+                Catechism, Catechism for Young Children, Matthew Henry's
+                Scripture Catechism, the Exposition of the Assembly's Catechism,
+                Fisher's <code>shorter_catechism_explained</code>, Zwingli's 67
+                Articles and Fidei Ratio, First Confession of Basel, First
+                Helvetic, Tetrapolitan, Ten Theses of Berne, Waldensian,
+                Consensus Tigurinus, Abstract of Principles
+              </td>
+              <td>completeness</td>
+            </tr>
+            <tr>
+              <td><strong>D — other traditions</strong>, not in Creeds.json</td>
+              <td>
+                Augsburg Confession, Luther's Small and Large Catechisms
+                (Concordia Triglotta, 1921, public domain); the Thirty-Nine
+                Articles; the Catechism of the Council of Trent (Donovan, 1829);
+                the Baltimore Catechism (Gutenberg #14554); the Longer Catechism
+                of Philaret (Schaff, <em>Creeds of Christendom</em> vol. 2,
+                1877)
+              </td>
+              <td>
+                so "what do Christians hold" is never answered from Reformed
+                documents alone. Run
+                <code>scripts/writings/english-search.py</code> for each first,
+                as for any writing; rights are what the source states.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Check what is already held first: parts of Schaff's
+        <em>Creeds of Christendom</em> may be in the index as prose. The
+        structured import is still wanted — Ask needs one unit per question or
+        section with a stable identifier, which a volume's paragraphs do not
+        give.
+      </p>
+      <h3>2.3 The unit shape — the part that matters most</h3>
+      <p>
+        One edition record per document, through
+        <code>scripts/writings/import.py</code> with a new importer
+        <code>importers/creeds_json.py</code> registered in
+        <code>IMPORTERS</code>; source family <code>creeds-json</code>, release
+        <code>2026-11-01</code>, the file's sha256.
+      </p>
+      <ul>
+        <li>
+          <strong>Catechisms</strong> (<code>CreedFormat: Catechism</code>;
+          records <code>Number/Question/Answer</code>):
+          <strong>one unit per question</strong>. The locator is the stable id —
+          <code>WSC 18</code>, <code>WLC 25</code>,
+          <code>HC 7</code> (Heidelberg; put the Lord's Day in the section
+          title), <code>BapCat 1695 18</code>, <code>Keach 20</code>. The text
+          is <code>Q. &lt;question&gt; A. &lt;answer&gt;</code>, the document's
+          own words only.
+        </li>
+        <li>
+          <strong
+            >Proof texts go in <code>notes</code>, never in the text.</strong
+          >
+          Where a record has <code>Proofs</code> /
+          <code>AnswerWithProofs</code>, write each lettered proof as one note
+          (<code>"a. Rom. 5:12, 19; Eph. 2:3"</code>).
+          <code>common.place()</code> then places the unit on those verses by
+          <em>note-citation</em>, and the text stays the formulation. This is
+          the catechism's own link from teaching to Scripture — the "biblical
+          interpretation" layer.
+        </li>
+        <li>
+          <strong>Confessions</strong> (<code>Chapter/Title/Sections</code>):
+          <strong>one unit per section</strong>, locator <code>WCF 6.4</code>,
+          <code>2LCF 6.2</code>, <code>2HC 8.3</code>; the chapter title is the
+          section heading.
+          <strong>Articles</strong> (<code>Article/Title/Content</code>, the
+          "Canon" format): one unit per article — <code>BC 15</code>; Dort's
+          heads <code>CD 3/4.1</code>.
+        </li>
+        <li>
+          <strong>Creeds</strong> (a single text): one unit per clause or
+          paragraph as the file breaks it — <code>Nicene 1</code>,
+          <code>Athanasian 3</code>.
+        </li>
+        <li>
+          <strong>Nested catechisms</strong> (<code>HenrysCatechism</code>:
+          Henry's, the Exposition, Fisher's — <code>SubQuestions</code>): the
+          parent question is a unit (<code>Fisher 18</code>) and each
+          sub-question a unit (<code>Fisher 18.3</code>) in a section named by
+          the parent.
+        </li>
+        <li>
+          Keep the file's wording (early-modern spelling included); no
+          modernising. No chunker — the units are the document's own divisions.
+        </li>
+      </ul>
+      <h3>2.4 Edition record fields</h3>
+      <pre><code>slug:     creeds-json-westminster-shorter-catechism
+title:    "Westminster Shorter Catechism (1647) — Creeds.json public-domain text"
+language: en
+work:     title; author: Metadata.Authors ("Westminster Assembly"); class: "later-interpretation";
+          group: "Medieval, Reformation and modern statements";
+          kind: "catechism" | "confession" | "creed" | "articles"            ← NEW
+          tradition: "Reformed" | "Reformed Baptist" | "Lutheran" | "Roman Catholic"
+                     | "Anglican" | "Eastern Orthodox" | "Ecumenical"          ← NEW
+          date: Metadata.Year; dateBasis: "the document's own date of adoption or publication (Creeds.json metadata)"
+edition:  publication: "Creeds.json (NonlinearFruit), from &lt;Metadata.SourceUrl&gt;"; year: Metadata.Year;
+          licence: "Public Domain";
+          licenceEvidence: "the document's own SourceAttribution in Creeds.json: \"Public Domain\"; &lt;SourceUrl&gt;";
+          basis: "A historic standard; this edition's text is stated public domain by its source.";
+          attribution: "&lt;Title&gt; (&lt;Year&gt;), text from Creeds.json (public domain).";
+          source: { family: "creeds-json", release: "2026-11-01", url: SourceUrl, sha256 };
+          evalGold: ["scripture-ask-catechism-wsc"]                          ← NEW, on the seven below only</code></pre>
+      <p>
+        <code>kind</code> and <code>tradition</code> are what the ontology
+        projection reads (§3.2). If <code>check_edition</code> rejects the new
+        keys, say so and the harness side widens it.
+      </p>
+      <p>
+        <strong>Evaluation gold</strong> — still published (a named-source
+        question is open-book by policy) but tagged so the independent-synthesis
+        track can leave them out: Westminster Shorter
+        (<code>scripture-ask-catechism-wsc</code>), Westminster Larger
+        (<code>-wlc</code>), Heidelberg (<code>-heidelberg</code>), 1695 Baptist
+        Catechism (<code>-baptist-1695</code>), Fisher's Shorter Catechism
+        Explained (<code>-fisher</code>), Baltimore No. 4
+        (<code>-baltimore-4</code>), Beddome (<code>-beddome</code>).
+      </p>
+      <h3>2.5 Pipeline, as usual</h3>
+      <p>
+        <code>import.py creeds-json</code> →
+        <code>build-writing-works.mts --editions …</code> (it merges; a filtered
+        build no longer replaces <code>works.json</code>) →
+        <code>publishing-publish-work.ts</code> under the gateway's publisher
+        <code>demo-admin</code> (read back before re-publishing after a "fetch
+        failed") → <code>receipt.py</code> → index load and embed (check
+        <code>ps</code> for another loader on the index first) →
+        <code>build-writings-abox.py</code> and the GraphDB reload. Wave A is
+        about 2,000 units — small against the store.
+      </p>
+      <h3>2.6 Done looks like</h3>
+      <ul>
+        <li>
+          <code>writings_at Rom.5.12</code> lists WSC 18, WLC 25, HC 7 and WCF 6
+          among its units (placed by their proof texts).
+        </li>
+        <li>
+          <code
+            >writings_retrieve "sinfulness of the estate whereinto man
+            fell"</code
+          >
+          returns WSC 18 first, text verbatim.
+        </li>
+        <li>
+          <code>publishing.locus {source: "WSC 18"}</code> answers the unit with
+          its commitment.
+        </li>
+        <li>
+          The slugs are in <code>published.json</code>; send the list to the
+          harness side.
+        </li>
+      </ul>
+
+      <h2 id="ontology">
+        3. Ontology developer — the doctrine layer Ask can read
+      </h2>
+      <p>
+        Most of what is needed already exists in
+        <code>doctrine</code> (<code>sdo:</code>):
+        <code>sdo:Doctrine</code> (the topic),
+        <code>sdo:DoctrineFormulation</code> with <code>formulationText</code> /
+        <code>formulationSpan</code> / <code>statesFormulation</code>,
+        <code>sdo:DoctrineProfile</code> with <code>inProfile</code>,
+        <code>sdo:AdoptionAssertion</code> with <code>adopts</code> /
+        <code>adoptedBy</code> / <code>adoptionEvidence</code>,
+        <code>sdo:SourceStance</code>, <code>sdo:citesPassage</code>,
+        <code>sdo:throughArgument</code>, <code>sdo:DoctrinalPolicyUse</code>.
+        The asks are: a projection that fills it from the published collection,
+        a small evidence-policy vocabulary, and three new terms. Nothing here
+        changes the project profile or RBS's concept rules.
+      </p>
+      <h3>3.1 Three new terms (T-box + C-box; shapes for each)</h3>
+      <ul>
+        <li>
+          <code>sdo:AskEvidencePolicy</code> ⊑ <code>at:Norm</code> — one record
+          per question kind: <code>sdo:forQuestionKind</code> (a value of a new
+          C-box <code>sdo:AskQuestionKind</code>: explain-named-formulation ·
+          doctrinal-overview · bible-teaches · passage · earliest-teaching ·
+          history-of-reading · word-study · compare · factual · pastoral), and
+          for each evidence layer (a C-box <code>sdo:EvidenceLayer</code>:
+          scripture-period · formulation · tradition-profile · later-reader ·
+          denomination) a rule value from <code>sdo:LayerRule</code>: required ·
+          allowed · allowed-under-perspective · excluded; plus
+          <code>sdo:presentationOrder</code> (the layers in the order the answer
+          presents them) and <code>sdo:policyRationale</code> (exists). Shape:
+          exactly one policy per kind; every layer named; preflight refuses a
+          kind with none or two. The starting rows are the table in spec §4b.2.
+        </li>
+        <li>
+          <code>sdo:evalGoldFor</code> (datatype, on a formulation's source
+          edition or on the formulation): the evaluation set id the source is
+          gold for — read by the quarantine.
+        </li>
+        <li>
+          <code>sdo:stableId</code> on <code>sdo:DoctrineFormulation</code>: the
+          locator (<code>WSC 18</code>, <code>WCF 6.4</code>) — the key the
+          harness, the UI and the verse screen use. Confessions, catechisms,
+          creeds and articles are told apart by
+          <code>sdo:formulationKind</code> (C-box: catechism-answer ·
+          confession-section · creed-clause · article).
+        </li>
+      </ul>
+      <h3>3.2 The projection (generated, never hand-authored)</h3>
+      <p>
+        <code>scripts/build-doctrine-formulations.py</code> reads the edition
+        records whose <code>work.kind</code> is set (§2.4) and writes
+        <code>ontology/doctrine.formulations.ttl</code> into its own graph
+        <code>&lt;urn:skills:context:doctrine:formulations&gt;</code>:
+      </p>
+      <ul>
+        <li>
+          one <code>sdo:DoctrineFormulation</code> per unit:
+          <code>stableId</code>, <code>formulationText</code> (verbatim — public
+          domain), <code>formulationSpan</code> → the published unit (<code
+            >wrt:PublishedWriting</code
+          >
+          / <code>txt:Span</code> by unit id), <code>formulationKind</code>,
+          <code>formulationLanguage</code>, <code>sdo:citesPassage</code> for
+          every OSIS id in the unit's proof-text notes (this is the "biblical
+          interpretation" edge; it is the document's own claim, so it is
+          <em>stated</em>, not argued);
+        </li>
+        <li>
+          one <code>sdo:DoctrineProfile</code> per
+          <code>work.tradition</code> value (Reformed, Reformed Baptist,
+          Lutheran, Roman Catholic, Anglican, Eastern Orthodox, Ecumenical) —
+          created if absent, every formulation <code>inProfile</code> its
+          tradition's; the ecumenical creeds in every Christian profile;
+        </li>
+        <li>
+          <code>sdo:ofDoctrine</code> → an <code>sdo:Doctrine</code> topic,
+          proposed by Haiku from the question/section title against the existing
+          <code>sdo:Doctrine</code> list and admitted by code (an exact existing
+          IRI or none); unresolved formulations carry no topic rather than a
+          guessed one; <code>reviewStatus "proposed"</code> throughout;
+        </li>
+        <li>
+          <code>sdo:AdoptionAssertion</code>s for denominations: a small seed
+          table in the script (e.g. the OPC and PCA adopt the Westminster
+          Standards; the URCNA, CRCNA and RCA the Three Forms of Unity; Reformed
+          Baptist associations the 1689; Lutheran bodies the Augsburg
+          Confession), each with its <code>adoptionEvidence</code> URL, status
+          proposed — it names who adopts and nothing more;
+        </li>
+        <li>
+          <code>sdo:evalGoldFor</code> from the edition's <code>evalGold</code>.
+        </li>
+      </ul>
+      <p>
+        Load with
+        <code
+          >load_evidence_graphs.py --apply --only doctrine-formulations</code
+        >
+        (add the graph to its list); preflight
+        <code>doctrine-formulations</code> holds the file to a fresh build and
+        to its shapes. The runtime never queries GraphDB per ask (GraphDB Free
+        runs two queries at a time): the data worker needs a projection in D1 —
+        tables <code>doctrine_formulations</code> (stable id, text, kind,
+        tradition, topic, unit id, eval-gold set) and
+        <code>ask_evidence_policy</code> (kind × layer → rule, order), filled by
+        a loader beside the scripture KB's. The harness side writes the loader
+        and the tools if you give the TTL; say which you prefer.
+      </p>
+      <h3>
+        3.3 The competency questions (the acceptance test, as SPARQL in the data
+        file's header)
+      </h3>
+      <ol>
+        <li>
+          Which formulations state the doctrine <em>original sin</em>, in which
+          traditions, with which proof texts? → WSC 18, WLC 25, HC 7–8, WCF
+          6.1–6, 2LCF 6, BC 15, with their verses.
+        </li>
+        <li>
+          Which formulations cite Rom 5:12? → the units whose proof-text notes
+          name it.
+        </li>
+        <li>
+          What may an ask of kind <em>passage</em> bring in, and in what order?
+          → one policy row: scripture-period required, formulation excluded
+          unless under perspective, later readers allowed, order meaning →
+          context → readers.
+        </li>
+        <li>
+          Which published sources are gold for
+          <code>scripture-ask-catechism-wsc</code>? → the WSC edition.
+        </li>
+        <li>
+          Which bodies adopt the document WSC 18 belongs to? → the adoption
+          assertions, each with its evidence URL.
+        </li>
+      </ol>
+      <p>
+        Grounding reminder: every new class reaches an upper anchor (<code
+          >at:Norm</code
+        >
+        for the policy; the formulation already reaches
+        <code>at:InformationArtifact</code>), sits in exactly one semantic
+        cluster (a new <code>sdo:cluster_ask_policy</code> for the three codes
+        lists — a new codes cluster does not reuse an old cluster's IRI), and a
+        controlled value is a <code>skos:notation</code>, never an IRI under
+        <code>sh:class</code>. Push with
+        <code>sync_ontology.py push --direct doctrine</code>, data with
+        <code>load_data_graph.py doctrine --apply --direct</code>, and run
+        <code>python3 scripts/preflight.py --live</code> before committing.
+      </p>
+
+      <h2 id="harness">4. What the harness side does with it</h2>
+      <ul>
+        <li>
+          Adds <code>context.perspective</code> to the ask (beside
+          <code>role</code>); the frame step fills <code>source</code>,
+          <code>tradition</code>, <code>perspective</code>, <code>kind</code>; a
+          source named in the question overrides the reader's perspective.
+        </li>
+        <li>
+          Reads the evidence policy for the frame's kind and enforces it: which
+          layers are gathered, which are allowed into the answer, in what order;
+          a formulation is rendered with its attribution and stable id.
+        </li>
+        <li>
+          Builds the quarantine: on the independent-synthesis track the units of
+          an <code>evalGold</code> source are left out of retrieval; on the
+          source-grounded track they are open-book.
+        </li>
+        <li>
+          Runs the 2×2 on the frozen slice — {current sources, + wave A} ×
+          {current harness, draft-then-prove} — with every item labelled with
+          its intended source or perspective, so a Westminster question is
+          graded against Westminster and a general question never needs an
+          unattributed Westminster answer to pass.
+        </li>
+      </ul>
+
+      <h2 id="handoff">5. Handoff and sequencing</h2>
+      <ol>
+        <li>
+          Publishing: wave A imported, published, in the index; the slug list
+          sent. (Blocks the experiment.)
+        </li>
+        <li>
+          Ontology: the three terms, the policy C-box and shapes, the projection
+          script, the loaded graph, preflight green; the TTL sent. (Blocks the
+          policy-enforced arm, not the 2×2's first cell.)
+        </li>
+        <li>
+          Harness: the D1 projection and tools, the frame fields, the
+          quarantine, the 2×2.
+        </li>
+        <li>
+          Then waves B–D and the other traditions; the policy table is revised
+          from what the 2×2 shows, never from a single case.
+        </li>
+      </ol>
+      <p>
+        Questions in either direction go through the owner; the file form of
+        this brief is
+        <code
+          >docs/bible-translation/doctrinal-collection-brief-2026-11-01.md</code
+        >
+        in the skills repo.
+      </p>
+    </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v3-spec/"
+                  >ask-writings v3 spec</a
+                >
+              </li>
+              <li>
+                <span aria-current="page">Doctrinal collection brief</span>
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
+  </body>
+</html>

@@ -82,7 +82,12 @@ interface Persisted {
   customColors?: string[];
   highlightOverrides?: HighlightOverrides;
   bookOrder?: BookOrder;
+  /** Read only to move off it: a day of builds saved `false` for everyone (the card off by default). */
   showDiscovered?: boolean;
+  /** The Discover card in the chapter (seedbible.org's discoveredContent.showContent, on by default). */
+  showDiscoverCard?: boolean;
+  /** The card beside the text (true) or below it (false): seedbible.org's discoverContentPanelInline. */
+  discoverInline?: boolean;
   selectionEffects?: SelectionEffects;
 }
 
@@ -158,7 +163,8 @@ export function createSettings(deps: SettingsDeps = {}) {
     saved.bookOrder === "tanakh" ? "tanakh" : "traditional"
   );
   /** The Discover card beside the chapter (the old reader's "Show discovered content"). */
-  const showDiscovered = signal(saved.showDiscovered !== false);
+  const showDiscovered = signal(saved.showDiscoverCard !== false);
+  const discoverInline = signal(saved.discoverInline !== false);
   const selectionEffects = signal<SelectionEffects>(
     saved.selectionEffects === "enabled" ||
       saved.selectionEffects === "disabled"
@@ -271,7 +277,8 @@ export function createSettings(deps: SettingsDeps = {}) {
         customColors: customColors.value,
         highlightOverrides: highlightOverrides.value,
         bookOrder: bookOrder.value,
-        showDiscovered: showDiscovered.value,
+        showDiscoverCard: showDiscovered.value,
+        discoverInline: discoverInline.value,
         selectionEffects: selectionEffects.value,
       };
       localStorage.setItem(KEY, JSON.stringify(p));
@@ -297,6 +304,7 @@ export function createSettings(deps: SettingsDeps = {}) {
     highlightOverrides,
     bookOrder,
     showDiscovered,
+    discoverInline,
     selectionEffects,
     resolvedTheme,
     toggleTheme,

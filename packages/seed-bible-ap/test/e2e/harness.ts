@@ -105,6 +105,12 @@ export class FlowContext {
     await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
     await this.dismissWelcome(page);
     await page.locator(".sb-app:not(.sb-app-ssr)").waitFor({ timeout: 20000 });
+    // A new device opens on the rail, as seedbible.org does; the flows read the open sidebar (its tabs, bookmarks,
+    // saves), as a returning reader has it. A flow about the rail closes it again itself.
+    const expand = page
+      .locator('button[aria-label="Expand sidebar"]:visible')
+      .first();
+    if (await expand.count()) await expand.click().catch(() => undefined);
   }
 
   /** Turn down the first visit's tour offer, and the install offer that can follow it. */
@@ -223,6 +229,8 @@ export class FlowContext {
     item: RegExp,
     page: Page = this.page
   ): Promise<void> {
+    // seedbible.org shows a card's ⋮ only while the pointer is over it (or on touch): hover first, as a person does.
+    await card.hover().catch(() => undefined);
     await card.locator(".sb-annotation-item-menu").first().click();
     await page.getByRole("menuitem", { name: item }).first().click();
     if (item.test("Delete")) {
@@ -423,6 +431,56 @@ export class FlowContext {
         .innerText()
         .catch(() => "")
     ).replace(/\s+/g, " ");
+  }
+
+  /** Settings, opened from the sidebar (the rail's gear on a desktop, the phone's More otherwise). */
+  async openSettings(page: Page = this.page): Promise<Locator> {
+    const gear = page
+      .locator('button[aria-label="Open settings"]:visible')
+      .first();
+    if (await gear.count()) await gear.click();
+    else await this.pressToolbar("Settings", page);
+    const view = page.locator(".sb-sidebar-settings-view").first();
+    await view.waitFor({ timeout: 10000 });
+    return view;
+  }
+
+  /** Turn on extensions seedbible.org does not have (they start off): Settings → Extensions → Available → Install. */
+  async useExtensions(names: string[], page: Page = this.page): Promise<void> {
+    const view = await this.openSettings(page);
+    await view.getByText("Extensions", { exact: true }).first().click();
+    const available = view.getByRole("tab", { name: /available/i });
+    if (await available.count()) await available.click();
+    for (const name of names) {
+      const row = view.locator(".sb-extension-row", { hasText: name }).first();
+      const install = row.getByRole("button", { name: "Install" });
+      if (await install.count()) {
+        await install.click();
+        await row
+          .getByRole("button", { name: "Uninstall" })
+          .waitFor({ timeout: 10000 })
+          .catch(() => undefined);
+      }
+    }
+    await page
+      .locator('button[aria-label="Close Settings"]')
+      .first()
+      .click()
+      .catch(() => undefined);
+  }
+
+  /** The Discover card in the chapter (Settings → Display & Theme → Show discovered content): on unless turned off. */
+  async showDiscovered(page: Page = this.page): Promise<void> {
+    const view = await this.openSettings(page);
+    await view.getByText("Display & Theme", { exact: true }).first().click();
+    const box = view.getByLabel(/show discovered content/i).first();
+    await box.waitFor({ timeout: 10000 });
+    if (!(await box.isChecked())) await box.check();
+    await page
+      .locator('button[aria-label="Close Settings"]')
+      .first()
+      .click()
+      .catch(() => undefined);
   }
 
   /** Sign in as one of the Home's sample people (Quick Connect): the account pane's list. */

@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ask-writings: measured, built, next</title>
+    <meta
+      name="description"
+      content="For external review: what the ask-writings harness measured against its own gold, 477 Christian Ask questions and three other ask apps; what was built on 31 October and 1 November 2026; how our RunPod-trained models compare with Haiku 5.5; and a detailed, sequenced plan of next steps with acceptance tests."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> /
+        <a href="/architecture/harness/">Scripture harness</a> / ask-writings:
+        measured, built, next
+      </div>
+      <h1>ask-writings: measured, built, next</h1>
+      <p class="lede">
+        For external review. Date: 1 November 2026. Status:
+        <strong>partly built, not deployed</strong>. This page follows the
+        <a href="/architecture/ask-writings-v2/">ask-writings v2 design</a> (31
+        October, proposed). It reports what two days of measurement found —
+        against our own gold questions, against 477 frozen Christian Ask
+        questions, and against three other ask apps — what was built in
+        response, how the models we trained on RunPod compare with Haiku 5.5,
+        and a detailed plan of next steps, each with the test that decides it.
+      </p>
+
+      <p class="toc">
+        <a href="#review">Review questions</a>
+        <a href="#summary">1. Summary</a>
+        <a href="#principles">2. Standing decisions</a>
+        <a href="#measured">3. What we measured</a>
+        <a href="#apps">4. Against other ask apps</a>
+        <a href="#models">5. Our trained models vs Haiku 5.5</a>
+        <a href="#found">6. What the measurements found</a>
+        <a href="#built">7. What was built</a>
+        <a href="#design">8. The design as it now stands</a>
+        <a href="#next">9. Next steps</a>
+        <a href="#eval">10. How each step is tested</a>
+        <a href="#risks">11. Risks</a>
+        <a href="#open">12. Open questions</a>
+      </p>
+
+      <h2 id="review">Review questions</h2>
+      <p>We are asking for a critical read. In order of importance:</p>
+      <ol>
+        <li>
+          <strong>Diagnosis (§6).</strong> We conclude that the remaining gap to
+          the other apps is in <em>answering what was asked</em>, not in
+          grounding. Do the numbers in §3–§4 support that, or are we
+          over-reading a small slice?
+        </li>
+        <li>
+          <strong>One harness for every question (§2, §8).</strong> We will not
+          route ordinary verse or doctrine questions to a separate, simpler ask.
+          Is a single evidence-first harness the right shape for both "what did
+          Josephus add to the flood story" and "what is the chief end of man"?
+        </li>
+        <li>
+          <strong>The next-step order (§9).</strong> Is the order right? Is
+          anything missing that would move answer quality more than what we
+          listed?
+        </li>
+        <li>
+          <strong>Trained models (§5, §9.6).</strong> Our 9B translates at least
+          as well as Haiku 5.5 but composes answers far worse. Is training a
+          dedicated composer adapter worth it, and what should it be trained on?
+        </li>
+        <li>
+          <strong>Fairness of the comparisons (§4, §10).</strong> One judge
+          (Haiku 5.5) grades every system blind; we fixed a defect that hid our
+          citations from it. Is anything else tilting the comparison, either
+          way?
+        </li>
+      </ol>
+
+      <h2 id="summary">1. Summary</h2>
+      <p>
+        <code>ask-writings</code> is the Scripture Agent's one ask: it gathers
+        evidence from Scripture and the writings around it, plans an answer,
+        composes it from that evidence only, and lets code refuse any claim the
+        evidence does not carry. Two days of measurement changed three things we
+        believed:
+      </p>
+      <ul>
+        <li>
+          <strong
+            >Evidence packaging, not retrieval, was costing recall.</strong
+          >
+          The first "evidence packet" threw away 8 required sources that search
+          had already found — every one of them by a hard per-kind cap. A
+          coverage-first packet keeps them: required recall on our 32 gold
+          questions rose from 0.67 to <strong>0.87</strong> end to end, best of
+          every arm measured.
+        </li>
+        <li>
+          <strong
+            >Our answers are better grounded than the other apps' but answer the
+            question less directly.</strong
+          >
+          On 80 fixed Christian Ask questions, scored by a blind judge, the
+          improved harness leads on "Scripture actually supports it" (0.88 vs
+          Apologist 0.84, Bonfire 0.54) and trails on "addresses what was asked"
+          (0.68 vs 0.86 and 0.82).
+        </li>
+        <li>
+          <strong
+            >Our 9B translates as well as Haiku 5.5 but cannot yet compose
+            answers.</strong
+          >
+          Translation: 44.4 vs 43.0 chrF3 on 300 shared rows (207 of 300 rows
+          better). Composition: 0.60 required recall vs 0.81 on identical
+          evidence.
+        </li>
+      </ul>
+      <p>
+        <strong>Decision sought:</strong> agreement on the order of §9 — finish
+        and confirm the question-first planning, deploy the measured changes,
+        then cut latency, then train a composer adapter on reviewed targets.
+      </p>
+
+      <h2 id="principles">2. Standing decisions (the owner's)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Decision</th>
+              <th>Consequence for the design</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                One harness answers every question; nothing is routed back to
+                the retired verse-level ask
+              </td>
+              <td>
+                Question kinds that did poorly (verse meaning, doctrine,
+                catechism, pastoral) are fixed inside the harness — a new kind,
+                a skill, a plan — never by a router.
+              </td>
+            </tr>
+            <tr>
+              <td>Code decides evidence, layers and dates; models propose</td>
+              <td>
+                Every claim names held evidence ids; the check strikes the rest.
+                Unchanged.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                RunPod GPU time is a fixed cost; Haiku 5.5 calls are the metered
+                spend
+              </td>
+              <td>
+                Heavy evaluation runs on the pod where it can; harness steps
+                move to our own models only when they match Haiku; the judge is
+                used only where it decides something.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                The judge is Haiku 5.5; numbers from different judges are never
+                compared
+              </td>
+              <td>
+                Every quality number on this page is the same blind Haiku 5.5
+                judge, or a code grader.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="measured">3. What we measured</h2>
+      <h3>
+        3.1 Our own gold: 32 writings questions (Haiku 5.5 throughout, code
+        graders)
+      </h3>
+      <p>
+        Required recall = the share of the gold's required sources the answer
+        cites; over all requests counts a failed answer as zero.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Arm</th>
+              <th>Answered</th>
+              <th>Required recall</th>
+              <th>Expected recall</th>
+              <th>Citation coverage</th>
+              <th>Layer discipline</th>
+              <th>Input tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Baseline (the live pipeline), run 2</td>
+              <td>32/32</td>
+              <td>0.724</td>
+              <td>0.397</td>
+              <td>0.907</td>
+              <td>0.856</td>
+              <td>1.10M</td>
+            </tr>
+            <tr>
+              <td>Baseline, run 3</td>
+              <td>31/32</td>
+              <td>0.776</td>
+              <td>0.494</td>
+              <td>0.912</td>
+              <td>0.876</td>
+              <td>1.11M</td>
+            </tr>
+            <tr>
+              <td>Harness (coverage check + repair)</td>
+              <td>31/32</td>
+              <td>0.688</td>
+              <td>0.475</td>
+              <td>0.916</td>
+              <td>0.917</td>
+              <td>1.34M</td>
+            </tr>
+            <tr>
+              <td>Packet v1 + Qwen3 reranker</td>
+              <td>30/32</td>
+              <td>0.630</td>
+              <td>0.422</td>
+              <td>0.958</td>
+              <td>0.926</td>
+              <td>0.77M</td>
+            </tr>
+            <tr>
+              <td><strong>Packet v2 + Qwen3 reranker</strong></td>
+              <td><strong>32/32</strong></td>
+              <td><strong>0.870</strong></td>
+              <td><strong>0.512</strong></td>
+              <td><strong>0.962</strong></td>
+              <td>0.890</td>
+              <td>1.07M</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Paired by case against the best baseline run, packet v2 is better on 6
+        questions, worse on 1, the same on 25. One run per arm; the gold is not
+        yet reviewed case by case, so these are diagnostics.
+      </p>
+
+      <h3>3.2 Where each missed source was lost</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Stage (of 76 required items)</th>
+              <th>Harness</th>
+              <th>Packet v1</th>
+              <th>Packet v2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cited</td>
+              <td>54</td>
+              <td>49</td>
+              <td><strong>67</strong></td>
+            </tr>
+            <tr>
+              <td>Never retrieved</td>
+              <td>15</td>
+              <td>11</td>
+              <td>8</td>
+            </tr>
+            <tr>
+              <td>Retrieved but cut from the packet</td>
+              <td>0</td>
+              <td>8</td>
+              <td><strong>0</strong></td>
+            </tr>
+            <tr>
+              <td>Retrieved, not selected or not cited</td>
+              <td>4</td>
+              <td>1</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>Answer failed</td>
+              <td>3</td>
+              <td>6</td>
+              <td>0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.3 Packet builders on frozen evidence pools (no model calls)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Builder</th>
+              <th>Required sources kept (packet run, of 62 found)</th>
+              <th>(harness run, of 58 found)</th>
+              <th>Mean packet tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>v1, channel order</td>
+              <td>49</td>
+              <td>51</td>
+              <td>6.6k</td>
+            </tr>
+            <tr>
+              <td>v1, Qwen3 reranker</td>
+              <td>51</td>
+              <td>51</td>
+              <td>6.7k</td>
+            </tr>
+            <tr>
+              <td>v2, channel order</td>
+              <td>56</td>
+              <td>54</td>
+              <td>9.3k</td>
+            </tr>
+            <tr>
+              <td><strong>v2, Qwen3 reranker</strong></td>
+              <td><strong>61</strong></td>
+              <td><strong>58</strong></td>
+              <td>9.1k</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>
+        3.4 The 80-question Christian Ask development slice (blind Haiku 5.5
+        judge, 0–1)
+      </h3>
+      <p>
+        Eighty fixed questions across study-Bible notes, six catechisms, CREDO,
+        CTTAF, FMG-Bench and Bible trivia. The two "ours" columns are interim
+        (52 and 28 questions graded when this page was written).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Ours, deployed</th>
+              <th>Ours, improved (v2b)</th>
+              <th>Apologist</th>
+              <th>Bonfire</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Addresses what was asked</td>
+              <td>0.53</td>
+              <td>0.68</td>
+              <td><strong>0.86</strong></td>
+              <td>0.82</td>
+            </tr>
+            <tr>
+              <td>Covers the reference answer's claims</td>
+              <td>0.26</td>
+              <td>0.41</td>
+              <td><strong>0.62</strong></td>
+              <td>0.54</td>
+            </tr>
+            <tr>
+              <td>Restraint (no unsupported additions)</td>
+              <td>0.58</td>
+              <td>0.75</td>
+              <td><strong>0.92</strong></td>
+              <td>0.58</td>
+            </tr>
+            <tr>
+              <td>Scripture actually supports it</td>
+              <td>0.77</td>
+              <td><strong>0.88</strong></td>
+              <td>0.84</td>
+              <td>0.54</td>
+            </tr>
+            <tr>
+              <td>Contradicts the reference</td>
+              <td>never</td>
+              <td>never</td>
+              <td>never</td>
+              <td>2%</td>
+            </tr>
+            <tr>
+              <td>Strict "good answer" verdict</td>
+              <td>0.04</td>
+              <td>0.21</td>
+              <td><strong>0.33</strong></td>
+              <td>0.31</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="apps">4. Against other ask apps</h2>
+      <p>
+        Three apps answered as a guest: Seed Bible's
+        <strong>Apologist</strong> (gpt-5-mini behind apologist.seedbible.io)
+        and <strong>Bonfire AI</strong> (bonfire.seedbible.io), and
+        <strong>FaithBot</strong> (faithbot.donbarger.com; behind a bot check,
+        so its answers were pasted by hand and it is in the writings comparison
+        only).
+      </p>
+      <h3>
+        4.1 Writings questions (27 common questions; one prose grader for every
+        system: a source counts when the answer names it)
+      </h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Answered</th>
+              <th>Required recall (prose)</th>
+              <th>Required recall (attached citations)</th>
+              <th>Median time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ours, v2 harness</td>
+              <td>27/27</td>
+              <td>0.580</td>
+              <td><strong>0.858</strong></td>
+              <td>115 s</td>
+            </tr>
+            <tr>
+              <td>Ours, deployed baseline</td>
+              <td>26/27</td>
+              <td><strong>0.593</strong></td>
+              <td>0.759</td>
+              <td>131 s</td>
+            </tr>
+            <tr>
+              <td>FaithBot</td>
+              <td>26/27</td>
+              <td>0.525</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Apologist</td>
+              <td>27/27</td>
+              <td>0.519</td>
+              <td>none returned</td>
+              <td>19 s</td>
+            </tr>
+            <tr>
+              <td>Bonfire</td>
+              <td>27/27</td>
+              <td>0.340</td>
+              <td>knowledge-base sources only</td>
+              <td>12 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The other apps answer from model memory: nothing checks that a citation
+        they name exists or says what they claim. Ours cites held,
+        commitment-verified text. They are six to ten times faster.
+      </p>
+      <h3>4.2 Are FaithBot and Apologist the same engine?</h3>
+      <p>
+        Not as configured: they run on different hosts and APIs, and on the same
+        26 questions share 0.3% of six-word phrases and 9% of vocabulary
+        (FaithBot's median answer is 400 characters, Apologist's 4,260). They
+        could still sit on the same base model; that cannot be told from
+        outside.
+      </p>
+
+      <h2 id="models">5. Our RunPod-trained models vs Haiku 5.5</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Our model</th>
+              <th>Haiku 5.5</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                Translate Hebrew, Greek, Latin → English (300 shared dev rows,
+                chrF3)
+              </td>
+              <td>
+                <strong>44.44</strong> (hbo 37.9 · grc 53.6 · lat 41.9); better
+                on 207 of 300 rows
+              </td>
+              <td>42.95 (hbo 34.7 · grc 50.1 · lat 44.1)</td>
+              <td>
+                At least level, likely ahead (+1.5). The rows come from only 8
+                source works, so the interval (−1.4 to +2.1) cannot confirm the
+                lead.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Compose the ask answer (32 identical packets and outlines)
+              </td>
+              <td>
+                0.604 required recall (translation adapter) · 0.526 (stock 9B);
+                layer discipline 0.62
+              </td>
+              <td>0.812; layer discipline 0.88</td>
+              <td>
+                Not ready. Needs a composer adapter trained on reviewed answers.
+              </td>
+            </tr>
+            <tr>
+              <td>Expand a question into search terms (172 probes)</td>
+              <td>67.4% pool recall</td>
+              <td>77.9%</td>
+              <td>Fails its gate; not pursued.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The translation model: Qwen3.5-9B, LoRA (43M trainable parameters),
+        7,001 updates over 92M tokens on an A100, final training loss 1.195. Its
+        adapter is kept on the RunPod volume and locally.
+      </p>
+
+      <h2 id="found">6. What the measurements found</h2>
+      <ol>
+        <li>
+          <strong>The packet cut what search found.</strong> Hard per-kind caps
+          (8 undated items, 25 period items) dropped required sources while the
+          packet sat at 5–8k of a 40k-token budget; six of the eight were
+          passages the question itself named. The first builder also
+          <em>stopped</em> at the first item that overflowed the budget.
+        </li>
+        <li>
+          <strong>Search misses were routing, not holdings.</strong> Every
+          required source no run retrieved is held. Causes: a range kept only
+          its first six verses (Genesis 5:27 lost from 5:21–27); a range across
+          chapters was refused; "City of God XV.11" did not match the stored
+          locator "City of God, Book XV, Chapter 11"; the planner named no
+          passage for a work the question implied.
+        </li>
+        <li>
+          <strong
+            >The search index is healthy; the probes were too strict.</strong
+          >
+          Every probe passage has a vector, filters work, and a passage queried
+          by its own vector returns first. Exact scoring helps slightly (11 vs 9
+          of 60). Many probe questions are generic, so "find this one passage"
+          undercounts good retrieval.
+        </li>
+        <li>
+          <strong>The data worker fails under load.</strong> At six concurrent
+          asks, two of three passage reads failed and 72 of 108 answers were
+          written without a passage they needed. The agent gave up after three
+          tries in under a second.
+        </li>
+        <li>
+          <strong>The judge never saw our citations.</strong> Writings answers
+          carry no "commitment verified" flag on their verses and their cited
+          writings were never shown, so the blind judge graded every one as
+          citing nothing. With the fix, one smoke question's restraint score
+          went from 0.0 to 1.0.
+        </li>
+        <li>
+          <strong>Most questions had no fitting kind.</strong> "What does this
+          verse mean", a catechism question and a pastoral question were forced
+          into "what the text says" or "history of reading", whose instructions
+          told the writer to end on what the text does not settle and to fill
+          every layer.
+        </li>
+        <li>
+          <strong
+            >Answers were built around the evidence found, not the
+            question.</strong
+          >
+          The remaining gap to the other apps (addresses the question 0.68 vs
+          0.86) is here.
+        </li>
+      </ol>
+
+      <h2 id="built">7. What was built (31 October – 1 November)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Change</th>
+              <th>Answers finding</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                Coverage-first packet (v2): named passages protected, caps as
+                preferences, an over-budget item skipped, coverage checked again
+                after packing
+              </td>
+              <td>6.1</td>
+              <td>Built, measured (0.87)</td>
+            </tr>
+            <tr>
+              <td>
+                Ranges keep both ends and may cross chapters; a cited form
+                ("XV.11", "IV.41") is found through search and kept only when
+                title words and numbers match
+              </td>
+              <td>6.2</td>
+              <td>Built, unit-tested</td>
+            </tr>
+            <tr>
+              <td>
+                The question channel: the asker's own words as one more meaning
+                query
+              </td>
+              <td>6.3</td>
+              <td>Built (+3.7 points on probes)</td>
+            </tr>
+            <tr>
+              <td>Exact vector scoring in the data worker's search</td>
+              <td>6.3</td>
+              <td>Prepared, not deployed (live worker)</td>
+            </tr>
+            <tr>
+              <td>Data-worker retries: five attempts over about 15 s</td>
+              <td>6.4</td>
+              <td>Built, not deployed</td>
+            </tr>
+            <tr>
+              <td>
+                The judge is shown what our answer cites (held Scripture and
+                writings behind every surviving claim)
+              </td>
+              <td>6.5</td>
+              <td>Built (evaluation)</td>
+            </tr>
+            <tr>
+              <td>
+                A <code>teach</code> kind and its skill: answer first, ground in
+                Scripture, traditions named only where they differ, writings
+                only where they bear, no forced "unsettled" ending
+              </td>
+              <td>6.6</td>
+              <td>Built; skill exported; measured in v2b</td>
+            </tr>
+            <tr>
+              <td>
+                Sources named in the prose ("1 John 2:6", "Josephus, Antiquities
+                1.3.1")
+              </td>
+              <td>§4.1</td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>
+                Plan around the question: select first writes what the question
+                asks (1–4 points), the first point answers the first ask,
+                evidence that serves no ask is left out; compose answers each
+                ask in order
+              </td>
+              <td>6.7</td>
+              <td>Built; being measured</td>
+            </tr>
+            <tr>
+              <td>
+                A faster gather (lookups together, the book's window read while
+                verses resolve, the question channel alongside the main search)
+              </td>
+              <td>latency</td>
+              <td>Built</td>
+            </tr>
+            <tr>
+              <td>
+                Failure accounting: every structured call records stop reason,
+                output tokens, length and stage; failed attempts' tokens are
+                counted; the trace records what sent a draft back for revision
+              </td>
+              <td>reliability</td>
+              <td>Built</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="design">8. The design as it now stands</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Who</th>
+              <th>What it does now</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>classify</td>
+              <td>Haiku 5.5, checked by code</td>
+              <td>
+                The question's kind — now including <code>teach</code> — and its
+                anchors.
+              </td>
+            </tr>
+            <tr>
+              <td>gather</td>
+              <td>code</td>
+              <td>
+                About fifteen channels, plus the question channel; waves that do
+                not depend on each other run together; ranges and cited forms
+                resolved by code.
+              </td>
+            </tr>
+            <tr>
+              <td>coverage + repair</td>
+              <td>code</td>
+              <td>
+                Checks the pool against the question's obligations; up to two
+                targeted repair searches; the stop reason recorded.
+              </td>
+            </tr>
+            <tr>
+              <td>packet (v2)</td>
+              <td>code + Qwen3-Reranker-0.6B</td>
+              <td>
+                Named passages first; ranked within preferences; filled to a
+                hard budget; coverage checked again.
+              </td>
+            </tr>
+            <tr>
+              <td>select</td>
+              <td>Haiku 5.5</td>
+              <td>
+                What the question asks, then an outline around it; every point
+                names evidence ids.
+              </td>
+            </tr>
+            <tr>
+              <td>compose</td>
+              <td>Haiku 5.5</td>
+              <td>
+                Answers each ask in order, names its sources in the prose, lists
+                every claim with its layer and evidence.
+              </td>
+            </tr>
+            <tr>
+              <td>check → revise → answer</td>
+              <td>code (revise: Haiku 5.5)</td>
+              <td>Unchanged: code strikes what the evidence does not carry.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="next">9. Next steps, in order</h2>
+      <h3>9.1 Confirm question-first planning (now)</h3>
+      <p>
+        <strong>Change:</strong> already built (§7).
+        <strong>Test:</strong> re-ask the slice questions where v2b scored
+        "partly" or "no" on addressing the question.
+        <strong>Pass:</strong> addresses-the-question rises on those questions
+        without restraint or Scripture support falling.
+        <strong>Cost:</strong> about 15 asks.
+      </p>
+      <h3>9.2 Close the answer-shape gap</h3>
+      <ul>
+        <li>
+          <strong>A direct opening sentence, enforced by code:</strong> the
+          check refuses an answer whose first sentence does not address the
+          first ask (a cheap judge-free proxy: it must contain the ask's key
+          terms or a yes/no).
+        </li>
+        <li>
+          <strong>Length by question:</strong> a short, factual or catechism
+          question gets a short answer; the writings survey is for questions
+          that ask for it.
+        </li>
+        <li>
+          <strong>Reference coverage:</strong> for doctrine and catechism
+          questions, the outline must cover the standard points of the question
+          (what it is, its scriptural ground, its bearing), so the answer covers
+          what a reference answer covers.
+        </li>
+      </ul>
+      <p>
+        <strong>Pass:</strong> on the slice, addresses-the-question ≥ 0.80 and
+        covers-the-reference ≥ 0.55 with restraint ≥ 0.85 and Scripture support
+        ≥ 0.85.
+      </p>
+      <h3>9.3 Deploy the measured changes</h3>
+      <p>
+        Packet v2 with Qwen3 (the reranker needs a hosted home: a RunPod
+        serverless endpoint or a small always-on pod), the question channel, the
+        routing fixes, the data-worker retries, the <code>teach</code> kind,
+        question-first planning, and exact vector scoring in the data worker.
+        <strong>Gate:</strong> the slice shows no measure falling against the
+        deployed agent, and our 32 writings gold questions keep required recall
+        ≥ 0.85.
+      </p>
+      <h3>
+        9.4 Cut latency (about 115 s today; the other apps answer in 12–19 s)
+      </h3>
+      <ul>
+        <li>Stream the answer as it is written.</li>
+        <li>
+          Merge select into compose for <code>teach</code> questions (one model
+          call instead of two).
+        </li>
+        <li>
+          Prevent the commonest revise causes before drafting (the trace now
+          records them): revise runs on 44% of answers and costs about 23 s.
+        </li>
+        <li>Keep the gather waves parallel (done) and measure the gain.</li>
+      </ul>
+      <p>
+        <strong>Pass:</strong> median under 60 s, first words on screen under 15
+        s, no quality measure falling.
+      </p>
+      <h3>9.5 Make the measurement decision-grade</h3>
+      <ul>
+        <li>
+          Review the 32 writings gold questions case by case (a draft review
+          sheet exists: for each gold item, how often runs cited and retrieved
+          it, and what the runs keep citing instead).
+        </li>
+        <li>
+          Calibrate the judge against the owner's verdicts on about 60 claims
+          before any number is quoted outside the team.
+        </li>
+        <li>
+          Fix a non-inferiority margin before repeats; repeat three times only
+          for a release decision.
+        </li>
+      </ul>
+      <h3>9.6 Train a composer adapter (RunPod)</h3>
+      <p>
+        Our 9B composes far worse than Haiku today (§5). A dedicated adapter
+        trained on <em>reviewed</em> question → evidence → claims examples is
+        the path to moving the most expensive step off the metered API.
+        <strong>Training data:</strong> the harness's own recorded packets and
+        the answers that passed the check and the judge, reviewed; conflicting
+        sources, false premises and "not held" cases included.
+        <strong>Serving:</strong> schema-constrained decoding (vLLM) so a reply
+        cannot leave the answer format. <strong>Gate:</strong> on identical
+        packets, within a fixed margin of Haiku on required recall, citation
+        coverage and layer discipline. The design floor from the earlier plan
+        stands: at least 1,000 reviewed targets.
+      </p>
+      <h3>9.7 Use the translation model where it already wins</h3>
+      <p>
+        Offer the 9B as the drafter in the writings translation pipeline beside
+        Haiku 5.5, on the next batch of works, and score it with that pipeline's
+        fidelity checks; widen the dev set beyond 8 source works so the
+        comparison can be decided.
+      </p>
+
+      <h2 id="eval">10. How each step is tested</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>Size</th>
+              <th>Grader</th>
+              <th>Used for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Writings gold</td>
+              <td>32 questions</td>
+              <td>code (cites the gold sources)</td>
+              <td>retrieval and packet changes</td>
+            </tr>
+            <tr>
+              <td>Frozen evidence pools</td>
+              <td>32 pools</td>
+              <td>code</td>
+              <td>packet builders, rankers — no model calls</td>
+            </tr>
+            <tr>
+              <td>Christian Ask development slice</td>
+              <td>80 questions</td>
+              <td>blind Haiku 5.5 judge</td>
+              <td>answer quality; every design step</td>
+            </tr>
+            <tr>
+              <td>Christian Ask frozen suite</td>
+              <td>477 questions</td>
+              <td>blind Haiku 5.5 judge</td>
+              <td>confirming a release</td>
+            </tr>
+            <tr>
+              <td>Other ask apps</td>
+              <td>the same questions</td>
+              <td>the same graders</td>
+              <td>where we stand</td>
+            </tr>
+            <tr>
+              <td>Identical-packet composer test</td>
+              <td>32 packets</td>
+              <td>code</td>
+              <td>any model in the compose step</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Every answer of ours is graded on what it cites, and every other app's
+        answer on what it says, by the same judge, which is not told which
+        system wrote the answer. The judge is an Anthropic model and two of the
+        compared composers are Anthropic models; the judge's reading of our
+        answers is checked against the owner's verdicts before a number is
+        quoted outside the team.
+      </p>
+
+      <h2 id="risks">11. Risks</h2>
+      <ul>
+        <li>
+          <strong>Small slices.</strong> 80 questions guide design; they do not
+          prove a release. Confirmation is the full suite.
+        </li>
+        <li>
+          <strong>The data worker.</strong> Under load it fails; a busy reader
+          hour could produce partial answers until retries and capacity are both
+          in place.
+        </li>
+        <li>
+          <strong>Overfitting to the judge.</strong> Answer-shape changes could
+          please the judge without helping readers; the owner's review of
+          sampled answers is the check.
+        </li>
+        <li>
+          <strong>Speed vs grounding.</strong> The other apps are fast because
+          they do not fetch or verify. Cutting latency must not cut
+          verification.
+        </li>
+        <li>
+          <strong>Unreviewed gold.</strong> The writings gold was accepted in
+          bulk; some "misses" are acceptable alternatives (the Targums, Josephus
+          on Pompey's siege).
+        </li>
+      </ul>
+
+      <h2 id="open">12. Open questions</h2>
+      <ol>
+        <li>
+          Should "addresses what was asked" be the release gate, ahead of
+          required-source recall?
+        </li>
+        <li>
+          For doctrine and catechism questions, should the answer state the
+          reference tradition's answer first and then where traditions differ,
+          or treat traditions evenly?
+        </li>
+        <li>
+          How much latency are readers willing to trade for verified citations —
+          is 30–45 s acceptable if the first words arrive in 10?
+        </li>
+        <li>
+          Is the Qwen3 reranker worth a hosted service, or should its gain be
+          folded into the data worker's own search?
+        </li>
+        <li>
+          What should the composer adapter's training set be reviewed for, and
+          by whom?
+        </li>
+      </ol>
+    </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <span aria-current="page"
+                  >ask-writings: measured, built, next</span
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
+  </body>
+</html>

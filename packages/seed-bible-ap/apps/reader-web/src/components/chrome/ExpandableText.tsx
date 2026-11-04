@@ -1,0 +1,189 @@
+// seedbible.org's ExpandableText, copied from upstream HelloAOLab/seed-bible develop (1.16)
+// packages/seed-bible/seed-bible/components/ExpandableText/ExpandableText.tsx (its stylesheet is styles/expandable-text.css).
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
+
+/**
+ * Sub-pixel guard for the overflow comparison below. `scrollWidth` and
+ * `clientWidth` are both rounded to whole pixels, so text that fits exactly
+ * can report one pixel of overflow it does not have. A pixel of real overflow
+ * is invisible, so erring towards "fits" costs nothing.
+ */
+const OVERFLOW_TOLERANCE_PX = 1;
+
+/**
+ * Shows text with a "Read more" / "Read less" control when it does not fit.
+ * Collapsed, it reads as one line of prose — `text... Read more` — with the
+ * ellipsis and the control on the same baseline as the text. Expanded, the
+ * full text is shown with its line breaks preserved.
+ *
+ * Whether it fits is measured, not estimated: the collapsed line is clipped
+ * by the browser and `scrollWidth` is compared against `clientWidth` on that
+ * same element — two real measurements of one element, so nothing has to be
+ * assumed about the font.
+ *
+ * An earlier version instead built the budget by hand: one line of
+ * `getComputedStyle().lineHeight`, which is the keyword "normal" here, so it
+ * fell back to `fontSize * 1.2`. That guess lands inside a pixel of a real
+ * line box, and which side it lands on depends on the font's own metrics.
+ * Measured at this font size in Chromium: 1.15 for the default sans stack, so
+ * the guess held; 1.39 for a CJK fallback and 1.62 for a Thai one, where a
+ * single short line measured over the budget and every description, however
+ * short, was given a "Read more" that expanded to nothing. `--sb-font-family`
+ * is themeable and `system-ui` resolves per platform, so the guess was never
+ * one the component could make.
+ *
+ * Labels are passed in already-translated so this stays i18n-agnostic (same
+ * pattern as `SkeletonContainer`).
+ */
+export function ExpandableText(props: {
+  children: string;
+  /** Already-translated "Read more" label. */
+  readMoreLabel: string;
+  /** Already-translated "Read less" label. */
+  readLessLabel: string;
+  className?: string;
+  /**
+   * How many lines to show before collapsing. Defaults to 1. Above 1, the
+   * text wraps within the budget rather than showing only its first line.
+   */
+  lines?: number;
+}) {
+  const {
+    children: text,
+    readMoreLabel,
+    readLessLabel,
+    className,
+    lines: maxLines = 1,
+  } = props;
+  const multiline = maxLines > 1;
+  const bodyRef = useRef<HTMLElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [clipped, setClipped] = useState(false);
+
+  useLayoutEffect(() => {
+    setExpanded(false);
+  }, [text]);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    // Expanded, the body wraps instead of being clipped, so there is nothing
+    // to measure — and `clipped` has to survive so "Read less" stays.
+    if (!body || expanded) {
+      return;
+    }
+    const measure = () => {
+      setClipped(
+        multiline
+          ? body.scrollHeight > body.clientHeight + OVERFLOW_TOLERANCE_PX
+          : body.scrollWidth > body.clientWidth + OVERFLOW_TOLERANCE_PX
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    // The body's own width changes when the control appears beside it; the
+    // wrapper's changes when the pane is resized. Either can flip the answer.
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    if (wrapRef.current) {
+      observer.observe(wrapRef.current);
+    }
+    return () => observer.disconnect();
+  }, [text, expanded, multiline]);
+
+  if (!text) {
+    return null;
+  }
+
+  const collapsed = !expanded;
+  const toggle = (
+    <button
+      type="button"
+      className="sb-expandable-text-toggle"
+      aria-expanded={expanded}
+      // Excluded from the wrapper's `dir="auto"` detection, which would
+      // otherwise read the label (in the UI language) before the text.
+      dir="auto"
+      onClick={(event) => {
+        event.stopPropagation();
+        setExpanded((current) => !current);
+      }}
+    >
+      {expanded ? readLessLabel : readMoreLabel}
+    </button>
+  );
+
+  if (multiline) {
+    // Clamped by `-webkit-line-clamp`, which draws its own ellipsis. The
+    // toggle comes before the text so it can float to the end of the last
+    // visible line (see the CSS); expanded, it flows in after the last word.
+    const classes = [
+      "sb-expandable-text",
+      "sb-expandable-text--multiline",
+      collapsed ? "sb-expandable-text--clamped" : null,
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <div
+        ref={wrapRef}
+        className={classes}
+        dir="auto"
+        style={{ "--sb-expandable-text-lines": maxLines }}
+      >
+        <div
+          ref={bodyRef as { current: HTMLDivElement | null }}
+          className="sb-expandable-text-body"
+        >
+          {collapsed && clipped ? toggle : null}
+          {text}
+          {expanded && clipped ? toggle : null}
+        </div>
+      </div>
+    );
+  }
+
+  const lines = text.split(/\r?\n/);
+  const firstLine = lines[0] ?? text;
+  // A description written as several lines has more to show even when its
+  // first line fits, so that answer comes from the text rather than a
+  // measurement.
+  const overflowing = lines.length > 1 || clipped;
+
+  const classes = [
+    "sb-expandable-text",
+    collapsed ? "sb-expandable-text--clamped" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div ref={wrapRef} className={classes} dir="auto">
+      {/*
+       * Inline-level, so the surrounding `text-align` places it: centred in
+       * the profile card, start-aligned in a Discover row. The collapsed row
+       * used to be a block-level flex container, whose `justify-content`
+       * default overrode a centred `text-align` and pinned the text to the
+       * start edge until it was expanded.
+       */}
+      <span className="sb-expandable-text-line">
+        <span
+          ref={bodyRef as { current: HTMLSpanElement | null }}
+          className="sb-expandable-text-body"
+        >
+          {collapsed ? firstLine : text}
+        </span>
+        {collapsed && overflowing ? (
+          <span className="sb-expandable-text-ellipsis" aria-hidden="true">
+            ...
+          </span>
+        ) : null}
+        {overflowing ? toggle : null}
+      </span>
+    </div>
+  );
+}

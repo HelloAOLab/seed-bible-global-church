@@ -11,22 +11,24 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+// seedbible.org's list in its order, then what this reader adds (Toolbar, Customize) after About.
 const ROWS = [
-  "Account settings",
+  "Account",
   "Display & Theme",
-  "Toolbar",
   "Extensions",
   "Install App",
   "Launch tutorial",
-  "Customize",
   "About Seed Bible",
+  "Toolbar",
+  "Customize",
 ];
 
 describe("Settings in the sidebar", () => {
   it("opens in place of the tabs, in the old reader's order, and ✕ brings the tabs back", async () => {
     const t = await createTestReaderState({ identity: null });
     const r = renderInHost(<TabsSidebar state={t.state} />);
-    expect(r.queryByText("Tabs")).not.toBeNull();
+    // A new reader starts on the rail, as on seedbible.org; Settings opens the whole sidebar.
+    expect(r.queryByText("Tabs")).toBeNull();
     fireEvent.click(r.getByRole("button", { name: "Open settings" }));
     await waitFor(() => expect(r.queryByText("Settings")).not.toBeNull());
     expect(r.queryByText("Tabs")).toBeNull();
@@ -44,7 +46,7 @@ describe("Settings in the sidebar", () => {
     const r = renderInHost(<TabsSidebar state={t.state} />);
     fireEvent.click(r.getByRole("button", { name: "Open settings" }));
     const pages: Array<[string, RegExp]> = [
-      ["Account settings", /sign out/i],
+      ["Account", /sign out/i],
       ["Display & Theme", /line height/i],
       ["Toolbar", /the others are under more/i],
       ["Extensions", /extensions/i],

@@ -330,10 +330,7 @@ export function DiscoverPane({ state }: { state: ReaderState }) {
     >
       <header className="sb-pane-header">
         <h2 className="sb-discover-title">
-          {t("discover-book", {
-            book: state.reading.bookName.value,
-            defaultValue: "Discover {{book}}",
-          })}
+          {t("discover", { defaultValue: "Discover" })}
         </h2>
         <div className="sb-discover-header-actions">
           <div className="sb-discover-create">

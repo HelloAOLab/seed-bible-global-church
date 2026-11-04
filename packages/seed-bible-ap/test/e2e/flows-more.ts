@@ -4,9 +4,18 @@
 // two Homes that are friends with each other are skipped with the reason: the sample people have no friends.
 import { chromium, firefox, type Page } from "playwright";
 import type { Flow, FlowContext } from "./harness";
+
+/** The extensions this reader adds that seedbible.org lacks — off until turned on, so flows that use them turn them on. */
+const EXTRAS = [
+  "Dead Sea Scrolls",
+  "Elsewhere",
+  "Interpretations & writings",
+  "Story",
+  "Study companion",
+];
 import { A2A, BASE } from "./harness";
 
-const CH = "/read/BSB/JHN/3";
+const CH = "/en/BSB/john/3";
 const stamp = () => new Date().toISOString().slice(11, 19).replace(/:/g, "");
 
 /** A 2×2 PNG (a red square) for the picture flows. */
@@ -662,7 +671,7 @@ export const MORE_FLOWS: Flow[] = [
           .last()
           .click();
         await guest.keyboard.press("ArrowRight");
-        await c.page.waitForURL(/\/JHN\/4/, { timeout: 15000 }).catch(() => {
+        await c.page.waitForURL(/\/john\/4/, { timeout: 15000 }).catch(() => {
           throw new Error(
             `the guest moved; the host stayed at ${c.page.url()}`
           );
@@ -680,15 +689,15 @@ export const MORE_FLOWS: Flow[] = [
           .click();
         await guest.waitForTimeout(800);
         await guest.keyboard.press("ArrowRight");
-        await guest.waitForURL(/\/JHN\/5/, { timeout: 15000 });
+        await guest.waitForURL(/\/john\/5/, { timeout: 15000 });
         await c.page.waitForTimeout(2000);
-        if (!/\/JHN\/4/.test(c.page.url()))
+        if (!/\/john\/4/.test(c.page.url()))
           throw new Error(`the host was moved to ${c.page.url()}`);
 
         step = "the host's tap flares for the guest";
         await c.page.keyboard.press("ArrowRight");
-        await guest.waitForURL(/\/JHN\/5/, { timeout: 15000 });
-        await c.page.waitForURL(/\/JHN\/5/, { timeout: 15000 });
+        await guest.waitForURL(/\/john\/5/, { timeout: 15000 });
+        await c.page.waitForURL(/\/john\/5/, { timeout: 15000 });
         await c.page.waitForTimeout(800);
         await c.tapVerse(3);
         await guest
@@ -855,9 +864,9 @@ export const MORE_FLOWS: Flow[] = [
         await side.getByRole("button", { name: "New tab" }).first().click();
         await c.page.waitForTimeout(1200);
         await c.page.keyboard.press("ArrowRight");
-        await c.page.waitForURL(/\/JHN\/4/, { timeout: 15000 });
+        await c.page.waitForURL(/\/john\/4/, { timeout: 15000 });
         await guest.waitForTimeout(2500);
-        if (!/\/JHN\/3/.test(guest.url()))
+        if (!/\/john\/3/.test(guest.url()))
           throw new Error(`the guest was moved to ${guest.url()}`);
 
         step = "closing the Shared tab ends it";
@@ -1023,6 +1032,8 @@ export const MORE_FLOWS: Flow[] = [
       let step = "";
       try {
         await c.open(CH);
+        await c.useExtensions(EXTRAS);
+        await c.showDiscovered();
         const side = c.page.locator(".sb-tabs-sidebar");
         await side.getByRole("button", { name: "Open settings" }).click();
         await side.getByText("Display & Theme").click();
@@ -1170,7 +1181,7 @@ export const MORE_FLOWS: Flow[] = [
       try {
         await c.open(CH, page);
         await page
-          .getByRole("button", { name: "Text settings" })
+          .getByRole("button", { name: "Settings" })
           .filter({ visible: true })
           .first()
           .tap();
@@ -1352,7 +1363,7 @@ export const MORE_FLOWS: Flow[] = [
       const hist = card.locator(".sb-today-history");
       await c.waitText(hist, /John 3/, 5000);
       await hist.getByRole("button", { name: "John 3" }).first().click();
-      await c.page.waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 10000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/john\/3/, { timeout: 10000 });
       return `chips ${chips.join(" · ")}; 'You read John 3' under All and Reading; Notes empty; History listed John 3 and opened it`;
     },
   },
@@ -1555,7 +1566,9 @@ export const MORE_FLOWS: Flow[] = [
       );
       await input.press("ArrowDown");
       await input.press("Enter");
-      await c.page.waitForURL(/\/read\/BSB\/GEN\/2$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/genesis\/2$/, {
+        timeout: 15000,
+      });
       await c.pressToolbar("Search");
       await input.fill("loved the world");
       const hit = panel
@@ -1565,7 +1578,7 @@ export const MORE_FLOWS: Flow[] = [
         .first();
       await hit.waitFor({ timeout: 20000 });
       await hit.click();
-      await c.page.waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/john\/3/, { timeout: 15000 });
       await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 15000 });
       const tabsBefore = await c.page
         .locator(".sb-sidebar-tab-list .sb-tab-main, .sb-sidebar-tab-list > *")
@@ -1601,7 +1614,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "At 1495 px: one row of the translation (BSB ▾), the search box and All books; Old Testament in three columns filled down each column (Genesis, Exodus… then 2 Chronicles), New Testament in two; the book on screen open with its chapters as a full-width row of square buttons and the current chapter filled; Song Of Solomon by its full name. At 390 px: a header of ×, Books and the tabs, one column, and the current chapter in view",
     run: async (c) => {
-      await c.open("/read/BSB/MAT/3");
+      await c.open("/en/BSB/matthew/3");
       await c.page
         .locator(".sb-bible-reader-active .sb-bible-reader-title")
         .click();
@@ -1612,7 +1625,7 @@ export const MORE_FLOWS: Flow[] = [
           p.querySelector(sel)!.getBoundingClientRect();
         const head = [
           ".sidebar-translation-selector",
-          ".searchbar",
+          ".sb-selector-book-search",
           ".dropdown",
         ].map((s) => box(s));
         const cols = (i: number) => {
@@ -1659,7 +1672,7 @@ export const MORE_FLOWS: Flow[] = [
       if (bad.length) throw new Error(bad.join("; "));
       const phone = await c.secondPage();
       await phone.setViewportSize({ width: 390, height: 844 });
-      await c.open("/read/BSB/MAT/3", phone);
+      await c.open("/en/BSB/matthew/3", phone);
       await phone.locator(".sb-reader-floating-nav-label").first().click();
       const head = phone.locator(
         ".sb-selector-panel .sb-bible-reader-mobile-header-title"
@@ -1800,7 +1813,7 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(
           "BSB carries no red-letter data, yet red runs were drawn"
         );
-      await c.open("/read/ENGWEBP/JHN/3");
+      await c.open("/en/ENGWEBP/john/3");
       const woj = await c.page
         .locator(".sb-bible-reader-active .sb-words-of-jesus")
         .count();
@@ -1815,7 +1828,7 @@ export const MORE_FLOWS: Flow[] = [
       const modal = c.page.locator(".sb-footnote-modal");
       await modal.waitFor({ timeout: 5000 });
       const note = (await modal.innerText()).replace(/\s+/g, " ").slice(0, 60);
-      await c.open("/read/BSB/PSA/23");
+      await c.open("/en/BSB/psalms/23");
       const poetry = await c.page
         .locator(".sb-bible-reader-active .sb-verse-poetry")
         .count();
@@ -1860,7 +1873,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Open Romans 8, then open the site's home page on the same device: it opens on Romans 8",
     run: async (c) => {
-      await c.open("/read/BSB/ROM/8");
+      await c.open("/en/BSB/romans/8");
       await c.verse(28).waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(800);
       await c.open("/");
@@ -1883,7 +1896,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.page.evaluate(async () => {
         await navigator.serviceWorker?.ready;
       });
-      await c.open("/read/BSB/JHN/4");
+      await c.open("/en/BSB/john/4");
       await c.verse(1).waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(1500);
       await c.context.setOffline(true);
@@ -1914,7 +1927,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Keep Romans 8 open ten seconds (signed out): Today → Recent reading lists Romans 8",
     run: async (c) => {
-      await c.open("/read/BSB/ROM/8");
+      await c.open("/en/BSB/romans/8");
       await c.verse(28).waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(10000);
       await c.pressToolbar("Today");
@@ -2025,7 +2038,7 @@ export const MORE_FLOWS: Flow[] = [
         .first();
       await link.waitFor({ timeout: 5000 });
       await link.click();
-      await c.page.waitForURL(/\/read\/[A-Za-z0-9]+\/ROM\/8/, {
+      await c.page.waitForURL(/\/[a-z]{2}\/[A-Za-z0-9]+\/romans\/8/, {
         timeout: 15000,
       });
       await c.page.locator(".sb-verse-toolbar").waitFor({ timeout: 15000 });
@@ -2071,7 +2084,7 @@ export const MORE_FLOWS: Flow[] = [
       "Signed in on two browsers as Seed Reader: one note, edited differently on each while offline, comes back twice; the old reader's window 'This note changed in two places' shows Your version and The other version, and keeping Your version leaves that one note",
     run: async (c) => {
       // A chapter of its own each run: the sample person's Library keeps whatever an earlier run left.
-      const ch = `/read/BSB/PSA/${10 + Math.floor(Math.random() * 130)}`;
+      const ch = `/en/BSB/psalms/${10 + Math.floor(Math.random() * 130)}`;
       await c.open(ch);
       await c.signInAsSample();
       await deleteAllNotes(c);
@@ -2480,7 +2493,7 @@ export const MORE_FLOWS: Flow[] = [
           );
         const box = c.page.locator(".sb-bookmark-picker");
         step = "open John 3";
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await button().click();
         await box.waitFor({ timeout: 5000 });
         step = "the offered first bookmark";
@@ -2499,7 +2512,7 @@ export const MORE_FLOWS: Flow[] = [
           .waitFor({ timeout: 5000 });
 
         step = "move it to Romans 8";
-        await c.open("/read/BSB/ROM/8");
+        await c.open("/en/BSB/romans/8");
         await button().click();
         await c.waitText(box, /tap a bookmark to move it/i, 5000);
         await box
@@ -2542,7 +2555,7 @@ export const MORE_FLOWS: Flow[] = [
           throw new Error(`panel: ${rows.join(" | ")}`);
 
         step = "John 3 has none now";
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await button().waitFor({ timeout: 10000 });
         if (
           (await button().getAttribute("aria-label")) !==
@@ -2581,7 +2594,7 @@ export const MORE_FLOWS: Flow[] = [
       try {
         step = "open";
         await c.keepTours();
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await c.page
           .locator(".sb-bible-reader-active .sb-bible-reader-translation")
           .click();
@@ -2673,7 +2686,7 @@ export const MORE_FLOWS: Flow[] = [
         const clip = await c.page.evaluate(() =>
           navigator.clipboard.readText()
         );
-        if (!/\/read\/BSB\/JHN\/3/.test(clip))
+        if (!/\/[a-z]{2}\/BSB\/john\/3/.test(clip))
           throw new Error(`clipboard: ${clip}`);
 
         step = "cancel a download";
@@ -2801,7 +2814,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Signed in: a note on John 7:37 → its ⋮ → Publish to your public shelf → marked Published; the reader agent's passage answer for John 7:37 lists it from the registry at the verse's canonical id; ⋮ → Copy link gives a link naming the offering; ⋮ → Make private again withdraws it",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/7");
+      await c.open("/en/BSB/john/7");
       await c.signInAsSample();
       await deleteAllNotes(c);
       await writeNote(c, 37, `a published note ${stamp()}`);
@@ -2967,12 +2980,12 @@ export const MORE_FLOWS: Flow[] = [
       if (order.indexOf("Romans 8") > order.indexOf("John 3"))
         throw new Error(`order after move: ${order.slice(0, 160)}`);
       await card.getByRole("button", { name: /play playlist/i }).click();
-      await c.page.waitForURL(/\/ROM\/8/, { timeout: 15000 });
+      await c.page.waitForURL(/\/romans\/8/, { timeout: 15000 });
       await c.page
         .getByRole("button", { name: /^next$/i })
         .first()
         .click();
-      await c.page.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+      await c.page.waitForURL(/\/john\/3/, { timeout: 15000 });
       await c.page
         .getByRole("button", { name: /^stop$/i })
         .first()
@@ -3119,7 +3132,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Library → Reading plans → up to chapter 5 → Create plan; open it → Start; tick the first reading; the progress label moves; delete the plan",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/1");
+      await c.open("/en/BSB/john/1");
       const pane = await c.openLibrary("Reading plans");
       const title = `Flow plan ${stamp()}`;
       await pane.locator('input[placeholder^="Plan title"]').fill(title);
@@ -3160,7 +3173,7 @@ export const MORE_FLOWS: Flow[] = [
       let step = "";
       try {
         step = "make and start";
-        await c.open("/read/BSB/JHN/1");
+        await c.open("/en/BSB/john/1");
         let pane = await c.openLibrary("Reading plans");
         const title = `Flow rp ${stamp()}`;
         await pane.locator('input[placeholder^="Plan title"]').fill(title);
@@ -3232,7 +3245,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Library → Reading plans → Start a blank plan; Save waits for a reading; type Romans 8:28-39 into day 1, add a day with Psalm 23 and the chapter on screen, a nonsense reference is refused; move day 2 up and name it; offer Weekly; Save — the card shows the days in the new order, kept after a reload, with Start · Weekly",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/1");
+      await c.open("/en/BSB/john/1");
       const pane = await c.openLibrary("Reading plans");
       const title = `Flow edit ${stamp()}`;
       await pane.locator('input[placeholder^="Plan title"]').fill(title);
@@ -3623,6 +3636,8 @@ export const MORE_FLOWS: Flow[] = [
       try {
         step = "the page";
         await c.open(CH);
+        await c.useExtensions(EXTRAS);
+        await c.showDiscovered();
         const discoverRefs = async () => {
           // The source's own chip lists all of it (All shows the first few).
           await c.page
@@ -3709,6 +3724,8 @@ export const MORE_FLOWS: Flow[] = [
       "Select John 3:16 → Discover → Cross-references lists related passages; tapping one opens it",
     run: async (c) => {
       await c.open(CH);
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(16);
       await c.pressToolbar("Discover");
       await c.waitText(c.pane(), /cross-references/i);
@@ -3740,6 +3757,8 @@ export const MORE_FLOWS: Flow[] = [
       "Signed in: select John 3:16 → Ask in the verse toolbar opens the companion on the verse; ask 'Who is Nicodemus?'; an answer streams in and the pane says who answered",
     run: async (c) => {
       await c.open(CH);
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.signInAsSample();
       await c.selectVerse(16);
       await c.page
@@ -3892,9 +3911,11 @@ export const MORE_FLOWS: Flow[] = [
       if (!/Sitemap: .*sitemap\.xml/.test(robots))
         throw new Error("robots names no sitemap");
       const urls = (sitemap.match(/<loc>/g) ?? []).length;
-      if (!sitemap.includes("/read/BSB/JHN/3<"))
+      if (!sitemap.includes("/en/BSB/john/3<"))
         throw new Error("John 3 not in the sitemap");
-      if (!/<link rel="canonical" href="[^"]*\/read\/BSB\/JHN\/3"/.test(page))
+      if (
+        !/<link rel="canonical" href="[^"]*\/[a-z]{2}\/BSB\/john\/3"/.test(page)
+      )
         throw new Error("no canonical link");
       return `robots → sitemap of ${urls} URLs, John 3 listed, canonical present`;
     },
@@ -4006,6 +4027,8 @@ export const MORE_FLOWS: Flow[] = [
       "The sidebar's ⋮ → Scripture map opens it with John 3 outlined; a highlight there marks its square; tapping Romans 8 opens it",
     run: async (c) => {
       await c.open(CH);
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(16);
       await c.pickColor(0);
       // The sidebar's ⋮ More menu holds it now, as in the old reader.
@@ -4024,7 +4047,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator('.sb-map-chapter[title^="Romans 8"]')
         .first()
         .click();
-      await c.page.waitForURL(/\/ROM\/8/, { timeout: 15000 });
+      await c.page.waitForURL(/\/romans\/8/, { timeout: 15000 });
       return `"${hereTitle}" outlined; Romans 8 opened from its square`;
     },
   },
@@ -4084,10 +4107,10 @@ export const MORE_FLOWS: Flow[] = [
       try {
         await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
         await c.dismissWelcome(page);
-        await page.waitForURL(/\/read\/fra_ncl\//, { timeout: 20000 });
+        await page.waitForURL(/\/[a-z]{2}\/fra_ncl\//, { timeout: 20000 });
         const fr = page.url().replace(BASE, "");
         await c.open("/");
-        await c.page.waitForURL(/\/read\/BSB\//, { timeout: 20000 });
+        await c.page.waitForURL(/\/[a-z]{2}\/BSB\//, { timeout: 20000 });
         return `French browser → ${fr}; English → ${c.page.url().replace(BASE, "")}`;
       } finally {
         await ctx.close();
@@ -4105,9 +4128,9 @@ export const MORE_FLOWS: Flow[] = [
       await c.open(CH);
       await c.verse(16).waitFor({ timeout: 20000 });
       await c.page.keyboard.press("ArrowRight");
-      await c.page.waitForURL(/\/JHN\/4$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/john\/4$/, { timeout: 15000 });
       await c.page.keyboard.press("ArrowLeft");
-      await c.page.waitForURL(/\/JHN\/3$/, { timeout: 15000 });
+      await c.page.waitForURL(/\/john\/3$/, { timeout: 15000 });
       await c.verse(16).waitFor({ timeout: 20000 });
       await c.selectVerse(16);
       await c.pressToolbar("Notes");
@@ -4212,7 +4235,9 @@ export const MORE_FLOWS: Flow[] = [
           .catch((e: Error) => {
             throw new Error(`chapter 1: ${e.message.split("\n")[0]}`);
           });
-        await c.page.waitForURL(/\/read\/BSB\/OBA\/1/, { timeout: 20000 });
+        await c.page.waitForURL(/\/[a-z]{2}\/BSB\/obadiah\/1/, {
+          timeout: 20000,
+        });
         await c.waitText(c.verse(1), /vision of Obadiah/i, 20000);
         const text = (await c.verse(1).innerText()).slice(0, 40);
         return `BSB downloaded; offline, Obadiah 1 reads ("${text}")`;
@@ -4279,7 +4304,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-play-history-row", { hasText: title })
         .getByRole("button", { name: /play again/i })
         .click();
-      await c.page.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+      await c.page.waitForURL(/\/john\/3/, { timeout: 15000 });
       await c.page
         .getByRole("button", { name: /^stop$/i })
         .first()
@@ -4451,17 +4476,17 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "G17",
     section: "12. Extensions",
-    title: "Videos and articles in Discover",
+    title: "Videos and articles in Discover (Content)",
     rows: ["Videos and articles"],
     checks:
-      "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; Open page opens its own page in a new tab",
+      "On Matthew 26, Discover shows the old reader's picture cards under their authors (Expedition Bible, BibleProject); Read more opens a card's description; tapping the Upper Room video's picture plays it in place; its title opens its own page in a new tab, as seedbible.org's entry does",
     run: async (c) => {
       let step = "";
       try {
         step = "cards";
-        await c.open("/read/BSB/MAT/26");
+        await c.open("/en/BSB/matthew/26");
         await c.pressToolbar("Discover");
-        await c.openSource("Videos and articles");
+        await c.openSource(/^\s*Content\b/);
         const pane = c.pane();
         const eb = pane
           .locator(".sb-content-cards", { hasText: /Expedition Bible/i })
@@ -4482,10 +4507,10 @@ export const MORE_FLOWS: Flow[] = [
           await more.click();
           await card.getByRole("button", { name: /read less/i }).waitFor();
         }
-        step = "Open page";
+        step = "the title opens its page";
         const [popup] = await Promise.all([
           c.page.waitForEvent("popup", { timeout: 10000 }),
-          card.getByRole("button", { name: /open page/i }).click(),
+          card.locator(".sb-content-card-title").click(),
         ]);
         const url = popup.url();
         await popup.close();
@@ -4511,7 +4536,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/12");
+      await c.open("/en/BSB/genesis/12");
       await c.pressToolbar("Discover");
       await c.openSource("People, places and events");
       const section = c.pane().locator(".sb-content-section", {
@@ -4545,7 +4570,9 @@ export const MORE_FLOWS: Flow[] = [
       const ref = card.locator(".sb-theo-ref").nth(1);
       const label = (await ref.innerText()).trim();
       await ref.click();
-      await c.page.waitForURL(/\/read\//, { timeout: 10000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/[^/]+\/[a-z0-9-]+\/\d+/, {
+        timeout: 10000,
+      });
       return `Abraham's card; ${other}'s card and Back; ${label} opened at ${new URL(c.page.url()).pathname}`;
     },
   },
@@ -4564,7 +4591,9 @@ export const MORE_FLOWS: Flow[] = [
             .screenshot({ path: `${dir}/dss1-${name}.png` })
             .catch(() => {});
       };
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(2);
       await c.pressToolbar("Discover");
       await c.openSource("Dead Sea Scrolls");
@@ -4608,7 +4637,9 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Reading BSB (which carries none), Genesis 6 → Discover → Interpretations shows one card per verse ('Genesis 6:2', its words, how many questions and what became of them); tapping it opens 'How Genesis 6:2 is read': the verse, 'Who is meant here?' with its readings as a list, 'Left open', what the translators say — no record codes on show, the full record folded under 'Details for scholars'; the chapter's own Discover card stays out of the way while the pane is open",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/6");
+      await c.open("/en/BSB/genesis/6");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.pressToolbar("Discover");
       await c.openSource(/^\s*Interpretations/);
       const section = c.pane().locator(".sb-discover-source--open", {
@@ -4649,7 +4680,9 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "On Genesis 6, tap verse 2 → the verse bar offers Interpretations → it opens 'How Genesis 6:2 is read' for that verse alone (no other verses to switch to); tap verse 3, which has no record → the bar does not offer it",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/6");
+      await c.open("/en/BSB/genesis/6");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(2);
       const bar = c.page.locator(".sb-verse-toolbar").first();
       const button = bar.getByRole("button", { name: "Interpretations" });
@@ -4679,7 +4712,9 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "On Isaiah 40, tap verse 3 → Discover → Elsewhere lists it as 'Quoted in the New Testament' (Matthew 3:3 …) and 'In Greek (Septuagint)'; the Greek opens in a card; Scrolls lists 'Quoted in other writings' — the Community Rule (1QS) line that quotes it, whose card says 'Quotes Isaiah 40:3' with its Hebrew and English",
     run: async (c) => {
-      await c.open("/read/BSB/ISA/40");
+      await c.open("/en/BSB/isaiah/40");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(3);
       await c.pressToolbar("Discover");
       await c.openSource(/Elsewhere in the Bible/);
@@ -4725,7 +4760,9 @@ export const MORE_FLOWS: Flow[] = [
       "On Isaiah 40, tap verse 3 → the verse bar offers Content → 'Content for Isaiah 40:3': In the Dead Sea Scrolls (each copy's Hebrew and English draft), Quoted in other writings (the Community Rule, found by computer), Quoted in the New Testament (Matthew 3:3 … — tapping one opens it), In Greek (the Septuagint) and the sources' credits; at Genesis 1:3 each scroll line says which verses it holds ('This line holds Genesis 1:3–4'), the lines that start at verse 3 before any that run on from verse 2; on John 11, verse 35 has none and the bar does not offer Content",
     run: async (c) => {
       const dir = process.env["E2E_SHOTS"];
-      await c.open("/read/BSB/ISA/40");
+      await c.open("/en/BSB/isaiah/40");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(3);
       const bar = c.page.locator(".sb-verse-toolbar").first();
       const button = bar.getByRole("button", { name: "Content" });
@@ -4759,10 +4796,12 @@ export const MORE_FLOWS: Flow[] = [
       if (dir) await c.page.screenshot({ path: `${dir}/cnt1-isa-40-3.png` });
       const copies = await pane.locator(".sb-content-line").count();
       await pane.getByRole("button", { name: "Matthew 3:3" }).click();
-      await c.page.waitForURL(/\/read\/[^/]+\/MAT\/3/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/[^/]+\/matthew\/3/, {
+        timeout: 15000,
+      });
       // A scroll line can run across two verses: at Genesis 1:3 a line from verse 2 says which verses it holds, and the
       // lines that start at verse 3 come first.
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
       await c.selectVerse(3);
       await bar.getByRole("button", { name: "Content" }).click();
       await c.waitText(pane, /Content for Genesis 1:3/, 20000);
@@ -4774,7 +4813,7 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(
           `a line from verse 2 is listed first: ${first.slice(0, 80)}`
         );
-      await c.open("/read/BSB/JHN/11");
+      await c.open("/en/BSB/john/11");
       await c.selectVerse(35);
       await bar.waitFor({ timeout: 10000 });
       await c.page.waitForTimeout(4000);
@@ -4792,7 +4831,9 @@ export const MORE_FLOWS: Flow[] = [
       "On Philemon 1, tap verse 6 → Interpretations on the verse bar → 'How Philemon 1:6 is read': 'How do the words relate?' with the Greek and both readings, 'No reviewer has decided this yet', 'This translation reads it as: …' with how it was read, the notes credited to unfoldingWord; 'Which words are original?' with each reading's editions and 'translates the Greek text it is based on' — never 'has recorded a decision' for these; the full record still opens under Details for scholars",
     run: async (c) => {
       const dir = process.env["E2E_SHOTS"];
-      await c.open("/read/BSB/PHM/1");
+      await c.open("/en/BSB/philemon/1");
+      await c.useExtensions(EXTRAS);
+      await c.showDiscovered();
       await c.selectVerse(6);
       const bar = c.page.locator(".sb-verse-toolbar").first();
       await bar
@@ -4839,7 +4880,7 @@ export const MORE_FLOWS: Flow[] = [
             .screenshot({ path: `${dir}/prf1-${name}.png` })
             .catch(() => {});
       };
-      await c.open("/read/BSB/JHN/3");
+      await c.open("/en/BSB/john/3");
       await c.signInAsSample();
       await c.page.locator(".sb-sidebar-profile-button-in").first().click();
       await c.page
@@ -4942,7 +4983,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Signed in, close the tab and open the reader in a new one: still signed in (the sign-in is kept on the device, not with the tab), and it lasts days — the Home's token for this app runs seven days",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/3");
+      await c.open("/en/BSB/john/3");
       await c.signInAsSample();
       const days = await c.page.evaluate(() => {
         const s = JSON.parse(localStorage.getItem("sbr.session") ?? "null") as {
@@ -4962,7 +5003,7 @@ export const MORE_FLOWS: Flow[] = [
         throw new Error(`the sign-in lasts ${days.toFixed(2)} days`);
       await c.page.close();
       const again = await c.context.newPage();
-      await again.goto(`${BASE}/read/BSB/JHN/3`);
+      await again.goto(`${BASE}/en/BSB/john/3`);
       await again
         .locator(".sb-sidebar-profile-button-in")
         .first()
@@ -5026,7 +5067,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Customize the bottom toolbar",
     rows: ["Customize the bottom toolbar"],
     checks:
-      "Account → Toolbar: tick Today into the bar, move Discover up twice; the bar shows Discover then Today and More no longer lists Today; kept after a reload; Reset puts Today back under More",
+      "Account → Toolbar: tick Notes into the bar, move it up twice; the bar shows Notes before Discover and More no longer lists Notes; kept after a reload; Reset puts Notes back under More",
     run: async (c) => {
       await c.open(CH);
       const labels = () =>
@@ -5052,37 +5093,36 @@ export const MORE_FLOWS: Flow[] = [
       };
       const before = await labels();
       if (
-        before.includes("Today") ||
-        !(await inMore()).some((n) => /today/i.test(n))
+        before.some((l) => /^notes/i.test(l ?? "")) ||
+        !(await inMore()).some((n) => /notes/i.test(n))
       )
         throw new Error(
-          `a new bar: ${before.join(", ")}; Today should be under More`
+          `a new bar: ${before.join(", ")}; Notes should be under More`
         );
       let pane = await c.openAccount();
       const card = pane.locator(".sb-toolbar-card");
-      await c.check(card, "Today").check();
+      await c.check(card, "Notes").check();
       for (let i = 0; i < 2; i++)
-        await card.locator('button[aria-label="Move up Discover"]').click();
+        await card.locator('button[aria-label="Move up Notes"]').click();
       // With a pane open the reading area is narrower and the bar folds under More; read it with the pane closed.
       await pane.locator(".sb-pane-close").first().click();
       await c.page
         .locator(".sb-reader-toolbar-desk:not(.sb-reader-toolbar-folded)")
         .waitFor({ timeout: 5000 });
       const after = await labels();
-      if (
-        !after.includes("Today") ||
-        after.indexOf("Discover") > after.indexOf("Today")
-      )
+      const notesAt = after.findIndex((l) => /^notes/i.test(l ?? ""));
+      if (notesAt < 0 || notesAt > after.indexOf("Discover"))
         throw new Error(`toolbar: ${after.join(", ")}`);
-      if ((await inMore()).some((n) => /^today/i.test(n)))
-        throw new Error("Today is both in the bar and under More");
+      if ((await inMore()).some((n) => /notes/i.test(n)))
+        throw new Error("Notes is both in the bar and under More");
       await c.page.reload();
       await c.page
         .locator(".sb-app:not(.sb-app-ssr)")
         .waitFor({ timeout: 20000 });
       await c.page.waitForTimeout(500);
       const kept = await labels();
-      if (!kept.includes("Today")) throw new Error("not kept after a reload");
+      if (!kept.some((l) => /^notes/i.test(l ?? "")))
+        throw new Error("not kept after a reload");
       pane = await c.openAccount();
       await pane
         .locator(".sb-toolbar-card")
@@ -5095,9 +5135,9 @@ export const MORE_FLOWS: Flow[] = [
       const reset = await labels();
       if (reset.join() !== before.join())
         throw new Error(`after reset: ${reset.join(", ")}`);
-      if (!(await inMore()).some((n) => /today/i.test(n)))
-        throw new Error("after Reset, Today is not under More");
-      return `bar ${before.join(", ")}; Today ticked in, Discover moved before it, kept after a reload; Reset put it back under More`;
+      if (!(await inMore()).some((n) => /notes/i.test(n)))
+        throw new Error("after Reset, Notes is not under More");
+      return `bar ${before.join(", ")}; Notes ticked in and moved before Discover, kept after a reload; Reset put it back under More`;
     },
   },
   {
@@ -5143,7 +5183,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Signed in: publish a playlist; its card's Share playlist copies the link ('Playlist URL copied'); Discover on Genesis 1 lists it → Copy page link; a fresh, signed-out browser gets the page drawn on the edge (its title in the preview tags) and opens it with Save to my Library and play; Open Seed Bible returns to a chapter; withdrawn, the link says it is not shared any more",
     run: async (c) => {
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
       await c.signInAsSample();
       const lib = await c.openLibrary("Playlists");
       // Pages an earlier run left published (it failed before withdrawing) are withdrawn and deleted first: they
@@ -5231,7 +5271,9 @@ export const MORE_FLOWS: Flow[] = [
         .last()
         .getByRole("button", { name: /open seed bible/i })
         .click();
-      await fresh.waitForURL(/\/read\//, { timeout: 10000 });
+      await fresh.waitForURL(/\/[a-z]{2}\/[^/]+\/[a-z0-9-]+\/\d+/, {
+        timeout: 10000,
+      });
       await c.openLibrary("Playlists");
       await ensureOpen(card);
       await card.locator("button", { hasText: /(^|\s)Published\s*$/ }).click();
@@ -5353,7 +5395,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The old reader's bottom bar; every action within reach",
     rows: ["Every action within reach"],
     checks:
-      "On a desktop the bar is ‹ Books · Search · Discover · the extensions · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Today, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More) or the More sheet",
+      "On a desktop the bar is seedbible.org's ‹ Today · Books · Search · Discover · More ›, each with its word under the icon; Books opens the book picker and Search opens the floating search box, ready to type in; More lists Sign in, Live session, Notes, Library, Your content, Full screen and Themes. On a phone every one of those actions is in its five tabs (Today · You · Bible · Search · More), the More menu, or the chapter header's Settings (Themes)",
     run: async (c) => {
       const all = [
         "Live session",
@@ -5400,14 +5442,20 @@ export const MORE_FLOWS: Flow[] = [
           );
         await page.locator(".sb-phone-more-tab > button").click();
         const inMore = (
-          await page
-            .locator(".sb-mobile-more-menu button:visible")
-            .allInnerTexts()
+          await page.locator(".sb-more-menu button:visible").allInnerTexts()
         ).map((t) => t.replace(/\s+/g, " ").trim());
         await page.locator(".sb-phone-more-tab > button").click();
+        // Themes are in Settings, which is the chapter header's button on a phone, as on seedbible.org.
+        const header = await page
+          .locator(".sb-quick-toolbar-mobile-header button:visible")
+          .evaluateAll((bs) =>
+            bs.map((b) => b.getAttribute("aria-label") ?? "")
+          );
+        tabs.push(...header);
         const via: Record<string, string> = {
           "Sign in": "You",
           "Your content": "You",
+          Themes: "Settings",
         };
         const missing = all.filter(
           (a) =>
@@ -5419,7 +5467,7 @@ export const MORE_FLOWS: Flow[] = [
       const words = await c.page
         .locator(".sb-reader-toolbar .sb-reader-toolbar-button-label:visible")
         .allInnerTexts();
-      if (words.slice(0, 3).join() !== "Books,Search,Discover")
+      if (words.slice(0, 4).join() !== "Today,Books,Search,Discover")
         throw new Error(`the bar reads: ${words.join(", ")}`);
       const desk = await reachable(c.page);
       if (desk.missing.length)
@@ -5467,7 +5515,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The chapter header's actions",
     rows: ["Chapter actions in the header"],
     checks:
-      "At the top right of the chapter, in the old reader's order: ☆ Save chapter fills when tapped, Bookmark, Discover opens the Discover pane, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause",
+      "At the top right of the chapter, in seedbible.org's order: ☆ Save chapter fills when tapped, Bookmark, Share opens the Share dialog with the chapter's link, and the orange Listen plays the recording and turns into Pause (Discover is the bar's)",
     run: async (c) => {
       await c.open(CH);
       const head = c.page.locator(
@@ -5476,13 +5524,7 @@ export const MORE_FLOWS: Flow[] = [
       const order = await head
         .locator("button:visible")
         .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
-      const want = [
-        "Save chapter",
-        "Bookmark this chapter",
-        "Discover",
-        "Share",
-        "Listen",
-      ];
+      const want = ["Save chapter", "Bookmark this chapter", "Share", "Listen"];
       if (order.join() !== want.join())
         throw new Error(`header: ${order.join(", ")}`);
       await head.getByRole("button", { name: "Save chapter" }).click();
@@ -5492,10 +5534,6 @@ export const MORE_FLOWS: Flow[] = [
         .waitFor({ timeout: 5000 });
       await head.getByRole("button", { name: "Save chapter" }).click();
       await c.savePicker({ remove: true });
-      await head.getByRole("button", { name: "Discover" }).click();
-      await c.pane().waitFor({ timeout: 5000 });
-      if (!/discover/i.test(await c.paneText()))
-        throw new Error("Discover did not open the Discover pane");
       await head.getByRole("button", { name: "Share" }).click();
       const dialog = c.page.getByRole("dialog");
       await dialog.waitFor({ timeout: 5000 });
@@ -5511,7 +5549,7 @@ export const MORE_FLOWS: Flow[] = [
           throw new Error("Listen did not start the recording");
         });
       await head.getByRole("button", { name: "Pause" }).click();
-      return `header: ${order.join(" · ")}; Save filled and cleared; Discover opened its pane; Share opened the dialog; Listen played and paused`;
+      return `header: ${order.join(" · ")}; Save filled and cleared; Share opened the dialog; Listen played and paused`;
     },
   },
   {
@@ -5520,7 +5558,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "Settings in the sidebar",
     rows: ["Settings"],
     checks:
-      "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — Account settings, Display & Theme, Toolbar, Extensions, Install App, Launch tutorial, Customize, About Seed Bible, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
+      "The ⚙ at the bottom left of the sidebar turns the sidebar into Settings, in place of the tabs — seedbible.org's Account, Display & Theme, Extensions, Install App, Launch tutorial, About Seed Bible, then this reader's Toolbar and Customize, then Language; Display & Theme opens its page there, a line-height choice there changes the chapter, ← goes back to the list; ✕ brings the tabs back",
     run: async (c) => {
       await c.open(CH);
       const side = c.page.locator(".sb-tabs-sidebar");
@@ -5529,14 +5567,14 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-settings-nav-label")
         .allInnerTexts();
       const want = [
-        "Account settings",
+        "Account",
         "Display & Theme",
-        "Toolbar",
         "Extensions",
         "Install App",
         "Launch tutorial",
-        "Customize",
         "About Seed Bible",
+        "Toolbar",
+        "Customize",
       ];
       if (labels.join() !== want.join())
         throw new Error(`Settings lists: ${labels.join(", ")}`);
@@ -5575,7 +5613,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "Beside Tabs: ☑ Tasks opens Today, 🔖 shows the bookmarks above the tabs, ☆ shows the saves in My Saves; the open tab's ☆ saves the chapter; a save made in BSB opens in BSB from the Saves panel and from Your content while the KJV is open; the tab's ⋮ → Open in new panel adds a pane; the top row has ⊞ Panels and ⋮ More",
     run: async (c) => {
-      await c.open("/read/BSB/JHN/3");
+      await c.open("/en/BSB/john/3");
       const side = c.page.locator(".sb-tabs-sidebar");
       await side.getByRole("button", { name: "Tasks" }).click();
       await c.waitText(c.pane(), /today/i, 5000);
@@ -5603,7 +5641,7 @@ export const MORE_FLOWS: Flow[] = [
       await side.getByRole("button", { name: "Saves" }).click();
       const saves = side.locator(".sb-saves-section");
       await c.waitText(saves, /my saves[\s\S]*john 3/i, 5000);
-      await c.page.goto(`${BASE}/read/eng_kjv/ROM/8`, {
+      await c.page.goto(`${BASE}/en/eng_kjv/romans/8`, {
         waitUntil: "domcontentloaded",
       });
       await c.page
@@ -5615,11 +5653,11 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click();
       await c.page
-        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 })
+        .waitForURL(/\/[a-z]{2}\/BSB\/john\/3/, { timeout: 15000 })
         .catch(() => {
           throw new Error(`the save opened at ${c.page.url()}, not in BSB`);
         });
-      await c.page.goto(`${BASE}/read/eng_kjv/ROM/8`, {
+      await c.page.goto(`${BASE}/en/eng_kjv/romans/8`, {
         waitUntil: "domcontentloaded",
       });
       await c.page
@@ -5632,7 +5670,7 @@ export const MORE_FLOWS: Flow[] = [
         .first()
         .click();
       await c.page
-        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 15000 })
+        .waitForURL(/\/[a-z]{2}\/BSB\/john\/3/, { timeout: 15000 })
         .catch(() => {
           throw new Error(
             `Your content opened the save at ${c.page.url()}, not in BSB`
@@ -5805,16 +5843,16 @@ export const MORE_FLOWS: Flow[] = [
     title: "A link to a translation that isn't served",
     rows: ["Open a book and chapter"],
     checks:
-      "A link to a translation the scripture agent does not serve (/read/WEB/ROM/8) says so instead of a dead Retry, with Read in BSB — which opens Romans 8 in BSB — and Choose a translation",
+      "A link to a translation the scripture agent does not serve (/en/WEB/romans/8) says so instead of a dead Retry, with Read in BSB — which opens Romans 8 in BSB — and Choose a translation",
     run: async (c) => {
-      await c.open("/read/WEB/ROM/8");
+      await c.open("/en/WEB/romans/8");
       const err = c.page.locator(".sb-bible-reader-active .sb-reader-error");
       await c.waitText(err, /isn't available here/i, 20000);
       await err
         .getByRole("button", { name: /choose a translation/i })
         .waitFor({ timeout: 3000 });
       await err.getByRole("button", { name: /read in bsb/i }).click();
-      await c.page.waitForURL(/\/read\/BSB\/ROM\/8/, { timeout: 15000 });
+      await c.page.waitForURL(/\/[a-z]{2}\/BSB\/romans\/8/, { timeout: 15000 });
       await c.verse(28).waitFor({ timeout: 20000 });
       return "WEB said it isn't available here; Read in BSB opened Romans 8 in BSB";
     },
@@ -5838,12 +5876,12 @@ export const MORE_FLOWS: Flow[] = [
           .waitFor({ timeout: 20000 });
         seen.push(`${from} → ${new URL(c.page.url()).pathname}`);
       };
-      await land("/en/BSB/john/3?verse=16", /\/read\/BSB\/JHN\/3/);
+      await land("/en/BSB/john/3?verse=16", /\/[a-z]{2}\/BSB\/john\/3/);
       await c.dismissWelcome();
       await c.waitText(c.page.locator(".sb-verse-toolbar"), /John 3:16/, 15000);
-      await land("/BSB/romans/8", /\/read\/BSB\/ROM\/8/);
-      await land("/en/BSB/1-samuel/17", /\/read\/BSB\/1SA\/17/);
-      await land("/es/BSB/john/3", /\/read\/BSB\/JHN\/3/);
+      await land("/BSB/romans/8", /\/[a-z]{2}\/BSB\/romans\/8/);
+      await land("/en/BSB/1-samuel/17", /\/[a-z]{2}\/BSB\/1-samuel\/17/);
+      await land("/es/BSB/john/3", /\/[a-z]{2}\/BSB\/john\/3/);
       await c.page
         .waitForFunction(
           () => document.documentElement.lang === "es",
@@ -5856,7 +5894,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.page.evaluate(() => localStorage.removeItem("sbr.language"));
       await land(
         "/?translation=BSB&book=genesis&chapter=12",
-        /\/read\/BSB\/GEN\/12/
+        /\/[a-z]{2}\/BSB\/genesis\/12/
       );
       return `${seen.join("; ")}; verse 16 selected; Spanish taken from /es/`;
     },
@@ -5954,7 +5992,7 @@ export const MORE_FLOWS: Flow[] = [
           "Save chapter",
           "Bookmark this chapter",
           "Share",
-          "Text settings",
+          "Settings",
         ];
         if (
           !wantHead.every((w) => actions.includes(w)) ||
@@ -5987,7 +6025,7 @@ export const MORE_FLOWS: Flow[] = [
         step = "await nav.getByRole( button name Next Chapter ).clic";
         await nav.getByRole("button", { name: "Next Chapter" }).click();
         step = "await page.waitForURL( JHN 4 timeout 15000 )";
-        await page.waitForURL(/\/JHN\/4$/, { timeout: 15000 });
+        await page.waitForURL(/\/john\/4$/, { timeout: 15000 });
         step = "await nav.locator( .sb-reader-floating-nav-label ).click()";
         await nav.locator(".sb-reader-floating-nav-label").click();
         step = "await page.locator( .sb-selector-panel ).waitFor( timeout";
@@ -6279,12 +6317,12 @@ export const MORE_FLOWS: Flow[] = [
           await route.fulfill({ response: res, json: body }).catch(() => {});
         });
         // John 3 is reached in the app (John 2 → Next), so it is fetched — a page opened on it carries it from the edge.
-        await c.open("/read/BSB/JHN/2", page);
+        await c.open("/en/BSB/john/2", page);
         await page
           .locator('.sb-reader-toolbar button[aria-label="Next Chapter"]')
           .first()
           .click();
-        await page.waitForURL(/\/JHN\/3$/, { timeout: 20000 });
+        await page.waitForURL(/\/john\/3$/, { timeout: 20000 });
         const badge = page.locator(".sb-scripture-check").first();
         // The address moves before John 3 arrives — John 2's badge is still there for a moment. Wait for John 3's text.
         await page
@@ -6483,10 +6521,10 @@ export const MORE_FLOWS: Flow[] = [
         });
         await drag(300, 270, true);
         await page.waitForTimeout(400);
-        if (!/\/JHN\/3/.test(page.url()))
+        if (!/\/john\/3/.test(page.url()))
           throw new Error(`a short drag turned the page: ${page.url()}`);
         await drag(320, 40, true);
-        await page.waitForURL(/\/JHN\/4/, { timeout: 5000 }).catch(() => {
+        await page.waitForURL(/\/john\/4/, { timeout: 5000 }).catch(() => {
           throw new Error("a full swipe did not land on John 4");
         });
         await reader
@@ -6523,7 +6561,7 @@ export const MORE_FLOWS: Flow[] = [
       const fresh = async () => {
         const page = await ctx.newPage();
         c.watch(page);
-        await c.open("/read/BSB/JHN/3", page);
+        await c.open("/en/BSB/john/3", page);
         await c.settleTours(page);
         return page;
       };
@@ -6607,7 +6645,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "The embed's own controls",
     rows: ["Embed in another site"],
     checks:
-      "John 3 embedded (?embed=minimal) has only Open in New Tab and Text settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
+      "John 3 embedded (?embed=minimal) has only Open in New Tab and Settings in its header, and the ‹ John 3 › bar along the bottom: › goes to John 4. Open in New Tab opens John 4 in Seed Bible itself, without the embed. A verse offers Copy, Compare, Share and Cancel — no Highlight, Save or Note. Text settings opens the Theme & text sheet without 'Go to all settings'",
     run: async (c) => {
       const page = c.page;
       await c.open(`${CH}?embed=minimal`);
@@ -6617,7 +6655,7 @@ export const MORE_FLOWS: Flow[] = [
       const actions = await head
         .locator("button:visible")
         .evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
-      if (actions.join() !== "Open in New Tab,Text settings")
+      if (actions.join() !== "Open in New Tab,Settings")
         throw new Error(`header: ${actions.join(", ")}`);
       const bar = page.locator(".sb-reader-toolbar-wrap-embed");
       await c.waitText(bar, /john\s*3/i, 5000);
@@ -6630,7 +6668,7 @@ export const MORE_FLOWS: Flow[] = [
       await tab.waitForLoadState("domcontentloaded");
       const opened = tab.url();
       await tab.close();
-      if (!/\/read\/BSB\/JHN\/4/.test(opened) || /embed/.test(opened))
+      if (!/\/[a-z]{2}\/BSB\/john\/4/.test(opened) || /embed/.test(opened))
         throw new Error(`Open in New Tab opened ${opened}`);
       await c.verse(3).locator(".sb-verse-number").first().click();
       const tools = page.locator(".sb-verse-toolbar");
@@ -6654,7 +6692,7 @@ export const MORE_FLOWS: Flow[] = [
         .locator(".sb-verse-toolbar")
         .waitFor({ state: "detached", timeout: 3000 })
         .catch(() => undefined);
-      await head.getByRole("button", { name: "Text settings" }).click();
+      await head.getByRole("button", { name: "Settings" }).click();
       const sheet = page.locator(".sb-mobile-settings-sheet");
       await sheet.waitFor({ timeout: 3000 });
       if (await sheet.getByText(/go to all settings/i).count())
@@ -6759,14 +6797,14 @@ export const MORE_FLOWS: Flow[] = [
       let step = "";
       try {
         step = "a footnote's reference";
-        await c.open("/read/BSB/JHN/1");
+        await c.open("/en/BSB/john/1");
         await c.verse(23).locator(".sb-inline-footnote-button").first().click();
         const link = page
           .locator(".sb-footnote-modal-content a")
           .filter({ hasText: "Isaiah 40:3" });
         await link.waitFor({ timeout: 5000 });
         await link.click();
-        await page.waitForURL(/\/read\/BSB\/ISA\/40/, { timeout: 8000 });
+        await page.waitForURL(/\/[a-z]{2}\/BSB\/isaiah\/40/, { timeout: 8000 });
         await page
           .locator(
             '.sb-bible-reader-active [data-verse-number="3"].sb-verse-selected, .sb-bible-reader-active .sb-verse-selected[data-verse-number="3"]'
@@ -6884,7 +6922,7 @@ export const MORE_FLOWS: Flow[] = [
     title: "When a chapter can't be shown",
     rows: ["Offline reading"],
     checks:
-      "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it and a card offers 'Save BSB for offline reading?' (Not now closes it). /read/BSB/TOB/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
+      "Turning from John 3 to a John 4 that cannot be fetched says 'Chapter unavailable', 'We were unable to load the data for this chapter…', with Reload and Choose a translation; once it can be fetched, Reload shows it and a card offers 'Save BSB for offline reading?' (Not now closes it). /en/BSB/tob/1 (Tobit is not in the BSB) says 'Book not found' — 'We couldn't find that book in Berean Standard Bible.' — and Go to Genesis 1 goes there",
     run: async (c) => {
       const ctx = await c.browser.newContext({
         viewport: { width: 1280, height: 900 },
@@ -6920,7 +6958,7 @@ export const MORE_FLOWS: Flow[] = [
         await c.waitText(card, /save BSB for offline reading\?/i, 5000);
         await card.getByRole("button", { name: "Not now" }).click();
         await card.waitFor({ state: "detached", timeout: 3000 });
-        await c.open("/read/BSB/TOB/1", page);
+        await c.open("/en/BSB/tob/1", page);
         const nf = page.locator(".sb-bible-reader-active .sb-reader-not-found");
         await c.waitText(
           nf,
@@ -6928,7 +6966,7 @@ export const MORE_FLOWS: Flow[] = [
           20000
         );
         await nf.getByRole("button", { name: "Go to Genesis 1" }).click();
-        await page.waitForURL(/\/read\/BSB\/GEN\/1/, { timeout: 8000 });
+        await page.waitForURL(/\/[a-z]{2}\/BSB\/genesis\/1/, { timeout: 8000 });
         return "Chapter unavailable with Reload and Choose a translation, Reload brought John 4 and the save-for-offline card; Tobit: Book not found, Go to Genesis 1 went there";
       } finally {
         await ctx.close();
@@ -7007,7 +7045,7 @@ export const MORE_FLOWS: Flow[] = [
       c.watch(phone);
       let room = 0;
       try {
-        await c.open("/read/BSB/PSA/23", phone);
+        await c.open("/en/BSB/psalms/23", phone);
         await c.settleTours(phone);
         await c.verse(1, phone).waitFor({ timeout: 20000 });
         const p = await spot(phone);
@@ -7027,7 +7065,7 @@ export const MORE_FLOWS: Flow[] = [
       } finally {
         await ctx.close();
       }
-      await c.open("/read/BSB/PSA/23");
+      await c.open("/en/BSB/psalms/23");
       await c.verse(1).waitFor({ timeout: 20000 });
       await c.settleTours();
       const d = await spot(c.page);
@@ -7143,6 +7181,11 @@ export const MORE_FLOWS: Flow[] = [
           .catch(() => sheet.locator(".sb-verse-toolbar-handle-area").click());
         const notes = sheet.locator(".sb-verse-toolbar-notes");
         await c.waitText(notes, /John 3:16[\s\S]*a note in the sheet/, 5000);
+        await notes
+          .locator(".sb-annotation-item")
+          .first()
+          .hover()
+          .catch(() => undefined);
         await notes.locator(".sb-annotation-item-menu").first().click();
         for (const name of [/^edit$/i, /^delete$/i])
           await page
@@ -7281,16 +7324,16 @@ export const MORE_FLOWS: Flow[] = [
         await box.fill(text);
         await box.press("Enter");
       };
-      await c.open("/read/BSB/ROM/8");
+      await c.open("/en/BSB/romans/8");
       await typeAndEnter("John 3");
       await page
-        .waitForURL(/\/read\/BSB\/JHN\/3/, { timeout: 8000 })
+        .waitForURL(/\/[a-z]{2}\/BSB\/john\/3/, { timeout: 8000 })
         .catch(() => {
           throw new Error(`'John 3' + Enter went to ${page.url()}`);
         });
       await typeAndEnter("1 John 2");
       await page
-        .waitForURL(/\/read\/BSB\/1JN\/2/, { timeout: 8000 })
+        .waitForURL(/\/[a-z]{2}\/BSB\/1-john\/2/, { timeout: 8000 })
         .catch(() => {
           throw new Error(`'1 John 2' + Enter went to ${page.url()}`);
         });
@@ -7325,7 +7368,7 @@ export const MORE_FLOWS: Flow[] = [
           type: "touchEnd",
           touchPoints: [],
         });
-        await phone.waitForURL(/\/read\/BSB\/JHN\/5/, { timeout: 8000 });
+        await phone.waitForURL(/\/[a-z]{2}\/BSB\/john\/5/, { timeout: 8000 });
         await phone
           .locator(".sb-selector-panel")
           .waitFor({ state: "detached", timeout: 5000 });
@@ -7856,7 +7899,7 @@ export const MORE_FLOWS: Flow[] = [
       "With a started plan of John 1–5, John 3 ends with a 'Reading Plans' card naming the plan and 'Mark John 3 as read'; reading on to the card (twelve seconds on the chapter) raises 'Nice reading! Mark John 3 complete?' — Mark as complete ticks the plan there",
     run: async (c) => {
       const page = c.page;
-      await c.open("/read/BSB/JHN/1");
+      await c.open("/en/BSB/john/1");
       const pane = await c.openLibrary("Reading plans");
       const title = `Flow belongs ${stamp()}`;
       await pane.locator('input[placeholder^="Plan title"]').fill(title);
@@ -8309,20 +8352,40 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "DW1",
     section: "3. Reading",
-    title: "Hide Discover; the chapter fills the window",
+    title:
+      "The Discover card: beside or below, hidden; the chapter fills the window",
     rows: ["Margins, line height, UI scale, custom fonts"],
     checks:
-      "On a 1580px-wide desktop at Ephesians 5: the Discover card's ✕ hides it and says how to bring it back; Account → Scripture Width → Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
+      "On a 1580px-wide desktop at Ephesians 5 the Discover card sits beside the chapter, as on seedbible.org; the header's lit compass (Discover content) moves it below the text and back; Account → Show discovered content off hides it and Fit the window lets the chapter run nearly the full width of the reading area; after a reload both are kept; Show discovered content brings the card back",
     run: async (c) => {
       await c.page.setViewportSize({ width: 1580, height: 850 });
-      await c.open("/read/BSB/EPH/5");
+      await c.open("/en/BSB/ephesians/5");
+      await c.useExtensions(EXTRAS);
       await c.settleTours();
       const card = c.page.locator(".sb-discover-content-panel");
       await card.waitFor({ timeout: 20000 });
-      await card.getByRole("button", { name: "Hide Discover" }).click();
-      await card.waitFor({ state: "detached", timeout: 3000 });
-      await c.waitText(c.page.locator("body"), /Discover is hidden/, 3000);
+      const content = c.page.locator(
+        ".sb-bible-reader-active .sb-bible-reader-content"
+      );
+      const compass = c.page
+        .locator(".sb-bible-reader-active .sb-quick-toolbar-reader")
+        .getByRole("button", { name: "Discover content" });
+      await compass.click();
+      await c.page
+        .locator(
+          ".sb-bible-reader-active .sb-bible-reader-content--discover-below"
+        )
+        .waitFor({ timeout: 3000 })
+        .catch(() => {
+          throw new Error("the compass did not move the card below the text");
+        });
+      await compass.click();
+      if (/discover-below/.test((await content.getAttribute("class")) ?? ""))
+        throw new Error(
+          "the compass did not put the card back beside the text"
+        );
       let pane = await c.openAccount();
+      await c.check(pane, /show discovered content/i).uncheck();
       await c.check(pane, /fit the window/i).check();
       await c.page.keyboard.press("Escape");
       const widths = () =>
@@ -8353,7 +8416,7 @@ export const MORE_FLOWS: Flow[] = [
       await c.check(pane, /fit the window/i).uncheck();
       await c.check(pane, /show discovered content/i).check();
       await card.waitFor({ timeout: 10000 });
-      return `hidden with its note; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
+      return `beside, below and back with the compass; hidden; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
     },
   },
   {
@@ -8585,7 +8648,7 @@ export const MORE_FLOWS: Flow[] = [
     checks:
       "On Obadiah 1 with no notes, Discover opens with '+ Create' and Notes first, chips across the top (All, then one per source), every source one line with its count under All; tapping one shows it alone with its chip on, All goes back — 'You don't have any notes for this chapter. Create a note'; Create a note opens the note editor for verse 1; + Create offers Note and Playlist; the sources follow (no source that has nothing)",
     run: async (c) => {
-      await c.open("/read/BSB/OBA/1");
+      await c.open("/en/BSB/obadiah/1");
       await c.settleTours();
       await c.pressToolbar("Discover");
       const pane = c.page.locator(".sb-discover-pane");
@@ -8652,7 +8715,7 @@ export const MORE_FLOWS: Flow[] = [
       "On a 1600px desktop with Discover open beside the chapter, the bar keeps Books, Search and as many of its buttons as fit (Discover among them, first in line), and only the rest are under More; every button sits inside the bar",
     run: async (c) => {
       await c.page.setViewportSize({ width: 1600, height: 820 });
-      await c.open("/read/BSB/GEN/1");
+      await c.open("/en/BSB/genesis/1");
       await c.settleTours();
       await c.pressToolbar("Discover");
       await c.page.locator(".sb-discover-pane").waitFor({ timeout: 8000 });
@@ -8738,53 +8801,24 @@ export const MORE_FLOWS: Flow[] = [
   {
     id: "SI2",
     section: "1. Signing in",
-    title: "Sign in right where you are",
+    title: "Sign in from Profile",
     rows: ["Signing in and out"],
     checks:
-      "Signed out, the Profile and Today each show the sign-in itself — the terms and Sign in with Faithnet — instead of a Log in button that leads to Account",
+      "Signed out, Profile is seedbible.org's card — the circle, 'Sign in to keep your highlights…' and Log in; Log in opens the sign-in itself — the terms and Sign in with Faithnet",
     run: async (c) => {
       await c.open(CH);
       await c.settleTours();
-      const seen: string[] = [];
-      const check = async (
-        open: () => Promise<void>,
-        where: string,
-        pane: string
-      ) => {
-        await open();
-        const p = c.page.locator(pane);
-        await p.waitFor({ timeout: 8000 });
-        await p
-          .getByRole("button", { name: /sign in with faithnet/i })
-          .waitFor({ timeout: 5000 });
-        await p.getByText(/I agree to the/).waitFor({ timeout: 2000 });
-        if (await p.getByRole("button", { name: /^log in$/i }).count())
-          throw new Error(`${where} still has Log in`);
-        seen.push(where);
-      };
-      await check(
-        async () => {
-          await c.page
-            .locator(".sb-tabs-sidebar")
-            .getByRole("button", { name: /profile|account/i })
-            .last()
-            .click();
-        },
-        "Profile",
-        ".sb-profile-screen"
-      );
-      await check(
-        async () => {
-          await c.page
-            .locator(".sb-reader-toolbar-desk")
-            .getByRole("button", { name: "More", exact: true })
-            .click();
-          await c.page.getByRole("menuitem", { name: "Today" }).click();
-        },
-        "Today",
-        ".sb-app-pane"
-      );
-      return `the sign-in itself in ${seen.join(", ")}`;
+      await c.page.locator(".sb-sidebar-profile-button").click();
+      const card = c.page.locator(".sb-profile-screen .sb-profile-identity");
+      await card.waitFor({ timeout: 8000 });
+      await c.waitText(card, /sign in to keep your highlights/i, 3000);
+      await card.getByRole("button", { name: /^log in$/i }).click();
+      const p = c.pane();
+      await p
+        .getByRole("button", { name: /sign in with faithnet/i })
+        .waitFor({ timeout: 5000 });
+      await p.getByText(/I agree to the/).waitFor({ timeout: 2000 });
+      return "Profile's card → Log in → the terms and Sign in with Faithnet";
     },
   },
   {
@@ -9196,7 +9230,7 @@ export const MORE_FLOWS: Flow[] = [
         said.push("friends");
 
         // 1. reading now, then where he was
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await until("ruth-sees-reading-now", 180000, async () => {
           const today = await openToday(ruth);
           return today
@@ -9210,9 +9244,9 @@ export const MORE_FLOWS: Flow[] = [
           .locator(".sb-presence-where", { hasText: /John 3/ })
           .first()
           .click();
-        await ruth.waitForURL(/\/JHN\/3/, { timeout: 15000 });
+        await ruth.waitForURL(/\/john\/3/, { timeout: 15000 });
         said.push("reading now (tap opened John 3)");
-        await c.open("/read/BSB/GEN/1");
+        await c.open("/en/BSB/genesis/1");
         await until("ruth-sees-he-read", 180000, async () => {
           const today = await openToday(ruth);
           return today
@@ -9224,7 +9258,7 @@ export const MORE_FLOWS: Flow[] = [
         said.push("'read John 3' in her Community");
 
         // 2. a published note: her Community, her chapter, her Discover
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await unpublishNotes();
         await deleteAllNotes(c);
         await writeNote(c, 16, text);
@@ -9247,7 +9281,7 @@ export const MORE_FLOWS: Flow[] = [
             .then(() => true);
         });
         said.push("his note's words in her Community");
-        await c.open("/read/BSB/JHN/3", ruth);
+        await c.open("/en/BSB/john/3", ruth);
         await until("ruth-friend-mark", 180000, async () =>
           ruth
             .locator(".sb-bible-reader-active .sb-verse-friend-note")
@@ -9267,7 +9301,7 @@ export const MORE_FLOWS: Flow[] = [
         await k.shot(ruth, "ruth-opened-friend-note");
         await ruth.keyboard.press("Escape").catch(() => {});
         said.push("the friend mark at John 3:16 opened his note");
-        await c.open("/read/BSB/JHN/3", ruth);
+        await c.open("/en/BSB/john/3", ruth);
         await c.pressToolbar("Discover", ruth);
         await c.waitText(c.pane(ruth), /· friend/, 60000);
         await k.shot(ruth, "ruth-discover-friend");
@@ -9298,7 +9332,7 @@ export const MORE_FLOWS: Flow[] = [
         said.push("'Playlists from your friends' lists his playlist");
 
         // 4. a live session: '… is sharing — Join'
-        await c.open("/read/BSB/JHN/3");
+        await c.open("/en/BSB/john/3");
         await startSession(c);
         await until("ruth-told-sharing", 240000, async () =>
           ruth
@@ -9338,7 +9372,7 @@ export const MORE_FLOWS: Flow[] = [
             .click()
             .catch(() => {});
         }
-        await c.open("/read/BSB/JHN/3").catch(() => {});
+        await c.open("/en/BSB/john/3").catch(() => {});
         await unpublishNotes().catch(() => {});
         await deleteAllNotes(c).catch(() => {});
         await dropPlaylists().catch(() => {});

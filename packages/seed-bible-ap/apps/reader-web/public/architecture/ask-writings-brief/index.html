@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ask-writings planning brief</title>
+    <meta
+      name="description"
+      content="A self-contained brief for an outside planner: the ask-writings agent harness as it runs today, how it measures against Apologist and Bonfire on 80 Christian Ask questions, how little of our ontology reaches an answer, what our skills and plan lack, and the questions we want a better plan to answer."
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/architecture/arch.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/architecture/"><span>Architecture</span></a>
+        <nav>
+          <a href="/architecture/">Overview</a>
+          <a href="/architecture/information/">Information Architecture</a>
+          <a href="/architecture/agentic/" aria-current="page">Agentic</a>
+          <a href="/architecture/ux/">UX</a>
+          <a href="/">Open the reader →</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="crumbs">
+        <a href="/architecture/">Architecture</a> /
+        <a href="/architecture/agentic/">Agentic</a> /
+        <a href="/architecture/harness/">Scripture harness</a> / ask-writings
+        planning brief
+      </div>
+      <h1>ask-writings: where we are, where we are short</h1>
+      <p class="lede">
+        A brief for an outside planner. Date: 1 November 2026. It is written so
+        a capable model or engineer who has never seen this system can propose a
+        plan: what the agent does today, what the measurements say, how much of
+        what we hold actually reaches an answer, and where the design is thin.
+        Nothing here is a decision. The companion page
+        <a href="/architecture/ask-writings-next/"
+          >ask-writings: measured, built, next</a
+        >
+        records the work of the last two days.
+      </p>
+
+      <p class="toc">
+        <a href="#ask">What we want from you</a>
+        <a href="#goal">1. Goal and constraints</a>
+        <a href="#system">2. The system today</a>
+        <a href="#results">3. Results</a>
+        <a href="#judge">4. What the judge rewards</a>
+        <a href="#ontology">5. The ontology: held vs used</a>
+        <a href="#skills">6. Skill artifacts</a>
+        <a href="#plan">7. The plan: fixed, not built per question</a>
+        <a href="#gaps">8. Gaps, with evidence</a>
+        <a href="#directions">9. Directions we see (not decided)</a>
+        <a href="#assets">10. What you can use</a>
+        <a href="#questions">11. Questions for you</a>
+      </p>
+
+      <h2 id="ask">What we want from you</h2>
+      <p>
+        A plan that makes our Scripture Agent's answers
+        <strong>clearly better than Apologist's and Bonfire's</strong> on the
+        Christian Ask questions (§3), without giving up what already makes ours
+        different: every claim rests on held, verified text, and code — not a
+        model — decides evidence, layers and dates. In particular we want your
+        view on four things:
+      </p>
+      <ol>
+        <li>
+          Whether, and how, our <strong>ontology</strong> should drive answers
+          (§5) — and what it lacks.
+        </li>
+        <li>
+          Whether our <strong>skill artifacts</strong> should carry more than
+          instructions (§6).
+        </li>
+        <li>
+          Whether the <strong>plan</strong> should be constructed per question
+          from typed steps, instead of one fixed pipeline (§7).
+        </li>
+        <li>
+          What order to do it in, and how to tell each step worked (§10 lists
+          the tests that exist).
+        </li>
+      </ol>
+
+      <h2 id="goal">1. Goal and constraints</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Constraint (the owner's)</th>
+              <th>What it rules out or requires</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                One harness — <code>ask-writings</code> — answers every kind of
+                question
+              </td>
+              <td>
+                No router to a second, simpler ask. A question type that does
+                poorly is fixed inside the harness.
+              </td>
+            </tr>
+            <tr>
+              <td>Models propose; code decides evidence, layers and dates</td>
+              <td>
+                Every claim names held evidence ids; a code check strikes the
+                rest. A plan may be model-proposed but must be code-validated.
+              </td>
+            </tr>
+            <tr>
+              <td>Haiku 5.5 is the model ($0.10 / $0.50 per million tokens)</td>
+              <td>
+                gpt-5-mini was tried inside the harness and did no better (§3).
+                Larger models are a budgeted exception.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                RunPod GPU time is a fixed cost; API calls are the metered spend
+              </td>
+              <td>
+                Self-hosted models are welcome where they match; our 9B is not
+                yet good enough to compose (§3.4).
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Later readings are reception, never what a text says; a date is
+                the date an item carries
+              </td>
+              <td>Layer discipline is a hard rule, checked by code.</td>
+            </tr>
+            <tr>
+              <td>
+                The judge is Claude Haiku 5.5, blind to which system wrote an
+                answer
+              </td>
+              <td>Numbers from different judges are never compared.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="system">2. The system today</h2>
+      <h3>2.1 The steps (the same for every question)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Who</th>
+              <th>What it does</th>
+              <th>Median cost / time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>classify</td>
+              <td>Haiku, checked by code</td>
+              <td>
+                One of nine kinds (text, teach, history-of-reading, term,
+                source, compare, verse, collection, edition) and anchors: verses
+                (≤ 6, now including study-Bible cross-references), Strong's
+                numbers, names, passages, three search phrasings.
+              </td>
+              <td>16k input tokens · 1–3 s</td>
+            </tr>
+            <tr>
+              <td>gather</td>
+              <td>code</td>
+              <td>
+                About fifteen channels in a few waves (§2.2). Verses through the
+                signed corpus; writings citing the verse; parallels and scroll
+                copies; the edition's own record; names and referents through
+                the knowledge base; meaning search over 3.9M units; a question
+                channel; cited-form and range resolution.
+              </td>
+              <td>5–80 s</td>
+            </tr>
+            <tr>
+              <td>coverage + repair</td>
+              <td>code</td>
+              <td>
+                Checks the pool against obligations generated from the kind; up
+                to two targeted repair searches; a stop reason.
+              </td>
+              <td>0–13 s</td>
+            </tr>
+            <tr>
+              <td>packet</td>
+              <td>code + stock Qwen3-Reranker-0.6B</td>
+              <td>
+                Named passages first, ranked within soft per-layer preferences,
+                filled to 90 items / 40k tokens. (In the eval harness; the
+                deployed agent selects from the whole pool.)
+              </td>
+              <td>3–10 s</td>
+            </tr>
+            <tr>
+              <td>select</td>
+              <td>Haiku</td>
+              <td>
+                What the question asks (1–4 points), then an outline around
+                them; every point names evidence ids.
+              </td>
+              <td>30k tokens · 6–36 s</td>
+            </tr>
+            <tr>
+              <td>compose</td>
+              <td>Haiku</td>
+              <td>
+                Answers each ask; names sources in the prose; lists every claim
+                with its layer and evidence.
+              </td>
+              <td>15k tokens · 17–36 s</td>
+            </tr>
+            <tr>
+              <td>check → revise → answer</td>
+              <td>code (+ Haiku on revise)</td>
+              <td>
+                Strikes uncited claims, a "says" claim resting on a
+                non-Scripture item, unheld quotations, dates no item carries,
+                claims about the evidence itself; revises once (44% of answers).
+              </td>
+              <td>16k tokens · ~23 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        An answer today: about <strong>75k input and 10k output tokens</strong>,
+        4 model calls, about <strong>$0.013</strong>, and
+        <strong>50–90 s</strong>. Apologist and Bonfire answer in 12–19 s,
+        without fetching or verifying anything.
+      </p>
+
+      <h3>2.2 Where the evidence an answer rests on comes from</h3>
+      <p>
+        Measured over 44 answers to Christian Ask questions (deployed agent and
+        the current harness).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th>Share of the evidence pool</th>
+              <th>Share of cited evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture verses (asked, anchors, lemma)</td>
+              <td>11%</td>
+              <td><strong>43%</strong></td>
+            </tr>
+            <tr>
+              <td>Writings that cite the verse (citation index)</td>
+              <td>32%</td>
+              <td>22%</td>
+            </tr>
+            <tr>
+              <td>Parallels and scroll copies (associations)</td>
+              <td>7%</td>
+              <td>13%</td>
+            </tr>
+            <tr>
+              <td>The edition's own record (notes, decisions)</td>
+              <td>6%</td>
+              <td>8%</td>
+            </tr>
+            <tr>
+              <td>The chapter's writings record</td>
+              <td>2%</td>
+              <td>4%</td>
+            </tr>
+            <tr>
+              <td>Meaning search (embeddings)</td>
+              <td>12%</td>
+              <td>2%</td>
+            </tr>
+            <tr>
+              <td>Named passages (locator)</td>
+              <td>13%</td>
+              <td>2%</td>
+            </tr>
+            <tr>
+              <td>
+                <strong
+                  >Ontology: knowledge-base facts, referents, ontology
+                  verses</strong
+                >
+              </td>
+              <td><strong>6%</strong></td>
+              <td><strong>3%</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        86% of these questions were classified <code>teach</code> (what a
+        passage means, what a doctrine or catechism question teaches).
+      </p>
+
+      <h2 id="results">3. Results</h2>
+      <h3>
+        3.1 The 80-question development slice (blind Haiku 5.5 judge, 0–1)
+      </h3>
+      <p>
+        Eighty fixed questions from Reformation Study Bible notes, six
+        catechisms (Westminster Shorter and Larger, Heidelberg, 1689 Baptist,
+        Baltimore, Beddome), CREDO, CTTAF, FMG-Bench and Bible trivia. Ours was
+        30–33 questions graded at the time of writing.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Ours, start of day</th>
+              <th>Ours, deployed now</th>
+              <th>Apologist (gpt-5-mini)</th>
+              <th>Bonfire</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Addresses what was asked</td>
+              <td>0.53</td>
+              <td>0.67</td>
+              <td><strong>0.86</strong></td>
+              <td>0.82</td>
+            </tr>
+            <tr>
+              <td>Covers the reference answer's claims</td>
+              <td>0.26</td>
+              <td>0.36</td>
+              <td><strong>0.62</strong></td>
+              <td>0.54</td>
+            </tr>
+            <tr>
+              <td>Restraint (no unsupported or wrong additions)</td>
+              <td>0.58</td>
+              <td>0.67</td>
+              <td><strong>0.92</strong></td>
+              <td>0.58</td>
+            </tr>
+            <tr>
+              <td>Scripture actually supports it</td>
+              <td>0.77</td>
+              <td><strong>0.93</strong></td>
+              <td>0.84</td>
+              <td>0.54</td>
+            </tr>
+            <tr>
+              <td>Contradicts the reference</td>
+              <td>never</td>
+              <td>never</td>
+              <td>never</td>
+              <td>2%</td>
+            </tr>
+            <tr>
+              <td>Strict "good answer" verdict</td>
+              <td>0.04</td>
+              <td>0.19</td>
+              <td><strong>0.33</strong></td>
+              <td>0.31</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>3.2 By question family</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Family</th>
+              <th>Measure</th>
+              <th>Ours (deployed)</th>
+              <th>Apologist</th>
+              <th>Bonfire</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Catechisms</td>
+              <td>covers the reference</td>
+              <td><strong>0.00</strong> (4)</td>
+              <td>0.69</td>
+              <td>0.65</td>
+            </tr>
+            <tr>
+              <td>Catechisms</td>
+              <td>addresses the question</td>
+              <td>0.50</td>
+              <td>0.83</td>
+              <td>0.81</td>
+            </tr>
+            <tr>
+              <td>Catechisms</td>
+              <td>strict good answer</td>
+              <td>0.00</td>
+              <td>0.50</td>
+              <td>0.38</td>
+            </tr>
+            <tr>
+              <td>Study-Bible notes</td>
+              <td>covers the reference</td>
+              <td>0.41</td>
+              <td>0.56</td>
+              <td>0.46</td>
+            </tr>
+            <tr>
+              <td>Study-Bible notes</td>
+              <td>strict good answer</td>
+              <td>0.22 <em>(inflated, §8 G6)</em></td>
+              <td>0.18</td>
+              <td>0.26</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>3.3 The model is not the gap</h3>
+      <p>
+        Our harness run on gpt-5-mini scored no better than on Haiku 5.5
+        (addresses the question 0.64 vs 0.70; Scripture support 0.80 vs 0.92).
+        The same gpt-5-mini inside Apologist scores 0.86 on addressing the
+        question. The difference is the design — how the answer is planned and
+        shaped — not the model.
+      </p>
+      <h3>3.4 Our own trained models</h3>
+      <p>
+        Our RunPod-trained Qwen3.5-9B translates at least as well as Haiku 5.5
+        (chrF3 44.4 vs 43.0 on 300 rows) but composes ask answers far worse on
+        identical evidence (required-source recall 0.60 vs 0.81; layer
+        discipline 0.62 vs 0.88).
+      </p>
+
+      <h2 id="judge">4. What the judge rewards</h2>
+      <p>
+        For question-and-answer sets the judge reads the answer and the texts it
+        cites (Scripture and writings, with their dates), compares it with the
+        reference answer's claims (each with a role: required, supporting,
+        optional), and returns:
+      </p>
+      <ul>
+        <li>
+          <strong>intent</strong> — addressed / partly / no. Partly is typical
+          when an answer engages the passage but does not give the reference's
+          explanation, or hedges ("Scripture does not give a plain yes or no").
+        </li>
+        <li>
+          <strong>claims covered</strong> — stated / differs / contradicted /
+          absent per reference claim.
+        </li>
+        <li>
+          <strong>scripture support</strong> — whether the cited passages carry
+          what the answer claims.
+        </li>
+        <li>
+          <strong>restraint</strong> — fails on <em>any</em> unsupported
+          additional claim, an overstatement or a material error. One stray date
+          fails it.
+        </li>
+        <li>
+          <strong>strict good answer</strong> — every required claim stated,
+          nothing contradicted, no major unsupported addition, support ≥ 0.8,
+          intent addressed.
+        </li>
+      </ul>
+      <p>
+        What the judge's reasons said about our answers (66 judged):
+        <strong>262 additional claims</strong> beyond the reference (mostly
+        "defensible, minor" — padding); unsupported or wrong extras were mostly
+        <strong>dates and remarks about the evidence</strong> ("dated AD 1567 by
+        its work record", "these items are not used");
+        <strong>non-committal</strong> answers to doctrinal questions; and
+        <strong>missing the central reading</strong> with its cross-references
+        ("the cup is God's wrath", "the link to James 1:5").
+      </p>
+
+      <h2 id="ontology">
+        5. The ontology: what we hold vs what reaches an answer
+      </h2>
+      <h3>5.1 What exists</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Context</th>
+              <th>Content</th>
+              <th>Reaches the ask?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scripture knowledge base (<code>scr:</code>)</td>
+              <td>
+                People 3,129, places 1,007, named things, 5,221 key terms
+                (Strong's), 5,535 name forms, 184 theological concepts (each a
+                <em>rendering rule</em> for translation), 16 divine names,
+                units, kinship and events
+              </td>
+              <td>
+                <strong>Partly</strong> — projected to D1 (4,262 entities,
+                edges, ancestry, 184 concepts, verse referents, story states);
+                called by name and referent
+              </td>
+            </tr>
+            <tr>
+              <td>Story layer</td>
+              <td>
+                Scenes, cast and discourse states per verse (who "he" is), for
+                every book
+              </td>
+              <td>
+                Partly — referents at a verse; the verse dossier tool that
+                bundles it is not called by the ask
+              </td>
+            </tr>
+            <tr>
+              <td>Doctrine (<code>sdo:</code>)</td>
+              <td>
+                162 doctrine propositions (the reference chronology register's
+                entries), 231 doctrinal commitments, 65 chain propositions, 65
+                defeat conditions, 20 reading rules, 13 authority claims,
+                assessments
+              </td>
+              <td><strong>No</strong></td>
+            </tr>
+            <tr>
+              <td>Interpretation layer</td>
+              <td>
+                Interpretation questions, candidates, story paths,
+                compatibility, reception claims (2,861 code-admitted claims from
+                Sefaria and unfoldingWord evidence)
+              </td>
+              <td>
+                <strong>No</strong> — served by other Scripture Agent skills
+                (verse/chapter interpretations), not by ask-writings
+              </td>
+            </tr>
+            <tr>
+              <td>Reference chronology</td>
+              <td>
+                143 entries: when a theological position enters the surviving
+                record, with passages and dated writings
+              </td>
+              <td><strong>No</strong></td>
+            </tr>
+            <tr>
+              <td>Writings ontology (<code>wrt:</code>, <code>txt:</code>)</td>
+              <td>
+                Works, editions, witnesses, canon classifications per community,
+                rights
+              </td>
+              <td>
+                Indirectly — through the writings index's fields (layer, date,
+                licence)
+              </td>
+            </tr>
+            <tr>
+              <td>Bible-translation ontology</td>
+              <td>
+                Decisions, term senses, name renderings, the edition's notes
+              </td>
+              <td>Yes — the edition record channel</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>5.2 What is used</h3>
+      <ul>
+        <li>
+          Ontology channels supply <strong>3% of cited evidence</strong> (§2.2).
+        </li>
+        <li>
+          Data-worker tools that exist but the ask never calls:
+          <code>graph_query</code>, <code>verse_dossier</code>,
+          <code>get_chapter_interpretations</code>,
+          <code>get_interpretation_index</code>, <code>find_entities</code>,
+          <code>get_entity</code>.
+        </li>
+        <li>
+          The 184 theological concepts are rules for <em>translating</em> a term
+          (its rendering), not an account of what the doctrine teaches; they
+          help a term question, not a catechism question.
+        </li>
+        <li>
+          Nothing in the ontology connects a
+          <strong>doctrinal question</strong> ("what are the duties required in
+          the seventh commandment?", "may true believers fall away?") to the
+          propositions, proof texts and traditions' positions that answer it. On
+          those questions we scored 0.00 on covering the reference.
+        </li>
+      </ul>
+
+      <h2 id="skills">6. Skill artifacts</h2>
+      <p>
+        Nine skills (<code>skills/scripture/ask-*</code>), one per question
+        kind. Each is a short list of instructions plus shared evidence rules,
+        and a declaration of the graph capabilities it may use. Example
+        (<code>ask-teach</code>, added today): answer first; ground in Scripture
+        with study-Bible cross-references; commit to the reading most Christians
+        hold and name alternatives in a sentence; give a full list when a list
+        is asked; no tangents; 150–250 words.
+      </p>
+      <p>
+        What the skills do <strong>not</strong> carry: worked examples of a good
+        answer; the standard points an answer to a given question family must
+        cover (e.g. a commandment question: what it requires, what it forbids,
+        its scriptural ground, its reach to the heart); doctrinal scaffolds;
+        per-tradition framing; question-specific retrieval plans; or tests that
+        say a skill is working.
+      </p>
+
+      <h2 id="plan">7. The plan: fixed, not built per question</h2>
+      <p>
+        Every question runs the same steps (§2.1). What varies with the
+        classified kind is: the skill text the model reads; a static recipe per
+        task (six tasks: explain-passage, author-or-tradition,
+        compare-interpretations, trace-development, wording-or-witnesses,
+        assess-prevalence) naming the layers the evidence must reach and which
+        of three repair searches may run; and obligations generated from the
+        anchors. Today's addition: <em>select</em> first writes what the
+        question asks (1–4 points) and plans the outline around them.
+      </p>
+      <p>
+        Nothing constructs steps from the question. A doctrinal question, a
+        history-of-reading question and "who is 'he' in verse 3" all gather
+        through the same channels in the same waves; the recipe only changes
+        which repairs are allowed.
+      </p>
+
+      <h2 id="gaps">8. Gaps, with evidence</h2>
+      <ol>
+        <li>
+          <strong>G1 Answer shape.</strong> Answers address the question less
+          directly than the other apps (0.67 vs 0.86), pad (262 extra claims in
+          66), and hedge on doctrine. Partly fixed today (question-first
+          planning, committed answers, no evidence remarks); measuring.
+        </li>
+        <li>
+          <strong>G2 No doctrinal knowledge in the ask.</strong> Catechism and
+          doctrine questions — a large share of the suite — have no source of
+          structured doctrine: no propositions, no proof-text sets, no
+          confessional positions. The ask reconstructs doctrine from verses each
+          time (catechism coverage 0.00).
+        </li>
+        <li>
+          <strong>G3 The ontology barely reaches the answer.</strong> 3% of
+          cited evidence; the doctrine, interpretation and chronology contexts
+          are not reachable; several graph tools are never called (§5).
+        </li>
+        <li>
+          <strong>G4 The plan is static.</strong> One pipeline for every kind;
+          no per-question construction of steps; channels run whether or not
+          they serve the question (the evidence pool is ~100–300 items for a
+          two-sentence question).
+        </li>
+        <li>
+          <strong>G5 Skills are thin.</strong> Instructions only; no examples,
+          no per-family coverage checklists, no tests.
+        </li>
+        <li>
+          <strong>G6 Evaluation leakage.</strong> The Reformation Study Bible
+          notes are held writings and are retrieved as evidence: 12 of 28
+          study-note answers cited the very note the reference was drawn from
+          (claims covered 0.49 when they did, 0.35 when not). Schaff's
+          <em>Creeds of Christendom</em> — the source of the catechism
+          references — is held too. Our study-note scores are inflated until
+          those sources are excluded when grading their own questions.
+        </li>
+        <li>
+          <strong>G7 Data quality.</strong> Some writings carry wrong dates in
+          the index ("Against the Arians c. AD 175–180"; "the Diatessaron 1st
+          century BC – AD 70"); a wrong date the answer repeats fails restraint.
+        </li>
+        <li>
+          <strong>G8 Reliability.</strong> The data worker failed under six
+          concurrent asks (two of three passage reads), and its catalog was down
+          for days until today; answers were written without the verse they were
+          about.
+        </li>
+        <li>
+          <strong>G9 Latency.</strong> 50–90 s against 12–19 s; most of it in
+          gather, select and the revise round (44% of answers).
+        </li>
+        <li>
+          <strong>G10 Measurement limits.</strong> One judge; the gold is not
+          reviewed case by case; 80 questions guide design but do not prove a
+          release; the reference answers are mostly one tradition (Reformed), so
+          "covers the reference" rewards that tradition's framing.
+        </li>
+      </ol>
+
+      <h2 id="directions">
+        9. Directions we see (not decided — improve on them)
+      </h2>
+      <ul>
+        <li>
+          <strong>A question-family taxonomy with typed plans.</strong> Classify
+          into families (doctrine/catechism, verse meaning, word study,
+          person/place, history of reading, comparison, pastoral, apologetic,
+          factual) and build the plan from a library of typed, code-validated
+          steps — e.g. doctrine: concept → proposition → proof texts →
+          traditions' statements → reception; person: entity → kin and events →
+          verses → writings naming them.
+        </li>
+        <li>
+          <strong>A doctrine layer the ask can query.</strong> Load the doctrine
+          context (propositions, commitments, proof texts) into the ask's store,
+          and extend it: for each common doctrinal question, the proposition,
+          its proof texts and how major traditions state it — with care that
+          evaluation questions are not answered from their own gold.
+        </li>
+        <li>
+          <strong>Skills with coverage checklists and examples.</strong> For
+          each family, the points a complete answer covers and two or three
+          exemplar answers; a code check that the outline covers the checklist.
+        </li>
+        <li>
+          <strong>A cross-reference channel.</strong> Make study-Bible-style
+          cross-references a first-class ontology channel (verse → related
+          verses with a reason), rather than relying on the classifier to name
+          them.
+        </li>
+        <li>
+          <strong>Use the story layer and dossiers.</strong> Call
+          <code>verse_dossier</code> for verse questions: referents, cast, the
+          edition's notes, scroll copies — precomputed.
+        </li>
+        <li>
+          <strong>A fast path.</strong> For a simple doctrinal or factual
+          question, a smaller plan (fewer channels, one model call) with the
+          same verification.
+        </li>
+        <li>
+          <strong>Fix the measurement first where it lies.</strong> Exclude a
+          question's own source from its evidence when grading; fix wrong dates
+          at the index.
+        </li>
+      </ul>
+
+      <h2 id="assets">10. What you can use</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Where / how</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The harness code</td>
+              <td>
+                <code
+                  >verifiable-content-demo/apps/demo-bible-a2a/src/ask-writings.ts</code
+                >
+                (classify, gather, select, compose, check),
+                <code>src/harness/</code> (contract, recipes, repair, packet,
+                runner)
+              </td>
+            </tr>
+            <tr>
+              <td>Skills</td>
+              <td>
+                <code>skills/skills/scripture/ask-*/SKILL.md</code>, exported
+                into the agent by
+                <code>scripts/writings/export-ask-skills.mjs</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Data-worker tools</td>
+              <td>
+                <code>verifiable-content-demo/apps/demo-bible-mcp/src/</code> —
+                writings, kb, verse dossier, interpretations, graph query
+              </td>
+            </tr>
+            <tr>
+              <td>Ontology sources</td>
+              <td>
+                <code>skills/ontology/</code> — scripture.kb, doctrine (+
+                doctrine.chain), interpretations, writings, household,
+                bible-translation
+              </td>
+            </tr>
+            <tr>
+              <td>Question sets</td>
+              <td>
+                <code>skills/evaluations/christian-ask/</code> (catechisms,
+                CREDO, CTTAF, FMG, trivia; study-note sets kept private);
+                writings gold
+                <code>evaluations/bible-translation/ask-writings/</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Run one change</td>
+              <td>
+                <code>slice.py run --tag &lt;t&gt; --arm harness-local</code>
+                with <code>HARNESS_DIR</code> = a frozen worktree of the commit
+                and <code>HARNESS_OPTS</code>;
+                <code>slice.py report --tags …</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Other apps' answers</td>
+              <td>
+                Apologist and Bonfire on the same 80 questions and the full 477
+                (tags <code>ap</code>, <code>bf</code>,
+                <code>xs-apologist-1101</code>, <code>xs-bonfire-1101</code>)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="questions">11. Questions for you</h2>
+      <ol>
+        <li>
+          Given G2 and G3, what should the ontology contain for the ask — and is
+          a doctrine layer the right first addition, or a cross-reference graph,
+          or a question-family plan library?
+        </li>
+        <li>
+          Should the plan be built per question from typed steps (and validated
+          by code), or should the fixed pipeline stay with better skills? If
+          built, what is the step library?
+        </li>
+        <li>
+          What should a skill artifact contain beyond instructions — checklists,
+          exemplars, retrieval plans, tests?
+        </li>
+        <li>
+          How should an answer serve readers of different traditions when the
+          reference answers are mostly Reformed?
+        </li>
+        <li>
+          How do we beat 12–19 s answers without giving up verification — a fast
+          path, caching, precomputed dossiers, streaming?
+        </li>
+        <li>
+          What would you measure to know each step worked, and in what order
+          would you build it?
+        </li>
+      </ol>
+    </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <span aria-current="page">ask-writings planning brief</span>
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
+  </body>
+</html>

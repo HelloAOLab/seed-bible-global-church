@@ -1,0 +1,97 @@
+.sb-expandable-text {
+  min-width: 0;
+  width: 100%;
+}
+
+/*
+ * Inline-level, so the surrounding `text-align` positions the whole
+ * `text... Read more` group — centred in the profile card, start-aligned in a
+ * Discover row — in the collapsed state as well as the expanded one. Expanded
+ * it stays plain inline content, so the text wraps and "Read less" flows in
+ * after the last word.
+ */
+.sb-expandable-text--clamped .sb-expandable-text-line {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sb-expandable-text-body {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The clip that the overflow measurement reads: the line is held to one row
+ * and allowed to shrink, so `scrollWidth` exceeds `clientWidth` by exactly
+ * the amount that does not fit.
+ */
+.sb-expandable-text--clamped .sb-expandable-text-body {
+  flex: 0 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/*
+ * Multi-line clamp. The wrapper is a flex container so the body's height is
+ * definite, which the `::before` spacer's percentage height needs. The spacer
+ * fills every clamped line but the last, pushing the floated toggle down to
+ * the end of the last visible line, where the clamp's ellipsis sits before
+ * it. The toggle is only rendered once the text is measured as overflowing,
+ * and adding it only takes space away, so it can't flip that answer back.
+ */
+.sb-expandable-text--multiline.sb-expandable-text--clamped {
+  display: flex;
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--sb-expandable-text-lines);
+  line-clamp: var(--sb-expandable-text-lines);
+  overflow: hidden;
+  /* Undoes the single-line clamp's `nowrap`, which this also matches. */
+  white-space: pre-wrap;
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-body::before {
+  content: "";
+  float: inline-end;
+  height: calc(100% - 1lh);
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-toggle {
+  float: inline-end;
+  clear: inline-end;
+}
+
+.sb-expandable-text-ellipsis {
+  flex: 0 0 auto;
+}
+
+.sb-expandable-text-toggle {
+  all: unset;
+  flex: 0 0 auto;
+  margin-inline-start: 0.25em;
+  color: var(--sb-primary-color);
+  font: inherit;
+  font-weight: 500;
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sb-expandable-text-toggle:hover {
+  text-decoration: underline;
+}
+
+.sb-expandable-text-toggle:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

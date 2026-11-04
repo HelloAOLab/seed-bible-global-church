@@ -17,11 +17,7 @@
     var(--sb-font-color),
     transparent 95%
   );
-  --sb-profile-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 88%
-  );
+  --sb-profile-border: var(--sb-divider-color);
   /* Secondary text: dates, counts, row subtitles. */
   --sb-profile-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
   --sb-profile-accent: var(--sb-primary-color);
@@ -50,6 +46,15 @@
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+}
+
+/* The reader toolbar floats over the bottom of the pane, so leave room to
+   scroll "Log out" clear of it. On phones the pane already stops above it
+   (see PaneLayout.css). */
+@media (min-width: 481px) {
+  .sb-profile-screen {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
 }
 
 /* Wide viewports: the design is a phone layout, so cap it and centre. */
@@ -329,13 +334,7 @@ button.sb-profile-plans-link {
 
 /* ------------------------------------------------------------------ logout */
 
-/*
- * Matches the account settings page's own sign-out button
- * (`.sb-account-signout-button`) so the two entry points to the same action
- * read as the same control. `--sb-profile-danger` is the #db1c1c that button
- * hardcodes. Only the top margin differs: the settings page separates it with
- * a rule above, which this card does not have.
- */
+/* `--sb-profile-danger` is the app's destructive-action red (#db1c1c). */
 .sb-profile-logout {
   display: inline-flex;
   align-items: center;
@@ -430,12 +429,14 @@ button.sb-profile-plans-link {
   overflow-wrap: anywhere;
 }
 
+.sb-profile-email,
 .sb-profile-location {
   display: inline-flex;
   align-items: center;
   gap: 2px;
 }
 
+.sb-profile-email .material-symbols-outlined,
 .sb-profile-location .material-symbols-outlined {
   font-size: 16px;
 }
@@ -458,17 +459,6 @@ button.sb-profile-plans-link {
 }
 
 /* ------------------------------------------------------------ edit profile */
-
-.sb-profile-pane-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
 
 .sb-profile-field {
   display: flex;
@@ -547,4 +537,18 @@ button.sb-profile-plans-link {
   width: 100%;
   max-width: 34rem;
   margin: 1.5rem auto 0;
+}
+
+/* ── KEPT from this reader's earlier copy: classes seedbible.org 1.16 no longer styles here, still used by this
+   reader's markup until that screen is ported (visual-parity work, 2026-11-04). ── */
+
+.sb-profile-pane-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
 }

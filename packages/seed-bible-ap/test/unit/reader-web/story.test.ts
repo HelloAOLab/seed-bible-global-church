@@ -344,6 +344,8 @@ describe("what a heading or the title opens", () => {
     host.register(story);
     const state = { ui: { pane: { value: "none" } } } as unknown as ReaderState;
     await host.bind(state);
+    // Off until the reader turns it on (it is not in seedbible.org).
+    await host.setEnabled("story", true);
     host.headingTools.value[0]!.onSelect({
       chapterRef: "GEN.1",
       heading: "The Creation",

@@ -872,13 +872,18 @@
 
       <h2 id="workbench">The Expert Workbench</h2>
       <p>
-        The Christian Ask sets are a domain of the existing Expert Workbench.
-        Each run writes the harness's standard experiment record, so the
-        Workbench shows a scorecard by set, the questions the agent struggles
-        with and each answer's verdicts. Screens for the work the review assigns
-        to people (reviewing a record's roles, adjudicating a difference,
-        two-reviewer calibration) are the next piece of the Workbench; today
-        that work is done in reviewer sheets.
+        The Christian Ask sets are a domain of the Expert Workbench, and a
+        dedicated workbench was built on 29 October 2026 for the screens this
+        review assigns to people: a scorecard, a paired comparison, the slices
+        where the agent struggles, a queue, one item, and judge calibration
+        (agreement, Cohen's kappa, and which way the judge errs). It keeps one
+        reviewer verdict per answer. A deploy shows scores and reasons, not
+        answer text, gold, or a licensed question. It is not deployed. The
+        <a href="/architecture/ask-writings-harness/#workbench"
+          >ask-writings harness page</a
+        >
+        records it beside the retrieval compile. The skills app's Expert
+        Workbench still reads the same experiment records.
       </p>
 
       <h2 id="loop">The improvement loop</h2>
@@ -1292,7 +1297,7 @@
               <td>
                 the skills repository,
                 <code>scripts/christian-ask/build-sets.py</code>,
-                <code>build-rsb-sets.py</code>
+                <code>the study-notes set builder</code>
               </td>
             </tr>
             <tr>
@@ -1316,8 +1321,9 @@
             <tr>
               <td>Results and the Workbench</td>
               <td>
-                <code>evaluations/results/christian-ask/</code>; the Expert
-                Workbench in the skills app, Scripture domain
+                <code>evaluations/results/christian-ask/</code>; the Christian
+                Ask workbench (not deployed) and the Expert Workbench in the
+                skills app
               </td>
             </tr>
             <tr>
@@ -1335,5 +1341,81 @@
         </table>
       </div>
     </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><a href="/architecture/harness/">Scripture harness</a></li>
+              <li><span aria-current="page">Ask evaluation</span></li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
   </body>
 </html>

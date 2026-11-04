@@ -3,6 +3,7 @@
 // Discover, Share and an orange Listen; the chapter column, the footnote modal, the skeleton and error states), over
 // the ported state. One instance per pane, on that tab's reading state; selection, the toolbars and the panes
 // follow the selected tab.
+import { StarIcon, InfoSettingsIcon } from "../chrome/seedIcons";
 import { friendNotesByVerse } from "../../state/social/friendNotes";
 import { sharedRefOf } from "../../state/social/sharedPage";
 import type { Offering } from "../../state/social/discover";
@@ -121,6 +122,9 @@ export function BibleReader({
   }, [chapter]);
   const translationLabel =
     reading.translation.value?.shortName ?? reading.translationId.value;
+  // The translation's own name for its button's label, as seedbible.org reads it out ("Berean Standard Bible").
+  const translationFullName =
+    reading.translation.value?.name ?? translationLabel;
   // The text on screen, checked against what was published (state/reading/scriptureCheck.ts).
   const check = state.scriptureCheck.of(chapter as never);
   const verseChecks = check && "verses" in check ? check.verses : undefined;
@@ -269,20 +273,6 @@ export function BibleReader({
       bookName: reading.bookName.value,
     });
   };
-  const bookPicker = (className: string) => (
-    <button
-      type="button"
-      className={className}
-      aria-label={t("change-book", { defaultValue: "Change book" })}
-      title={t("change-book", { defaultValue: "Change book" })}
-      onClick={(e: MouseEvent) => {
-        e.stopPropagation();
-        ui.selector.value = ui.selector.value === "books" ? null : "books";
-      }}
-    >
-      <span className="material-symbols-outlined">menu_book</span>
-    </button>
-  );
 
   /** Others' marks in the live session, verse by verse, for the off-screen cues. */
   const sessionCues = (): CueMark[] => {
@@ -644,14 +634,14 @@ export function BibleReader({
       <button
         type="button"
         className="sb-bible-reader-action-button sb-bible-reader-mobile-header-settings"
-        aria-label={t("text-settings", { defaultValue: "Text settings" })}
-        title={t("text-settings", { defaultValue: "Text settings" })}
+        aria-label={t("settings", { defaultValue: "Settings" })}
+        title={t("settings", { defaultValue: "Settings" })}
         onClick={(e: MouseEvent) => {
           e.stopPropagation();
           ui.textSheet.value = true;
         }}
       >
-        <span className="material-symbols-outlined">tune</span>
+        <InfoSettingsIcon />
       </button>
     </>
   );
@@ -687,18 +677,29 @@ export function BibleReader({
       <button
         type="button"
         className={`sb-bible-reader-save-button${saved ? " sb-bible-reader-save-button-saved" : ""}`}
-        aria-label={t("save-chapter", { defaultValue: "Save chapter" })}
-        title={t("save-chapter", { defaultValue: "Save chapter" })}
+        aria-label={
+          saved
+            ? t("edit-save", { defaultValue: "Edit save" })
+            : t("save-chapter", { defaultValue: "Save chapter" })
+        }
+        title={
+          saved
+            ? t("edit-save", { defaultValue: "Edit save" })
+            : t("save-chapter", { defaultValue: "Save chapter" })
+        }
         onClick={(e: MouseEvent) => {
           e.stopPropagation();
           openSavePicker(state, chapterRef, null, reading.translationId.value);
         }}
       >
-        <span
-          className={`material-symbols-outlined${saved ? " sb-icon-filled" : ""}`}
-        >
-          star
-        </span>
+        {/* seedbible.org's SaveStarIcon: one outlined star, filled once the chapter is saved. */}
+        <StarIcon
+          width={22}
+          height={22}
+          fill={saved ? "currentColor" : "none"}
+          stroke-width="1.5"
+          aria-hidden="true"
+        />
       </button>
       <button
         type="button"
@@ -717,26 +718,57 @@ export function BibleReader({
       </button>
     </>
   );
-  const shareButton = (
-    <button
-      type="button"
-      className="sb-bible-reader-action-button"
-      aria-label={t("share", { defaultValue: "Share" })}
-      title={t("share", { defaultValue: "Share" })}
-      onClick={(e: MouseEvent) => {
-        e.stopPropagation();
-        ui.share.value = {
-          title: chapterLabel,
-          url: `${location.origin}${routeOf({
-            translationId: reading.translationId.value,
-            bookId: reading.bookId.value,
-            chapterNumber: reading.chapterNumber.value,
-          })}`,
-        };
-      }}
-    >
-      <span className="material-symbols-outlined">share</span>
-    </button>
+  // seedbible.org's quick tool: Share in its toolbar item (the header's `sb-quick-toolbar`).
+  // seedbible.org's "discover-content-panel" quick tool: the card beside the text (lit) or below it; shown only on a
+  // desktop while the card has something in it.
+  const discoverItem = (
+    <div className="sb-quick-toolbar-item">
+      <button
+        type="button"
+        className="sb-quick-toolbar-button"
+        aria-label={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+        title={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+        aria-pressed={settings.discoverInline.value}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          settings.discoverInline.value = !settings.discoverInline.value;
+        }}
+      >
+        <span
+          className={`material-symbols-outlined${settings.discoverInline.value ? " sb-quick-tool-icon-active" : ""}`}
+        >
+          explore
+        </span>
+      </button>
+    </div>
+  );
+  const shareItem = (
+    <div className="sb-quick-toolbar-item">
+      <button
+        type="button"
+        className="sb-quick-toolbar-button"
+        aria-label={t("share", { defaultValue: "Share" })}
+        title={t("share", { defaultValue: "Share" })}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          ui.share.value = {
+            title: chapterLabel,
+            url: `${location.origin}${routeOf({
+              translationId: reading.translationId.value,
+              bookId: reading.bookId.value,
+              chapterNumber: reading.chapterNumber.value,
+            })}`,
+          };
+        }}
+      >
+        <span className="material-symbols-outlined">share</span>
+        <span className="sr-only">{t("share", { defaultValue: "Share" })}</span>
+      </button>
+    </div>
   );
 
   return (
@@ -774,8 +806,8 @@ export function BibleReader({
                 type="button"
                 className="sb-bible-reader-mobile-header-translation"
                 aria-label={t("change-translation", {
-                  name: translationLabel,
-                  defaultValue: `Change translation (${translationLabel})`,
+                  name: translationFullName,
+                  defaultValue: `Change translation (${translationFullName})`,
                 })}
                 onClick={(e: MouseEvent) => {
                   e.stopPropagation();
@@ -824,21 +856,21 @@ export function BibleReader({
               <>
                 {saveButtons}
                 {extensionButtons}
-                {shareButton}
+                <div className="sb-quick-toolbar sb-quick-toolbar-mobile-header">
+                  {shareItem}
+                </div>
                 {inSession && <SessionPeopleStack state={state} />}
                 <button
                   type="button"
                   className="sb-bible-reader-mobile-header-settings"
-                  aria-label={t("text-settings", {
-                    defaultValue: "Text settings",
-                  })}
-                  title={t("text-settings", { defaultValue: "Text settings" })}
+                  aria-label={t("settings", { defaultValue: "Settings" })}
+                  title={t("settings", { defaultValue: "Settings" })}
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
                     ui.textSheet.value = true;
                   }}
                 >
-                  <span className="material-symbols-outlined">tune</span>
+                  <InfoSettingsIcon />
                 </button>
               </>
             )}
@@ -857,14 +889,21 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
-            {bookPicker("sb-bible-reader-book-picker")}
             <button
               type="button"
               className="sb-bible-reader-translation"
               aria-label={t("change-translation", {
-                name: translationLabel,
-                defaultValue: `Change translation (${translationLabel})`,
+                name: translationFullName,
+                defaultValue: `Change translation (${translationFullName})`,
               })}
+              title={
+                check?.status === "verified"
+                  ? t("scripture-verified-tooltip", {
+                      name: translationLabel,
+                      defaultValue: `${translationLabel} · Verified against its publisher's text`,
+                    })
+                  : undefined
+              }
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 ui.selector.value = "translations";
@@ -872,13 +911,17 @@ export function BibleReader({
             >
               {translationLabel}
             </button>
-            <ScriptureCheckBadge
-              check={check}
-              translationName={
-                reading.translation.value?.name ?? translationLabel
-              }
-              chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
-            />
+            {/* seedbible.org's header has no badge: a verified text says so on the translation's tooltip, and only a
+                failed check shows here. */}
+            {check?.status === "differs" && (
+              <ScriptureCheckBadge
+                check={check}
+                translationName={
+                  reading.translation.value?.name ?? translationLabel
+                }
+                chapterLabel={`${reading.bookName.value} ${reading.chapterNumber.value}`}
+              />
+            )}
           </div>
           <div className="sb-bible-reader-actions">
             {embed ? embedActions : null}
@@ -894,51 +937,80 @@ export function BibleReader({
             )}
             {/* The old reader's chapter actions, in its order. */}
             {!embed && saveButtons}
-            {!embed && (
-              <button
-                type="button"
-                className={`sb-bible-reader-action-button${ui.pane.value === "discover" ? " sb-bible-reader-save-button-saved" : ""}`}
-                aria-label={t("discover", { defaultValue: "Discover" })}
-                title={t("discover", { defaultValue: "Discover" })}
-                aria-pressed={ui.pane.value === "discover"}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  ui.pane.value =
-                    ui.pane.value === "discover" ? "none" : "discover";
-                }}
-              >
-                <span className="material-symbols-outlined">explore</span>
-              </button>
-            )}
             {extensionButtons}
-            {!embed && shareButton}
-            {!embed && active && canPlay && (
-              <button
-                type="button"
-                className="sb-bible-reader-play-button"
-                aria-label={
-                  playing
-                    ? t("pause", { defaultValue: "Pause" })
-                    : t("listen", { defaultValue: "Listen" })
-                }
-                title={
-                  playing
-                    ? t("pause", { defaultValue: "Pause" })
-                    : t("listen", { defaultValue: "Listen" })
-                }
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  state.togglePlay();
-                }}
-              >
-                <span className="material-symbols-outlined sb-icon-filled">
-                  {playing ? "pause" : "play_arrow"}
-                </span>
-              </button>
+            {!embed && (
+              <div className="sb-quick-toolbar sb-quick-toolbar-reader">
+                {active &&
+                  settings.showDiscovered.value &&
+                  ui.pane.value === "none" &&
+                  ui.discoverCardHasContent.value &&
+                  discoverItem}
+                {shareItem}
+                {active && canPlay && (
+                  <div className="sb-quick-toolbar-item">
+                    <button
+                      type="button"
+                      className="sb-quick-toolbar-button"
+                      aria-label={
+                        playing
+                          ? t("pause", { defaultValue: "Pause" })
+                          : t("listen", { defaultValue: "Listen" })
+                      }
+                      title={
+                        playing
+                          ? t("pause", { defaultValue: "Pause" })
+                          : t("listen", { defaultValue: "Listen" })
+                      }
+                      onClick={(e: MouseEvent) => {
+                        e.stopPropagation();
+                        state.togglePlay();
+                      }}
+                    >
+                      {/* seedbible.org's Listen tool: the theme's colour, a play (or pause) mark in it. */}
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 36 36"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="18"
+                          style={{ fill: "var(--sb-primary-color, #e07b4c)" }}
+                        />
+                        {playing ? (
+                          <path
+                            d="M13 11h4v14h-4zM19 11h4v14h-4z"
+                            style={{
+                              fill: "var(--sb-primary-font-color, #fff)",
+                            }}
+                          />
+                        ) : (
+                          <path
+                            d="M14 25V11L25 18L14 25Z"
+                            style={{
+                              fill: "var(--sb-primary-font-color, #fff)",
+                            }}
+                          />
+                        )}
+                      </svg>
+                      <span className="sr-only">
+                        {playing
+                          ? t("pause", { defaultValue: "Pause" })
+                          : t("listen", { defaultValue: "Listen" })}
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
-        <div className="sb-bible-reader-content">
+        <div
+          className={`sb-bible-reader-content${settings.discoverInline.value ? "" : " sb-bible-reader-content--discover-below"}`}
+        >
           <div className="sb-bible-reader-main-content">
             <h2
               className="sb-bible-reader-mobile-content-title sb-bible-reader-mobile-content-title-tappable"
@@ -951,9 +1023,6 @@ export function BibleReader({
                 {reading.chapterNumber.value}
               </span>
             </h2>
-            {bookPicker(
-              "sb-bible-reader-book-picker sb-bible-reader-book-picker-mobile"
-            )}
             {body()}
           </div>
           {/* The old reader's Discover card in the chapter — not while a side pane is open: it would repeat the pane

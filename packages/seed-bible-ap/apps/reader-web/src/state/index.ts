@@ -28,6 +28,7 @@ import {
   parseFriendLink,
   type FriendInvite,
 } from "./social/friendship";
+import { createFaith } from "./faith/faith";
 
 const INVITE_KEY = "sbr.invite";
 import { A2A_BASE } from "../api";
@@ -57,7 +58,13 @@ import { createScriptureCheck } from "./reading/scriptureCheck";
 import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
-import { bindRoute, parseRoute, pushRoute, versesOf } from "./reading/route";
+import {
+  bindRoute,
+  parseRoute,
+  pushRoute,
+  setRouteLanguage,
+  versesOf,
+} from "./reading/route";
 import { legacyTarget } from "./reading/legacyRoute";
 import { createTabs, slotCountOf, type LayoutId } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
@@ -178,6 +185,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     refresh: () => today.refreshContacts(),
     homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
   });
+  // Every address is written in the interface language (`/en/…`, `/fr/…`), as seedbible.org's are.
+  effect(() => setRouteLanguage(language.value));
+  const faith = createFaith(backend, () => !!backend.identity(), stores.prefs);
   const invites = createInvites({
     base: A2A_BASE,
     bearer: () => {
@@ -188,6 +198,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   });
   effect(() => {
     if (!session.value) return;
+    void faith.refresh();
     void invites.refresh();
     void invites.loadFindable();
   });
@@ -389,12 +400,6 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       )
         await extensions.setEnabled(id, true);
   });
-  // Moving to another chapter tells friends at once rather than at the next beat.
-  effect(() => {
-    readingOf().chapterRef.value;
-    readingOf().chapterData.value;
-    if (session.value) void presence.beat();
-  });
   // A session lives in the tab it was started or joined in (the old reader's Shared tab): that tab follows the room
   // and moves it, whichever tab is on screen.
   const sessionTabId = signal<string | null>(null);
@@ -406,6 +411,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     reading: sessionReading,
     identity: () => backend.identity(),
     selectionEffects: () => settings.selectionEffects.value,
+  });
+  // Moving to another chapter tells friends at once rather than at the next beat.
+  effect(() => {
+    readingOf().chapterRef.value;
+    readingOf().chapterData.value;
+    if (session.value) void presence.beat();
   });
   // Starting or ending a session tells friends at once ("Ruth is sharing — Join"), not at the next beat.
   effect(() => {
@@ -579,6 +590,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       | "about"
       | "map"
       | "friends"
+      | "faith"
       | "profile"
       | "edit-profile"
       | `ext:${string}`
@@ -586,9 +598,12 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     selector: signal<"books" | "translations" | null>(null),
     noteDraft: signal<{ start: number; end: number } | null>(null),
     focusNoteVerse: signal<number | null>(null),
-    sidebarCollapsed: signal(false),
+    // seedbible.org opens on the rail (its sb-sidebar-collapsed); the reader's own choice is kept (setSidebarCollapsed).
+    sidebarCollapsed: signal(true),
     /** On a phone the sidebar is a drawer over the reader, opened from the toolbar. */
     sidebarDrawer: signal(false),
+    /** The chapter's Discover card has something to show (seedbible.org's getDiscoverPanelContent().hasAny). */
+    discoverCardHasContent: signal(false),
     /** An extension's pane (the Places map) expanded to the full page, from its header's button. */
     paneWide: signal(false),
     /** The bookmarks and saves panels above the sidebar's tab list (opened from its header, or the phone's More). */
@@ -820,8 +835,23 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     }
   }
 
+  /** The rail or the open sidebar, as the reader chose it — remembered on this device, as the old reader did. */
+  const SIDEBAR_KEY = "sidebar:collapsed";
+  void stores.prefs
+    .get(SIDEBAR_KEY)
+    .then((v) => {
+      if (typeof v === "boolean") ui.sidebarCollapsed.value = v;
+    })
+    .catch(() => {});
+  const setSidebarCollapsed = (collapsed: boolean) => {
+    ui.sidebarCollapsed.value = collapsed;
+    void stores.prefs.set(SIDEBAR_KEY, collapsed).catch(() => {});
+  };
+
   // The open tabs and the layout are remembered on the device (prefs) and restored on the next visit.
   let tabsRestored = false;
+  /** A device's very first visit, still on the default Bible it was given (nothing restored, no address). */
+  const firstVisit = signal(false);
   let tabsSaveTimer: ReturnType<typeof setTimeout> | undefined;
   let tabsPending: SavedTabs | null = null;
   const saveTabsNow = () => {
@@ -894,6 +924,11 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         return null;
       }
     })();
+    // seedbible.org's home page is Today (its Welcome card on a first visit): the reader opens there from "/".
+    const atHome =
+      typeof location !== "undefined" &&
+      location.pathname === "/" &&
+      !location.search;
     // A seedbible.org link (`/en/BSB/john/3?verse=16`) becomes this reader's own address before anything reads it.
     if (typeof location !== "undefined") {
       const legacy = legacyTarget(location.pathname, location.search);
@@ -922,6 +957,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
         target ?? { translationId: defaultTranslationFor(language.value) }
       );
     tabsRestored = true;
+    firstVisit.value = !restored && !target;
+    if (atHome && !ui.embed.value) ui.pane.value = "today";
     if (offering) {
       discover.focus.value = offering;
       ui.pane.value = "discover";
@@ -1035,8 +1072,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       const q = new URLSearchParams(location.search);
       // Embed mode and a theme or customization named in the link (the old `?embed=`, `?theme=`, `?customization=`).
       // `?lang=` (the old reader's, and the language segment of its links): the interface language, when we have it.
-      const lang = q.get("lang");
-      if (lang && AVAILABLE_LANGUAGES.includes(lang)) void setLanguage(lang);
+      // …and the language at the front of the address (`/fr/BSB/jean/1`), as seedbible.org reads its own.
+      const lang = q.get("lang") ?? parseRoute(location.pathname)?.lang;
+      if (lang && AVAILABLE_LANGUAGES.includes(lang) && lang !== language.value)
+        void setLanguage(lang);
       const embed = q.get("embed");
       if (embed === "minimal" || embed === "true") ui.embed.value = true;
       // `app.themeId` is the old reader's embed parameter; links made by it keep working.
@@ -1104,6 +1143,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
   }
 
   const stateObject = {
+    firstVisit,
     offline,
     toolbar,
     tours,
@@ -1132,6 +1172,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     today,
     profile,
     friendship,
+    faith,
+    setSidebarCollapsed,
     invites,
     homeProfile,
     presence,

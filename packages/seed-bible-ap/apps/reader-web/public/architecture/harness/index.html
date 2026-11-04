@@ -6,7 +6,7 @@
     <title>Scripture harness</title>
     <meta
       name="description"
-      content="How the Scripture agent answers a question from evidence: the sources of content, how they are published and indexed, the seven recorded steps, what comes out, and the checks that make it robust."
+      content="How the Scripture agent answers a question from evidence: the sources of content, how they are published and indexed, the seven recorded steps, what comes out, the checks that make it robust, and the design for using the trained ancient-en model for retrieval, the ontology graph and composing."
     />
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/architecture/arch.css" />
@@ -41,12 +41,18 @@
         made of it. Code decides what is evidence, which layer it belongs to,
         and which dates it may give. A model only relates the evidence to the
         question. Code then checks the answer and strikes what does not hold.
-        There are two ways to ask: one fast, about a verse you have open, and
-        one broad, about anything the agent holds.
+        There are two ways to ask, and only two: <code>ask-verse</code>, fast,
+        about a verse you have open, and <code>ask-writings</code>, broad, about
+        anything the agent holds. They are different harnesses with different
+        designs, and this page keeps them apart. A question gets
+        <code>ask-writings</code> unless it is anchored to a verse.
+        (<code>ask-scripture</code>, the first general ask, was retired on 29
+        October 2026 and is refused by name.)
       </p>
 
       <p class="toc">
         <a href="#two-asks">Two asks</a>
+        <a href="#routing">Which ask answers</a>
         <a href="#picture">The picture</a>
         <a href="#layers">Layers of evidence</a>
         <a href="#verse">The verse ask</a>
@@ -58,6 +64,7 @@
         <a href="#checks">Checks, not intentions</a>
         <a href="#measured">How it is measured</a>
         <a href="#runs">Where it runs</a>
+        <a href="#next">Next: the trained model</a>
       </p>
 
       <h2 id="two-asks">Two asks, for two kinds of question</h2>
@@ -71,6 +78,17 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>Chosen when</td>
+              <td>
+                The ask is anchored to a verse, or to up to five verses of one
+                chapter, that the asker names.
+              </td>
+              <td>
+                Every other ask. This is the default: an ask that names no skill
+                and no verse is an <code>ask-writings</code> ask.
+              </td>
+            </tr>
             <tr>
               <td>For</td>
               <td>
@@ -137,6 +155,78 @@
         Bible…", "throughout the prophets") is not guessed at. The fast ask says
         so in one sentence and offers the open ask as a button, and the slow
         search runs only when the reader presses it.
+      </p>
+
+      <h3 id="routing">Which ask answers</h3>
+      <p>
+        One small function decides, in code, from what the request says. No
+        model chooses between the asks.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>The request</th>
+              <th>Answered by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                A plain ask, with or without a role and a study context, naming
+                no verse
+              </td>
+              <td><code>ask-writings</code> (the default)</td>
+            </tr>
+            <tr>
+              <td>
+                A plain ask whose context names a verse
+                (<code>context.reference</code>: <code>John.2.4</code>) or a
+                range of at most five in one chapter (<code>John.2.1-5</code>,
+                or <code>context.verses</code> listing consecutive verses)
+              </td>
+              <td><code>ask-verse</code></td>
+            </tr>
+            <tr>
+              <td>
+                A range of more than five verses, scattered verses, or verses
+                from two chapters
+              </td>
+              <td>
+                <code>ask-writings</code>. The fast ask reads a verse or five,
+                and it will not quietly keep the first five of nine.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                The skill or mode named: <code>ask-verse</code> /
+                <code>ask-writings</code>
+              </td>
+              <td>
+                The one named. Naming <code>ask-verse</code> without a verse is
+                refused, and a named <code>ask-writings</code> wins over a verse
+                in the context.
+              </td>
+            </tr>
+            <tr>
+              <td><code>ask-scripture</code>, or a mode nobody defined</td>
+              <td>
+                Refused, with the reason. It is not answered by another ask in
+                its place.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <code>ask-scripture</code> proposed passages from memory, resolved them
+        through the corpus and composed an answer. It had no writings, no
+        edition record and no knowledge base behind it, and on the first
+        open-ask gold set it reached required recall 0.35 against the open ask's
+        0.77. It stays in the measurements below as the baseline, and nowhere
+        else. A request that cannot run is told so: the old route fell back to
+        <code>ask-scripture</code> whenever the open ask could not run, and that
+        fall-back is gone.
       </p>
 
       <h2 id="picture">The picture</h2>
@@ -475,6 +565,13 @@
       </div>
 
       <h2 id="verse">The verse ask (<code>ask-verse</code>)</h2>
+      <div class="note">
+        <p>
+          <strong>Harness 1 of 2.</strong> A function of one verse: stored
+          evidence, one streamed call, seconds. The trained-model design further
+          down does not change it.
+        </p>
+      </div>
       <p>
         The reader already knows the verse, so nothing is classified and nothing
         is searched. The evidence for a verse is a function of the verse, so it
@@ -638,6 +735,13 @@
       </p>
 
       <h2 id="writings">The open ask (<code>ask-writings</code>)</h2>
+      <div class="note">
+        <p>
+          <strong>Harness 2 of 2, and the default.</strong> Evidence gathered
+          per question, a pipeline of recorded steps, minutes. It is the ask the
+          design work in "Next" targets.
+        </p>
+      </div>
       <p>
         Seven recorded steps on the agent, each its own receipt. A step that
         fails returns its cause, and every later step carries it to the asker.
@@ -1348,7 +1452,7 @@
               </td>
             </tr>
             <tr>
-              <td>The Scripture-only ask, 1 repeat</td>
+              <td><code>ask-scripture</code> (retired 29 October), 1 repeat</td>
               <td>the same 12</td>
               <td>0.375</td>
               <td>0.344</td>
@@ -1396,7 +1500,8 @@
               <td>scripture.faithnet.io</td>
               <td>
                 verifiable-content-demo
-                <code>demo-bible-a2a</code> (<code>ask-verse.ts</code>,
+                <code>demo-bible-a2a</code> (<code>ask-route.ts</code> decides
+                which ask answers; <code>ask-verse.ts</code>,
                 <code>ask-writings.ts</code>)
               </td>
             </tr>
@@ -1438,6 +1543,572 @@
           </tbody>
         </table>
       </div>
+
+      <h2 id="next">
+        Next: the trained model in <code>ask-writings</code> (design, 29 October
+        2026)
+      </h2>
+      <p class="note">
+        <strong>Built the same day, not yet deployed:</strong>
+        <a href="/architecture/ask-writings-harness/"
+          >the retrieval compile, the writings evaluation runner, and the
+          Christian Ask workbench</a
+        >. The design specification remains
+        <a href="/architecture/ask-writings-design/">ask-writings design</a>.
+        Haiku is still the writer. The table below is not the next step. Models
+        of our own for the drafting, query and story steps are described on
+        <a href="/architecture/trained-models/">Our own models in the harness</a
+        >. A draft redesign of retrieval, open for external review:
+        <a href="/architecture/ask-writings-v2/">ask-writings v2 design</a>.
+      </p>
+      <div class="note">
+        <p>
+          <strong>Status: a design, not a release.</strong> The ancient-en model
+          is a QLoRA fine-tune (rank 16) of Qwen3.5-9B trained on aligned
+          source-language passages and their English (Hebrew, Aramaic, Greek,
+          Latin). It is built for translation. Its ask task (the
+          <code>a1</code> row: a question, the evidence the live harness
+          selected, and a cited answer the code accepted) is written and
+          distilled on a probe; no ask row has trained yet, and nothing below is
+          measured on this model. Each item says what is built, what is
+          proposed, and the number that decides whether it ships. This model
+          never enters the study-Bible loop, and the study Bible's notes stay in
+          their partition that is never exported.
+        </p>
+        <p>
+          <strong>Scope: <code>ask-writings</code> only.</strong> It is the
+          default ask and the one that gathers evidence per question, so it is
+          where a model that reads the original languages and runs cheaply helps
+          most. <code>ask-verse</code> keeps Haiku 5.5 and its stored dossier;
+          it is not redesigned here, and a verse-anchored ask is routed to it
+          before any of this applies.
+        </p>
+      </div>
+      <p>
+        <code>ask-writings</code> is already retrieval-augmented: code gathers
+        evidence from fifteen channels and a model relates it to the question.
+        So the trained model does not add RAG. It changes <em>who</em> does each
+        job in the pipeline, and it opens jobs that a general model does poorly
+        or too expensively: reading the original languages, running the same
+        small step thousands of times, and answering in seconds instead of
+        minutes. The design keeps every rule the page already states. The
+        invariants come first.
+      </p>
+
+      <h3>Invariants the model does not change</h3>
+      <ul>
+        <li>
+          <strong
+            >Code decides what is evidence, its layer and its dates.</strong
+          >
+          A model never assigns a layer, and never supplies a date.
+        </li>
+        <li>
+          <strong>A model proposes; code gates.</strong> Anything the trained
+          model produces that could be wrong in a decidable way (a cited id, a
+          quoted span, a date, a relation) is checked by code, and a failure is
+          struck, not argued with.
+        </li>
+        <li>
+          <strong>GraphDB is never asked at ask time.</strong> The graph reaches
+          the ask only as projected tables. Everything graph-shaped below is a
+          new projection or a new named query over one, declared in a skill,
+          never a live SPARQL call.
+        </li>
+        <li>
+          <strong>The model is a port.</strong> Each job below names the model
+          that does it today, the trained model as a candidate, and the
+          measurement that moves the job. The route (Workers AI, RunPod
+          serverless, the merged export) can change without the harness
+          changing.
+        </li>
+        <li>
+          <strong>Items are evidence, not instructions.</strong> The training
+          rows and the live prompt both say so; a writing that tells the reader
+          to do something is quoted, never obeyed.
+        </li>
+      </ul>
+
+      <h3>Who does which job</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Today</th>
+              <th>Trained model</th>
+              <th>What moves it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Classify, anchors</td>
+              <td>Haiku 5.5, anchors validated by code</td>
+              <td>
+                Candidate. A short, high-volume step; the 9B is cheap enough to
+                run twice and compare.
+              </td>
+              <td>
+                Same anchors accepted by code on the 20 gold cases as Haiku.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Expand the query into the original languages <em>(new)</em>
+              </td>
+              <td>
+                none; the exact-words channel searches the question's own words
+              </td>
+              <td>
+                Primary. It knows how an English question reads in Hebrew, Greek
+                and Latin vocabulary; Haiku does not know our corpus's
+                spellings.
+              </td>
+              <td>
+                Recall of gold items that only a source-language phrase reaches.
+              </td>
+            </tr>
+            <tr>
+              <td>Select the evidence</td>
+              <td>Opus 5.5, one-line summaries</td>
+              <td>
+                Stays with Opus until measured. Choosing among 40 items for a
+                hard question is reasoning, not reading.
+              </td>
+              <td>
+                Selected-set overlap with Opus on gold, then required recall.
+              </td>
+            </tr>
+            <tr>
+              <td>Compose the checked answer</td>
+              <td>Opus 5.5</td>
+              <td>
+                Candidate, trained on code-clean answers only. It cannot be
+                worse at citing than the check lets it be.
+              </td>
+              <td>
+                Required recall within the paired bootstrap of the Haiku arm,
+                date provenance 1.00, struck rate no higher.
+              </td>
+            </tr>
+            <tr>
+              <td>Read an original with no English held <em>(new)</em></td>
+              <td>the writing is findable by its record only</td>
+              <td>
+                Primary. A bounded machine-draft gloss at ask time, labelled,
+                never quotable.
+              </td>
+              <td>
+                The translation gate, not chrF. See Reading what has no English,
+                below.
+              </td>
+            </tr>
+            <tr>
+              <td>Propose the span that supports a claim <em>(new)</em></td>
+              <td>code checks the cited id and the date</td>
+              <td>
+                Primary. The model names the exact words in the cited item that
+                support the claim; code checks they are there.
+              </td>
+              <td>
+                Share of claims that pass the span check; claims struck for no
+                support.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Graph-grounded retrieval, without asking GraphDB</h3>
+      <p>
+        Today the graph reaches <code>ask-writings</code> as named queries
+        answered by projected tables (<code>kb.link</code>, <code>kb.kin</code>,
+        <code>kb.concept</code> and the rest), and the ontology's people, places
+        and things are linked to a question by code. The trained model makes a
+        richer use of the same graph possible, by reading it as text.
+      </p>
+      <ol>
+        <li>
+          <strong>Fact cards.</strong> Project each referent's one- and two-hop
+          neighbourhood (typed edge, direction, the source that asserts it, its
+          IRI) as short cards in a <code>kb_card</code> table, built at build
+          time with the rest of the projection. The composer reads
+          <code>[kb:person/…] Nathan —prophet-to→ David (source: …)</code> as it
+          reads any item. The card's layer is <code>kb</code>, decided by code,
+          and its claims are as strong as the edge's own source, not stronger.
+        </li>
+        <li>
+          <strong>Walks as declared queries.</strong> New named queries a skill
+          can list in its frontmatter: <code>kb.path</code> (the shortest chain
+          between two linked referents, at most three hops),
+          <code>kb.neighbourhood</code>, <code>kb.concept-family</code> (a
+          concept with its narrower and related terms from the ontology's T-box)
+          and <code>kb.timeline</code> (a referent against the dated writings
+          that name it). Each is a table lookup with a budget, refused at export
+          if no projection serves it, like every other query.
+        </li>
+        <li>
+          <strong>Ontology-widened search.</strong> A question about a concept
+          searches the concept and its narrower terms, in English and in the
+          original-language forms the ontology records. The expansion is a join
+          in code; the trained model only adds phrasings the ontology does not
+          list, and each added phrasing is marked as the model's.
+        </li>
+        <li>
+          <strong>Relations are checked the way kinship is.</strong> The check
+          that strikes a kinship sentence the knowledge base contradicts
+          generalises: a composed claim carries typed
+          <code>about</code> referents and, where it states a relation, the
+          relation's name. Code strikes a relation the cards contradict. A
+          relation the cards do not hold is not struck, because the graph is not
+          complete; it is marked <em>not in the knowledge base</em>.
+        </li>
+      </ol>
+
+      <h3>Where to take it: seven ideas, each with its gate</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Idea</th>
+              <th>What it does</th>
+              <th>Gate before it ships</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. A bridge to the originals</strong></td>
+              <td>
+                An English question is expanded into Hebrew, Greek and Latin
+                search forms. Hits in the original-language text are shown with
+                their English, the held translation if there is one, otherwise a
+                labelled draft. A reader who knows no Greek finds what only the
+                Greek reaches.
+              </td>
+              <td>
+                Gold items reached only through an expanded phrase, over the 20
+                gold cases and the Christian Ask sets; no loss on the rest.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>2. Reading what has no English</strong></td>
+              <td>
+                Of the 578 catalog works, those with no English can be read at
+                ask time: a bounded gloss of the few passages the question
+                reaches, cached by passage and model version, layer
+                <code>draft</code>, dated from the work and never from the
+                model, never quoted as period English. The ask says it is a
+                machine reading.
+              </td>
+              <td>
+                The translation programme's own gate (checks over chrF), a
+                reader-visible label, and a cap on drafts per answer.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>3. Two writers, compared by code</strong></td>
+              <td>
+                On the same selected evidence, the 9B and the larger model both
+                compose. Code compares which items each cites and which claims
+                each makes. Agreement serves the 9B's answer; a divergence goes
+                to the larger model and is logged. It is the translation
+                harness's rule: spend on a trigger, not on every row.
+              </td>
+              <td>
+                The share of asks answered by the 9B alone, at no loss of
+                required recall against the larger model, and a lower cost per
+                answer.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>4. Extractive grounding</strong></td>
+              <td>
+                For each claim the model proposes the exact span of the cited
+                item that supports it. Code checks the span is in the item,
+                verbatim. A claim whose span is not there is struck as
+                unsupported, and the span can be shown on tap.
+              </td>
+              <td>
+                Struck-for-no-support recall on a set of planted unsupported
+                claims, and no rise in the false-strike rate.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>5. Speak first, deepen on request</strong></td>
+              <td>
+                The open ask is minutes. With a model that composes in seconds,
+                a checked first answer streams from the 9B in the first moments,
+                with a <em>go deeper</em> button that runs the full open ask,
+                the same pattern the verse ask already uses for a question that
+                reaches beyond the verse.
+              </td>
+              <td>
+                First-words and done times at p95, and the share of readers
+                whose first answer was enough (no press of the button).
+              </td>
+            </tr>
+            <tr>
+              <td><strong>6. Ask as discovery</strong></td>
+              <td>
+                A checked answer states relations. Those the knowledge base does
+                not hold become <em>candidate edges</em> with their evidence,
+                queued for the workbench, never written to the ontology
+                automatically. An expert accepts or rejects them, so the answers
+                that are used to read the graph also grow it.
+              </td>
+              <td>
+                Accept rate of candidate edges over a month, and none reaches
+                the graph without a person's decision.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>7. A flywheel that cannot leak</strong></td>
+              <td>
+                Every code-clean answer from the live asks is a candidate
+                training row, with its evidence ids and rights recorded. The
+                next training pass takes only rows whose evidence is cleared for
+                training, groups by work family so a family never sits in two
+                splits, and is measured on the Christian Ask Workbench and the
+                ask-writings gold before it serves.
+              </td>
+              <td>
+                Zero rows from the study Bible partition, from non-commercial
+                machine English or from programme translations; the held-out
+                gold stays held out; the model card carries the share-alike
+                terms.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>What the page's numbers say about where to start</h3>
+      <p>
+        On the 20-case gold set the open ask moved from required recall 0.658 to
+        0.767 when names were linked to the graph, the edition layer was added
+        and the index widened; the verse ask is at 0.971 in under 3 seconds.
+        Retrieval and the checks, not the writer, were what moved the number.
+        That points the first work at the parts the trained model is best at and
+        the writer cannot fix: <strong>idea 1</strong> (more of the right
+        evidence reaches the writer), <strong>idea 4</strong> (a stronger check)
+        and the graph cards. Composing with the 9B (idea 3) comes after, because
+        a cheaper writer on weaker evidence only answers faster.
+      </p>
+
+      <h3>Serving it</h3>
+      <p>
+        Three routes are measured against each other on the same rows: a Worker
+        calling the merged model on RunPod serverless (the model exists; it
+        costs a standing charge to avoid a 30 to 60 second cold start), a stock
+        Workers AI model with no fine-tune (about $0.0006 an ask, no GPU), and a
+        retrain on a base Workers AI accepts for adapters. The decision rule is
+        the translation epoch's: if the stock model is within the paired
+        bootstrap of the fine-tune on the same rows, nothing of ours needs a
+        GPU. The retrieval (D1, Vectorize with bge-m3), the cards and the checks
+        stay in the Worker whichever route wins.
+      </p>
+
+      <h3>How it is measured</h3>
+      <ul>
+        <li>
+          <strong>Equal-budget arms</strong> on the same cases: the larger model
+          composing; the 9B composing; the 9B with expanded queries; the two
+          writers compared. A stage must beat the arm that spends as much.
+        </li>
+        <li>
+          <strong>Two instruments.</strong> The ask-writings gold (required
+          recall, date provenance, layer discipline) and the Christian Ask sets,
+          judged on five dimensions by a judge that stays the same across arms.
+          Numbers from different judges are never pooled.
+        </li>
+        <li>
+          <strong>Honest about contamination.</strong> The gold asks have not
+          yet been rewritten, so a measure on them is a shape test until they
+          are. Training asks are grouped by work family, and the gold works are
+          held out.
+        </li>
+        <li>
+          <strong>A model that does not know declines.</strong> Ten percent of
+          rows retrieve nothing relevant and the completion says so. Without
+          them, retrieval-augmented answering becomes confabulation with
+          footnotes. The negatives are not built yet.
+        </li>
+      </ul>
+
+      <h3>Build order</h3>
+      <div class="table-wrap">
+        <p class="note">
+          <strong>Order superseded.</strong> The governing build order is the
+          priority table in the
+          <a href="/architecture/ask-writings-design/#12-plan-and-kill-criteria"
+            >ask-writings design specification</a
+          >
+          (repair and measure first; calibrated evaluation; support checks;
+          model roles later). The table below lists the model-role steps and is
+          read as P2 and later, after that work.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>What lands</th>
+              <th>Done when</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>
+                Serve the model behind the agent's model port (RunPod endpoint)
+                and run it as the composer on the gold set with nothing else
+                changed
+              </td>
+              <td>A recorded number against the Haiku arm</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                Build the decline rows; train the multi-task pilot (translation
+                and ask)
+              </td>
+              <td>
+                Translation dev chrF3 within the bootstrap of the single-task
+                pilot
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                Fact cards and the four graph walks in the projection and the
+                skills
+              </td>
+              <td>
+                Preflight refuses a skill naming a query no projection serves
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>
+                Query expansion into the original languages, behind a flag
+              </td>
+              <td>Gold items reached only by expansion, no loss elsewhere</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Span grounding in the check</td>
+              <td>Planted-claim recall, false-strike rate</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Dual writers and the speak-first path</td>
+              <td>Latency and cost at equal required recall</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Candidate edges queue and the training flywheel</td>
+              <td>
+                A person decides every edge; rights audit of training rows is
+                clean
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Questions for the owner</h3>
+      <ul>
+        <li>
+          May a draft gloss of a work with no English be shown to a reader at
+          ask time (idea 2), labelled, or only to the workbench?
+        </li>
+        <li>
+          Should the fast tier (idea 5) answer from the 9B before the larger
+          model is asked, or is a wrong-but-fast first answer worse than a wait?
+        </li>
+        <li>
+          Is a standing GPU worker acceptable for the cold-start, or does the
+          ask accept the 30 to 60 second first answer while the stock Workers AI
+          model covers the gap?
+        </li>
+      </ul>
     </main>
+
+    <!-- arch-sitemap:start -->
+    <footer>
+      <div class="wrap">
+        <nav class="sitemap" aria-label="All architecture pages">
+          <div>
+            <h2>The architecture</h2>
+            <ul>
+              <li><a href="/architecture/">Overview</a></li>
+              <li>
+                <a href="/architecture/information/"
+                  >Information Architecture</a
+                >
+              </li>
+              <li><a href="/architecture/agentic/">Agents</a></li>
+              <li><a href="/architecture/ux/">Reader Experience</a></li>
+              <li><a href="/architecture/ontology/">Ontology</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>The Scripture agent’s ask</h2>
+            <ul>
+              <li><span aria-current="page">Scripture harness</span></li>
+              <li>
+                <a href="/architecture/ask-evaluation/">Ask evaluation</a>
+              </li>
+              <li><a href="/architecture/writings/">Period writings</a></li>
+              <li>
+                <a href="/architecture/ask-writings-design/"
+                  >ask-writings design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-test-report/"
+                  >ask-writings test report</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-harness/"
+                  >ask-writings harness</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-v2/"
+                  >ask-writings v2 design</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-next/"
+                  >ask-writings: measured, built, next</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/ask-writings-brief/"
+                  >ask-writings planning brief</a
+                >
+              </li>
+              <li>
+                <a href="/architecture/trained-models/"
+                  >Our own models in the harness</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h2>Reader</h2>
+            <ul>
+              <li><a href="/">Open the reader</a></li>
+            </ul>
+          </div>
+        </nav>
+        <p class="credit">
+          Built on the agenticprimitives substrate · faithnet estate ·
+          <a href="/">seed-reader.faithnet.io</a>
+        </p>
+      </div>
+    </footer>
+    <!-- arch-sitemap:end -->
   </body>
 </html>

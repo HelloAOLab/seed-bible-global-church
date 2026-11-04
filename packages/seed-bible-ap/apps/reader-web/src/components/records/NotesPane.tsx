@@ -4,6 +4,7 @@
 // (loaded on first use) follows the selected verses while it is open; with none selected it is on the whole chapter.
 // A note that came back twice from a merge (edited on two devices) shows as a conflict the reader settles. A verse
 // reference typed into a note is a link that opens the chapter.
+import { routeOf } from "../../state/reading/route";
 import { lazy, Suspense } from "preact/compat";
 import { Component, type ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
@@ -202,7 +203,11 @@ function NoteItem({
   const shareLink = () => {
     const rec = state.publishing.recordOf(note.id);
     const r = state.reading;
-    const base = `${location.origin}/read/${encodeURIComponent(r.translationId.value)}/${encodeURIComponent(r.bookId.value)}/${r.chapterNumber.value}`;
+    const base = `${location.origin}${routeOf({
+      translationId: r.translationId.value,
+      bookId: r.bookId.value,
+      chapterNumber: r.chapterNumber.value,
+    })}`;
     const v = note.whole
       ? ""
       : `v=${note.start === note.end ? `${note.start}` : `${note.start}-${note.end}`}`;
