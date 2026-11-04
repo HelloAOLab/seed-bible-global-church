@@ -56,7 +56,7 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
 describe("hydration", () => {
   it("adopts the edge-rendered chapter without changing the DOM", async () => {
     const { page, root, html } = await edgeRendered();
-    history.replaceState(null, "", "/read/BSB/JHN/3");
+    history.replaceState(null, "", "/en/BSB/john/3");
     expect(
       hydrationProblem(root, {
         pathname: location.pathname,
@@ -76,21 +76,21 @@ describe("hydration", () => {
     expect(w.records).toEqual([]);
     expect(root.innerHTML).toBe(html);
     expect(root.firstElementChild!.getAttribute(SSR_ROUTE_ATTR)).toBe(
-      "/read/BSB/JHN/3"
+      "/en/BSB/john/3"
     );
     expect(root.querySelector('[data-verse-number="16"]')).not.toBeNull();
   });
 
   it("declines a URL the markup is not for: the stale chapter is cleared, nothing thrown", async () => {
     const { page, root } = await edgeRendered();
-    history.replaceState(null, "", "/read/BSB/JHN/4");
+    history.replaceState(null, "", "/en/BSB/john/4");
     expect(
       hydrationProblem(root, {
         pathname: location.pathname,
         seed: page.seed,
         buildId: BUILD_ID,
       })
-    ).toBe("markup is for /read/BSB/JHN/3");
+    ).toBe("markup is for /en/BSB/john/3");
     const outcome = hydrateChapter(root, {
       pathname: location.pathname,
       seed: page.seed,
@@ -102,7 +102,7 @@ describe("hydration", () => {
 
   it("declines a missing or broken seed: cleared, nothing thrown", async () => {
     const { root } = await edgeRendered();
-    history.replaceState(null, "", "/read/BSB/JHN/3");
+    history.replaceState(null, "", "/en/BSB/john/3");
     expect(
       hydrationProblem(root, {
         pathname: location.pathname,
@@ -139,7 +139,7 @@ describe("hydration", () => {
 
   it("declines a page from another build: one client render of the chapter from the seed", async () => {
     const { page, root } = await edgeRendered("older");
-    history.replaceState(null, "", "/read/BSB/JHN/3");
+    history.replaceState(null, "", "/en/BSB/john/3");
     expect(
       hydrationProblem(root, {
         pathname: location.pathname,

@@ -10,7 +10,7 @@ compatibility_flags = ["nodejs_compat"]
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt", "/af/*", "/am/*", "/ar/*", "/az/*", "/be/*", "/bg/*", "/bn/*", "/bs/*", "/ca/*", "/cs/*", "/cy/*", "/da/*", "/de/*", "/el/*", "/en/*", "/es/*", "/et/*", "/fa/*", "/fi/*", "/fil/*", "/fr/*", "/fy/*", "/gl/*", "/gn/*", "/gu/*", "/he/*", "/hi/*", "/hr/*", "/hu/*", "/ind/*", "/is/*", "/it/*", "/iw/*", "/ja/*", "/ka/*", "/km/*", "/kn/*", "/ko/*", "/ky/*", "/ln/*", "/lo/*", "/lt/*", "/lv/*", "/mk/*", "/mn/*", "/ml/*", "/mr/*", "/ms/*", "/my/*", "/nb/*", "/ne/*", "/nl/*", "/no/*", "/pa/*", "/pl/*", "/ps/*", "/pt/*", "/ro/*", "/ru/*", "/sk/*", "/sl/*", "/sq/*", "/sv/*", "/sw/*", "/ta/*", "/te/*", "/th/*", "/ti/*", "/tl/*", "/tr/*", "/ug/*", "/uk/*", "/ur/*", "/uz/*", "/vi/*", "/zh/*", "/zu/*"]
 
 [env.faithnet]
 name = "seed-bible-reader-web-faithnet"
@@ -27,4 +27,4 @@ custom_domain = true
 directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt"]
+run_worker_first = ["/read/*", "/shared/*", "/sitemap.xml", "/robots.txt", "/af/*", "/am/*", "/ar/*", "/az/*", "/be/*", "/bg/*", "/bn/*", "/bs/*", "/ca/*", "/cs/*", "/cy/*", "/da/*", "/de/*", "/el/*", "/en/*", "/es/*", "/et/*", "/fa/*", "/fi/*", "/fil/*", "/fr/*", "/fy/*", "/gl/*", "/gn/*", "/gu/*", "/he/*", "/hi/*", "/hr/*", "/hu/*", "/ind/*", "/is/*", "/it/*", "/iw/*", "/ja/*", "/ka/*", "/km/*", "/kn/*", "/ko/*", "/ky/*", "/ln/*", "/lo/*", "/lt/*", "/lv/*", "/mk/*", "/mn/*", "/ml/*", "/mr/*", "/ms/*", "/my/*", "/nb/*", "/ne/*", "/nl/*", "/no/*", "/pa/*", "/pl/*", "/ps/*", "/pt/*", "/ro/*", "/ru/*", "/sk/*", "/sl/*", "/sq/*", "/sv/*", "/sw/*", "/ta/*", "/te/*", "/th/*", "/ti/*", "/tl/*", "/tr/*", "/ug/*", "/uk/*", "/ur/*", "/uz/*", "/vi/*", "/zh/*", "/zu/*"]

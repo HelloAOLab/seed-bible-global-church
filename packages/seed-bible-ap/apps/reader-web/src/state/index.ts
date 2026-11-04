@@ -58,7 +58,13 @@ import { createScriptureCheck } from "./reading/scriptureCheck";
 import { setVerseLinkTranslation } from "../components/records/tiptap/VerseReferenceMark";
 import { createPosition } from "./records/position";
 import { createReading, type ReadingApi } from "./reading/reading";
-import { bindRoute, parseRoute, pushRoute, versesOf } from "./reading/route";
+import {
+  bindRoute,
+  parseRoute,
+  pushRoute,
+  setRouteLanguage,
+  versesOf,
+} from "./reading/route";
 import { legacyTarget } from "./reading/legacyRoute";
 import { createTabs, slotCountOf, type LayoutId } from "./reading/tabs";
 import { createSettings } from "./chrome/settings";
@@ -179,6 +185,8 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     refresh: () => today.refreshContacts(),
     homeOrigin: estateById(DEFAULT_ESTATE)?.home ?? "",
   });
+  // Every address is written in the interface language (`/en/…`, `/fr/…`), as seedbible.org's are.
+  effect(() => setRouteLanguage(language.value));
   const faith = createFaith(backend, () => !!backend.identity(), stores.prefs);
   const invites = createInvites({
     base: A2A_BASE,
@@ -1059,8 +1067,10 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       const q = new URLSearchParams(location.search);
       // Embed mode and a theme or customization named in the link (the old `?embed=`, `?theme=`, `?customization=`).
       // `?lang=` (the old reader's, and the language segment of its links): the interface language, when we have it.
-      const lang = q.get("lang");
-      if (lang && AVAILABLE_LANGUAGES.includes(lang)) void setLanguage(lang);
+      // …and the language at the front of the address (`/fr/BSB/jean/1`), as seedbible.org reads its own.
+      const lang = q.get("lang") ?? parseRoute(location.pathname)?.lang;
+      if (lang && AVAILABLE_LANGUAGES.includes(lang) && lang !== language.value)
+        void setLanguage(lang);
       const embed = q.get("embed");
       if (embed === "minimal" || embed === "true") ui.embed.value = true;
       // `app.themeId` is the old reader's embed parameter; links made by it keep working.

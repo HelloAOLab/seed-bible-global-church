@@ -103,10 +103,10 @@ describe("reading", () => {
     await r.prev();
     expect(r.chapterNumber.value).toBe(2);
     expect(changes).toEqual([
-      "/read/BSB/JHN/3",
-      "/read/BSB/JHN/4",
-      "/read/BSB/JHN/3",
-      "/read/BSB/JHN/2",
+      "/en/BSB/john/3",
+      "/en/BSB/john/4",
+      "/en/BSB/john/3",
+      "/en/BSB/john/2",
     ]);
     expect(r.hasPrev.value).toBe(true);
   });
@@ -148,6 +148,6 @@ describe("reading", () => {
     expect(parseRoute("/")).toBeNull();
     expect(
       routeOf({ translationId: "BSB", bookId: "1JN", chapterNumber: 2 })
-    ).toBe("/read/BSB/1JN/2");
+    ).toBe("/en/BSB/1-john/2");
   });
 });
