@@ -21,6 +21,8 @@ export interface ReadingApi {
   getTranslationBooks: FreeUseBibleAPI["getTranslationBooks"];
   getTranslationBookChapter: FreeUseBibleAPI["getTranslationBookChapter"];
   getAudioTimings: FreeUseBibleAPI["getAudioTimings"];
+  /** Today's verse of the day (the Bible API's dataset); absent in a test's canned API. */
+  getVerseOfTheDay?: FreeUseBibleAPI["getVerseOfTheDay"];
 }
 
 export interface ReadingDeps {

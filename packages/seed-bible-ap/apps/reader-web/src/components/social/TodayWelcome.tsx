@@ -8,7 +8,7 @@ import { useI18n } from "../../i18n";
 import { SeedBibleIcon } from "../chrome/icons";
 import { HIGHLIGHT_MARKERS, WELCOME_VERSE_MAP } from "./welcomeVerse";
 
-function plain(verse: ChapterVerse): string {
+export function plain(verse: ChapterVerse): string {
   return verse.content
     .map((c) => (typeof c === "string" ? c : "text" in c ? c.text : ""))
     .join("")

@@ -1,0 +1,4399 @@
+{
+  "dataset": {
+    "id": "verse-of-the-day",
+    "name": "Verse of the Day",
+    "website": "https://github.com/HelloAOLab/bible-api/blob/main/packages/helloao-tools/generation/verse-of-the-day.ts",
+    "licenseUrl": "https://github.com/HelloAOLab/bible-api/blob/main/LICENSE",
+    "licenseNotes": "A curated list of well-known verses by AO Lab, released under the MIT License.",
+    "englishName": "Verse of the Day",
+    "language": "eng",
+    "textDirection": "ltr",
+    "sha256": "b5bb3c77b74caf2f3d83b6d1b4d43d51d662f3486de381a25d07ea7b42569b4d",
+    "availableFormats": ["json"],
+    "listOfBooksApiLink": "/api/d/verse-of-the-day/books.json",
+    "numberOfBooks": 65,
+    "totalNumberOfChapters": 381,
+    "totalNumberOfVerses": 750,
+    "totalNumberOfReferences": 0,
+    "languageName": "English",
+    "languageEnglishName": "English",
+    "listOfVersesApiLink": "/api/d/verse-of-the-day/verses.json",
+    "listOfCategoriesApiLink": "/api/d/verse-of-the-day/categories.json",
+    "totalNumberOfCategories": 31
+  },
+  "verses": [
+    { "book": "GEN", "chapter": 1, "verse": 1, "categories": ["praise"] },
+    {
+      "book": "GEN",
+      "chapter": 3,
+      "verse": 19,
+      "categories": ["ash-wednesday"]
+    },
+    {
+      "book": "GEN",
+      "chapter": 15,
+      "verse": 6,
+      "categories": ["faith", "salvation"]
+    },
+    { "book": "GEN", "chapter": 18, "verse": 14, "categories": ["faith"] },
+    { "book": "GEN", "chapter": 22, "verse": 14, "categories": ["provision"] },
+    {
+      "book": "GEN",
+      "chapter": 28,
+      "verse": 15,
+      "categories": ["comfort", "guidance"]
+    },
+    {
+      "book": "GEN",
+      "chapter": 50,
+      "verse": 20,
+      "categories": ["hope", "faith"]
+    },
+    { "book": "EXO", "chapter": 3, "verse": 14, "categories": ["praise"] },
+    {
+      "book": "EXO",
+      "chapter": 14,
+      "verse": 14,
+      "categories": ["peace", "faith"]
+    },
+    {
+      "book": "EXO",
+      "chapter": 15,
+      "verse": 2,
+      "categories": ["strength", "praise", "salvation"]
+    },
+    { "book": "EXO", "chapter": 15, "verse": 11, "categories": ["praise"] },
+    { "book": "EXO", "chapter": 20, "verse": 12, "categories": ["wisdom"] },
+    {
+      "book": "EXO",
+      "chapter": 33,
+      "verse": 14,
+      "categories": ["peace", "comfort"]
+    },
+    {
+      "book": "EXO",
+      "chapter": 34,
+      "verse": 6,
+      "categories": ["love", "forgiveness"]
+    },
+    { "book": "LEV", "chapter": 19, "verse": 18, "categories": ["love"] },
+    {
+      "book": "NUM",
+      "chapter": 6,
+      "verse": 24,
+      "endVerse": 26,
+      "categories": ["peace"]
+    },
+    { "book": "NUM", "chapter": 23, "verse": 19, "categories": ["faith"] },
+    { "book": "DEU", "chapter": 4, "verse": 29, "categories": ["prayer"] },
+    { "book": "DEU", "chapter": 6, "verse": 5, "categories": ["love"] },
+    {
+      "book": "DEU",
+      "chapter": 7,
+      "verse": 9,
+      "categories": ["love", "faith"]
+    },
+    {
+      "book": "DEU",
+      "chapter": 8,
+      "verse": 3,
+      "categories": ["provision", "wisdom"]
+    },
+    { "book": "DEU", "chapter": 20, "verse": 4, "categories": ["courage"] },
+    {
+      "book": "DEU",
+      "chapter": 30,
+      "verse": 19,
+      "categories": ["wisdom", "inspiration"]
+    },
+    {
+      "book": "DEU",
+      "chapter": 31,
+      "verse": 6,
+      "categories": ["courage", "strength"]
+    },
+    {
+      "book": "DEU",
+      "chapter": 31,
+      "verse": 8,
+      "categories": ["courage", "comfort"]
+    },
+    {
+      "book": "JOS",
+      "chapter": 1,
+      "verse": 8,
+      "categories": ["wisdom", "guidance"]
+    },
+    {
+      "book": "JOS",
+      "chapter": 1,
+      "verse": 9,
+      "categories": ["courage", "strength"]
+    },
+    { "book": "JOS", "chapter": 21, "verse": 45, "categories": ["faith"] },
+    {
+      "book": "JOS",
+      "chapter": 24,
+      "verse": 15,
+      "categories": ["faith", "inspiration"]
+    },
+    {
+      "book": "JDG",
+      "chapter": 6,
+      "verse": 12,
+      "categories": ["courage", "strength"]
+    },
+    { "book": "RUT", "chapter": 1, "verse": 16, "categories": ["love"] },
+    {
+      "book": "RUT",
+      "chapter": 2,
+      "verse": 12,
+      "categories": ["comfort", "provision"]
+    },
+    { "book": "1SA", "chapter": 2, "verse": 2, "categories": ["praise"] },
+    {
+      "book": "1SA",
+      "chapter": 12,
+      "verse": 24,
+      "categories": ["gratitude", "inspiration"]
+    },
+    { "book": "1SA", "chapter": 16, "verse": 7, "categories": ["wisdom"] },
+    { "book": "2SA", "chapter": 22, "verse": 31, "categories": ["faith"] },
+    { "book": "2SA", "chapter": 22, "verse": 33, "categories": ["strength"] },
+    {
+      "book": "1KI",
+      "chapter": 8,
+      "verse": 56,
+      "categories": ["faith", "praise"]
+    },
+    {
+      "book": "2KI",
+      "chapter": 6,
+      "verse": 16,
+      "categories": ["courage", "faith"]
+    },
+    {
+      "book": "1CH",
+      "chapter": 16,
+      "verse": 11,
+      "categories": ["prayer", "strength"]
+    },
+    {
+      "book": "1CH",
+      "chapter": 16,
+      "verse": 34,
+      "categories": ["gratitude", "praise", "love"]
+    },
+    {
+      "book": "1CH",
+      "chapter": 28,
+      "verse": 20,
+      "categories": ["courage", "strength"]
+    },
+    { "book": "1CH", "chapter": 29, "verse": 11, "categories": ["praise"] },
+    {
+      "book": "2CH",
+      "chapter": 7,
+      "verse": 14,
+      "categories": ["prayer", "forgiveness"]
+    },
+    {
+      "book": "2CH",
+      "chapter": 15,
+      "verse": 7,
+      "categories": ["courage", "inspiration"]
+    },
+    {
+      "book": "2CH",
+      "chapter": 20,
+      "verse": 15,
+      "categories": ["courage", "peace"]
+    },
+    {
+      "book": "EZR",
+      "chapter": 7,
+      "verse": 10,
+      "categories": ["inspiration", "wisdom"]
+    },
+    {
+      "book": "NEH",
+      "chapter": 8,
+      "verse": 10,
+      "categories": ["joy", "strength"]
+    },
+    {
+      "book": "EST",
+      "chapter": 4,
+      "verse": 14,
+      "categories": ["inspiration", "courage"]
+    },
+    {
+      "book": "JOB",
+      "chapter": 1,
+      "verse": 21,
+      "categories": ["praise", "faith"]
+    },
+    {
+      "book": "JOB",
+      "chapter": 19,
+      "verse": 25,
+      "categories": ["hope", "salvation"]
+    },
+    {
+      "book": "JOB",
+      "chapter": 23,
+      "verse": 10,
+      "categories": ["hope", "strength"]
+    },
+    { "book": "JOB", "chapter": 42, "verse": 2, "categories": ["faith"] },
+    {
+      "book": "PSA",
+      "chapter": 1,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["wisdom"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 3,
+      "verse": 3,
+      "categories": ["comfort", "strength"]
+    },
+    { "book": "PSA", "chapter": 3, "verse": 6, "categories": ["courage"] },
+    { "book": "PSA", "chapter": 4, "verse": 7, "categories": ["joy"] },
+    { "book": "PSA", "chapter": 4, "verse": 8, "categories": ["peace"] },
+    { "book": "PSA", "chapter": 5, "verse": 3, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 5,
+      "verse": 11,
+      "categories": ["joy", "comfort"]
+    },
+    { "book": "PSA", "chapter": 8, "verse": 1, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 8,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 9,
+      "verse": 1,
+      "categories": ["gratitude", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 9,
+      "verse": 9,
+      "categories": ["comfort", "strength"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 9,
+      "verse": 10,
+      "categories": ["faith", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 16,
+      "verse": 8,
+      "categories": ["strength", "faith"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 16,
+      "verse": 11,
+      "categories": ["joy", "guidance"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 18,
+      "verse": 2,
+      "categories": ["strength", "faith"]
+    },
+    { "book": "PSA", "chapter": 18, "verse": 28, "categories": ["hope"] },
+    { "book": "PSA", "chapter": 19, "verse": 1, "categories": ["praise"] },
+    { "book": "PSA", "chapter": 19, "verse": 14, "categories": ["prayer"] },
+    { "book": "PSA", "chapter": 20, "verse": 7, "categories": ["faith"] },
+    {
+      "book": "PSA",
+      "chapter": 23,
+      "verse": 1,
+      "categories": ["provision", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 23,
+      "verse": 3,
+      "categories": ["guidance", "peace"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 23,
+      "verse": 4,
+      "categories": ["comfort", "courage"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 23,
+      "verse": 6,
+      "categories": ["hope", "love"]
+    },
+    { "book": "PSA", "chapter": 24, "verse": 7, "categories": ["palm-sunday"] },
+    {
+      "book": "PSA",
+      "chapter": 25,
+      "verse": 4,
+      "endVerse": 5,
+      "categories": ["guidance", "prayer"]
+    },
+    { "book": "PSA", "chapter": 25, "verse": 9, "categories": ["guidance"] },
+    {
+      "book": "PSA",
+      "chapter": 27,
+      "verse": 1,
+      "categories": ["courage", "faith"]
+    },
+    { "book": "PSA", "chapter": 27, "verse": 4, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 27,
+      "verse": 14,
+      "categories": ["hope", "courage"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 28,
+      "verse": 7,
+      "categories": ["strength", "faith", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 29,
+      "verse": 11,
+      "categories": ["strength", "peace"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 30,
+      "verse": 5,
+      "categories": ["joy", "hope", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 30,
+      "verse": 12,
+      "categories": ["gratitude", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 31,
+      "verse": 3,
+      "categories": ["guidance", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 31,
+      "verse": 19,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 31,
+      "verse": 24,
+      "categories": ["courage", "hope"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 32,
+      "verse": 1,
+      "categories": ["forgiveness", "joy"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 32,
+      "verse": 5,
+      "categories": ["forgiveness", "prayer"]
+    },
+    { "book": "PSA", "chapter": 32, "verse": 8, "categories": ["guidance"] },
+    {
+      "book": "PSA",
+      "chapter": 33,
+      "verse": 22,
+      "categories": ["hope", "love", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 34,
+      "verse": 1,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 34,
+      "verse": 4,
+      "categories": ["courage", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 34,
+      "verse": 8,
+      "categories": ["praise", "faith"]
+    },
+    { "book": "PSA", "chapter": 34, "verse": 10, "categories": ["provision"] },
+    {
+      "book": "PSA",
+      "chapter": 34,
+      "verse": 17,
+      "categories": ["prayer", "comfort"]
+    },
+    { "book": "PSA", "chapter": 34, "verse": 18, "categories": ["comfort"] },
+    { "book": "PSA", "chapter": 36, "verse": 5, "categories": ["love"] },
+    {
+      "book": "PSA",
+      "chapter": 37,
+      "verse": 3,
+      "categories": ["faith", "inspiration"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 37,
+      "verse": 4,
+      "categories": ["joy", "faith"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 37,
+      "verse": 5,
+      "categories": ["faith", "guidance"]
+    },
+    { "book": "PSA", "chapter": 37, "verse": 7, "categories": ["peace"] },
+    { "book": "PSA", "chapter": 37, "verse": 23, "categories": ["guidance"] },
+    { "book": "PSA", "chapter": 37, "verse": 25, "categories": ["provision"] },
+    {
+      "book": "PSA",
+      "chapter": 40,
+      "verse": 1,
+      "categories": ["prayer", "hope"]
+    },
+    { "book": "PSA", "chapter": 42, "verse": 1, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 42,
+      "verse": 11,
+      "categories": ["hope", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 46,
+      "verse": 1,
+      "categories": ["strength", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 46,
+      "verse": 10,
+      "categories": ["peace", "faith"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 47,
+      "verse": 1,
+      "categories": ["praise", "joy"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 48,
+      "verse": 14,
+      "categories": ["guidance", "faith"]
+    },
+    { "book": "PSA", "chapter": 50, "verse": 15, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 51,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["ash-wednesday"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 51,
+      "verse": 10,
+      "categories": ["prayer", "forgiveness"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 51,
+      "verse": 12,
+      "categories": ["joy", "salvation", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 52,
+      "verse": 8,
+      "categories": ["faith", "love"]
+    },
+    { "book": "PSA", "chapter": 55, "verse": 17, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 55,
+      "verse": 22,
+      "categories": ["comfort", "peace"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 56,
+      "verse": 3,
+      "categories": ["courage", "faith"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 57,
+      "verse": 1,
+      "categories": ["comfort", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 59,
+      "verse": 16,
+      "categories": ["praise", "strength"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 61,
+      "verse": 2,
+      "categories": ["prayer", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 62,
+      "verse": 1,
+      "categories": ["peace", "salvation"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 62,
+      "verse": 8,
+      "categories": ["faith", "prayer"]
+    },
+    { "book": "PSA", "chapter": 63, "verse": 1, "categories": ["prayer"] },
+    {
+      "book": "PSA",
+      "chapter": 63,
+      "verse": 3,
+      "categories": ["love", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 65,
+      "verse": 11,
+      "categories": ["provision", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 68,
+      "verse": 19,
+      "categories": ["provision", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 69,
+      "verse": 30,
+      "categories": ["praise", "gratitude"]
+    },
+    { "book": "PSA", "chapter": 71, "verse": 5, "categories": ["hope"] },
+    { "book": "PSA", "chapter": 72, "verse": 11, "categories": ["epiphany"] },
+    {
+      "book": "PSA",
+      "chapter": 73,
+      "verse": 24,
+      "categories": ["guidance", "hope"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 73,
+      "verse": 26,
+      "categories": ["strength", "hope"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 73,
+      "verse": 28,
+      "categories": ["prayer", "joy"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 75,
+      "verse": 1,
+      "categories": ["gratitude", "praise"]
+    },
+    { "book": "PSA", "chapter": 77, "verse": 14, "categories": ["praise"] },
+    { "book": "PSA", "chapter": 81, "verse": 10, "categories": ["provision"] },
+    {
+      "book": "PSA",
+      "chapter": 84,
+      "verse": 10,
+      "categories": ["praise", "joy"]
+    },
+    { "book": "PSA", "chapter": 84, "verse": 11, "categories": ["provision"] },
+    { "book": "PSA", "chapter": 85, "verse": 8, "categories": ["peace"] },
+    {
+      "book": "PSA",
+      "chapter": 86,
+      "verse": 5,
+      "categories": ["forgiveness", "love", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 86,
+      "verse": 11,
+      "categories": ["guidance", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 89,
+      "verse": 1,
+      "categories": ["praise", "love"]
+    },
+    { "book": "PSA", "chapter": 90, "verse": 2, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 90,
+      "verse": 12,
+      "categories": ["wisdom", "prayer"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 90,
+      "verse": 17,
+      "categories": ["prayer", "inspiration"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 91,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["comfort", "faith"]
+    },
+    { "book": "PSA", "chapter": 91, "verse": 4, "categories": ["comfort"] },
+    {
+      "book": "PSA",
+      "chapter": 91,
+      "verse": 5,
+      "categories": ["all-hallows-eve"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 92,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 94,
+      "verse": 18,
+      "categories": ["comfort", "love"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 94,
+      "verse": 19,
+      "categories": ["comfort", "peace"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 95,
+      "verse": 2,
+      "categories": ["gratitude", "praise"]
+    },
+    { "book": "PSA", "chapter": 95, "verse": 6, "categories": ["praise"] },
+    { "book": "PSA", "chapter": 96, "verse": 1, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 98,
+      "verse": 4,
+      "categories": ["praise", "joy"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 100,
+      "verse": 4,
+      "categories": ["gratitude", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 100,
+      "verse": 5,
+      "categories": ["love", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 103,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 103,
+      "verse": 8,
+      "categories": ["love", "forgiveness"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 103,
+      "verse": 12,
+      "categories": ["forgiveness"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 103,
+      "verse": 13,
+      "categories": ["love", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 103,
+      "verse": 14,
+      "categories": ["ash-wednesday"]
+    },
+    { "book": "PSA", "chapter": 104, "verse": 33, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 107,
+      "verse": 1,
+      "categories": ["gratitude", "love"]
+    },
+    { "book": "PSA", "chapter": 107, "verse": 9, "categories": ["provision"] },
+    { "book": "PSA", "chapter": 111, "verse": 5, "categories": ["provision"] },
+    {
+      "book": "PSA",
+      "chapter": 112,
+      "verse": 7,
+      "categories": ["courage", "faith"]
+    },
+    { "book": "PSA", "chapter": 113, "verse": 3, "categories": ["praise"] },
+    { "book": "PSA", "chapter": 115, "verse": 1, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 116,
+      "verse": 1,
+      "categories": ["prayer", "love"]
+    },
+    { "book": "PSA", "chapter": 116, "verse": 7, "categories": ["peace"] },
+    {
+      "book": "PSA",
+      "chapter": 116,
+      "verse": 15,
+      "categories": ["all-saints-day"]
+    },
+    { "book": "PSA", "chapter": 118, "verse": 6, "categories": ["courage"] },
+    {
+      "book": "PSA",
+      "chapter": 118,
+      "verse": 24,
+      "categories": ["joy", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 118,
+      "verse": 26,
+      "categories": ["palm-sunday"]
+    },
+    { "book": "PSA", "chapter": 119, "verse": 11, "categories": ["wisdom"] },
+    {
+      "book": "PSA",
+      "chapter": 119,
+      "verse": 50,
+      "categories": ["comfort", "hope"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 119,
+      "verse": 76,
+      "categories": ["comfort", "love", "prayer"]
+    },
+    { "book": "PSA", "chapter": 119, "verse": 89, "categories": ["faith"] },
+    {
+      "book": "PSA",
+      "chapter": 119,
+      "verse": 105,
+      "categories": ["guidance", "wisdom"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 119,
+      "verse": 114,
+      "categories": ["hope", "comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 119,
+      "verse": 130,
+      "categories": ["wisdom", "guidance"]
+    },
+    { "book": "PSA", "chapter": 119, "verse": 165, "categories": ["peace"] },
+    {
+      "book": "PSA",
+      "chapter": 121,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["strength", "faith"]
+    },
+    { "book": "PSA", "chapter": 121, "verse": 3, "categories": ["comfort"] },
+    {
+      "book": "PSA",
+      "chapter": 121,
+      "verse": 7,
+      "endVerse": 8,
+      "categories": ["comfort"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 126,
+      "verse": 3,
+      "categories": ["joy", "gratitude"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 126,
+      "verse": 5,
+      "categories": ["joy", "hope"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 127,
+      "verse": 1,
+      "categories": ["wisdom", "faith"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 130,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["forgiveness"]
+    },
+    { "book": "PSA", "chapter": 130, "verse": 5, "categories": ["hope"] },
+    {
+      "book": "PSA",
+      "chapter": 133,
+      "verse": 1,
+      "categories": ["love", "peace"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 136,
+      "verse": 1,
+      "categories": ["gratitude", "love"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 138,
+      "verse": 3,
+      "categories": ["prayer", "strength"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 139,
+      "verse": 14,
+      "categories": ["praise", "inspiration"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 139,
+      "verse": 23,
+      "endVerse": 24,
+      "categories": ["prayer", "guidance"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 141,
+      "verse": 3,
+      "categories": ["prayer", "wisdom"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 143,
+      "verse": 8,
+      "categories": ["prayer", "guidance", "love"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 143,
+      "verse": 10,
+      "categories": ["guidance", "prayer"]
+    },
+    { "book": "PSA", "chapter": 145, "verse": 9, "categories": ["love"] },
+    {
+      "book": "PSA",
+      "chapter": 145,
+      "verse": 14,
+      "categories": ["comfort", "strength"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 145,
+      "verse": 15,
+      "endVerse": 16,
+      "categories": ["provision", "praise"]
+    },
+    {
+      "book": "PSA",
+      "chapter": 145,
+      "verse": 18,
+      "categories": ["prayer", "comfort"]
+    },
+    { "book": "PSA", "chapter": 147, "verse": 3, "categories": ["comfort"] },
+    { "book": "PSA", "chapter": 147, "verse": 5, "categories": ["praise"] },
+    {
+      "book": "PSA",
+      "chapter": 149,
+      "verse": 4,
+      "categories": ["love", "joy"]
+    },
+    { "book": "PSA", "chapter": 150, "verse": 6, "categories": ["praise"] },
+    { "book": "PRO", "chapter": 2, "verse": 6, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 3, "verse": 3, "categories": ["love"] },
+    {
+      "book": "PRO",
+      "chapter": 3,
+      "verse": 5,
+      "endVerse": 6,
+      "categories": ["faith", "guidance", "wisdom"]
+    },
+    {
+      "book": "PRO",
+      "chapter": 3,
+      "verse": 27,
+      "categories": ["love", "inspiration"]
+    },
+    { "book": "PRO", "chapter": 4, "verse": 23, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 9, "verse": 10, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 10, "verse": 9, "categories": ["wisdom"] },
+    {
+      "book": "PRO",
+      "chapter": 10,
+      "verse": 12,
+      "categories": ["love", "forgiveness"]
+    },
+    { "book": "PRO", "chapter": 11, "verse": 2, "categories": ["wisdom"] },
+    {
+      "book": "PRO",
+      "chapter": 11,
+      "verse": 25,
+      "categories": ["provision", "inspiration"]
+    },
+    {
+      "book": "PRO",
+      "chapter": 12,
+      "verse": 25,
+      "categories": ["peace", "inspiration"]
+    },
+    { "book": "PRO", "chapter": 13, "verse": 20, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 14, "verse": 30, "categories": ["peace"] },
+    { "book": "PRO", "chapter": 15, "verse": 1, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 15, "verse": 13, "categories": ["joy"] },
+    {
+      "book": "PRO",
+      "chapter": 15,
+      "verse": 22,
+      "categories": ["wisdom", "guidance"]
+    },
+    {
+      "book": "PRO",
+      "chapter": 16,
+      "verse": 3,
+      "categories": ["guidance", "faith"]
+    },
+    { "book": "PRO", "chapter": 16, "verse": 9, "categories": ["guidance"] },
+    { "book": "PRO", "chapter": 16, "verse": 24, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 17, "verse": 17, "categories": ["love"] },
+    { "book": "PRO", "chapter": 17, "verse": 22, "categories": ["joy"] },
+    {
+      "book": "PRO",
+      "chapter": 18,
+      "verse": 10,
+      "categories": ["strength", "comfort"]
+    },
+    { "book": "PRO", "chapter": 18, "verse": 24, "categories": ["love"] },
+    {
+      "book": "PRO",
+      "chapter": 19,
+      "verse": 17,
+      "categories": ["love", "provision"]
+    },
+    {
+      "book": "PRO",
+      "chapter": 19,
+      "verse": 21,
+      "categories": ["guidance", "wisdom"]
+    },
+    { "book": "PRO", "chapter": 20, "verse": 24, "categories": ["guidance"] },
+    { "book": "PRO", "chapter": 22, "verse": 1, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 22, "verse": 6, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 23, "verse": 18, "categories": ["hope"] },
+    {
+      "book": "PRO",
+      "chapter": 24,
+      "verse": 16,
+      "categories": ["strength", "hope"]
+    },
+    { "book": "PRO", "chapter": 25, "verse": 11, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 27, "verse": 17, "categories": ["wisdom"] },
+    { "book": "PRO", "chapter": 28, "verse": 1, "categories": ["courage"] },
+    {
+      "book": "PRO",
+      "chapter": 28,
+      "verse": 13,
+      "categories": ["forgiveness"]
+    },
+    {
+      "book": "PRO",
+      "chapter": 29,
+      "verse": 25,
+      "categories": ["courage", "faith"]
+    },
+    { "book": "PRO", "chapter": 30, "verse": 5, "categories": ["faith"] },
+    {
+      "book": "PRO",
+      "chapter": 31,
+      "verse": 25,
+      "categories": ["strength", "inspiration"]
+    },
+    { "book": "PRO", "chapter": 31, "verse": 30, "categories": ["wisdom"] },
+    { "book": "ECC", "chapter": 3, "verse": 1, "categories": ["wisdom"] },
+    {
+      "book": "ECC",
+      "chapter": 3,
+      "verse": 11,
+      "categories": ["hope", "faith"]
+    },
+    {
+      "book": "ECC",
+      "chapter": 4,
+      "verse": 9,
+      "categories": ["wisdom", "love"]
+    },
+    { "book": "ECC", "chapter": 12, "verse": 13, "categories": ["wisdom"] },
+    { "book": "SNG", "chapter": 8, "verse": 7, "categories": ["love"] },
+    { "book": "ISA", "chapter": 1, "verse": 18, "categories": ["forgiveness"] },
+    { "book": "ISA", "chapter": 6, "verse": 8, "categories": ["inspiration"] },
+    {
+      "book": "ISA",
+      "chapter": 7,
+      "verse": 14,
+      "categories": ["christmas-eve"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 9,
+      "verse": 2,
+      "categories": ["christmas-eve"]
+    },
+    { "book": "ISA", "chapter": 9, "verse": 6, "categories": ["christmas"] },
+    {
+      "book": "ISA",
+      "chapter": 12,
+      "verse": 2,
+      "categories": ["salvation", "courage", "faith"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 12,
+      "verse": 3,
+      "categories": ["joy", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 25,
+      "verse": 8,
+      "categories": ["hope", "comfort"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 26,
+      "verse": 3,
+      "categories": ["peace", "faith"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 26,
+      "verse": 4,
+      "categories": ["faith", "strength"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 30,
+      "verse": 18,
+      "categories": ["love", "hope"]
+    },
+    { "book": "ISA", "chapter": 30, "verse": 21, "categories": ["guidance"] },
+    { "book": "ISA", "chapter": 32, "verse": 17, "categories": ["peace"] },
+    { "book": "ISA", "chapter": 35, "verse": 4, "categories": ["courage"] },
+    {
+      "book": "ISA",
+      "chapter": 40,
+      "verse": 3,
+      "categories": ["advent-sunday"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 40,
+      "verse": 5,
+      "categories": ["advent-sunday"]
+    },
+    { "book": "ISA", "chapter": 40, "verse": 8, "categories": ["faith"] },
+    {
+      "book": "ISA",
+      "chapter": 40,
+      "verse": 11,
+      "categories": ["comfort", "love"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 40,
+      "verse": 28,
+      "categories": ["strength", "praise"]
+    },
+    { "book": "ISA", "chapter": 40, "verse": 29, "categories": ["strength"] },
+    {
+      "book": "ISA",
+      "chapter": 40,
+      "verse": 31,
+      "categories": ["strength", "hope"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 41,
+      "verse": 10,
+      "categories": ["courage", "strength", "comfort"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 41,
+      "verse": 13,
+      "categories": ["courage", "comfort"]
+    },
+    { "book": "ISA", "chapter": 42, "verse": 16, "categories": ["guidance"] },
+    {
+      "book": "ISA",
+      "chapter": 43,
+      "verse": 1,
+      "categories": ["courage", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 43,
+      "verse": 2,
+      "categories": ["comfort", "courage"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 43,
+      "verse": 18,
+      "endVerse": 19,
+      "categories": ["hope", "inspiration"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 43,
+      "verse": 25,
+      "categories": ["forgiveness"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 44,
+      "verse": 22,
+      "categories": ["forgiveness", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 46,
+      "verse": 4,
+      "categories": ["comfort", "strength"]
+    },
+    { "book": "ISA", "chapter": 48, "verse": 17, "categories": ["guidance"] },
+    {
+      "book": "ISA",
+      "chapter": 49,
+      "verse": 15,
+      "endVerse": 16,
+      "categories": ["love", "comfort"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 51,
+      "verse": 11,
+      "categories": ["joy", "hope"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 51,
+      "verse": 12,
+      "categories": ["courage", "comfort"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 52,
+      "verse": 7,
+      "categories": ["inspiration", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 53,
+      "verse": 5,
+      "categories": ["salvation", "forgiveness"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 54,
+      "verse": 10,
+      "categories": ["love", "comfort"]
+    },
+    { "book": "ISA", "chapter": 54, "verse": 17, "categories": ["courage"] },
+    {
+      "book": "ISA",
+      "chapter": 55,
+      "verse": 6,
+      "categories": ["prayer", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 55,
+      "verse": 7,
+      "categories": ["forgiveness", "salvation"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 55,
+      "verse": 8,
+      "endVerse": 9,
+      "categories": ["wisdom", "faith"]
+    },
+    { "book": "ISA", "chapter": 55, "verse": 11, "categories": ["faith"] },
+    {
+      "book": "ISA",
+      "chapter": 55,
+      "verse": 12,
+      "categories": ["joy", "peace"]
+    },
+    {
+      "book": "ISA",
+      "chapter": 58,
+      "verse": 11,
+      "categories": ["guidance", "provision"]
+    },
+    { "book": "ISA", "chapter": 60, "verse": 1, "categories": ["inspiration"] },
+    {
+      "book": "ISA",
+      "chapter": 60,
+      "verse": 2,
+      "categories": ["all-hallows-eve"]
+    },
+    { "book": "ISA", "chapter": 60, "verse": 3, "categories": ["epiphany"] },
+    {
+      "book": "ISA",
+      "chapter": 61,
+      "verse": 10,
+      "categories": ["joy", "salvation", "praise"]
+    },
+    { "book": "ISA", "chapter": 64, "verse": 8, "categories": ["faith"] },
+    { "book": "ISA", "chapter": 65, "verse": 24, "categories": ["prayer"] },
+    { "book": "JER", "chapter": 10, "verse": 23, "categories": ["guidance"] },
+    {
+      "book": "JER",
+      "chapter": 15,
+      "verse": 16,
+      "categories": ["joy", "wisdom"]
+    },
+    { "book": "JER", "chapter": 17, "verse": 7, "categories": ["faith"] },
+    {
+      "book": "JER",
+      "chapter": 17,
+      "verse": 14,
+      "categories": ["prayer", "salvation"]
+    },
+    {
+      "book": "JER",
+      "chapter": 29,
+      "verse": 11,
+      "categories": ["hope", "guidance"]
+    },
+    {
+      "book": "JER",
+      "chapter": 29,
+      "verse": 12,
+      "endVerse": 13,
+      "categories": ["prayer"]
+    },
+    { "book": "JER", "chapter": 31, "verse": 3, "categories": ["love"] },
+    {
+      "book": "JER",
+      "chapter": 32,
+      "verse": 17,
+      "categories": ["faith", "praise"]
+    },
+    { "book": "JER", "chapter": 33, "verse": 3, "categories": ["prayer"] },
+    {
+      "book": "LAM",
+      "chapter": 3,
+      "verse": 22,
+      "endVerse": 23,
+      "categories": ["love", "hope"]
+    },
+    { "book": "LAM", "chapter": 3, "verse": 24, "categories": ["hope"] },
+    { "book": "LAM", "chapter": 3, "verse": 25, "categories": ["hope"] },
+    { "book": "EZK", "chapter": 34, "verse": 26, "categories": ["provision"] },
+    {
+      "book": "EZK",
+      "chapter": 36,
+      "verse": 26,
+      "categories": ["salvation", "hope"]
+    },
+    { "book": "EZK", "chapter": 36, "verse": 27, "categories": ["pentecost"] },
+    {
+      "book": "DAN",
+      "chapter": 2,
+      "verse": 20,
+      "categories": ["praise", "wisdom"]
+    },
+    {
+      "book": "DAN",
+      "chapter": 3,
+      "verse": 17,
+      "endVerse": 18,
+      "categories": ["courage", "faith"]
+    },
+    {
+      "book": "DAN",
+      "chapter": 7,
+      "verse": 18,
+      "categories": ["all-saints-day"]
+    },
+    { "book": "DAN", "chapter": 9, "verse": 9, "categories": ["forgiveness"] },
+    {
+      "book": "DAN",
+      "chapter": 12,
+      "verse": 3,
+      "categories": ["wisdom", "inspiration"]
+    },
+    { "book": "HOS", "chapter": 6, "verse": 3, "categories": ["inspiration"] },
+    {
+      "book": "HOS",
+      "chapter": 6,
+      "verse": 6,
+      "categories": ["love", "wisdom"]
+    },
+    {
+      "book": "HOS",
+      "chapter": 10,
+      "verse": 12,
+      "categories": ["inspiration"]
+    },
+    {
+      "book": "HOS",
+      "chapter": 14,
+      "verse": 4,
+      "categories": ["forgiveness", "love"]
+    },
+    {
+      "book": "JOL",
+      "chapter": 2,
+      "verse": 12,
+      "categories": ["ash-wednesday"]
+    },
+    {
+      "book": "JOL",
+      "chapter": 2,
+      "verse": 13,
+      "categories": ["forgiveness", "love"]
+    },
+    {
+      "book": "JOL",
+      "chapter": 2,
+      "verse": 26,
+      "categories": ["provision", "praise"]
+    },
+    {
+      "book": "JOL",
+      "chapter": 2,
+      "verse": 32,
+      "categories": ["salvation", "prayer"]
+    },
+    { "book": "AMO", "chapter": 5, "verse": 24, "categories": ["inspiration"] },
+    {
+      "book": "JON",
+      "chapter": 2,
+      "verse": 9,
+      "categories": ["salvation", "gratitude"]
+    },
+    {
+      "book": "MIC",
+      "chapter": 5,
+      "verse": 2,
+      "categories": ["christmas-eve"]
+    },
+    {
+      "book": "MIC",
+      "chapter": 6,
+      "verse": 8,
+      "categories": ["wisdom", "inspiration"]
+    },
+    {
+      "book": "MIC",
+      "chapter": 7,
+      "verse": 7,
+      "categories": ["hope", "prayer"]
+    },
+    {
+      "book": "MIC",
+      "chapter": 7,
+      "verse": 18,
+      "categories": ["forgiveness", "love"]
+    },
+    { "book": "MIC", "chapter": 7, "verse": 19, "categories": ["forgiveness"] },
+    {
+      "book": "NAM",
+      "chapter": 1,
+      "verse": 7,
+      "categories": ["comfort", "strength"]
+    },
+    { "book": "HAB", "chapter": 2, "verse": 3, "categories": ["hope"] },
+    {
+      "book": "HAB",
+      "chapter": 3,
+      "verse": 18,
+      "categories": ["joy", "salvation"]
+    },
+    { "book": "HAB", "chapter": 3, "verse": 19, "categories": ["strength"] },
+    { "book": "ZEP", "chapter": 3, "verse": 17, "categories": ["love", "joy"] },
+    {
+      "book": "HAG",
+      "chapter": 2,
+      "verse": 9,
+      "categories": ["peace", "hope"]
+    },
+    { "book": "ZEC", "chapter": 2, "verse": 10, "categories": ["joy"] },
+    {
+      "book": "ZEC",
+      "chapter": 4,
+      "verse": 6,
+      "categories": ["strength", "faith"]
+    },
+    { "book": "ZEC", "chapter": 9, "verse": 9, "categories": ["palm-sunday"] },
+    {
+      "book": "MAL",
+      "chapter": 3,
+      "verse": 1,
+      "categories": ["advent-sunday"]
+    },
+    { "book": "MAL", "chapter": 3, "verse": 10, "categories": ["provision"] },
+    { "book": "MAL", "chapter": 4, "verse": 2, "categories": ["hope", "joy"] },
+    {
+      "book": "MAT",
+      "chapter": 1,
+      "verse": 21,
+      "categories": ["christmas-eve"]
+    },
+    { "book": "MAT", "chapter": 1, "verse": 23, "categories": ["christmas"] },
+    { "book": "MAT", "chapter": 2, "verse": 2, "categories": ["epiphany"] },
+    {
+      "book": "MAT",
+      "chapter": 2,
+      "verse": 10,
+      "endVerse": 11,
+      "categories": ["epiphany"]
+    },
+    { "book": "MAT", "chapter": 4, "verse": 19, "categories": ["inspiration"] },
+    { "book": "MAT", "chapter": 5, "verse": 4, "categories": ["comfort"] },
+    { "book": "MAT", "chapter": 5, "verse": 6, "categories": ["provision"] },
+    {
+      "book": "MAT",
+      "chapter": 5,
+      "verse": 7,
+      "categories": ["forgiveness", "love"]
+    },
+    { "book": "MAT", "chapter": 5, "verse": 8, "categories": ["inspiration"] },
+    { "book": "MAT", "chapter": 5, "verse": 9, "categories": ["peace"] },
+    { "book": "MAT", "chapter": 5, "verse": 14, "categories": ["inspiration"] },
+    { "book": "MAT", "chapter": 5, "verse": 16, "categories": ["inspiration"] },
+    { "book": "MAT", "chapter": 5, "verse": 44, "categories": ["love"] },
+    { "book": "MAT", "chapter": 6, "verse": 6, "categories": ["prayer"] },
+    {
+      "book": "MAT",
+      "chapter": 6,
+      "verse": 9,
+      "endVerse": 10,
+      "categories": ["prayer", "praise"]
+    },
+    { "book": "MAT", "chapter": 6, "verse": 14, "categories": ["forgiveness"] },
+    {
+      "book": "MAT",
+      "chapter": 6,
+      "verse": 17,
+      "endVerse": 18,
+      "categories": ["ash-wednesday"]
+    },
+    { "book": "MAT", "chapter": 6, "verse": 21, "categories": ["wisdom"] },
+    {
+      "book": "MAT",
+      "chapter": 6,
+      "verse": 26,
+      "categories": ["provision", "peace"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 6,
+      "verse": 33,
+      "categories": ["provision", "guidance"]
+    },
+    { "book": "MAT", "chapter": 6, "verse": 34, "categories": ["peace"] },
+    { "book": "MAT", "chapter": 7, "verse": 7, "categories": ["prayer"] },
+    {
+      "book": "MAT",
+      "chapter": 7,
+      "verse": 11,
+      "categories": ["provision", "prayer"]
+    },
+    { "book": "MAT", "chapter": 7, "verse": 24, "categories": ["wisdom"] },
+    {
+      "book": "MAT",
+      "chapter": 11,
+      "verse": 28,
+      "categories": ["comfort", "peace"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 11,
+      "verse": 29,
+      "endVerse": 30,
+      "categories": ["peace", "comfort"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 14,
+      "verse": 27,
+      "categories": ["courage", "comfort"]
+    },
+    { "book": "MAT", "chapter": 17, "verse": 20, "categories": ["faith"] },
+    {
+      "book": "MAT",
+      "chapter": 18,
+      "verse": 20,
+      "categories": ["prayer", "comfort"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 18,
+      "verse": 21,
+      "endVerse": 22,
+      "categories": ["forgiveness"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 19,
+      "verse": 26,
+      "categories": ["faith", "inspiration"]
+    },
+    { "book": "MAT", "chapter": 21, "verse": 9, "categories": ["palm-sunday"] },
+    {
+      "book": "MAT",
+      "chapter": 22,
+      "verse": 37,
+      "endVerse": 39,
+      "categories": ["love"]
+    },
+    { "book": "MAT", "chapter": 25, "verse": 40, "categories": ["love"] },
+    {
+      "book": "MAT",
+      "chapter": 27,
+      "verse": 45,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 27,
+      "verse": 46,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 27,
+      "verse": 50,
+      "endVerse": 51,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 27,
+      "verse": 59,
+      "endVerse": 60,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 28,
+      "verse": 6,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 28,
+      "verse": 9,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "MAT",
+      "chapter": 28,
+      "verse": 19,
+      "categories": ["inspiration"]
+    },
+    { "book": "MAT", "chapter": 28, "verse": 20, "categories": ["comfort"] },
+    { "book": "MRK", "chapter": 1, "verse": 35, "categories": ["prayer"] },
+    { "book": "MRK", "chapter": 4, "verse": 39, "categories": ["peace"] },
+    { "book": "MRK", "chapter": 6, "verse": 31, "categories": ["peace"] },
+    { "book": "MRK", "chapter": 8, "verse": 36, "categories": ["wisdom"] },
+    { "book": "MRK", "chapter": 9, "verse": 23, "categories": ["faith"] },
+    {
+      "book": "MRK",
+      "chapter": 10,
+      "verse": 45,
+      "categories": ["salvation", "love"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 11,
+      "verse": 24,
+      "categories": ["prayer", "faith"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 11,
+      "verse": 25,
+      "categories": ["forgiveness", "prayer"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 14,
+      "verse": 38,
+      "categories": ["maundy-thursday"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 15,
+      "verse": 39,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 16,
+      "verse": 6,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 16,
+      "verse": 15,
+      "categories": ["inspiration"]
+    },
+    {
+      "book": "MRK",
+      "chapter": 16,
+      "verse": 19,
+      "categories": ["ascension-day"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 1,
+      "verse": 31,
+      "endVerse": 33,
+      "categories": ["christmas-eve"]
+    },
+    { "book": "LUK", "chapter": 1, "verse": 37, "categories": ["faith"] },
+    { "book": "LUK", "chapter": 1, "verse": 45, "categories": ["faith"] },
+    {
+      "book": "LUK",
+      "chapter": 1,
+      "verse": 46,
+      "endVerse": 47,
+      "categories": ["praise", "joy"]
+    },
+    { "book": "LUK", "chapter": 2, "verse": 7, "categories": ["christmas"] },
+    {
+      "book": "LUK",
+      "chapter": 2,
+      "verse": 10,
+      "endVerse": 11,
+      "categories": ["christmas"]
+    },
+    { "book": "LUK", "chapter": 2, "verse": 12, "categories": ["christmas"] },
+    { "book": "LUK", "chapter": 2, "verse": 14, "categories": ["christmas"] },
+    { "book": "LUK", "chapter": 2, "verse": 20, "categories": ["christmas"] },
+    { "book": "LUK", "chapter": 2, "verse": 32, "categories": ["epiphany"] },
+    {
+      "book": "LUK",
+      "chapter": 6,
+      "verse": 31,
+      "categories": ["love", "wisdom"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 6,
+      "verse": 36,
+      "categories": ["love", "forgiveness"]
+    },
+    { "book": "LUK", "chapter": 6, "verse": 37, "categories": ["forgiveness"] },
+    { "book": "LUK", "chapter": 6, "verse": 38, "categories": ["provision"] },
+    { "book": "LUK", "chapter": 9, "verse": 23, "categories": ["inspiration"] },
+    { "book": "LUK", "chapter": 12, "verse": 7, "categories": ["comfort"] },
+    {
+      "book": "LUK",
+      "chapter": 15,
+      "verse": 7,
+      "categories": ["joy", "salvation"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 17,
+      "verse": 5,
+      "categories": ["faith", "prayer"]
+    },
+    { "book": "LUK", "chapter": 19, "verse": 10, "categories": ["salvation"] },
+    {
+      "book": "LUK",
+      "chapter": 19,
+      "verse": 38,
+      "categories": ["palm-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 19,
+      "verse": 40,
+      "categories": ["palm-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 21,
+      "verse": 28,
+      "categories": ["advent-sunday"]
+    },
+    { "book": "LUK", "chapter": 21, "verse": 33, "categories": ["faith"] },
+    {
+      "book": "LUK",
+      "chapter": 22,
+      "verse": 19,
+      "categories": ["maundy-thursday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 22,
+      "verse": 42,
+      "categories": ["maundy-thursday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 23,
+      "verse": 33,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 23,
+      "verse": 34,
+      "categories": ["forgiveness"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 23,
+      "verse": 43,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 23,
+      "verse": 46,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 24,
+      "verse": 5,
+      "endVerse": 7,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 24,
+      "verse": 31,
+      "endVerse": 32,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 24,
+      "verse": 34,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 24,
+      "verse": 38,
+      "endVerse": 39,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "LUK",
+      "chapter": 24,
+      "verse": 50,
+      "endVerse": 51,
+      "categories": ["ascension-day"]
+    },
+    { "book": "JHN", "chapter": 1, "verse": 1, "categories": ["praise"] },
+    { "book": "JHN", "chapter": 1, "verse": 5, "categories": ["hope"] },
+    { "book": "JHN", "chapter": 1, "verse": 9, "categories": ["epiphany"] },
+    { "book": "JHN", "chapter": 1, "verse": 12, "categories": ["salvation"] },
+    {
+      "book": "JHN",
+      "chapter": 1,
+      "verse": 14,
+      "categories": ["salvation", "praise"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 1,
+      "verse": 16,
+      "categories": ["salvation", "gratitude"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 1,
+      "verse": 29,
+      "categories": ["salvation", "forgiveness"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 3,
+      "verse": 16,
+      "categories": ["love", "salvation"]
+    },
+    { "book": "JHN", "chapter": 3, "verse": 17, "categories": ["salvation"] },
+    {
+      "book": "JHN",
+      "chapter": 4,
+      "verse": 14,
+      "categories": ["salvation", "provision"]
+    },
+    { "book": "JHN", "chapter": 4, "verse": 24, "categories": ["praise"] },
+    {
+      "book": "JHN",
+      "chapter": 5,
+      "verse": 24,
+      "categories": ["salvation", "faith"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 6,
+      "verse": 35,
+      "categories": ["provision", "salvation"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 6,
+      "verse": 37,
+      "categories": ["salvation", "comfort"]
+    },
+    { "book": "JHN", "chapter": 6, "verse": 68, "categories": ["faith"] },
+    {
+      "book": "JHN",
+      "chapter": 8,
+      "verse": 12,
+      "categories": ["guidance", "salvation"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 8,
+      "verse": 32,
+      "categories": ["wisdom", "salvation"]
+    },
+    { "book": "JHN", "chapter": 8, "verse": 36, "categories": ["salvation"] },
+    {
+      "book": "JHN",
+      "chapter": 10,
+      "verse": 10,
+      "categories": ["joy", "salvation"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 10,
+      "verse": 11,
+      "categories": ["love", "salvation"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 10,
+      "verse": 27,
+      "endVerse": 28,
+      "categories": ["guidance", "salvation", "comfort"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 11,
+      "verse": 25,
+      "categories": ["hope", "salvation"]
+    },
+    { "book": "JHN", "chapter": 11, "verse": 35, "categories": ["comfort"] },
+    {
+      "book": "JHN",
+      "chapter": 12,
+      "verse": 13,
+      "categories": ["palm-sunday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 12,
+      "verse": 46,
+      "categories": ["hope", "salvation"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 13,
+      "verse": 1,
+      "categories": ["maundy-thursday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 13,
+      "verse": 14,
+      "endVerse": 15,
+      "categories": ["maundy-thursday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 13,
+      "verse": 34,
+      "endVerse": 35,
+      "categories": ["love"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 14,
+      "verse": 1,
+      "categories": ["peace", "faith"]
+    },
+    { "book": "JHN", "chapter": 14, "verse": 2, "categories": ["hope"] },
+    {
+      "book": "JHN",
+      "chapter": 14,
+      "verse": 3,
+      "categories": ["ascension-day"]
+    },
+    { "book": "JHN", "chapter": 14, "verse": 6, "categories": ["salvation"] },
+    { "book": "JHN", "chapter": 14, "verse": 13, "categories": ["prayer"] },
+    { "book": "JHN", "chapter": 14, "verse": 15, "categories": ["love"] },
+    {
+      "book": "JHN",
+      "chapter": 14,
+      "verse": 16,
+      "endVerse": 17,
+      "categories": ["pentecost"]
+    },
+    { "book": "JHN", "chapter": 14, "verse": 18, "categories": ["comfort"] },
+    {
+      "book": "JHN",
+      "chapter": 14,
+      "verse": 26,
+      "categories": ["guidance", "comfort"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 14,
+      "verse": 27,
+      "categories": ["peace", "courage"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 15,
+      "verse": 5,
+      "categories": ["faith", "strength"]
+    },
+    { "book": "JHN", "chapter": 15, "verse": 7, "categories": ["prayer"] },
+    { "book": "JHN", "chapter": 15, "verse": 11, "categories": ["joy"] },
+    { "book": "JHN", "chapter": 15, "verse": 12, "categories": ["love"] },
+    { "book": "JHN", "chapter": 15, "verse": 13, "categories": ["love"] },
+    {
+      "book": "JHN",
+      "chapter": 15,
+      "verse": 16,
+      "categories": ["inspiration"]
+    },
+    { "book": "JHN", "chapter": 16, "verse": 13, "categories": ["guidance"] },
+    {
+      "book": "JHN",
+      "chapter": 16,
+      "verse": 22,
+      "categories": ["joy", "hope"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 16,
+      "verse": 24,
+      "categories": ["prayer", "joy"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 16,
+      "verse": 33,
+      "categories": ["courage", "peace"]
+    },
+    { "book": "JHN", "chapter": 17, "verse": 3, "categories": ["salvation"] },
+    {
+      "book": "JHN",
+      "chapter": 19,
+      "verse": 17,
+      "endVerse": 18,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 19,
+      "verse": 26,
+      "endVerse": 27,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 19,
+      "verse": 30,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 19,
+      "verse": 41,
+      "endVerse": 42,
+      "categories": ["good-friday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 20,
+      "verse": 1,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 20,
+      "verse": 16,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 20,
+      "verse": 20,
+      "categories": ["resurrection-sunday"]
+    },
+    {
+      "book": "JHN",
+      "chapter": 20,
+      "verse": 27,
+      "endVerse": 28,
+      "categories": ["post-resurrection-sunday"]
+    },
+    { "book": "JHN", "chapter": 20, "verse": 29, "categories": ["faith"] },
+    {
+      "book": "JHN",
+      "chapter": 20,
+      "verse": 31,
+      "categories": ["faith", "salvation"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 1,
+      "verse": 3,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 1,
+      "verse": 8,
+      "categories": ["strength", "inspiration"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 1,
+      "verse": 9,
+      "categories": ["ascension-day"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 1,
+      "verse": 11,
+      "categories": ["ascension-day"]
+    },
+    { "book": "ACT", "chapter": 2, "verse": 4, "categories": ["pentecost"] },
+    { "book": "ACT", "chapter": 2, "verse": 17, "categories": ["pentecost"] },
+    {
+      "book": "ACT",
+      "chapter": 2,
+      "verse": 24,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 2,
+      "verse": 38,
+      "categories": ["forgiveness", "salvation"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 3,
+      "verse": 19,
+      "categories": ["forgiveness", "salvation"]
+    },
+    { "book": "ACT", "chapter": 4, "verse": 12, "categories": ["salvation"] },
+    {
+      "book": "ACT",
+      "chapter": 16,
+      "verse": 31,
+      "categories": ["salvation", "faith"]
+    },
+    { "book": "ACT", "chapter": 17, "verse": 28, "categories": ["faith"] },
+    {
+      "book": "ACT",
+      "chapter": 20,
+      "verse": 24,
+      "categories": ["inspiration", "courage"]
+    },
+    {
+      "book": "ACT",
+      "chapter": 20,
+      "verse": 35,
+      "categories": ["love", "inspiration"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 1,
+      "verse": 16,
+      "categories": ["salvation", "courage"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 3,
+      "verse": 23,
+      "endVerse": 24,
+      "categories": ["salvation", "forgiveness"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 4,
+      "verse": 20,
+      "endVerse": 21,
+      "categories": ["faith"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 5,
+      "verse": 1,
+      "categories": ["peace", "salvation", "faith"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 5,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["hope", "strength"]
+    },
+    { "book": "ROM", "chapter": 5, "verse": 5, "categories": ["hope", "love"] },
+    {
+      "book": "ROM",
+      "chapter": 5,
+      "verse": 8,
+      "categories": ["love", "salvation"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 6,
+      "verse": 4,
+      "categories": ["salvation", "hope"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 6,
+      "verse": 9,
+      "categories": ["post-resurrection-sunday"]
+    },
+    { "book": "ROM", "chapter": 6, "verse": 23, "categories": ["salvation"] },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 1,
+      "categories": ["forgiveness", "salvation"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 6,
+      "categories": ["peace", "wisdom"]
+    },
+    { "book": "ROM", "chapter": 8, "verse": 11, "categories": ["pentecost"] },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 15,
+      "categories": ["salvation", "courage"]
+    },
+    { "book": "ROM", "chapter": 8, "verse": 18, "categories": ["hope"] },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 26,
+      "categories": ["prayer", "comfort"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 28,
+      "categories": ["hope", "faith"]
+    },
+    { "book": "ROM", "chapter": 8, "verse": 31, "categories": ["courage"] },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 37,
+      "categories": ["strength", "love"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 8,
+      "verse": 38,
+      "endVerse": 39,
+      "categories": ["love", "hope"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 10,
+      "verse": 9,
+      "categories": ["salvation", "faith"]
+    },
+    { "book": "ROM", "chapter": 10, "verse": 17, "categories": ["faith"] },
+    {
+      "book": "ROM",
+      "chapter": 11,
+      "verse": 33,
+      "categories": ["praise", "wisdom"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 12,
+      "verse": 1,
+      "categories": ["praise", "inspiration"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 12,
+      "verse": 2,
+      "categories": ["wisdom", "guidance"]
+    },
+    { "book": "ROM", "chapter": 12, "verse": 9, "categories": ["love"] },
+    { "book": "ROM", "chapter": 12, "verse": 10, "categories": ["love"] },
+    {
+      "book": "ROM",
+      "chapter": 12,
+      "verse": 12,
+      "categories": ["hope", "prayer", "joy"]
+    },
+    { "book": "ROM", "chapter": 12, "verse": 18, "categories": ["peace"] },
+    {
+      "book": "ROM",
+      "chapter": 12,
+      "verse": 21,
+      "categories": ["inspiration"]
+    },
+    { "book": "ROM", "chapter": 13, "verse": 8, "categories": ["love"] },
+    {
+      "book": "ROM",
+      "chapter": 13,
+      "verse": 11,
+      "categories": ["advent-sunday"]
+    },
+    {
+      "book": "ROM",
+      "chapter": 13,
+      "verse": 12,
+      "categories": ["all-hallows-eve"]
+    },
+    { "book": "ROM", "chapter": 14, "verse": 19, "categories": ["peace"] },
+    {
+      "book": "ROM",
+      "chapter": 15,
+      "verse": 4,
+      "categories": ["hope", "wisdom"]
+    },
+    { "book": "ROM", "chapter": 15, "verse": 7, "categories": ["love"] },
+    {
+      "book": "ROM",
+      "chapter": 15,
+      "verse": 13,
+      "categories": ["hope", "joy", "peace"]
+    },
+    { "book": "1CO", "chapter": 1, "verse": 4, "categories": ["gratitude"] },
+    { "book": "1CO", "chapter": 1, "verse": 18, "categories": ["salvation"] },
+    { "book": "1CO", "chapter": 2, "verse": 9, "categories": ["hope"] },
+    {
+      "book": "1CO",
+      "chapter": 6,
+      "verse": 20,
+      "categories": ["salvation", "inspiration"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 10,
+      "verse": 13,
+      "categories": ["strength", "faith"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 10,
+      "verse": 31,
+      "categories": ["inspiration", "praise"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 11,
+      "verse": 26,
+      "categories": ["maundy-thursday"]
+    },
+    { "book": "1CO", "chapter": 12, "verse": 13, "categories": ["pentecost"] },
+    { "book": "1CO", "chapter": 13, "verse": 4, "categories": ["love"] },
+    {
+      "book": "1CO",
+      "chapter": 13,
+      "verse": 7,
+      "categories": ["love", "hope"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 13,
+      "verse": 13,
+      "categories": ["love", "faith", "hope"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 15,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 15,
+      "verse": 10,
+      "categories": ["gratitude", "salvation"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 15,
+      "verse": 20,
+      "categories": ["post-resurrection-sunday"]
+    },
+    { "book": "1CO", "chapter": 15, "verse": 55, "categories": ["hope"] },
+    {
+      "book": "1CO",
+      "chapter": 15,
+      "verse": 57,
+      "categories": ["gratitude", "salvation"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 15,
+      "verse": 58,
+      "categories": ["inspiration", "strength"]
+    },
+    {
+      "book": "1CO",
+      "chapter": 16,
+      "verse": 13,
+      "endVerse": 14,
+      "categories": ["courage", "strength", "love"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 1,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["comfort", "praise"]
+    },
+    { "book": "2CO", "chapter": 1, "verse": 20, "categories": ["faith"] },
+    { "book": "2CO", "chapter": 3, "verse": 17, "categories": ["salvation"] },
+    {
+      "book": "2CO",
+      "chapter": 4,
+      "verse": 6,
+      "categories": ["all-hallows-eve"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 4,
+      "verse": 8,
+      "endVerse": 9,
+      "categories": ["strength", "hope"]
+    },
+    { "book": "2CO", "chapter": 4, "verse": 15, "categories": ["gratitude"] },
+    {
+      "book": "2CO",
+      "chapter": 4,
+      "verse": 16,
+      "categories": ["strength", "hope"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 4,
+      "verse": 18,
+      "categories": ["hope", "faith"]
+    },
+    { "book": "2CO", "chapter": 5, "verse": 7, "categories": ["faith"] },
+    {
+      "book": "2CO",
+      "chapter": 5,
+      "verse": 17,
+      "categories": ["salvation", "inspiration"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 5,
+      "verse": 20,
+      "categories": ["ash-wednesday"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 5,
+      "verse": 21,
+      "categories": ["salvation", "forgiveness"]
+    },
+    {
+      "book": "2CO",
+      "chapter": 6,
+      "verse": 2,
+      "categories": ["ash-wednesday"]
+    },
+    { "book": "2CO", "chapter": 9, "verse": 7, "categories": ["love", "joy"] },
+    { "book": "2CO", "chapter": 9, "verse": 8, "categories": ["provision"] },
+    { "book": "2CO", "chapter": 9, "verse": 10, "categories": ["provision"] },
+    { "book": "2CO", "chapter": 9, "verse": 15, "categories": ["gratitude"] },
+    { "book": "2CO", "chapter": 10, "verse": 5, "categories": ["wisdom"] },
+    {
+      "book": "2CO",
+      "chapter": 12,
+      "verse": 9,
+      "categories": ["strength", "comfort"]
+    },
+    { "book": "2CO", "chapter": 12, "verse": 10, "categories": ["strength"] },
+    {
+      "book": "2CO",
+      "chapter": 13,
+      "verse": 11,
+      "categories": ["peace", "joy", "love"]
+    },
+    {
+      "book": "GAL",
+      "chapter": 2,
+      "verse": 20,
+      "categories": ["faith", "salvation", "love"]
+    },
+    { "book": "GAL", "chapter": 3, "verse": 28, "categories": ["salvation"] },
+    {
+      "book": "GAL",
+      "chapter": 4,
+      "verse": 4,
+      "endVerse": 5,
+      "categories": ["christmas-eve"]
+    },
+    {
+      "book": "GAL",
+      "chapter": 5,
+      "verse": 1,
+      "categories": ["salvation", "courage"]
+    },
+    { "book": "GAL", "chapter": 5, "verse": 13, "categories": ["love"] },
+    {
+      "book": "GAL",
+      "chapter": 5,
+      "verse": 22,
+      "endVerse": 23,
+      "categories": ["love", "joy", "peace"]
+    },
+    { "book": "GAL", "chapter": 5, "verse": 25, "categories": ["guidance"] },
+    {
+      "book": "GAL",
+      "chapter": 6,
+      "verse": 2,
+      "categories": ["love", "comfort"]
+    },
+    {
+      "book": "GAL",
+      "chapter": 6,
+      "verse": 9,
+      "categories": ["inspiration", "strength"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 1,
+      "verse": 3,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 1,
+      "verse": 7,
+      "categories": ["forgiveness", "salvation"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 1,
+      "verse": 18,
+      "categories": ["hope", "wisdom", "prayer"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 2,
+      "verse": 4,
+      "endVerse": 5,
+      "categories": ["salvation", "love"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 2,
+      "verse": 8,
+      "endVerse": 9,
+      "categories": ["salvation", "faith"]
+    },
+    { "book": "EPH", "chapter": 2, "verse": 10, "categories": ["inspiration"] },
+    {
+      "book": "EPH",
+      "chapter": 2,
+      "verse": 19,
+      "categories": ["all-saints-day"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 3,
+      "verse": 20,
+      "categories": ["faith", "praise"]
+    },
+    { "book": "EPH", "chapter": 4, "verse": 2, "categories": ["love"] },
+    {
+      "book": "EPH",
+      "chapter": 4,
+      "verse": 3,
+      "categories": ["peace", "love"]
+    },
+    { "book": "EPH", "chapter": 4, "verse": 29, "categories": ["wisdom"] },
+    {
+      "book": "EPH",
+      "chapter": 4,
+      "verse": 32,
+      "categories": ["forgiveness", "love"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 5,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["love", "inspiration"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 5,
+      "verse": 8,
+      "categories": ["all-hallows-eve"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 5,
+      "verse": 15,
+      "endVerse": 16,
+      "categories": ["wisdom"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 5,
+      "verse": 19,
+      "endVerse": 20,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 6,
+      "verse": 10,
+      "categories": ["strength", "courage"]
+    },
+    {
+      "book": "EPH",
+      "chapter": 6,
+      "verse": 11,
+      "categories": ["strength", "courage"]
+    },
+    { "book": "EPH", "chapter": 6, "verse": 18, "categories": ["prayer"] },
+    {
+      "book": "PHP",
+      "chapter": 1,
+      "verse": 6,
+      "categories": ["hope", "faith"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 1,
+      "verse": 21,
+      "categories": ["hope", "faith"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 2,
+      "verse": 3,
+      "endVerse": 4,
+      "categories": ["love", "wisdom"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 2,
+      "verse": 6,
+      "endVerse": 7,
+      "categories": ["christmas"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 2,
+      "verse": 13,
+      "categories": ["inspiration", "faith"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 2,
+      "verse": 14,
+      "categories": ["inspiration", "gratitude"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 3,
+      "verse": 10,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 3,
+      "verse": 13,
+      "endVerse": 14,
+      "categories": ["inspiration"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 3,
+      "verse": 20,
+      "categories": ["hope", "salvation"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 4,
+      "verse": 4,
+      "categories": ["joy", "praise"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 4,
+      "verse": 6,
+      "endVerse": 7,
+      "categories": ["prayer", "peace", "gratitude"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 4,
+      "verse": 8,
+      "categories": ["wisdom", "inspiration"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 4,
+      "verse": 11,
+      "categories": ["peace", "gratitude"]
+    },
+    {
+      "book": "PHP",
+      "chapter": 4,
+      "verse": 13,
+      "categories": ["strength", "inspiration"]
+    },
+    { "book": "PHP", "chapter": 4, "verse": 19, "categories": ["provision"] },
+    {
+      "book": "COL",
+      "chapter": 1,
+      "verse": 12,
+      "categories": ["gratitude", "salvation"]
+    },
+    {
+      "book": "COL",
+      "chapter": 1,
+      "verse": 13,
+      "endVerse": 14,
+      "categories": ["salvation", "forgiveness"]
+    },
+    { "book": "COL", "chapter": 1, "verse": 17, "categories": ["praise"] },
+    {
+      "book": "COL",
+      "chapter": 2,
+      "verse": 6,
+      "endVerse": 7,
+      "categories": ["faith", "gratitude"]
+    },
+    {
+      "book": "COL",
+      "chapter": 2,
+      "verse": 15,
+      "categories": ["all-hallows-eve"]
+    },
+    {
+      "book": "COL",
+      "chapter": 3,
+      "verse": 1,
+      "categories": ["ascension-day"]
+    },
+    { "book": "COL", "chapter": 3, "verse": 2, "categories": ["wisdom"] },
+    { "book": "COL", "chapter": 3, "verse": 12, "categories": ["love"] },
+    {
+      "book": "COL",
+      "chapter": 3,
+      "verse": 13,
+      "categories": ["forgiveness", "love"]
+    },
+    { "book": "COL", "chapter": 3, "verse": 14, "categories": ["love"] },
+    {
+      "book": "COL",
+      "chapter": 3,
+      "verse": 15,
+      "categories": ["peace", "gratitude"]
+    },
+    {
+      "book": "COL",
+      "chapter": 3,
+      "verse": 16,
+      "categories": ["wisdom", "praise", "gratitude"]
+    },
+    {
+      "book": "COL",
+      "chapter": 3,
+      "verse": 17,
+      "categories": ["gratitude", "inspiration"]
+    },
+    { "book": "COL", "chapter": 3, "verse": 23, "categories": ["inspiration"] },
+    {
+      "book": "COL",
+      "chapter": 4,
+      "verse": 2,
+      "categories": ["prayer", "gratitude"]
+    },
+    { "book": "COL", "chapter": 4, "verse": 6, "categories": ["wisdom"] },
+    {
+      "book": "1TH",
+      "chapter": 3,
+      "verse": 12,
+      "categories": ["love", "prayer"]
+    },
+    {
+      "book": "1TH",
+      "chapter": 4,
+      "verse": 13,
+      "categories": ["hope", "comfort"]
+    },
+    {
+      "book": "1TH",
+      "chapter": 4,
+      "verse": 14,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "1TH",
+      "chapter": 5,
+      "verse": 5,
+      "categories": ["all-hallows-eve"]
+    },
+    {
+      "book": "1TH",
+      "chapter": 5,
+      "verse": 11,
+      "categories": ["inspiration", "love"]
+    },
+    {
+      "book": "1TH",
+      "chapter": 5,
+      "verse": 16,
+      "endVerse": 18,
+      "categories": ["joy", "prayer", "gratitude"]
+    },
+    { "book": "1TH", "chapter": 5, "verse": 24, "categories": ["faith"] },
+    {
+      "book": "2TH",
+      "chapter": 2,
+      "verse": 16,
+      "endVerse": 17,
+      "categories": ["comfort", "hope"]
+    },
+    {
+      "book": "2TH",
+      "chapter": 3,
+      "verse": 3,
+      "categories": ["strength", "faith"]
+    },
+    { "book": "2TH", "chapter": 3, "verse": 16, "categories": ["peace"] },
+    { "book": "1TI", "chapter": 1, "verse": 15, "categories": ["salvation"] },
+    { "book": "1TI", "chapter": 4, "verse": 12, "categories": ["inspiration"] },
+    {
+      "book": "1TI",
+      "chapter": 6,
+      "verse": 6,
+      "categories": ["wisdom", "peace"]
+    },
+    {
+      "book": "1TI",
+      "chapter": 6,
+      "verse": 12,
+      "categories": ["courage", "inspiration"]
+    },
+    {
+      "book": "2TI",
+      "chapter": 1,
+      "verse": 7,
+      "categories": ["courage", "strength", "love"]
+    },
+    { "book": "2TI", "chapter": 1, "verse": 9, "categories": ["salvation"] },
+    {
+      "book": "2TI",
+      "chapter": 2,
+      "verse": 15,
+      "categories": ["wisdom", "inspiration"]
+    },
+    {
+      "book": "2TI",
+      "chapter": 3,
+      "verse": 16,
+      "endVerse": 17,
+      "categories": ["wisdom", "guidance"]
+    },
+    {
+      "book": "2TI",
+      "chapter": 4,
+      "verse": 7,
+      "categories": ["inspiration", "faith"]
+    },
+    {
+      "book": "2TI",
+      "chapter": 4,
+      "verse": 18,
+      "categories": ["hope", "salvation"]
+    },
+    { "book": "TIT", "chapter": 2, "verse": 11, "categories": ["salvation"] },
+    { "book": "TIT", "chapter": 3, "verse": 5, "categories": ["salvation"] },
+    { "book": "PHM", "chapter": 1, "verse": 7, "categories": ["joy", "love"] },
+    { "book": "HEB", "chapter": 4, "verse": 12, "categories": ["wisdom"] },
+    {
+      "book": "HEB",
+      "chapter": 4,
+      "verse": 14,
+      "categories": ["ascension-day"]
+    },
+    { "book": "HEB", "chapter": 4, "verse": 15, "categories": ["comfort"] },
+    { "book": "HEB", "chapter": 4, "verse": 16, "categories": ["prayer"] },
+    {
+      "book": "HEB",
+      "chapter": 6,
+      "verse": 10,
+      "categories": ["inspiration", "hope"]
+    },
+    { "book": "HEB", "chapter": 6, "verse": 19, "categories": ["hope"] },
+    { "book": "HEB", "chapter": 8, "verse": 12, "categories": ["forgiveness"] },
+    {
+      "book": "HEB",
+      "chapter": 10,
+      "verse": 22,
+      "categories": ["prayer", "faith"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 10,
+      "verse": 23,
+      "categories": ["hope", "faith"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 10,
+      "verse": 24,
+      "categories": ["love", "inspiration"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 10,
+      "verse": 35,
+      "categories": ["courage", "hope"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 11,
+      "verse": 1,
+      "categories": ["faith", "hope"]
+    },
+    { "book": "HEB", "chapter": 11, "verse": 6, "categories": ["faith"] },
+    {
+      "book": "HEB",
+      "chapter": 12,
+      "verse": 1,
+      "endVerse": 2,
+      "categories": ["inspiration", "faith", "strength"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 12,
+      "verse": 11,
+      "categories": ["wisdom", "peace"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 12,
+      "verse": 28,
+      "categories": ["gratitude", "praise"]
+    },
+    { "book": "HEB", "chapter": 13, "verse": 2, "categories": ["love"] },
+    {
+      "book": "HEB",
+      "chapter": 13,
+      "verse": 5,
+      "categories": ["comfort", "provision"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 13,
+      "verse": 6,
+      "categories": ["courage", "comfort"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 13,
+      "verse": 7,
+      "categories": ["all-saints-day"]
+    },
+    { "book": "HEB", "chapter": 13, "verse": 8, "categories": ["faith"] },
+    {
+      "book": "HEB",
+      "chapter": 13,
+      "verse": 15,
+      "categories": ["praise", "gratitude"]
+    },
+    {
+      "book": "HEB",
+      "chapter": 13,
+      "verse": 16,
+      "categories": ["love", "inspiration"]
+    },
+    {
+      "book": "JAS",
+      "chapter": 1,
+      "verse": 2,
+      "endVerse": 3,
+      "categories": ["joy", "faith"]
+    },
+    {
+      "book": "JAS",
+      "chapter": 1,
+      "verse": 5,
+      "categories": ["wisdom", "prayer"]
+    },
+    {
+      "book": "JAS",
+      "chapter": 1,
+      "verse": 12,
+      "categories": ["strength", "hope"]
+    },
+    {
+      "book": "JAS",
+      "chapter": 1,
+      "verse": 17,
+      "categories": ["gratitude", "provision"]
+    },
+    { "book": "JAS", "chapter": 1, "verse": 19, "categories": ["wisdom"] },
+    {
+      "book": "JAS",
+      "chapter": 1,
+      "verse": 22,
+      "categories": ["wisdom", "inspiration"]
+    },
+    { "book": "JAS", "chapter": 2, "verse": 17, "categories": ["faith"] },
+    {
+      "book": "JAS",
+      "chapter": 3,
+      "verse": 17,
+      "categories": ["wisdom", "peace"]
+    },
+    { "book": "JAS", "chapter": 4, "verse": 7, "categories": ["strength"] },
+    { "book": "JAS", "chapter": 4, "verse": 8, "categories": ["prayer"] },
+    { "book": "JAS", "chapter": 4, "verse": 10, "categories": ["wisdom"] },
+    {
+      "book": "JAS",
+      "chapter": 5,
+      "verse": 13,
+      "categories": ["prayer", "praise"]
+    },
+    {
+      "book": "JAS",
+      "chapter": 5,
+      "verse": 16,
+      "categories": ["prayer", "forgiveness"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 1,
+      "verse": 3,
+      "categories": ["hope", "salvation", "praise"]
+    },
+    { "book": "1PE", "chapter": 1, "verse": 6, "categories": ["joy", "hope"] },
+    {
+      "book": "1PE",
+      "chapter": 1,
+      "verse": 8,
+      "categories": ["joy", "love", "faith"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 2,
+      "verse": 9,
+      "categories": ["inspiration", "praise"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 2,
+      "verse": 24,
+      "categories": ["salvation", "forgiveness"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 3,
+      "verse": 15,
+      "categories": ["hope", "inspiration"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 4,
+      "verse": 8,
+      "categories": ["love", "forgiveness"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 4,
+      "verse": 10,
+      "categories": ["inspiration", "love"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 5,
+      "verse": 6,
+      "categories": ["wisdom", "hope"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 5,
+      "verse": 7,
+      "categories": ["peace", "comfort"]
+    },
+    {
+      "book": "1PE",
+      "chapter": 5,
+      "verse": 10,
+      "categories": ["hope", "strength"]
+    },
+    { "book": "2PE", "chapter": 1, "verse": 3, "categories": ["provision"] },
+    { "book": "2PE", "chapter": 3, "verse": 9, "categories": ["salvation"] },
+    {
+      "book": "2PE",
+      "chapter": 3,
+      "verse": 18,
+      "categories": ["wisdom", "praise"]
+    },
+    {
+      "book": "1JN",
+      "chapter": 1,
+      "verse": 7,
+      "categories": ["forgiveness", "salvation"]
+    },
+    { "book": "1JN", "chapter": 1, "verse": 9, "categories": ["forgiveness"] },
+    { "book": "1JN", "chapter": 3, "verse": 1, "categories": ["love"] },
+    {
+      "book": "1JN",
+      "chapter": 3,
+      "verse": 18,
+      "categories": ["love", "inspiration"]
+    },
+    {
+      "book": "1JN",
+      "chapter": 4,
+      "verse": 4,
+      "categories": ["courage", "strength"]
+    },
+    { "book": "1JN", "chapter": 4, "verse": 7, "categories": ["love"] },
+    {
+      "book": "1JN",
+      "chapter": 4,
+      "verse": 9,
+      "categories": ["love", "salvation"]
+    },
+    { "book": "1JN", "chapter": 4, "verse": 16, "categories": ["love"] },
+    {
+      "book": "1JN",
+      "chapter": 4,
+      "verse": 18,
+      "categories": ["love", "courage"]
+    },
+    { "book": "1JN", "chapter": 4, "verse": 19, "categories": ["love"] },
+    {
+      "book": "1JN",
+      "chapter": 5,
+      "verse": 4,
+      "categories": ["faith", "courage"]
+    },
+    { "book": "1JN", "chapter": 5, "verse": 11, "categories": ["salvation"] },
+    { "book": "1JN", "chapter": 5, "verse": 14, "categories": ["prayer"] },
+    { "book": "2JN", "chapter": 1, "verse": 6, "categories": ["love"] },
+    { "book": "3JN", "chapter": 1, "verse": 4, "categories": ["joy"] },
+    {
+      "book": "JUD",
+      "chapter": 1,
+      "verse": 20,
+      "endVerse": 21,
+      "categories": ["faith", "prayer"]
+    },
+    {
+      "book": "JUD",
+      "chapter": 1,
+      "verse": 24,
+      "endVerse": 25,
+      "categories": ["praise"]
+    },
+    { "book": "REV", "chapter": 1, "verse": 8, "categories": ["praise"] },
+    {
+      "book": "REV",
+      "chapter": 1,
+      "verse": 17,
+      "endVerse": 18,
+      "categories": ["post-resurrection-sunday"]
+    },
+    {
+      "book": "REV",
+      "chapter": 2,
+      "verse": 10,
+      "categories": ["courage", "faith"]
+    },
+    { "book": "REV", "chapter": 3, "verse": 20, "categories": ["salvation"] },
+    { "book": "REV", "chapter": 4, "verse": 11, "categories": ["praise"] },
+    { "book": "REV", "chapter": 5, "verse": 12, "categories": ["praise"] },
+    {
+      "book": "REV",
+      "chapter": 7,
+      "verse": 9,
+      "categories": ["all-saints-day"]
+    },
+    {
+      "book": "REV",
+      "chapter": 14,
+      "verse": 13,
+      "categories": ["all-saints-day"]
+    },
+    {
+      "book": "REV",
+      "chapter": 21,
+      "verse": 3,
+      "categories": ["hope", "comfort"]
+    },
+    {
+      "book": "REV",
+      "chapter": 21,
+      "verse": 4,
+      "categories": ["hope", "comfort"]
+    },
+    { "book": "REV", "chapter": 21, "verse": 5, "categories": ["hope"] },
+    { "book": "REV", "chapter": 22, "verse": 17, "categories": ["salvation"] },
+    {
+      "book": "REV",
+      "chapter": 22,
+      "verse": 20,
+      "categories": ["advent-sunday"]
+    }
+  ],
+  "holidays": [
+    {
+      "id": "advent-sunday",
+      "name": "First Sunday of Advent",
+      "dates": [
+        "2026-11-29",
+        "2027-11-28",
+        "2028-12-03",
+        "2029-12-02",
+        "2030-12-01",
+        "2031-11-30",
+        "2032-11-28",
+        "2033-11-27",
+        "2034-12-03",
+        "2035-12-02",
+        "2036-11-30",
+        "2037-11-29",
+        "2038-11-28",
+        "2039-11-27",
+        "2040-12-02",
+        "2041-12-01",
+        "2042-11-30",
+        "2043-11-29",
+        "2044-11-27",
+        "2045-12-03",
+        "2046-12-02",
+        "2047-12-01",
+        "2048-11-29",
+        "2049-11-28",
+        "2050-11-27",
+        "2051-12-03",
+        "2052-12-01",
+        "2053-11-30",
+        "2054-11-29",
+        "2055-11-28",
+        "2056-12-03",
+        "2057-12-02",
+        "2058-12-01",
+        "2059-11-30",
+        "2060-11-28",
+        "2061-11-27",
+        "2062-12-03",
+        "2063-12-02",
+        "2064-11-30",
+        "2065-11-29",
+        "2066-11-28",
+        "2067-11-27",
+        "2068-12-02",
+        "2069-12-01",
+        "2070-11-30",
+        "2071-11-29",
+        "2072-11-27",
+        "2073-12-03",
+        "2074-12-02",
+        "2075-12-01",
+        "2076-11-29",
+        "2077-11-28",
+        "2078-11-27",
+        "2079-12-03",
+        "2080-12-01",
+        "2081-11-30",
+        "2082-11-29",
+        "2083-11-28",
+        "2084-12-03",
+        "2085-12-02",
+        "2086-12-01",
+        "2087-11-30",
+        "2088-11-28",
+        "2089-11-27",
+        "2090-12-03",
+        "2091-12-02",
+        "2092-11-30",
+        "2093-11-29",
+        "2094-11-28",
+        "2095-11-27",
+        "2096-12-02",
+        "2097-12-01",
+        "2098-11-30",
+        "2099-11-29",
+        "2100-11-28",
+        "2101-11-27",
+        "2102-12-03",
+        "2103-12-02",
+        "2104-11-30",
+        "2105-11-29",
+        "2106-11-28",
+        "2107-11-27",
+        "2108-12-02",
+        "2109-12-01",
+        "2110-11-30",
+        "2111-11-29",
+        "2112-11-27",
+        "2113-12-03",
+        "2114-12-02",
+        "2115-12-01",
+        "2116-11-29",
+        "2117-11-28",
+        "2118-11-27",
+        "2119-12-03",
+        "2120-12-01",
+        "2121-11-30",
+        "2122-11-29",
+        "2123-11-28",
+        "2124-12-03",
+        "2125-12-02"
+      ]
+    },
+    {
+      "id": "all-hallows-eve",
+      "name": "All Hallows' Eve",
+      "month": 10,
+      "day": 31
+    },
+    {
+      "id": "all-saints-day",
+      "name": "All Saints' Day",
+      "month": 11,
+      "day": 1
+    },
+    {
+      "id": "ascension-day",
+      "name": "Ascension Day",
+      "dates": [
+        "2026-05-14",
+        "2027-05-06",
+        "2028-05-25",
+        "2029-05-10",
+        "2030-05-30",
+        "2031-05-22",
+        "2032-05-06",
+        "2033-05-26",
+        "2034-05-18",
+        "2035-05-03",
+        "2036-05-22",
+        "2037-05-14",
+        "2038-06-03",
+        "2039-05-19",
+        "2040-05-10",
+        "2041-05-30",
+        "2042-05-15",
+        "2043-05-07",
+        "2044-05-26",
+        "2045-05-18",
+        "2046-05-03",
+        "2047-05-23",
+        "2048-05-14",
+        "2049-05-27",
+        "2050-05-19",
+        "2051-05-11",
+        "2052-05-30",
+        "2053-05-15",
+        "2054-05-07",
+        "2055-05-27",
+        "2056-05-11",
+        "2057-05-31",
+        "2058-05-23",
+        "2059-05-08",
+        "2060-05-27",
+        "2061-05-19",
+        "2062-05-04",
+        "2063-05-24",
+        "2064-05-15",
+        "2065-05-07",
+        "2066-05-20",
+        "2067-05-12",
+        "2068-05-31",
+        "2069-05-23",
+        "2070-05-08",
+        "2071-05-28",
+        "2072-05-19",
+        "2073-05-04",
+        "2074-05-24",
+        "2075-05-16",
+        "2076-05-28",
+        "2077-05-20",
+        "2078-05-12",
+        "2079-06-01",
+        "2080-05-16",
+        "2081-05-08",
+        "2082-05-28",
+        "2083-05-13",
+        "2084-05-04",
+        "2085-05-24",
+        "2086-05-09",
+        "2087-05-29",
+        "2088-05-20",
+        "2089-05-12",
+        "2090-05-25",
+        "2091-05-17",
+        "2092-05-08",
+        "2093-05-21",
+        "2094-05-13",
+        "2095-06-02",
+        "2096-05-24",
+        "2097-05-09",
+        "2098-05-29",
+        "2099-05-21",
+        "2100-05-06",
+        "2101-05-26",
+        "2102-05-18",
+        "2103-05-03",
+        "2104-05-22",
+        "2105-05-14",
+        "2106-05-27",
+        "2107-05-19",
+        "2108-05-10",
+        "2109-05-30",
+        "2110-05-15",
+        "2111-05-07",
+        "2112-05-26",
+        "2113-05-11",
+        "2114-05-31",
+        "2115-05-23",
+        "2116-05-07",
+        "2117-05-27",
+        "2118-05-19",
+        "2119-05-04",
+        "2120-05-23",
+        "2121-05-15",
+        "2122-05-07",
+        "2123-05-20",
+        "2124-05-11",
+        "2125-05-31"
+      ]
+    },
+    {
+      "id": "ash-wednesday",
+      "name": "Ash Wednesday",
+      "dates": [
+        "2026-02-18",
+        "2027-02-10",
+        "2028-03-01",
+        "2029-02-14",
+        "2030-03-06",
+        "2031-02-26",
+        "2032-02-11",
+        "2033-03-02",
+        "2034-02-22",
+        "2035-02-07",
+        "2036-02-27",
+        "2037-02-18",
+        "2038-03-10",
+        "2039-02-23",
+        "2040-02-15",
+        "2041-03-06",
+        "2042-02-19",
+        "2043-02-11",
+        "2044-03-02",
+        "2045-02-22",
+        "2046-02-07",
+        "2047-02-27",
+        "2048-02-19",
+        "2049-03-03",
+        "2050-02-23",
+        "2051-02-15",
+        "2052-03-06",
+        "2053-02-19",
+        "2054-02-11",
+        "2055-03-03",
+        "2056-02-16",
+        "2057-03-07",
+        "2058-02-27",
+        "2059-02-12",
+        "2060-03-03",
+        "2061-02-23",
+        "2062-02-08",
+        "2063-02-28",
+        "2064-02-20",
+        "2065-02-11",
+        "2066-02-24",
+        "2067-02-16",
+        "2068-03-07",
+        "2069-02-27",
+        "2070-02-12",
+        "2071-03-04",
+        "2072-02-24",
+        "2073-02-08",
+        "2074-02-28",
+        "2075-02-20",
+        "2076-03-04",
+        "2077-02-24",
+        "2078-02-16",
+        "2079-03-08",
+        "2080-02-21",
+        "2081-02-12",
+        "2082-03-04",
+        "2083-02-17",
+        "2084-02-09",
+        "2085-02-28",
+        "2086-02-13",
+        "2087-03-05",
+        "2088-02-25",
+        "2089-02-16",
+        "2090-03-01",
+        "2091-02-21",
+        "2092-02-13",
+        "2093-02-25",
+        "2094-02-17",
+        "2095-03-09",
+        "2096-02-29",
+        "2097-02-13",
+        "2098-03-05",
+        "2099-02-25",
+        "2100-02-10",
+        "2101-03-02",
+        "2102-02-22",
+        "2103-02-07",
+        "2104-02-27",
+        "2105-02-18",
+        "2106-03-03",
+        "2107-02-23",
+        "2108-02-15",
+        "2109-03-06",
+        "2110-02-19",
+        "2111-02-11",
+        "2112-03-02",
+        "2113-02-15",
+        "2114-03-07",
+        "2115-02-27",
+        "2116-02-12",
+        "2117-03-03",
+        "2118-02-23",
+        "2119-02-08",
+        "2120-02-28",
+        "2121-02-19",
+        "2122-02-11",
+        "2123-02-24",
+        "2124-02-16",
+        "2125-03-07"
+      ]
+    },
+    { "id": "christmas", "name": "Christmas", "month": 12, "day": 25 },
+    { "id": "christmas-eve", "name": "Christmas Eve", "month": 12, "day": 24 },
+    { "id": "epiphany", "name": "Epiphany", "month": 1, "day": 6 },
+    {
+      "id": "good-friday",
+      "name": "Good Friday",
+      "dates": [
+        "2026-04-03",
+        "2027-03-26",
+        "2028-04-14",
+        "2029-03-30",
+        "2030-04-19",
+        "2031-04-11",
+        "2032-03-26",
+        "2033-04-15",
+        "2034-04-07",
+        "2035-03-23",
+        "2036-04-11",
+        "2037-04-03",
+        "2038-04-23",
+        "2039-04-08",
+        "2040-03-30",
+        "2041-04-19",
+        "2042-04-04",
+        "2043-03-27",
+        "2044-04-15",
+        "2045-04-07",
+        "2046-03-23",
+        "2047-04-12",
+        "2048-04-03",
+        "2049-04-16",
+        "2050-04-08",
+        "2051-03-31",
+        "2052-04-19",
+        "2053-04-04",
+        "2054-03-27",
+        "2055-04-16",
+        "2056-03-31",
+        "2057-04-20",
+        "2058-04-12",
+        "2059-03-28",
+        "2060-04-16",
+        "2061-04-08",
+        "2062-03-24",
+        "2063-04-13",
+        "2064-04-04",
+        "2065-03-27",
+        "2066-04-09",
+        "2067-04-01",
+        "2068-04-20",
+        "2069-04-12",
+        "2070-03-28",
+        "2071-04-17",
+        "2072-04-08",
+        "2073-03-24",
+        "2074-04-13",
+        "2075-04-05",
+        "2076-04-17",
+        "2077-04-09",
+        "2078-04-01",
+        "2079-04-21",
+        "2080-04-05",
+        "2081-03-28",
+        "2082-04-17",
+        "2083-04-02",
+        "2084-03-24",
+        "2085-04-13",
+        "2086-03-29",
+        "2087-04-18",
+        "2088-04-09",
+        "2089-04-01",
+        "2090-04-14",
+        "2091-04-06",
+        "2092-03-28",
+        "2093-04-10",
+        "2094-04-02",
+        "2095-04-22",
+        "2096-04-13",
+        "2097-03-29",
+        "2098-04-18",
+        "2099-04-10",
+        "2100-03-26",
+        "2101-04-15",
+        "2102-04-07",
+        "2103-03-23",
+        "2104-04-11",
+        "2105-04-03",
+        "2106-04-16",
+        "2107-04-08",
+        "2108-03-30",
+        "2109-04-19",
+        "2110-04-04",
+        "2111-03-27",
+        "2112-04-15",
+        "2113-03-31",
+        "2114-04-20",
+        "2115-04-12",
+        "2116-03-27",
+        "2117-04-16",
+        "2118-04-08",
+        "2119-03-24",
+        "2120-04-12",
+        "2121-04-04",
+        "2122-03-27",
+        "2123-04-09",
+        "2124-03-31",
+        "2125-04-20"
+      ]
+    },
+    {
+      "id": "maundy-thursday",
+      "name": "Maundy Thursday",
+      "dates": [
+        "2026-04-02",
+        "2027-03-25",
+        "2028-04-13",
+        "2029-03-29",
+        "2030-04-18",
+        "2031-04-10",
+        "2032-03-25",
+        "2033-04-14",
+        "2034-04-06",
+        "2035-03-22",
+        "2036-04-10",
+        "2037-04-02",
+        "2038-04-22",
+        "2039-04-07",
+        "2040-03-29",
+        "2041-04-18",
+        "2042-04-03",
+        "2043-03-26",
+        "2044-04-14",
+        "2045-04-06",
+        "2046-03-22",
+        "2047-04-11",
+        "2048-04-02",
+        "2049-04-15",
+        "2050-04-07",
+        "2051-03-30",
+        "2052-04-18",
+        "2053-04-03",
+        "2054-03-26",
+        "2055-04-15",
+        "2056-03-30",
+        "2057-04-19",
+        "2058-04-11",
+        "2059-03-27",
+        "2060-04-15",
+        "2061-04-07",
+        "2062-03-23",
+        "2063-04-12",
+        "2064-04-03",
+        "2065-03-26",
+        "2066-04-08",
+        "2067-03-31",
+        "2068-04-19",
+        "2069-04-11",
+        "2070-03-27",
+        "2071-04-16",
+        "2072-04-07",
+        "2073-03-23",
+        "2074-04-12",
+        "2075-04-04",
+        "2076-04-16",
+        "2077-04-08",
+        "2078-03-31",
+        "2079-04-20",
+        "2080-04-04",
+        "2081-03-27",
+        "2082-04-16",
+        "2083-04-01",
+        "2084-03-23",
+        "2085-04-12",
+        "2086-03-28",
+        "2087-04-17",
+        "2088-04-08",
+        "2089-03-31",
+        "2090-04-13",
+        "2091-04-05",
+        "2092-03-27",
+        "2093-04-09",
+        "2094-04-01",
+        "2095-04-21",
+        "2096-04-12",
+        "2097-03-28",
+        "2098-04-17",
+        "2099-04-09",
+        "2100-03-25",
+        "2101-04-14",
+        "2102-04-06",
+        "2103-03-22",
+        "2104-04-10",
+        "2105-04-02",
+        "2106-04-15",
+        "2107-04-07",
+        "2108-03-29",
+        "2109-04-18",
+        "2110-04-03",
+        "2111-03-26",
+        "2112-04-14",
+        "2113-03-30",
+        "2114-04-19",
+        "2115-04-11",
+        "2116-03-26",
+        "2117-04-15",
+        "2118-04-07",
+        "2119-03-23",
+        "2120-04-11",
+        "2121-04-03",
+        "2122-03-26",
+        "2123-04-08",
+        "2124-03-30",
+        "2125-04-19"
+      ]
+    },
+    {
+      "id": "palm-sunday",
+      "name": "Palm Sunday",
+      "dates": [
+        "2026-03-29",
+        "2027-03-21",
+        "2028-04-09",
+        "2029-03-25",
+        "2030-04-14",
+        "2031-04-06",
+        "2032-03-21",
+        "2033-04-10",
+        "2034-04-02",
+        "2035-03-18",
+        "2036-04-06",
+        "2037-03-29",
+        "2038-04-18",
+        "2039-04-03",
+        "2040-03-25",
+        "2041-04-14",
+        "2042-03-30",
+        "2043-03-22",
+        "2044-04-10",
+        "2045-04-02",
+        "2046-03-18",
+        "2047-04-07",
+        "2048-03-29",
+        "2049-04-11",
+        "2050-04-03",
+        "2051-03-26",
+        "2052-04-14",
+        "2053-03-30",
+        "2054-03-22",
+        "2055-04-11",
+        "2056-03-26",
+        "2057-04-15",
+        "2058-04-07",
+        "2059-03-23",
+        "2060-04-11",
+        "2061-04-03",
+        "2062-03-19",
+        "2063-04-08",
+        "2064-03-30",
+        "2065-03-22",
+        "2066-04-04",
+        "2067-03-27",
+        "2068-04-15",
+        "2069-04-07",
+        "2070-03-23",
+        "2071-04-12",
+        "2072-04-03",
+        "2073-03-19",
+        "2074-04-08",
+        "2075-03-31",
+        "2076-04-12",
+        "2077-04-04",
+        "2078-03-27",
+        "2079-04-16",
+        "2080-03-31",
+        "2081-03-23",
+        "2082-04-12",
+        "2083-03-28",
+        "2084-03-19",
+        "2085-04-08",
+        "2086-03-24",
+        "2087-04-13",
+        "2088-04-04",
+        "2089-03-27",
+        "2090-04-09",
+        "2091-04-01",
+        "2092-03-23",
+        "2093-04-05",
+        "2094-03-28",
+        "2095-04-17",
+        "2096-04-08",
+        "2097-03-24",
+        "2098-04-13",
+        "2099-04-05",
+        "2100-03-21",
+        "2101-04-10",
+        "2102-04-02",
+        "2103-03-18",
+        "2104-04-06",
+        "2105-03-29",
+        "2106-04-11",
+        "2107-04-03",
+        "2108-03-25",
+        "2109-04-14",
+        "2110-03-30",
+        "2111-03-22",
+        "2112-04-10",
+        "2113-03-26",
+        "2114-04-15",
+        "2115-04-07",
+        "2116-03-22",
+        "2117-04-11",
+        "2118-04-03",
+        "2119-03-19",
+        "2120-04-07",
+        "2121-03-30",
+        "2122-03-22",
+        "2123-04-04",
+        "2124-03-26",
+        "2125-04-15"
+      ]
+    },
+    {
+      "id": "pentecost",
+      "name": "Pentecost",
+      "dates": [
+        "2026-05-24",
+        "2027-05-16",
+        "2028-06-04",
+        "2029-05-20",
+        "2030-06-09",
+        "2031-06-01",
+        "2032-05-16",
+        "2033-06-05",
+        "2034-05-28",
+        "2035-05-13",
+        "2036-06-01",
+        "2037-05-24",
+        "2038-06-13",
+        "2039-05-29",
+        "2040-05-20",
+        "2041-06-09",
+        "2042-05-25",
+        "2043-05-17",
+        "2044-06-05",
+        "2045-05-28",
+        "2046-05-13",
+        "2047-06-02",
+        "2048-05-24",
+        "2049-06-06",
+        "2050-05-29",
+        "2051-05-21",
+        "2052-06-09",
+        "2053-05-25",
+        "2054-05-17",
+        "2055-06-06",
+        "2056-05-21",
+        "2057-06-10",
+        "2058-06-02",
+        "2059-05-18",
+        "2060-06-06",
+        "2061-05-29",
+        "2062-05-14",
+        "2063-06-03",
+        "2064-05-25",
+        "2065-05-17",
+        "2066-05-30",
+        "2067-05-22",
+        "2068-06-10",
+        "2069-06-02",
+        "2070-05-18",
+        "2071-06-07",
+        "2072-05-29",
+        "2073-05-14",
+        "2074-06-03",
+        "2075-05-26",
+        "2076-06-07",
+        "2077-05-30",
+        "2078-05-22",
+        "2079-06-11",
+        "2080-05-26",
+        "2081-05-18",
+        "2082-06-07",
+        "2083-05-23",
+        "2084-05-14",
+        "2085-06-03",
+        "2086-05-19",
+        "2087-06-08",
+        "2088-05-30",
+        "2089-05-22",
+        "2090-06-04",
+        "2091-05-27",
+        "2092-05-18",
+        "2093-05-31",
+        "2094-05-23",
+        "2095-06-12",
+        "2096-06-03",
+        "2097-05-19",
+        "2098-06-08",
+        "2099-05-31",
+        "2100-05-16",
+        "2101-06-05",
+        "2102-05-28",
+        "2103-05-13",
+        "2104-06-01",
+        "2105-05-24",
+        "2106-06-06",
+        "2107-05-29",
+        "2108-05-20",
+        "2109-06-09",
+        "2110-05-25",
+        "2111-05-17",
+        "2112-06-05",
+        "2113-05-21",
+        "2114-06-10",
+        "2115-06-02",
+        "2116-05-17",
+        "2117-06-06",
+        "2118-05-29",
+        "2119-05-14",
+        "2120-06-02",
+        "2121-05-25",
+        "2122-05-17",
+        "2123-05-30",
+        "2124-05-21",
+        "2125-06-10"
+      ]
+    },
+    {
+      "id": "post-resurrection-sunday",
+      "name": "After Resurrection Sunday",
+      "dates": [
+        "2026-04-06",
+        "2026-04-07",
+        "2026-04-08",
+        "2027-03-29",
+        "2027-03-30",
+        "2027-03-31",
+        "2028-04-17",
+        "2028-04-18",
+        "2028-04-19",
+        "2029-04-02",
+        "2029-04-03",
+        "2029-04-04",
+        "2030-04-22",
+        "2030-04-23",
+        "2030-04-24",
+        "2031-04-14",
+        "2031-04-15",
+        "2031-04-16",
+        "2032-03-29",
+        "2032-03-30",
+        "2032-03-31",
+        "2033-04-18",
+        "2033-04-19",
+        "2033-04-20",
+        "2034-04-10",
+        "2034-04-11",
+        "2034-04-12",
+        "2035-03-26",
+        "2035-03-27",
+        "2035-03-28",
+        "2036-04-14",
+        "2036-04-15",
+        "2036-04-16",
+        "2037-04-06",
+        "2037-04-07",
+        "2037-04-08",
+        "2038-04-26",
+        "2038-04-27",
+        "2038-04-28",
+        "2039-04-11",
+        "2039-04-12",
+        "2039-04-13",
+        "2040-04-02",
+        "2040-04-03",
+        "2040-04-04",
+        "2041-04-22",
+        "2041-04-23",
+        "2041-04-24",
+        "2042-04-07",
+        "2042-04-08",
+        "2042-04-09",
+        "2043-03-30",
+        "2043-03-31",
+        "2043-04-01",
+        "2044-04-18",
+        "2044-04-19",
+        "2044-04-20",
+        "2045-04-10",
+        "2045-04-11",
+        "2045-04-12",
+        "2046-03-26",
+        "2046-03-27",
+        "2046-03-28",
+        "2047-04-15",
+        "2047-04-16",
+        "2047-04-17",
+        "2048-04-06",
+        "2048-04-07",
+        "2048-04-08",
+        "2049-04-19",
+        "2049-04-20",
+        "2049-04-21",
+        "2050-04-11",
+        "2050-04-12",
+        "2050-04-13",
+        "2051-04-03",
+        "2051-04-04",
+        "2051-04-05",
+        "2052-04-22",
+        "2052-04-23",
+        "2052-04-24",
+        "2053-04-07",
+        "2053-04-08",
+        "2053-04-09",
+        "2054-03-30",
+        "2054-03-31",
+        "2054-04-01",
+        "2055-04-19",
+        "2055-04-20",
+        "2055-04-21",
+        "2056-04-03",
+        "2056-04-04",
+        "2056-04-05",
+        "2057-04-23",
+        "2057-04-24",
+        "2057-04-25",
+        "2058-04-15",
+        "2058-04-16",
+        "2058-04-17",
+        "2059-03-31",
+        "2059-04-01",
+        "2059-04-02",
+        "2060-04-19",
+        "2060-04-20",
+        "2060-04-21",
+        "2061-04-11",
+        "2061-04-12",
+        "2061-04-13",
+        "2062-03-27",
+        "2062-03-28",
+        "2062-03-29",
+        "2063-04-16",
+        "2063-04-17",
+        "2063-04-18",
+        "2064-04-07",
+        "2064-04-08",
+        "2064-04-09",
+        "2065-03-30",
+        "2065-03-31",
+        "2065-04-01",
+        "2066-04-12",
+        "2066-04-13",
+        "2066-04-14",
+        "2067-04-04",
+        "2067-04-05",
+        "2067-04-06",
+        "2068-04-23",
+        "2068-04-24",
+        "2068-04-25",
+        "2069-04-15",
+        "2069-04-16",
+        "2069-04-17",
+        "2070-03-31",
+        "2070-04-01",
+        "2070-04-02",
+        "2071-04-20",
+        "2071-04-21",
+        "2071-04-22",
+        "2072-04-11",
+        "2072-04-12",
+        "2072-04-13",
+        "2073-03-27",
+        "2073-03-28",
+        "2073-03-29",
+        "2074-04-16",
+        "2074-04-17",
+        "2074-04-18",
+        "2075-04-08",
+        "2075-04-09",
+        "2075-04-10",
+        "2076-04-20",
+        "2076-04-21",
+        "2076-04-22",
+        "2077-04-12",
+        "2077-04-13",
+        "2077-04-14",
+        "2078-04-04",
+        "2078-04-05",
+        "2078-04-06",
+        "2079-04-24",
+        "2079-04-25",
+        "2079-04-26",
+        "2080-04-08",
+        "2080-04-09",
+        "2080-04-10",
+        "2081-03-31",
+        "2081-04-01",
+        "2081-04-02",
+        "2082-04-20",
+        "2082-04-21",
+        "2082-04-22",
+        "2083-04-05",
+        "2083-04-06",
+        "2083-04-07",
+        "2084-03-27",
+        "2084-03-28",
+        "2084-03-29",
+        "2085-04-16",
+        "2085-04-17",
+        "2085-04-18",
+        "2086-04-01",
+        "2086-04-02",
+        "2086-04-03",
+        "2087-04-21",
+        "2087-04-22",
+        "2087-04-23",
+        "2088-04-12",
+        "2088-04-13",
+        "2088-04-14",
+        "2089-04-04",
+        "2089-04-05",
+        "2089-04-06",
+        "2090-04-17",
+        "2090-04-18",
+        "2090-04-19",
+        "2091-04-09",
+        "2091-04-10",
+        "2091-04-11",
+        "2092-03-31",
+        "2092-04-01",
+        "2092-04-02",
+        "2093-04-13",
+        "2093-04-14",
+        "2093-04-15",
+        "2094-04-05",
+        "2094-04-06",
+        "2094-04-07",
+        "2095-04-25",
+        "2095-04-26",
+        "2095-04-27",
+        "2096-04-16",
+        "2096-04-17",
+        "2096-04-18",
+        "2097-04-01",
+        "2097-04-02",
+        "2097-04-03",
+        "2098-04-21",
+        "2098-04-22",
+        "2098-04-23",
+        "2099-04-13",
+        "2099-04-14",
+        "2099-04-15",
+        "2100-03-29",
+        "2100-03-30",
+        "2100-03-31",
+        "2101-04-18",
+        "2101-04-19",
+        "2101-04-20",
+        "2102-04-10",
+        "2102-04-11",
+        "2102-04-12",
+        "2103-03-26",
+        "2103-03-27",
+        "2103-03-28",
+        "2104-04-14",
+        "2104-04-15",
+        "2104-04-16",
+        "2105-04-06",
+        "2105-04-07",
+        "2105-04-08",
+        "2106-04-19",
+        "2106-04-20",
+        "2106-04-21",
+        "2107-04-11",
+        "2107-04-12",
+        "2107-04-13",
+        "2108-04-02",
+        "2108-04-03",
+        "2108-04-04",
+        "2109-04-22",
+        "2109-04-23",
+        "2109-04-24",
+        "2110-04-07",
+        "2110-04-08",
+        "2110-04-09",
+        "2111-03-30",
+        "2111-03-31",
+        "2111-04-01",
+        "2112-04-18",
+        "2112-04-19",
+        "2112-04-20",
+        "2113-04-03",
+        "2113-04-04",
+        "2113-04-05",
+        "2114-04-23",
+        "2114-04-24",
+        "2114-04-25",
+        "2115-04-15",
+        "2115-04-16",
+        "2115-04-17",
+        "2116-03-30",
+        "2116-03-31",
+        "2116-04-01",
+        "2117-04-19",
+        "2117-04-20",
+        "2117-04-21",
+        "2118-04-11",
+        "2118-04-12",
+        "2118-04-13",
+        "2119-03-27",
+        "2119-03-28",
+        "2119-03-29",
+        "2120-04-15",
+        "2120-04-16",
+        "2120-04-17",
+        "2121-04-07",
+        "2121-04-08",
+        "2121-04-09",
+        "2122-03-30",
+        "2122-03-31",
+        "2122-04-01",
+        "2123-04-12",
+        "2123-04-13",
+        "2123-04-14",
+        "2124-04-03",
+        "2124-04-04",
+        "2124-04-05",
+        "2125-04-23",
+        "2125-04-24",
+        "2125-04-25"
+      ]
+    },
+    {
+      "id": "resurrection-sunday",
+      "name": "Resurrection Sunday",
+      "dates": [
+        "2026-04-05",
+        "2027-03-28",
+        "2028-04-16",
+        "2029-04-01",
+        "2030-04-21",
+        "2031-04-13",
+        "2032-03-28",
+        "2033-04-17",
+        "2034-04-09",
+        "2035-03-25",
+        "2036-04-13",
+        "2037-04-05",
+        "2038-04-25",
+        "2039-04-10",
+        "2040-04-01",
+        "2041-04-21",
+        "2042-04-06",
+        "2043-03-29",
+        "2044-04-17",
+        "2045-04-09",
+        "2046-03-25",
+        "2047-04-14",
+        "2048-04-05",
+        "2049-04-18",
+        "2050-04-10",
+        "2051-04-02",
+        "2052-04-21",
+        "2053-04-06",
+        "2054-03-29",
+        "2055-04-18",
+        "2056-04-02",
+        "2057-04-22",
+        "2058-04-14",
+        "2059-03-30",
+        "2060-04-18",
+        "2061-04-10",
+        "2062-03-26",
+        "2063-04-15",
+        "2064-04-06",
+        "2065-03-29",
+        "2066-04-11",
+        "2067-04-03",
+        "2068-04-22",
+        "2069-04-14",
+        "2070-03-30",
+        "2071-04-19",
+        "2072-04-10",
+        "2073-03-26",
+        "2074-04-15",
+        "2075-04-07",
+        "2076-04-19",
+        "2077-04-11",
+        "2078-04-03",
+        "2079-04-23",
+        "2080-04-07",
+        "2081-03-30",
+        "2082-04-19",
+        "2083-04-04",
+        "2084-03-26",
+        "2085-04-15",
+        "2086-03-31",
+        "2087-04-20",
+        "2088-04-11",
+        "2089-04-03",
+        "2090-04-16",
+        "2091-04-08",
+        "2092-03-30",
+        "2093-04-12",
+        "2094-04-04",
+        "2095-04-24",
+        "2096-04-15",
+        "2097-03-31",
+        "2098-04-20",
+        "2099-04-12",
+        "2100-03-28",
+        "2101-04-17",
+        "2102-04-09",
+        "2103-03-25",
+        "2104-04-13",
+        "2105-04-05",
+        "2106-04-18",
+        "2107-04-10",
+        "2108-04-01",
+        "2109-04-21",
+        "2110-04-06",
+        "2111-03-29",
+        "2112-04-17",
+        "2113-04-02",
+        "2114-04-22",
+        "2115-04-14",
+        "2116-03-29",
+        "2117-04-18",
+        "2118-04-10",
+        "2119-03-26",
+        "2120-04-14",
+        "2121-04-06",
+        "2122-03-29",
+        "2123-04-11",
+        "2124-04-02",
+        "2125-04-22"
+      ]
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 // from the Home and what they released lately. Dressed by the copied `today.css` / `friends.css` where the
 // classes match, and `app.css` for the rest.
 import { useEffect, useState } from "preact/hooks";
+import { YearOfReading } from "./YearOfReading";
+import { VerseOfTheDay } from "./VerseOfTheDay";
 import type { RecentReading } from "../../state/records/history";
 import { CommunityFeed } from "./CommunityFeed";
 import type { ReaderState } from "../../state";
@@ -58,11 +60,16 @@ export function TodayPane({ state }: { state: ReaderState }) {
       className="sb-pane sb-today-container"
       aria-label={t("today", { defaultValue: "Today" })}
     >
-      {recentRead && <TodayWelcome state={state} hasReading={hasReading} />}
-
-      {/* seedbible.org's Today is its Welcome alone until there is reading; the sections follow once there is. */}
+      {/* seedbible.org's Today is its Welcome alone until there is reading; then the Welcome and the sections share
+          one centred column (its .sb-today-content). */}
+      {recentRead && !(hasReading || signedIn) && (
+        <TodayWelcome state={state} hasReading={hasReading} />
+      )}
       {(hasReading || signedIn) && (
-        <>
+        <div className="sb-today-content sb-today-content-sections">
+          {recentRead && <TodayWelcome state={state} hasReading={hasReading} />}
+          {/* As on seedbible.org, the verse of the day is for a signed-in reader. */}
+          {signedIn && <VerseOfTheDay state={state} onOpen={open} />}
           <div className="sb-content-section">
             <div className="sb-content-section-head">
               <h3 className="sb-content-section-title">
@@ -113,6 +120,20 @@ export function TodayPane({ state }: { state: ReaderState }) {
               </div>
             </div>
           )}
+
+          <YearOfReading
+            state={state}
+            label={(c) => label(state, c)}
+            onOpen={(r) => {
+              const [book, ch] = r.chapterRef.split(".");
+              void reading.goTo(
+                r.edition ?? reading.translationId.value,
+                book!,
+                Number(ch)
+              );
+              state.ui.pane.value = "none";
+            }}
+          />
 
           <div className="sb-content-section">
             <div className="sb-content-section-head">
@@ -184,7 +205,7 @@ export function TodayPane({ state }: { state: ReaderState }) {
             })}{" "}
             {parseRoute(location.pathname) ? "" : ""}
           </p>
-        </>
+        </div>
       )}
     </section>
   );

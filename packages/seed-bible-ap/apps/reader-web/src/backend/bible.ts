@@ -1,4 +1,8 @@
 import { A2A_BASE } from "../api";
+import {
+  pickVerseOfTheDay,
+  type VerseOfTheDayHoliday,
+} from "../state/social/verseOfTheDay";
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -1295,6 +1299,21 @@ export const DIRECT_BIBLE_API_ENDPOINT: string | null = (() => {
   return (v ?? "https://bible.helloao.org/").replace(/\/?$/, "/");
 })();
 
+/** A verse in a categorised dataset (`/api/d/{dataset}/verses.json`). */
+export interface DatasetCategorizedVerse {
+  book: string;
+  chapter: number;
+  verse: number;
+  endVerse?: number;
+  categories?: string[];
+  addedIn?: number | null;
+  removedIn?: number | null;
+}
+export interface DatasetCategorizedVerses {
+  verses: DatasetCategorizedVerse[];
+  holidays?: VerseOfTheDayHoliday[];
+}
+
 const AVAILABLE_TRANSLATIONS_PATH = "api/available_translations.json";
 
 /** The translation a Bible API path is about (`api/AAB/GEN/1.json`, `/api/AAB/books.json`), or null. */
@@ -1595,6 +1614,30 @@ export class FreeUseBibleAPI {
     text += decoder.decode();
 
     return JSON.parse(text) as CompleteTranslation;
+  }
+
+  /**
+   * The verses of a dataset whose verses have categories, such as "verse-of-the-day" — read from the Bible API
+   * itself (the scripture agent carries no such dataset), or from the agent when there is no direct API.
+   */
+  async getDatasetVerses(
+    dataset: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerses> {
+    return this._getJsonAt<DatasetCategorizedVerses>(
+      `api/d/${encodeURIComponent(dataset)}/verses.json`,
+      this.direct ?? undefined,
+      options
+    );
+  }
+
+  /** The verse of the day for a date (seedbible.org's pick: the same date, the same verse), or null. */
+  async getVerseOfTheDay(
+    date: Date | string = new Date(),
+    options?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerse | null> {
+    const data = await this.getDatasetVerses("verse-of-the-day", options);
+    return pickVerseOfTheDay(data.verses, date, { holidays: data.holidays });
   }
 
   async getNextChapter(

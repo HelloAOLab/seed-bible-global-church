@@ -1145,3 +1145,8 @@
     font-size: 0.75rem;
   }
 }
+
+/* This reader's sections fill seedbible.org's centred Today column rather than shrinking to their content. */
+.sb-today-content.sb-today-content-sections {
+  align-items: stretch;
+}
