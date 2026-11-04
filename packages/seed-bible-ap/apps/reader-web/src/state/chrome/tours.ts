@@ -172,7 +172,7 @@ export const TOURS: Record<
       ),
       step(
         "search",
-        ".sb-selector-panel .searchbar",
+        ".sb-selector-panel .sb-selector-book-search",
         "selectorSearch",
         "Search by",
         "Search by chapter, verse or book from here."

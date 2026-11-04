@@ -303,9 +303,18 @@ export function PhoneNav({ state }: { state: ReaderState }) {
         />
         <Tab
           label={t("you", { defaultValue: "You" })}
-          {...(signedIn
-            ? { node: <Avatar state={state} /> }
-            : { icon: "account_circle" })}
+          node={
+            signedIn ? (
+              <Avatar state={state} />
+            ) : (
+              // seedbible.org's signed-out avatar (Avatar's generic circle), drawn in the text colour.
+              <span className="sb-tab-user-icon sb-tab-user-icon-generic">
+                <span className="material-symbols-outlined">
+                  account_circle
+                </span>
+              </span>
+            )
+          }
           active={active === "you"}
           badge={state.session.value ? state.outbox.pending.value : 0}
           onClick={() => show("profile")}

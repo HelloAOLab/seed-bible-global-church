@@ -1625,7 +1625,7 @@ export const MORE_FLOWS: Flow[] = [
           p.querySelector(sel)!.getBoundingClientRect();
         const head = [
           ".sidebar-translation-selector",
-          ".searchbar",
+          ".sb-selector-book-search",
           ".dropdown",
         ].map((s) => box(s));
         const cols = (i: number) => {

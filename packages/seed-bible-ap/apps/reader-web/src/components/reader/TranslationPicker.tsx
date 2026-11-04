@@ -442,7 +442,14 @@ function LicenceLines({ notice }: { notice: string }) {
   );
 }
 
-export function TranslationPicker({ state }: { state: ReaderState }) {
+export function TranslationPicker({
+  state,
+  onClose,
+}: {
+  state: ReaderState;
+  /** Inside the book picker: closing returns to the books rather than closing the picker. */
+  onClose?: () => void;
+}) {
   const { t } = useI18n();
   const { reading } = state;
   const [query, setQuery] = useState("");
@@ -456,7 +463,7 @@ export function TranslationPicker({ state }: { state: ReaderState }) {
     y: number;
   } | null>(null);
   const [removing, setRemoving] = useState<Translation | null>(null);
-  const close = () => (state.ui.selector.value = null);
+  const close = onClose ?? (() => (state.ui.selector.value = null));
   const setViewMode = (m: TranslationViewMode) => {
     setViewModeState(m);
     try {
@@ -556,12 +563,9 @@ export function TranslationPicker({ state }: { state: ReaderState }) {
             className="sidebar-book-selector flex-between-center-gap-md"
             style={{ padding: "0.9375rem 0.3125rem" }}
           >
-            <div
-              className="searchbar flex-align-center"
-              style={{ width: "100%", height: "1.875rem" }}
-            >
+            <label className="sb-search-bar sb-search-bar-filled sb-selector-translation-search">
               <span
-                className="search-icon material-symbols-outlined"
+                className="material-symbols-outlined sb-search-bar-icon"
                 aria-hidden="true"
               >
                 search
@@ -581,9 +585,9 @@ export function TranslationPicker({ state }: { state: ReaderState }) {
                   setLimit(PAGE);
                 }}
                 id="translation-search-input"
-                className="flex-1"
+                className="sb-search-bar-input"
               />
-            </div>
+            </label>
             <button
               type="button"
               className="filters-icon"

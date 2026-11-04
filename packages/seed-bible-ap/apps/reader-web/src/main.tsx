@@ -24,6 +24,7 @@ import "./styles/note-conflict.css";
 import "./styles/toolbar.css";
 import "./styles/quick-toolbar.css";
 import "./styles/expandable-text.css";
+import "./styles/search-bar.css";
 import "./styles/your-content.css";
 import "./styles/tiptap.css";
 import "./styles/audio-scrubber.css";

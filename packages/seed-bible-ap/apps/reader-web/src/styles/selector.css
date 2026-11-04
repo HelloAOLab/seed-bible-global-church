@@ -1408,3 +1408,18 @@
     color: var(--sb-font-color);
   }
 }
+
+/* On a desktop the translation list drops down inside the book picker, under its translation button, as on
+   seedbible.org: its overlay covers the panel rather than the page. */
+.sb-selector-panel .sb-translation-picker.modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+/* seedbible.org draws the translation button as a plain field; here it is a real button, without the browser's
+   border and font. */
+button.sidebar-translation-selector {
+  border: none;
+  font: inherit;
+}
