@@ -127,6 +127,9 @@ export function itemsFor(
 const references: ExtensionRegistration = {
   id: "references",
   label: "Cross-references",
+  // seedbible.org installs its Discover sources only when the reader asks (autoinstall off), so a first visit
+  // reads the chapter alone; Settings → Extensions turns it on.
+  defaultEnabled: false,
   description: "Passages related to the verses on screen, in Discover.",
   settings: {
     perVerse: {

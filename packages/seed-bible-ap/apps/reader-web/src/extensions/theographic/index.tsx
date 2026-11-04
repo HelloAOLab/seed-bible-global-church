@@ -167,6 +167,9 @@ function Card({ state }: { state: ReaderState }) {
 const theographic: ExtensionRegistration = {
   id: "theographic",
   label: "People, places and events",
+  // seedbible.org installs its Discover sources only when the reader asks (autoinstall off), so a first visit
+  // reads the chapter alone; Settings → Extensions turns it on.
+  defaultEnabled: false,
   description:
     "Who and where in the chapter on screen, from the Theographic dataset, in Discover.",
   init: function* (ctx) {

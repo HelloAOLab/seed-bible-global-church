@@ -7,6 +7,11 @@ import type { Flow, FlowContext } from "./harness";
 
 /** The extensions this reader adds that seedbible.org lacks — off until turned on, so flows that use them turn them on. */
 const EXTRAS = [
+  // seedbible.org's Discover sources, which a first visit starts without (Settings → Extensions turns them on).
+  "Videos and articles",
+  "Cross-references",
+  "Places",
+  "People, places and events",
   "Dead Sea Scrolls",
   "Elsewhere",
   "Interpretations & writings",
@@ -4485,6 +4490,7 @@ export const MORE_FLOWS: Flow[] = [
       try {
         step = "cards";
         await c.open("/en/BSB/matthew/26");
+        await c.useExtensions(EXTRAS);
         await c.pressToolbar("Discover");
         await c.openSource(/^\s*Content\b/);
         const pane = c.pane();
@@ -4537,6 +4543,7 @@ export const MORE_FLOWS: Flow[] = [
       "On Genesis 12, Discover → People, places and events lists Abraham, Haran and Abraham enters Canaan under People, Places and Events (each with a count); Abraham's card shows his years, his relations and his passages; a relation opens its own card and Back returns; a passage opens in the reader",
     run: async (c) => {
       await c.open("/en/BSB/genesis/12");
+      await c.useExtensions(EXTRAS);
       await c.pressToolbar("Discover");
       await c.openSource("People, places and events");
       const section = c.pane().locator(".sb-content-section", {
@@ -8415,6 +8422,8 @@ export const MORE_FLOWS: Flow[] = [
       pane = await c.openAccount();
       await c.check(pane, /fit the window/i).uncheck();
       await c.check(pane, /show discovered content/i).check();
+      // The card stays out of the way while a side pane is open, as the Account pane is here.
+      await c.page.keyboard.press("Escape");
       await card.waitFor({ timeout: 10000 });
       return `beside, below and back with the compass; hidden; fit the window: ${Math.round(w.main)}px of ${Math.round(w.row)}px; kept after reload; card back`;
     },

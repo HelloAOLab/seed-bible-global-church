@@ -5,6 +5,11 @@ import type { Flow } from "./harness";
 
 /** The extensions this reader adds that seedbible.org lacks — off until turned on, so flows that use them turn them on. */
 const EXTRAS = [
+  // seedbible.org's Discover sources, which a first visit starts without (Settings → Extensions turns them on).
+  "Videos and articles",
+  "Cross-references",
+  "Places",
+  "People, places and events",
   "Dead Sea Scrolls",
   "Elsewhere",
   "Interpretations & writings",
@@ -541,6 +546,7 @@ const BASE_FLOWS: Flow[] = [
       "On Genesis 12 the Places map pane shows the published Bible lands base map (its tiles drawn) with at least one place marker",
     run: async (c) => {
       await c.open("/en/BSB/genesis/12");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -571,6 +577,7 @@ const BASE_FLOWS: Flow[] = [
         await route.continue();
       });
       await c.open("/en/rbs/deuteronomy/32");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -682,6 +689,7 @@ const BASE_FLOWS: Flow[] = [
       "On Acts 8 the Places map draws the Samaritan believers' region from the published map work beside the Bible places, and tapping it opens the group's picture and summary",
     run: async (c) => {
       await c.open("/en/BSB/acts/8");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -731,6 +739,7 @@ const BASE_FLOWS: Flow[] = [
         }
       });
       await c.open("/en/BSB/acts/6");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -811,6 +820,7 @@ const BASE_FLOWS: Flow[] = [
       "On Acts 8 open the Places map, press Expand on its header: the map fills the page beside a details column; tap 'Samaritan believers' in the list: the column shows the group's picture, period and summary and the verses naming it; Shrink puts the map back beside the chapter",
     run: async (c) => {
       await c.open("/en/BSB/acts/8");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
@@ -859,6 +869,7 @@ const BASE_FLOWS: Flow[] = [
       "On Acts 6 open the Places map and tap 'Alexandria' in the list under it: verse 9 (the Synagogue of the Freedmen) is selected and scrolled into view",
     run: async (c) => {
       await c.open("/en/BSB/acts/6");
+      await c.useExtensions(EXTRAS);
       await c
         .pressToolbar("Places map")
         .catch(async () => c.pressToolbar("Places"));
