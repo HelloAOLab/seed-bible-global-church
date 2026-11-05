@@ -1,33 +1,42 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-11-04 02:10 UTC",
+  "when": "2026-11-05 02:39 UTC",
   "results": [
     {
-      "id": "PY1",
+      "id": "PY4",
       "section": "10a. Prayer, faith journey and care",
-      "title": "Keep a prayer, pray for it, mark it answered",
-      "checks": "Signed in as Seed Reader, Prayer → Prayer request: a new prayer is added under Praying, marked Only me. I prayed shows 'Prayed 1 times'. Answered, with words, moves it to Answered prayers with those words. Remove takes it away.",
+      "title": "Choose your church and site in Settings",
+      "checks": "Settings → My church lists FaithNet's .church churches. Calvary Bible Church shows a Site dropdown (Boulder, Erie, Thornton, All sites); choosing Erie saves it and shows its address and service times; after a reload the dropdown still shows Erie; Care says requests go to Calvary's leaders. Saved as All sites the dropdown stays. Fort Morgan (no sites) saves without a site question.",
       "mark": "✅",
-      "note": "added under Praying (Only me); I prayed counted 1; Answered moved it to Answered prayers with the words; removed",
-      "ms": 62620
+      "note": "Calvary showed its sites; Erie was saved and held after a reload; All sites kept the dropdown; Care sends to Calvary's leaders; Fort Morgan saved without a site question",
+      "ms": 96629
     },
     {
-      "id": "PY2",
+      "id": "PY5",
       "section": "10a. Prayer, faith journey and care",
-      "title": "Say where you are on your journey; add a milestone",
-      "checks": "Journey: tapping New believer makes it the current stage and Next steps lists Reading the Bible. Adding the milestone Baptized with a place lists it under Milestones with the place; Remove takes it away.",
+      "title": "Open your faith journey from the top menu",
+      "checks": "The sidebar's ⋮ More menu lists Journey under Friends (after Groups and Church); choosing it opens the Faith page on its Journey tab. The toolbar's Prayer button still opens on Prayer.",
       "mark": "✅",
-      "note": "New believer became the current stage, with Reading the Bible as a next step; the Baptized milestone with its place was listed, then removed",
-      "ms": 56117
+      "note": "More → Journey (under Friends) opened the Journey tab; the Prayer button opened on Prayer",
+      "ms": 35050
     },
     {
-      "id": "PY3",
+      "id": "PY6",
       "section": "10a. Prayer, faith journey and care",
-      "title": "Ask your church for care; withdraw it",
-      "checks": "Care: the page says it is not for emergencies. A request is kept and listed under Your requests; 'I don't need this any more' marks it Withdrawn.",
+      "title": "Keep your groups: join one your church lists, add one of your own",
+      "checks": "The sidebar's ⋮ More menu lists Groups and Church right under Friends. Groups shows the groups Calvary Bible Church lists. I'm in this group puts one under My groups, marked In my groups; after a reload it is still there; Leave takes it away. A group of your own is added by name and kind, shows as Your own group, and Remove takes it away.",
       "mark": "✅",
-      "note": "the emergency note shows; the request was kept under Your requests, then withdrawn",
-      "ms": 51699
+      "note": "joined AI Faith Innovation at Calvary, still there after a reload, then left it; added and removed a group of my own",
+      "ms": 113916
+    },
+    {
+      "id": "PY7",
+      "section": "10a. Prayer, faith journey and care",
+      "title": "Keep more than one church",
+      "checks": "More → Church shows My church (Calvary Bible Church, Erie) and Other churches I go to. Add another church adds Fort Morgan household church without changing the main church; Remove takes it away again.",
+      "mark": "✅",
+      "note": "Fort Morgan was added under Other churches with Calvary still the main church, then removed",
+      "ms": 82232
     }
   ]
 }
