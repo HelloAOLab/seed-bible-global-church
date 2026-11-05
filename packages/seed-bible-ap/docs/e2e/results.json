@@ -1,6 +1,6 @@
 {
   "base": "https://seed-reader.faithnet.io",
-  "when": "2026-11-05 02:39 UTC",
+  "when": "2026-11-05 13:02 UTC",
   "results": [
     {
       "id": "PY4",
@@ -9,7 +9,7 @@
       "checks": "Settings → My church lists FaithNet's .church churches. Calvary Bible Church shows a Site dropdown (Boulder, Erie, Thornton, All sites); choosing Erie saves it and shows its address and service times; after a reload the dropdown still shows Erie; Care says requests go to Calvary's leaders. Saved as All sites the dropdown stays. Fort Morgan (no sites) saves without a site question.",
       "mark": "✅",
       "note": "Calvary showed its sites; Erie was saved and held after a reload; All sites kept the dropdown; Care sends to Calvary's leaders; Fort Morgan saved without a site question",
-      "ms": 96629
+      "ms": 81289
     },
     {
       "id": "PY5",
@@ -18,7 +18,7 @@
       "checks": "The sidebar's ⋮ More menu lists Journey under Friends (after Groups and Church); choosing it opens the Faith page on its Journey tab. The toolbar's Prayer button still opens on Prayer.",
       "mark": "✅",
       "note": "More → Journey (under Friends) opened the Journey tab; the Prayer button opened on Prayer",
-      "ms": 35050
+      "ms": 35105
     },
     {
       "id": "PY6",
@@ -27,7 +27,7 @@
       "checks": "The sidebar's ⋮ More menu lists Groups and Church right under Friends. Groups shows the groups Calvary Bible Church lists. I'm in this group puts one under My groups, marked In my groups; after a reload it is still there; Leave takes it away. A group of your own is added by name and kind, shows as Your own group, and Remove takes it away.",
       "mark": "✅",
       "note": "joined AI Faith Innovation at Calvary, still there after a reload, then left it; added and removed a group of my own",
-      "ms": 113916
+      "ms": 104559
     },
     {
       "id": "PY7",
@@ -36,7 +36,7 @@
       "checks": "More → Church shows My church (Calvary Bible Church, Erie) and Other churches I go to. Add another church adds Fort Morgan household church without changing the main church; Remove takes it away again.",
       "mark": "✅",
       "note": "Fort Morgan was added under Other churches with Calvary still the main church, then removed",
-      "ms": 82232
+      "ms": 70153
     }
   ]
 }

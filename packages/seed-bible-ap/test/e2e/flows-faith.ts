@@ -451,13 +451,27 @@ export const FAITH_FLOWS: Flow[] = [
         allow.waitFor().then(() => allow.click()),
       ]);
       await church.locator(".avatar").waitFor();
+      // Asking the person's agent can fail for a moment; the page says so, and a person would reload.
       const openChurchGroups = async () => {
-        await church.goto("https://church.faithnet.io/", {
-          waitUntil: "networkidle",
-        });
-        await church.locator(".nav-item[data-go=group]").click();
-        await church.locator("#my-groups").waitFor();
-        await church.locator("article.record-card").first().waitFor();
+        for (let tries = 0; tries < 4; tries++) {
+          await church.goto("https://church.faithnet.io/", {
+            waitUntil: "networkidle",
+          });
+          await church.locator(".nav-item[data-go=group]").click();
+          await church.locator("#my-groups").waitFor();
+          const state = await Promise.race([
+            church
+              .locator("#my-groups form#own-group-form")
+              .waitFor()
+              .then(() => "ready"),
+            church
+              .getByText("can’t be read from your own agent")
+              .waitFor()
+              .then(() => "unread"),
+          ]);
+          if (state === "ready") return;
+        }
+        throw new Error("the person's agent could not be asked, four times");
       };
       const churchRow = () =>
         church.locator("#my-groups li", { hasText: name }).first();
