@@ -165,7 +165,7 @@ export function ChurchTab({ state }: { state: ReaderState }) {
             </ul>
           )}
           {addable.length > 0 ? (
-            <div className="sb-my-church">
+            <div className="sb-my-church sb-church-add">
               <label htmlFor="church-add-other">
                 {t("church-add-other", { defaultValue: "Add another church" })}
               </label>

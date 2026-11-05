@@ -67,6 +67,8 @@
 .sb-faith-form textarea,
 .sb-faith-form select,
 .sb-faith-answer-form textarea,
+.sb-church-add select,
+.sb-church-site-label select,
 .sb-faith-who select {
   width: 100%;
   box-sizing: border-box;
