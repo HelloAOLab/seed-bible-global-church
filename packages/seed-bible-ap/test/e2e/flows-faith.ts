@@ -440,13 +440,11 @@ export const FAITH_FLOWS: Flow[] = [
         .getByRole("button", { name: "Continue with FaithNet" })
         .click();
       await church.waitForURL((u) => u.hostname.endsWith("faithnet.me"));
-      const people = church
+      await church
         .locator("summary")
-        .filter({ hasText: "Demo people" });
-      if (await people.count()) {
-        await people.click();
-        await church.getByRole("button", { name: /seed ?reader/i }).click();
-      }
+        .filter({ hasText: "Demo people" })
+        .click();
+      await church.getByRole("button", { name: /seed ?reader/i }).click();
       const allow = church.getByRole("button", { name: /allow church/i });
       await Promise.race([
         church.waitForURL((u) => u.hostname === "church.faithnet.io"),

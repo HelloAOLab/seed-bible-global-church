@@ -2,6 +2,7 @@
 // agent and the page then shows what the agent now holds — a prayer added, prayed for and answered, a stage said, a
 // milestone removed; a failed call is said in words, never thrown at the page.
 import { describe, expect, it } from "vitest";
+import { churchDescriptionOf } from "../../../apps/reader-web/src/backend/a2a";
 import { createDevBackend } from "../../../apps/reader-web/src/backend/dev";
 import { createFaith } from "../../../apps/reader-web/src/state/faith/faith";
 
@@ -266,6 +267,23 @@ describe("the reader's groups, kept beside their church (ap-church spec 204)", (
     expect(faith.churchHome.value.groups.map((g) => g.name)).toEqual([
       "Lunch prayer",
     ]);
+  });
+
+  it("the live backend passes on where a church takes names, and says nothing for a church that gives none", () => {
+    const church = calvary.church;
+    expect(
+      churchDescriptionOf({
+        church,
+        sites: [],
+        groups: [],
+        rosterApp: "https://church.test",
+      }).rosterApp
+    ).toBe("https://church.test");
+    expect(churchDescriptionOf({ church, sites: [] })).toEqual({
+      church,
+      sites: [],
+      groups: [],
+    });
   });
 
   it("an agent that has not learned groups keeps the church and drops the group: the reader is told", async () => {

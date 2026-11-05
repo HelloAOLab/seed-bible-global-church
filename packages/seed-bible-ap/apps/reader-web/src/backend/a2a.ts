@@ -52,6 +52,18 @@ interface HarnessReply {
   error?: string;
 }
 
+/** What the workspace's answer says of a church; a field left out here never reaches the page. */
+export function churchDescriptionOf(
+  r: Record<string, unknown>
+): ChurchDescription {
+  return {
+    church: r.church as ChurchDescription["church"],
+    sites: (r.sites as ChurchSite[] | undefined) ?? [],
+    groups: (r.groups as ChurchDescription["groups"] | undefined) ?? [],
+    ...(typeof r.rosterApp === "string" ? { rosterApp: r.rosterApp } : {}),
+  };
+}
+
 export function createA2aBackend(
   getSession: () => ReaderSession | null,
   fetchImpl: typeof fetch = (...a) => fetch(...a)
@@ -345,11 +357,7 @@ export function createA2aBackend(
         { name },
         "where does this church meet"
       );
-      return {
-        church: r.church as ChurchDescription["church"],
-        sites: (r.sites as ChurchSite[] | undefined) ?? [],
-        groups: (r.groups as ChurchDescription["groups"] | undefined) ?? [],
-      };
+      return churchDescriptionOf(r);
     },
     async faithChurchHome() {
       const r = await ask(
