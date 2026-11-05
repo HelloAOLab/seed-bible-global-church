@@ -1394,6 +1394,7 @@
   "groups-mine": "My groups",
   "groups-mine-empty": "You have not added a group yet.",
   "groups-own": "Your own group",
+  "groups-unlisted": "No longer listed by the church",
   "groups-leave": "Leave",
   "groups-leave-named": "Leave {{name}}",
   "groups-remove-named": "Remove {{name}}",

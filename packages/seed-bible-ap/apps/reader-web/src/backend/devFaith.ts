@@ -135,7 +135,10 @@ export function createDevFaith(guard: () => void): DevFaith {
             );
             if (!d || !churches.some((c) => c.agent === g.church))
               throw new Error("choose that church first, then its group");
-            const hit = d.groups?.find((x) => x.id === g.id);
+            // A group already kept stays when its church stops listing it.
+            const hit =
+              d.groups?.find((x) => x.id === g.id) ??
+              home.groups.find((x) => x.church === g.church && x.id === g.id);
             if (!hit)
               throw new Error(
                 `${d.church.displayName} does not list a group "${g.id}"`

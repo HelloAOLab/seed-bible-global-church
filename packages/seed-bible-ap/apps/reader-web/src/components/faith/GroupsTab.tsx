@@ -52,19 +52,28 @@ function useDescriptions(state: ReaderState) {
 
 function MyGroups({
   state,
+  descriptions,
   busy,
   run,
 }: {
   state: ReaderState;
+  descriptions: Record<string, ChurchDescription | false>;
   busy: boolean;
   run: (act: () => Promise<boolean>) => void;
 }) {
   const { t } = useI18n();
   const { faith } = state;
   const home = faith.churchHome.value;
+  const churchOf = (g: MyGroup) =>
+    home.churches.find((x) => x.agent === g.church);
   const churchName = (g: MyGroup) => {
-    const c = home.churches.find((x) => x.agent === g.church);
+    const c = churchOf(g);
     return c ? (c.displayName ?? c.name) : null;
+  };
+  /** The church was asked and no longer lists this group; the reader's note stays until they leave it. */
+  const unlisted = (g: MyGroup) => {
+    const d = descriptions[churchOf(g)?.name ?? ""];
+    return !!d && !(d.groups ?? []).some((x) => x.id === g.id);
   };
   return (
     <>
@@ -92,6 +101,13 @@ function MyGroups({
                     {churchName(g) ??
                       t("groups-own", { defaultValue: "Your own group" })}
                   </span>
+                  {g.church && unlisted(g) && (
+                    <span>
+                      {t("groups-unlisted", {
+                        defaultValue: "No longer listed by the church",
+                      })}
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="sb-faith-card-actions">
@@ -328,7 +344,12 @@ export function GroupsTab({ state }: { state: ReaderState }) {
             "The groups you are part of, like a home group or a men's group. Your own agent keeps this list, so the Church app shows the same groups. The church is not told.",
         })}
       </p>
-      <MyGroups state={state} busy={busy} run={run} />
+      <MyGroups
+        state={state}
+        descriptions={descriptions}
+        busy={busy}
+        run={run}
+      />
       {home.churches.length === 0 ? (
         <>
           <p className="sb-faith-empty">

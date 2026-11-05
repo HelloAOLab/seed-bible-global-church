@@ -144,6 +144,33 @@ describe("More → Groups", () => {
     );
   });
 
+  it("a group the church stops listing stays in My groups, marked, and other groups can still be joined", async () => {
+    const { t, r, groups } = await open("groups", { church: true });
+    await t.state.faith.joinGroup(CALVARY, "group_mens");
+    const listed = t.backend!.churchesOnFaithNet.find(
+      (d) => d.church.agent === CALVARY
+    )!;
+    listed.groups = listed.groups!.filter((g) => g.id !== "group_mens");
+    // Leaving the page and coming back asks the church again.
+    t.state.ui.faithTab.value = "church";
+    await waitFor(() => expect(r.queryByLabelText("Church")).not.toBeNull());
+    t.state.ui.faithTab.value = "groups";
+    await waitFor(() =>
+      expect(r.queryByText("No longer listed by the church")).not.toBeNull()
+    );
+    fireEvent.click(
+      await waitFor(() =>
+        r.getByRole("button", { name: "I'm in Erie Home Group" })
+      )
+    );
+    await waitFor(() =>
+      expect(groups().map((g) => g.id)).toEqual([
+        "group_mens",
+        "group_erie_home",
+      ])
+    );
+  });
+
   it("a stranger is asked to sign in", async () => {
     const { r } = await open("groups", { identity: null });
     expect(r.container.textContent).toMatch(
