@@ -280,7 +280,9 @@ export async function finish(
   authOrigin: string,
   code: string,
   codeVerifier: string,
-  nonce: string
+  nonce: string,
+  /** A silent attempt names who it asked for; the Home's answer is kept only if it is that person. */
+  expectSub?: string
 ): Promise<ReaderSession> {
   const ex = await exchange(authOrigin, code, codeVerifier);
   const claims = (await c.verifyIdToken(
@@ -288,6 +290,13 @@ export async function finish(
     ex.idToken,
     nonce
   )) as unknown as Record<string, unknown>;
+  // Nobody chose an account on a silent attempt, so a different person coming back is not a sign-in anyone made
+  // (the Home's session could have been put there by a link). It is dropped before anything is kept or handed on.
+  if (
+    expectSub &&
+    (hintSubOf(claims) ?? "").toLowerCase() !== expectSub.toLowerCase()
+  )
+    throw new SilentSignInMismatch();
   // An `ask_with_login` client gets the wire beside the site grant (`askDelegation`); asking for the ask-as-me
   // TEMPLATE (as this reader does) makes the wire the sign-in's own delegation. reader-a2a checks either is this
   // reader's, for its key, before keeping it.
@@ -301,11 +310,18 @@ export async function finish(
     ...handed,
   };
   save(s);
-  // Whoever the Home signed in is the person to ask for next time — also when a silent attempt came back as
-  // someone other than the one it named.
+  // Whoever the Home signed in is the person to ask for next time.
   const hintSub = hintSubOf(claims);
   if (hintSub) writeHint(deviceStore(), { estate: estateId, sub: hintSub });
   return s;
+}
+
+/** A silent attempt came back as someone other than the person it asked for. */
+export class SilentSignInMismatch extends Error {
+  constructor() {
+    super("the Home answered for a different person than the one asked for");
+    this.name = "SilentSignInMismatch";
+  }
 }
 
 /** How long a sign-in in the Home's window is waited for, all told. The SDK's popup gives up after 2 minutes (under the
@@ -449,8 +465,9 @@ interface PendingSignIn {
   codeVerifier: string;
   nonce: string;
   estate: EstateId;
-  /** A silent attempt, and the page it began on (the Home returns to "/"). */
+  /** A silent attempt, who it asked for, and the page it began on (the Home returns to "/"). */
   silent?: boolean;
+  expectSub?: string;
   returnTo?: string;
 }
 
@@ -475,25 +492,34 @@ export async function completeRedirectIfReturning(): Promise<ReaderSession | nul
       "",
       withoutHomeReturn(location.pathname, location.search, location.hash)
     );
-  if (back.kind === "error") {
-    tabStore().removeItem(PENDING_KEY);
+  // An answer that is not for the sign-in in flight (another `state`, e.g. a crafted link) is tidied off the address
+  // and otherwise ignored: it must not cancel that sign-in or touch the remembered person.
+  if (!stash || stash.state !== back.state) {
     clean();
-    if (stash?.state === back.state && stash.silent)
-      afterSilentRefusal(deviceStore(), back.error);
     return null;
   }
-  if (!stash) return null;
   tabStore().removeItem(PENDING_KEY);
   clean();
-  if (stash.state !== back.state) return null;
-  return finish(
-    clientFor(stash.estate),
-    stash.estate,
-    stash.authOrigin,
-    back.code,
-    stash.codeVerifier,
-    stash.nonce
-  );
+  if (back.kind === "error") {
+    if (stash.silent) afterSilentRefusal(deviceStore(), back.error);
+    return null;
+  }
+  try {
+    return await finish(
+      clientFor(stash.estate),
+      stash.estate,
+      stash.authOrigin,
+      back.code,
+      stash.codeVerifier,
+      stash.nonce,
+      stash.silent ? stash.expectSub : undefined
+    );
+  } catch (e) {
+    if (e instanceof SilentSignInMismatch) return null;
+    // A silent attempt that fails for any reason leaves the reader signed out, with nothing said.
+    if (stash.silent) return null;
+    throw e;
+  }
 }
 
 /** Before the page starts: a silent attempt's answer arrives at "/", so the address is put back to where the person
@@ -541,6 +567,7 @@ export async function silentSignInIfDue(): Promise<boolean> {
     ...start.stash,
     estate: hint.estate,
     silent: true,
+    expectSub: hint.sub,
     returnTo: safeReturnTo(
       `${location.pathname}${location.search}${location.hash}`
     ),

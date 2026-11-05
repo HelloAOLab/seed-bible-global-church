@@ -425,6 +425,29 @@ describe("a silent attempt, start to finish", () => {
     }
   );
 
+  it("the silent attempt records who it asked for", async () => {
+    const b = browser({ device: hintOf(ALICE) });
+    await session.silentSignInIfDue();
+    expect(
+      JSON.parse(b.tab.getItem("sbr.connect.pending")!) as { expectSub: string }
+    ).toMatchObject({ silent: true, expectSub: ALICE });
+  });
+
+  it.each(["?error=login_required&state=not-ours", "?code=x&state=not-ours"])(
+    "a return that is not for the sign-in in flight (%s) is tidied away and changes nothing",
+    async (search) => {
+      const b = browser({ device: hintOf(ALICE) });
+      await session.silentSignInIfDue();
+      const pendingBefore = b.tab.getItem("sbr.connect.pending");
+      b.loc.search = search;
+      await expect(session.completeRedirectIfReturning()).resolves.toBeNull();
+      expect(b.loc.search).toBe("");
+      expect(b.tab.getItem("sbr.connect.pending")).toBe(pendingBefore);
+      expect(readHint(b.device)).toEqual({ estate: "faithnet", sub: ALICE });
+      expect(session.loadSession()).toBeNull();
+    }
+  );
+
   it("granted: the answer is put back on the page the person was on, for the sign-in to finish there", async () => {
     const b = browser({ path: "/read/BSB/JHN/3", device: hintOf(ALICE) });
     await session.silentSignInIfDue();
@@ -460,7 +483,39 @@ describe("the hint through signing in and out", () => {
     expect(b.went).toEqual([]);
   });
 
-  it("follows the person the Home actually signed in, when that is not the one asked for", async () => {
+  it("a silent answer for someone other than the person asked for is dropped: nothing kept, nothing handed on, the hint unchanged", async () => {
+    const b = browser({ device: hintOf(ALICE) });
+    await expect(
+      session.finish(
+        homeClient({ sub: BOB, name: "Bob" }),
+        "faithnet",
+        HOME,
+        "code",
+        "cv",
+        "nonce",
+        ALICE
+      )
+    ).rejects.toBeInstanceOf(session.SilentSignInMismatch);
+    expect(session.loadSession()).toBeNull();
+    expect(b.handed).toEqual([]);
+    expect(readHint(b.device)).toEqual({ estate: "faithnet", sub: ALICE });
+  });
+
+  it("a silent answer for the person asked for is kept (ids compared without regard to case)", async () => {
+    browser({ device: hintOf(ALICE) });
+    const s = await session.finish(
+      homeClient({ sub: ALICE, name: "Alice" }),
+      "faithnet",
+      HOME,
+      "code",
+      "cv",
+      "nonce",
+      ALICE.toUpperCase().replace("EIP155", "eip155").replace("0X", "0x")
+    );
+    expect(s.sub).toBe(ALICE);
+  });
+
+  it("an ordinary sign-in follows the person the Home signed in, when that is not the one remembered", async () => {
     const b = browser({ device: hintOf(ALICE) });
     const s = await finishAs({ sub: BOB, name: "Bob" });
     expect(s.sub).toBe(BOB);
