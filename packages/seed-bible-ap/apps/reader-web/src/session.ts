@@ -14,6 +14,13 @@
 // listed under the reader's Connected assistants and revocable there. This page hands it to reader-a2a
 // (`/api/connect`) and forgets it; with it the reader's OWN agent writes their Library as them. The FedCM lane is
 // not used: `/fedcm/grant` mints the site-login template only.
+//
+// WHO SIGNED IN LAST. A Home sign-in leaves a hint on the device (the estate and the person's id, nothing else), kept
+// across Sign out. A later visit with no sign-in asks that Home once, with no screen, for the same person
+// (`sign-in-modes.ts` has the rules); the Home answers with a code or a refusal, and a refusal just leaves the reader
+// signed out. The connect client has no helper for this (its only screenless lane is FedCM), so the reader adds the
+// two parameters to the client's own authorize URL and goes there as a full page: the Home's session cookie is the
+// Home's own, which a frame on this site would not be sent.
 
 import {
   openCentralAuthPopup,
@@ -30,6 +37,22 @@ import {
   type EstateId,
 } from "../../../estate/faithnet";
 import { connectWire, whoAmI } from "./api";
+import {
+  afterSilentRefusal,
+  authorizeUrlFor,
+  clearHint,
+  hintSubOf,
+  homeReturnOf,
+  markSilentTried,
+  readHint,
+  restoredAddress,
+  safeReturnTo,
+  shouldTrySilent,
+  silentTried,
+  withoutHomeReturn,
+  writeHint,
+  type SignInMode,
+} from "./sign-in-modes";
 
 export const CLIENT_ID = READER_CLIENT_ID;
 export const RELAY_CHANNEL = "seed-bible-reader-connect-relay";
@@ -60,6 +83,30 @@ export interface ReaderSession {
 }
 
 type Wire = Record<string, unknown>;
+type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+const NO_STORE: Store = {
+  getItem: () => null,
+  setItem: () => {
+    throw new Error("no storage");
+  },
+  removeItem: () => undefined,
+};
+/** The device's storage (kept) and the tab's (gone with the tab); a stand-in that keeps nothing where there is none. */
+function deviceStore(): Store {
+  try {
+    return localStorage ?? NO_STORE;
+  } catch {
+    return NO_STORE;
+  }
+}
+function tabStore(): Store {
+  try {
+    return sessionStorage ?? NO_STORE;
+  } catch {
+    return NO_STORE;
+  }
+}
 
 /** The sign-in is kept across closing the browser (localStorage), for as long as the Home's token lasts — days, for
  *  this app — and dropped at its expiry (state's expiry watch) or on Sign out. A sign-in kept by an earlier version in
@@ -119,6 +166,11 @@ export function signOut(): void {
   save(null);
 }
 
+/** After the person's own Sign out: this tab does not sign them back in by itself. The hint stays for a later visit. */
+export function noSilentSignInThisTab(): void {
+  markSilentTried(tabStore());
+}
+
 function isAllowedIssuer(estateId: EstateId, origin: string): boolean {
   const est = estateById(estateId);
   if (!est) return false;
@@ -134,7 +186,10 @@ function isAllowedIssuer(estateId: EstateId, origin: string): boolean {
   }
 }
 
-function clientFor(estateId: EstateId, then?: string): ConnectClient {
+function clientFor(
+  estateId: EstateId,
+  opts: { then?: string; mode?: SignInMode } = {}
+): ConnectClient {
   const est = estateById(estateId);
   if (!est) throw new Error("unknown estate");
   const c = createConnectClient({
@@ -145,19 +200,10 @@ function clientFor(estateId: EstateId, then?: string): ConnectClient {
     resolveAuthOrigin: () => est.home,
     isAllowedIssuerOrigin: (origin) => isAllowedIssuer(estateId, origin),
   });
-  // The same client, asking for the ask-as-me template on every authorize it builds — and for the Home's person
-  // chooser (OIDC prompt=select_account): signing in to the reader picks who, rather than taking whoever the Home
-  // already has signed in (a demo person picked here used to come back as the browser's last Home session).
-  const retemplate = async (
+  const mode = opts.mode ?? { kind: "default" };
+  const retemplate = (
     start: Awaited<ReturnType<ConnectClient["startEnrollment"]>>
-  ) => {
-    const u = new URL(start.url);
-    u.searchParams.set("delegation_template", ASK_AS_ME);
-    u.searchParams.set("prompt", "select_account");
-    // One friend act the same Home window takes after signing in (the Home accepts only that).
-    if (then) u.searchParams.set("then", then);
-    return { ...start, url: u.toString() };
-  };
+  ) => ({ ...start, url: authorizeUrlFor(start.url, mode, opts.then) });
   return {
     ...c,
     startEnrollment: (name, opts) =>
@@ -255,6 +301,10 @@ export async function finish(
     ...handed,
   };
   save(s);
+  // Whoever the Home signed in is the person to ask for next time — also when a silent attempt came back as
+  // someone other than the one it named.
+  const hintSub = hintSubOf(claims);
+  if (hintSub) writeHint(deviceStore(), { estate: estateId, sub: hintSub });
   return s;
 }
 
@@ -345,17 +395,30 @@ function lateRelay(
   });
 }
 
-/** Sign in with your own Home. Popup first; a full-page redirect when the popup is blocked, announced. */
+/** Sign in with your own Home. Popup first; a full-page redirect when the popup is blocked, announced.
+ *  `differentAccount` is the person saying "not the one you remember": the Home shows its account chooser, and the
+ *  remembered person is forgotten here. */
 export async function connectViaHome(
   estateId: EstateId,
   onProgress?: (msg: string) => void,
-  opts: { then?: string; signal?: AbortSignal } = {}
+  opts: {
+    then?: string;
+    signal?: AbortSignal;
+    differentAccount?: boolean;
+  } = {}
 ): Promise<ReaderSession | null> {
   if (!HOME_SIGNIN_AVAILABLE)
     throw new Error(
       `Home sign-in is not registered yet (client "${CLIENT_ID}" needs a delegate — VITE_CONNECT_DELEGATE).`
     );
-  const c = clientFor(estateId, opts.then);
+  if (opts.differentAccount) {
+    clearHint(deviceStore());
+    markSilentTried(tabStore());
+  }
+  const c = clientFor(estateId, {
+    ...(opts.then ? { then: opts.then } : {}),
+    mode: { kind: opts.differentAccount ? "choose" : "default" },
+  });
   onProgress?.("Opening your Home…");
   const popup = await signInPopup(c, onProgress, opts.signal);
   if (popup.status === "success") {
@@ -380,32 +443,111 @@ export async function connectViaHome(
   return null;
 }
 
-/** Complete a redirect return if this load is one; null on every ordinary load. */
+interface PendingSignIn {
+  state: string;
+  authOrigin: string;
+  codeVerifier: string;
+  nonce: string;
+  estate: EstateId;
+  /** A silent attempt, and the page it began on (the Home returns to "/"). */
+  silent?: boolean;
+  returnTo?: string;
+}
+
+function pendingSignIn(): PendingSignIn | null {
+  try {
+    const raw = tabStore().getItem(PENDING_KEY);
+    return raw ? (JSON.parse(raw) as PendingSignIn) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Complete a redirect return if this load is one; null on every ordinary load. A refusal from the Home (a silent
+ *  attempt it could not grant) also ends here, as null: the reader stays signed out and says nothing. */
 export async function completeRedirectIfReturning(): Promise<ReaderSession | null> {
-  const sp = new URLSearchParams(location.search);
-  const code = sp.get("code");
-  const state = sp.get("state");
-  if (!code || !state) return null;
-  const raw = sessionStorage.getItem(PENDING_KEY);
-  if (!raw) return null;
-  const stash = JSON.parse(raw) as {
-    state: string;
-    authOrigin: string;
-    codeVerifier: string;
-    nonce: string;
-    estate: EstateId;
-  };
-  sessionStorage.removeItem(PENDING_KEY);
-  history.replaceState({}, "", "/");
-  if (stash.state !== state) return null;
+  const back = homeReturnOf(location.search);
+  if (back.kind === "none") return null;
+  const stash = pendingSignIn();
+  const clean = () =>
+    history.replaceState(
+      {},
+      "",
+      withoutHomeReturn(location.pathname, location.search, location.hash)
+    );
+  if (back.kind === "error") {
+    tabStore().removeItem(PENDING_KEY);
+    clean();
+    if (stash?.state === back.state && stash.silent)
+      afterSilentRefusal(deviceStore(), back.error);
+    return null;
+  }
+  if (!stash) return null;
+  tabStore().removeItem(PENDING_KEY);
+  clean();
+  if (stash.state !== back.state) return null;
   return finish(
     clientFor(stash.estate),
     stash.estate,
     stash.authOrigin,
-    code,
+    back.code,
     stash.codeVerifier,
     stash.nonce
   );
+}
+
+/** Before the page starts: a silent attempt's answer arrives at "/", so the address is put back to where the person
+ *  was (still carrying the answer) for the reader to open that place and `completeRedirectIfReturning` to finish. */
+export function restoreSilentReturnAddress(): void {
+  const back = homeReturnOf(location.search);
+  if (back.kind === "none") return;
+  const stash = pendingSignIn();
+  if (!stash?.silent || stash.state !== back.state || !stash.returnTo) return;
+  history.replaceState(
+    {},
+    "",
+    restoredAddress(stash.returnTo, location.search)
+  );
+}
+
+/** With nobody signed in and a remembered person: ask their Home for them once, with no screen, as a full-page
+ *  visit that comes straight back. True when the page is leaving for the Home. At most once per tab, never on a load
+ *  that is itself the Home's answer, never for a dev reader (it has no Home and leaves no hint). */
+export async function silentSignInIfDue(): Promise<boolean> {
+  const kept = loadSession();
+  const expiry = kept ? sessionExpiresAt(kept) : null;
+  const hint = readHint(deviceStore());
+  const due = shouldTrySilent({
+    search: location.search,
+    signedIn: kept !== null && (expiry === null || expiry > Date.now()),
+    hint,
+    tried: silentTried(tabStore()),
+    homeSignInAvailable: HOME_SIGNIN_AVAILABLE,
+    online: typeof navigator === "undefined" || navigator.onLine !== false,
+    framed: typeof window !== "undefined" && window.top !== window,
+  });
+  if (!due || !hint) return false;
+  if (!estateById(hint.estate)) {
+    clearHint(deviceStore());
+    return false;
+  }
+  if (!markSilentTried(tabStore())) return false;
+  const start = await connectViaRedirect(
+    clientFor(hint.estate, {
+      mode: { kind: "silent", loginHint: hint.sub },
+    })
+  );
+  const pending: PendingSignIn = {
+    ...start.stash,
+    estate: hint.estate,
+    silent: true,
+    returnTo: safeReturnTo(
+      `${location.pathname}${location.search}${location.hash}`
+    ),
+  };
+  tabStore().setItem(PENDING_KEY, JSON.stringify(pending));
+  location.replace(start.url);
+  return true;
 }
 
 /** The sample people the Home offers; `[]` when it offers none (that is the Home's answer, not an error). */
@@ -452,6 +594,8 @@ export async function connectAsSamplePerson(
     ...handed,
   };
   save(s);
+  // A sample person has no session at the Home; the person remembered before them must not come back in their place.
+  clearHint(deviceStore());
   return s;
 }
 
@@ -473,6 +617,7 @@ export function signInAsDevReader(
     wireNote: "A dev reader has no Home, so reading stays local-only.",
   };
   save(s);
+  clearHint(deviceStore());
   return s;
 }
 
