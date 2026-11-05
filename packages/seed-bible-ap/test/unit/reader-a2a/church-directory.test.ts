@@ -23,7 +23,11 @@ const nameView = (name: string, agent: string, over: object = {}) => ({
   ...over,
 });
 
-const describeAnswer = (agent: string, sites: unknown[]) => ({
+const describeAnswer = (
+  agent: string,
+  sites: unknown[],
+  groups?: unknown[]
+) => ({
   jsonrpc: "2.0",
   id: 1,
   result: {
@@ -36,6 +40,7 @@ const describeAnswer = (agent: string, sites: unknown[]) => ({
           protocol: "church.describe/1",
           church: { agent, displayName: "Calvary Bible Church" },
           sites,
+          ...(groups ? { groups } : {}),
         },
       },
     ],
@@ -147,6 +152,50 @@ describe("describing a church", () => {
     });
     expect(d.sites.map((s) => s.id)).toEqual(["campus_erie", "campus_boulder"]);
     expect(asked).toContain("https://edge.test/api/a2a/calvary");
+  });
+
+  it("returns the groups the church lists, with nothing about people (spec 204)", async () => {
+    const { f } = net({
+      ...calvary,
+      "https://edge.test/api/a2a/calvary": describeAnswer(
+        CALVARY,
+        [{ id: "campus_erie", name: "Erie" }],
+        [
+          {
+            id: "group_mens",
+            name: "Men’s Group",
+            kind: "men",
+            schedule: "Thursdays 6:30 AM",
+            site: "campus_erie",
+            leader: "Tom",
+            members: ["Bob"],
+          },
+          { id: "group_quilt", name: "Quilters", kind: "craft", site: "gone" },
+          { name: "no id" },
+          { id: "group_mens", name: "Listed twice" },
+        ]
+      ),
+    });
+    const d = await describeChurch(ENV, "calvary-bible-co.church", f);
+    expect(d.groups).toEqual([
+      {
+        id: "group_mens",
+        name: "Men’s Group",
+        kind: "men",
+        schedule: "Thursdays 6:30 AM",
+        site: "campus_erie",
+      },
+      { id: "group_quilt", name: "Quilters", kind: "other" },
+    ]);
+  });
+
+  it("a church that lists no groups has none", async () => {
+    const { f } = net({
+      ...calvary,
+      "https://edge.test/api/a2a/calvary": describeAnswer(CALVARY, []),
+    });
+    const d = await describeChurch(ENV, "calvary-bible-co.church", f);
+    expect(d.groups).toEqual([]);
   });
 
   it("refuses an answer that speaks for another agent", async () => {

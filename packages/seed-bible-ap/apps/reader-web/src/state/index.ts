@@ -657,7 +657,9 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     /** Which of the Library's tabs is showing (the Profile's cards open the one they name). */
     libraryTab: signal<"playlists" | "plans" | "customizations">("playlists"),
     /** Which of the Faith pane's tabs is showing (the top menu's Journey opens that one). */
-    faithTab: signal<"prayer" | "journey" | "care">("prayer"),
+    faithTab: signal<"prayer" | "journey" | "care" | "groups" | "church">(
+      "prayer"
+    ),
     /** "Sync device content?" at sign-in, while it waits for an answer. */
     adoptPrompt: signal<{
       kinds: ("highlights" | "notes")[];

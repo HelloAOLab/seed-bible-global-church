@@ -70,7 +70,7 @@ export function createDevFaith(guard: () => void): DevFaith {
   const milestones: JourneyView["milestones"] = [];
   const prayers: Prayer[] = [];
   const care: CareRequest[] = [];
-  let home: ChurchHome = { churches: [], defaultChurch: null };
+  let home: ChurchHome = { churches: [], defaultChurch: null, groups: [] };
   let n = 0;
   const id = () => `dev-${Date.now().toString(36)}-${(n++).toString(36)}`;
   const now = () => new Date().toISOString();
@@ -94,7 +94,11 @@ export function createDevFaith(guard: () => void): DevFaith {
     },
     async faithChurchHome() {
       guard();
-      return { ...home, churches: [...home.churches] };
+      return {
+        ...home,
+        churches: [...home.churches],
+        groups: [...home.groups],
+      };
     },
     async faithSaveChurchHome(args) {
       guard();
@@ -115,7 +119,51 @@ export function createDevFaith(guard: () => void): DevFaith {
           site: site ? { id: site.id, name: site.name } : null,
         });
       }
-      home = { churches, defaultChurch: args.defaultChurch };
+      // The agent's rule for groups (spec 204 §2): left out, the stored ones stay unless their church was dropped; a
+      // church's group must be one that church lists, and takes the church's own name for it.
+      let groups: ChurchHome["groups"];
+      if (!args.groups)
+        groups = home.groups.filter(
+          (g) => g.church === null || churches.some((c) => c.agent === g.church)
+        );
+      else {
+        groups = [];
+        for (const g of args.groups) {
+          if ("church" in g) {
+            const d = this.churchesOnFaithNet.find(
+              (x) => x.church.agent === g.church
+            );
+            if (!d || !churches.some((c) => c.agent === g.church))
+              throw new Error("choose that church first, then its group");
+            const hit = d.groups?.find((x) => x.id === g.id);
+            if (!hit)
+              throw new Error(
+                `${d.church.displayName} does not list a group "${g.id}"`
+              );
+            groups.push({
+              id: hit.id,
+              name: hit.name,
+              kind: hit.kind,
+              church: g.church,
+            });
+          } else {
+            if (!g.name.trim())
+              throw new Error("a group of your own needs a name");
+            groups.push({
+              id:
+                g.id ??
+                `own-${g.name
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")}`,
+              name: g.name.trim(),
+              kind: g.kind,
+              church: null,
+            });
+          }
+        }
+      }
+      home = { churches, defaultChurch: args.defaultChurch, groups };
       return { answer: "Kept — your church and site are saved." };
     },
     async faithJourney() {

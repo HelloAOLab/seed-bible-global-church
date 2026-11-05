@@ -5,6 +5,8 @@
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
+import { GroupsTab } from "./GroupsTab";
+import { ChurchTab } from "./ChurchTab";
 import {
   MILESTONES,
   STAGES,
@@ -15,7 +17,9 @@ import {
   type Visibility,
 } from "../../state/faith/faith";
 
-type Tab = "prayer" | "journey" | "care";
+type Tab = "prayer" | "journey" | "care" | "groups" | "church";
+/** Groups and Church open from the More menu under Friends and show as their own pair of tabs. */
+const COMMUNITY_TABS: readonly Tab[] = ["groups", "church"];
 type T = ReturnType<typeof useI18n>["t"];
 
 const STAGE_TEXT: Record<Stage, [string, string]> = {
@@ -949,15 +953,25 @@ export function FaithPane({ state }: { state: ReaderState }) {
     if (signedIn) void faith.refresh();
   }, [signedIn]);
   const msg = faith.message.value;
-  const tabs: Array<[Tab, string]> = [
-    ["prayer", t("faith-tab-prayer", { defaultValue: "Prayer" })],
-    ["journey", t("faith-tab-journey", { defaultValue: "Journey" })],
-    ["care", t("faith-tab-care", { defaultValue: "Care" })],
-  ];
+  const community = COMMUNITY_TABS.includes(tab);
+  const tabs: Array<[Tab, string]> = community
+    ? [
+        ["groups", t("faith-tab-groups", { defaultValue: "Groups" })],
+        ["church", t("faith-tab-church", { defaultValue: "Church" })],
+      ]
+    : [
+        ["prayer", t("faith-tab-prayer", { defaultValue: "Prayer" })],
+        ["journey", t("faith-tab-journey", { defaultValue: "Journey" })],
+        ["care", t("faith-tab-care", { defaultValue: "Care" })],
+      ];
   return (
     <section
       className="sb-pane sb-faith"
-      aria-label={t("faith", { defaultValue: "Faith" })}
+      aria-label={
+        community
+          ? t("faith-community", { defaultValue: "Groups and church" })
+          : t("faith", { defaultValue: "Faith" })
+      }
     >
       <header className="sb-pane-header">
         <div className="sb-selector-pane-picker" role="tablist">
@@ -986,10 +1000,15 @@ export function FaithPane({ state }: { state: ReaderState }) {
       {!signedIn ? (
         <div className="sb-faith-tab">
           <p className="sb-faith-hint">
-            {t("faith-signed-out", {
-              defaultValue:
-                "Sign in to keep your prayers and your faith journey. They are kept in your own Home, and only you can see them unless you choose to share.",
-            })}
+            {community
+              ? t("faith-community-signed-out", {
+                  defaultValue:
+                    "Sign in to keep your groups and your church. They are kept in your own Home, and the church is not told.",
+                })
+              : t("faith-signed-out", {
+                  defaultValue:
+                    "Sign in to keep your prayers and your faith journey. They are kept in your own Home, and only you can see them unless you choose to share.",
+                })}
           </p>
           <button
             type="button"
@@ -1017,6 +1036,10 @@ export function FaithPane({ state }: { state: ReaderState }) {
             <PrayerTab state={state} />
           ) : tab === "journey" ? (
             <JourneyTab state={state} />
+          ) : tab === "groups" ? (
+            <GroupsTab state={state} />
+          ) : tab === "church" ? (
+            <ChurchTab state={state} />
           ) : (
             <CareTab state={state} />
           )}

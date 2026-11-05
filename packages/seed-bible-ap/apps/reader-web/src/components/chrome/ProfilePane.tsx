@@ -467,6 +467,28 @@ export function ProfilePane({ state }: { state: ReaderState }) {
           onClick={() => go("friends")}
         />
         <Row
+          icon="groups"
+          title={t("faith-tab-groups", { defaultValue: "Groups" })}
+          subtitle={t("profile-groups-subtitle", {
+            defaultValue: "Your home group, men's group and others",
+          })}
+          onClick={() => {
+            state.ui.faithTab.value = "groups";
+            go("faith");
+          }}
+        />
+        <Row
+          icon="church"
+          title={t("faith-tab-church", { defaultValue: "Church" })}
+          subtitle={t("profile-church-subtitle", {
+            defaultValue: "Your church and the site you go to",
+          })}
+          onClick={() => {
+            state.ui.faithTab.value = "church";
+            go("faith");
+          }}
+        />
+        <Row
           icon="manage_accounts"
           title={t("account-settings", { defaultValue: "Account settings" })}
           subtitle={t("account-settings-subtitle", {

@@ -126,6 +126,37 @@ export interface ChurchSite {
   website?: string;
   services?: Array<{ day: string; time: string; durationMinutes?: number }>;
 }
+export const GROUP_KINDS = [
+  "home",
+  "men",
+  "women",
+  "couples",
+  "youth",
+  "young-adults",
+  "bible-study",
+  "prayer",
+  "serving",
+  "other",
+] as const;
+export type GroupKind = (typeof GROUP_KINDS)[number];
+/** A group a church lists in its own description (ap-church spec 204 §1): what it is, never who is in it. */
+export interface ChurchGroup {
+  id: string;
+  name: string;
+  kind: GroupKind;
+  description?: string;
+  schedule?: string;
+  location?: string;
+  /** The id of the site it belongs to; absent for a group of the whole church. */
+  site?: string;
+}
+/** A group the reader is part of (spec 204 §2). `church` is null for a group of their own. */
+export interface MyGroup {
+  id: string;
+  name: string;
+  kind: GroupKind;
+  church: string | null;
+}
 /** What a church says of itself in `church.describe` (spec 203 §2). */
 export interface ChurchDescription {
   church: {
@@ -137,8 +168,9 @@ export interface ChurchDescription {
     timezone?: string;
   };
   sites: ChurchSite[];
+  groups?: ChurchGroup[];
 }
-/** The reader's church and site, kept by their agent — the record the Church app reads too (spec 203 §3). */
+/** The reader's church, site and groups, kept by their agent — the record the Church app reads too (specs 203 §3, 204 §2). */
 export interface ChurchHome {
   churches: Array<{
     agent: string;
@@ -147,10 +179,17 @@ export interface ChurchHome {
     site: { id: string; name: string } | null;
   }>;
   defaultChurch: string | null;
+  groups: MyGroup[];
 }
+/** A group as it is sent to the agent: a church's group by its id, one of the reader's own by its name. */
+export type GroupSaveArg =
+  | { church: string; id: string }
+  | { id?: string; name: string; kind: GroupKind };
 export interface ChurchHomeSaveArgs {
   churches: Array<{ agent: string; name: string; site: string | null }>;
   defaultChurch: string | null;
+  /** Left out, the agent keeps the groups it already holds. */
+  groups?: GroupSaveArg[];
 }
 
 export interface JourneyRecordArgs {
@@ -203,7 +242,18 @@ export interface FaithBackend {
   faithSaveChurchHome(args: ChurchHomeSaveArgs): Promise<{ answer?: string }>;
 }
 
-const EMPTY_HOME: ChurchHome = { churches: [], defaultChurch: null };
+const EMPTY_HOME: ChurchHome = {
+  churches: [],
+  defaultChurch: null,
+  groups: [],
+};
+
+const groupArg = (g: MyGroup): GroupSaveArg =>
+  g.church
+    ? { church: g.church, id: g.id }
+    : { id: g.id, name: g.name, kind: g.kind };
+const sameGroup = (a: MyGroup, church: string | null, id: string) =>
+  a.church === church && a.id === id;
 
 const EMPTY_JOURNEY: JourneyView = {
   stage: null,
@@ -292,6 +342,38 @@ export function createFaith(
     }
   }
 
+  const churchArgs = () =>
+    home.value.churches.map((c) => ({
+      agent: c.agent,
+      name: c.name,
+      site: c.site?.id ?? null,
+    }));
+  /** Keep the churches as they are and replace the groups; `kept` says which groups must be there afterwards. */
+  async function saveGroups(
+    groups: GroupSaveArg[],
+    kept: (after: MyGroup[]) => boolean
+  ) {
+    const ok = await act(() =>
+      backend.faithSaveChurchHome({
+        churches: churchArgs(),
+        defaultChurch: home.value.defaultChurch,
+        groups,
+      })
+    );
+    if (!ok) return false;
+    // An agent that predates groups keeps the churches, says "Kept", and drops the groups without a word.
+    if (kept(home.value.groups)) return true;
+    message.value = {
+      text: "Your agent kept your church but has not learned to keep groups yet. Open your Home at www.faithnet.me once while signed in, then come back here and try again.",
+      error: true,
+    };
+    return false;
+  }
+  const saveChurches = (
+    churches: ChurchHomeSaveArgs["churches"],
+    defaultChurch: string | null
+  ) => act(() => backend.faithSaveChurchHome({ churches, defaultChurch }));
+
   return {
     journey,
     prayers,
@@ -344,6 +426,48 @@ export function createFaith(
           ],
           defaultChurch: church.agent,
         })
+      );
+    },
+    /** Another church the reader goes to (or a new site at one); their main church stays the main one. */
+    addChurch(church: { agent: string; name: string }, site: string | null) {
+      const others = churchArgs().filter((c) => c.agent !== church.agent);
+      return saveChurches(
+        [...others, { agent: church.agent, name: church.name, site }],
+        home.value.defaultChurch ?? church.agent
+      );
+    },
+    /** Stop naming a church. Its groups go with it (the agent's rule); the next church becomes the main one. */
+    removeChurch(agent: string) {
+      const left = churchArgs().filter((c) => c.agent !== agent);
+      const main = home.value.defaultChurch;
+      return saveChurches(
+        left,
+        main && main !== agent ? main : (left[0]?.agent ?? null)
+      );
+    },
+    /** A group one of the reader's churches lists. */
+    joinGroup(church: string, id: string) {
+      if (home.value.groups.some((g) => sameGroup(g, church, id)))
+        return Promise.resolve(true);
+      return saveGroups(
+        [...home.value.groups.map(groupArg), { church, id }],
+        (after) => after.some((g) => sameGroup(g, church, id))
+      );
+    },
+    /** A group of the reader's own: friends who meet, a group at a church that is not on FaithNet. */
+    addOwnGroup(name: string, kind: GroupKind) {
+      const before = home.value.groups.length;
+      return saveGroups(
+        [...home.value.groups.map(groupArg), { name: name.trim(), kind }],
+        (after) => after.length > before
+      );
+    },
+    leaveGroup(group: Pick<MyGroup, "church" | "id">) {
+      return saveGroups(
+        home.value.groups
+          .filter((g) => !sameGroup(g, group.church, group.id))
+          .map(groupArg),
+        (after) => !after.some((g) => sameGroup(g, group.church, group.id))
       );
     },
   };

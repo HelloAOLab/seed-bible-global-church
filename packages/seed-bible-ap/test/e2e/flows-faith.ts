@@ -14,6 +14,58 @@ async function openFaith(c: FlowContext, tab: "Prayer" | "Journey" | "Care") {
   return pane;
 }
 
+/** More → Groups or Church (under Friends): the Faith page on its Groups · Church tabs. */
+async function openCommunity(c: FlowContext, tab: "Groups" | "Church") {
+  await c.page
+    .locator(".sb-sidebar-top-row")
+    .getByRole("button", { name: "More" })
+    .click();
+  const items = (await c.page.getByRole("menuitem").allInnerTexts()).map((i) =>
+    i.replace(/^\S+\s+/, "").trim()
+  );
+  const friends = items.indexOf("Friends");
+  if (
+    friends < 0 ||
+    items[friends + 1] !== "Groups" ||
+    items[friends + 2] !== "Church"
+  )
+    throw new Error(
+      `Groups and Church are not right under Friends: ${items.join(" | ")}`
+    );
+  await c.page.getByRole("menuitem", { name: tab, exact: true }).click();
+  const pane = c.page.locator(".sb-faith");
+  await pane.waitFor({ timeout: 10000 });
+  if (
+    (await pane
+      .getByRole("tab", { name: tab })
+      .getAttribute("aria-selected")) !== "true"
+  )
+    throw new Error(`the page did not open on ${tab}`);
+  await pane.locator(".sb-faith-tab").first().waitFor({ timeout: 30000 });
+  return pane;
+}
+
+/** The sample person's main church is Calvary Bible Church at Erie, whatever an earlier flow left. */
+async function ensureCalvary(
+  c: FlowContext,
+  pane: ReturnType<FlowContext["page"]["locator"]>
+) {
+  await pane.getByRole("tab", { name: "Church" }).click();
+  const church = pane.locator("#my-church-select");
+  await church.waitFor({ timeout: 30000 });
+  await pane
+    .locator('#my-church-select option[value="calvary-bible-co.church"]')
+    .waitFor({ state: "attached", timeout: 60000 });
+  const site = pane.locator("#my-church-site");
+  if ((await church.inputValue()) !== "calvary-bible-co.church")
+    await church.selectOption("calvary-bible-co.church");
+  await site.waitFor({ timeout: 60000 });
+  if ((await site.inputValue()) !== "campus_erie") {
+    await site.selectOption("campus_erie");
+    await pane.getByText("Saved.").waitFor({ timeout: 90000 });
+  }
+}
+
 export const FAITH_FLOWS: Flow[] = [
   {
     id: "PY1",
@@ -208,7 +260,7 @@ export const FAITH_FLOWS: Flow[] = [
     rows: ["Your faith journey"],
     timeoutMs: 120_000,
     checks:
-      "The sidebar's ⋮ More menu lists Journey under Friends; choosing it opens the Faith page on its Journey tab. The toolbar's Prayer button still opens on Prayer.",
+      "The sidebar's ⋮ More menu lists Journey under Friends (after Groups and Church); choosing it opens the Faith page on its Journey tab. The toolbar's Prayer button still opens on Prayer.",
     run: async (c) => {
       await c.open(CH);
       await c.signInAsSample();
@@ -218,7 +270,10 @@ export const FAITH_FLOWS: Flow[] = [
         .click();
       const items = await c.page.getByRole("menuitem").allInnerTexts();
       const friends = items.findIndex((i) => /Friends/.test(i));
-      if (friends < 0 || !/Journey/.test(items[friends + 1] ?? ""))
+      const under = items
+        .slice(friends + 1, friends + 4)
+        .map((i) => i.replace(/^\S+\s+/, "").trim());
+      if (friends < 0 || !under.includes("Journey"))
         throw new Error(`Journey is not under Friends: ${items.join(" | ")}`);
       await c.page.getByRole("menuitem", { name: "Journey" }).click();
       const pane = c.page.locator(".sb-faith");
@@ -240,6 +295,113 @@ export const FAITH_FLOWS: Flow[] = [
       )
         throw new Error("the Prayer button did not open on Prayer");
       return "More → Journey (under Friends) opened the Journey tab; the Prayer button opened on Prayer";
+    },
+  },
+  {
+    id: "PY6",
+    section: "10a. Prayer, faith journey and care",
+    title: "Keep your groups: join one your church lists, add one of your own",
+    rows: ["Your groups"],
+    timeoutMs: 300_000,
+    checks:
+      "The sidebar's ⋮ More menu lists Groups and Church right under Friends. Groups shows the groups Calvary Bible Church lists. I'm in this group puts one under My groups, marked In my groups; after a reload it is still there; Leave takes it away. A group of your own is added by name and kind, shows as Your own group, and Remove takes it away.",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await openCommunity(c, "Groups");
+      await ensureCalvary(c, pane);
+      await pane.getByRole("tab", { name: "Groups" }).click();
+      const listed = pane.getByRole("list", {
+        name: "Groups at Calvary Bible Church",
+      });
+      await listed.waitFor({ timeout: 60000 });
+      const mine = pane.getByRole("list", { name: "My groups" });
+      const card = listed.locator(".sb-faith-card").first();
+      const name = (
+        await card.locator(".sb-faith-card-title").innerText()
+      ).trim();
+      // A run that stopped half way may have left it joined.
+      if (await card.getByRole("button", { name: `Leave ${name}` }).count()) {
+        await card.getByRole("button", { name: `Leave ${name}` }).click();
+        await card
+          .getByRole("button", { name: `I'm in ${name}` })
+          .waitFor({ timeout: 90000 });
+      }
+      await card.getByRole("button", { name: `I'm in ${name}` }).click();
+      await card.getByText("In my groups").waitFor({ timeout: 90000 });
+      await mine
+        .locator(".sb-faith-card", { hasText: name })
+        .waitFor({ timeout: 10000 });
+
+      await c.page.reload({ waitUntil: "domcontentloaded" });
+      await c.page
+        .locator(".sb-app:not(.sb-app-ssr)")
+        .waitFor({ timeout: 20000 });
+      const again = await openCommunity(c, "Groups");
+      const kept = again
+        .getByRole("list", { name: "My groups" })
+        .locator(".sb-faith-card", { hasText: name });
+      await kept.waitFor({ timeout: 60000 });
+      await kept.getByRole("button", { name: `Leave ${name}` }).click();
+      await kept.waitFor({ state: "detached", timeout: 90000 });
+
+      const own = `PY6 group ${stamp()}`;
+      await again.locator("#own-group-name").fill(own);
+      await again.locator("#own-group-kind").selectOption("prayer");
+      await again.getByRole("button", { name: "Add my group" }).click();
+      const ownCard = again
+        .getByRole("list", { name: "My groups" })
+        .locator(".sb-faith-card", { hasText: own });
+      await ownCard.waitFor({ timeout: 90000 });
+      if (!(await ownCard.getByText("Your own group").count()))
+        throw new Error("a group of my own is not marked Your own group");
+      if (
+        !(await ownCard
+          .locator(".sb-faith-chip", { hasText: "Prayer" })
+          .count())
+      )
+        throw new Error("a group of my own lost its kind");
+      await ownCard.getByRole("button", { name: `Remove ${own}` }).click();
+      await ownCard.waitFor({ state: "detached", timeout: 90000 });
+      return `joined ${name} at Calvary, still there after a reload, then left it; added and removed a group of my own`;
+    },
+  },
+  {
+    id: "PY7",
+    section: "10a. Prayer, faith journey and care",
+    title: "Keep more than one church",
+    rows: ["Your church and site"],
+    timeoutMs: 300_000,
+    checks:
+      "More → Church shows My church (Calvary Bible Church, Erie) and Other churches I go to. Add another church adds Fort Morgan household church without changing the main church; Remove takes it away again.",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await openCommunity(c, "Church");
+      await ensureCalvary(c, pane);
+      const others = pane.getByRole("list", { name: "Other churches I go to" });
+      const row = others.locator(".sb-faith-card", {
+        hasText: "Fort Morgan household church",
+      });
+      const remove = row.getByRole("button", {
+        name: "Remove Fort Morgan household church",
+      });
+      if (await row.count()) {
+        await remove.click();
+        await row.waitFor({ state: "detached", timeout: 90000 });
+      }
+      await pane
+        .locator("#church-add-other")
+        .selectOption("fort-morgan-household.church");
+      await row.waitFor({ timeout: 90000 });
+      if (
+        (await pane.locator("#my-church-select").inputValue()) !==
+        "calvary-bible-co.church"
+      )
+        throw new Error("adding another church changed my main church");
+      await remove.click();
+      await row.waitFor({ state: "detached", timeout: 90000 });
+      return "Fort Morgan was added under Other churches with Calvary still the main church, then removed";
     },
   },
 ];

@@ -1,6 +1,7 @@
 // THE CHURCH DIRECTORY — ap-church spec 203. FaithNet's churches are the `.church` names (the naming service), and a
 // church says who it is and where it meets in its own `church.describe` answer, to anyone, no credential. This
 // workspace only reads both; the reader's choice is kept by their own agent (person.church.home.*, skills/faith.ts).
+// The same answer may list the church's groups (spec 204 §1): what each is and when it meets, never who is in it.
 import type { ToolSpec, ToolInvoker } from "@agenticprimitives/orchestration";
 import { WireRefusal } from "../wires";
 
@@ -27,6 +28,67 @@ export interface ChurchSite {
   services?: Array<{ day: string; time: string; durationMinutes?: number }>;
 }
 
+export const GROUP_KINDS = [
+  "home",
+  "men",
+  "women",
+  "couples",
+  "youth",
+  "young-adults",
+  "bible-study",
+  "prayer",
+  "serving",
+  "other",
+] as const;
+export type GroupKind = (typeof GROUP_KINDS)[number];
+
+/** A group a church lists (spec 204 §1). */
+export interface ChurchGroup {
+  id: string;
+  name: string;
+  kind: GroupKind;
+  description?: string;
+  schedule?: string;
+  location?: string;
+  /** The id of the site it belongs to; absent for a group of the whole church. */
+  site?: string;
+}
+
+const text = (v: unknown, max: number) =>
+  typeof v === "string" ? v.trim().slice(0, max) : "";
+
+/** Only the keys the standard names: whatever else a church sent (a roster, a leader's phone) stops here. */
+export function groupsOf(raw: unknown, sites: ChurchSite[]): ChurchGroup[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: ChurchGroup[] = [];
+  for (const r of raw.slice(0, 500)) {
+    if (!r || typeof r !== "object") continue;
+    const o = r as Record<string, unknown>;
+    const id = text(o.id, 180);
+    const name = text(o.name, 200);
+    if (!id || !name || seen.has(id)) continue;
+    seen.add(id);
+    const kind = text(o.kind, 40).toLowerCase();
+    const site = text(o.site, 180);
+    const description = text(o.description, 1000);
+    const schedule = text(o.schedule, 200);
+    const location = text(o.location, 200);
+    out.push({
+      id,
+      name,
+      kind: (GROUP_KINDS as readonly string[]).includes(kind)
+        ? (kind as GroupKind)
+        : "other",
+      ...(description ? { description } : {}),
+      ...(schedule ? { schedule } : {}),
+      ...(location ? { location } : {}),
+      ...(site && sites.some((s) => s.id === site) ? { site } : {}),
+    });
+  }
+  return out;
+}
+
 export interface ChurchDescription {
   church: {
     agent: string;
@@ -37,6 +99,7 @@ export interface ChurchDescription {
     timezone?: string;
   };
   sites: ChurchSite[];
+  groups: ChurchGroup[];
 }
 
 type NameView = {
@@ -188,6 +251,7 @@ export async function describeChurch(
   return {
     church: { ...data.church, agent, name: n },
     sites,
+    groups: groupsOf((data as { groups?: unknown }).groups, sites),
   };
 }
 
@@ -203,12 +267,12 @@ export const CHURCH_TOOLS: ToolSpec[] = [
   {
     id: "seed.church.describe",
     description:
-      "A church's own description and its sites (address, time zone, service times), asked of the church's agent with church.describe (ap-church spec 203). Args: name (the .church name).",
+      "A church's own description, its sites (address, time zone, service times) and the groups it lists (kind, when and where each meets), asked of the church's agent with church.describe (ap-church specs 203, 204). Args: name (the .church name).",
     inputSchema: {
       type: "object",
       properties: { name: { type: "string" } },
     },
-    answers: ["where does my church meet"],
+    answers: ["where does my church meet", "which groups does my church have"],
     establishes: "lookup",
   },
 ];

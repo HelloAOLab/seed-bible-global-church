@@ -348,6 +348,7 @@ export function createA2aBackend(
       return {
         church: r.church as ChurchDescription["church"],
         sites: (r.sites as ChurchSite[] | undefined) ?? [],
+        groups: (r.groups as ChurchDescription["groups"] | undefined) ?? [],
       };
     },
     async faithChurchHome() {
@@ -361,13 +362,19 @@ export function createA2aBackend(
         churches: Array.isArray(h.churches) ? h.churches : [],
         defaultChurch:
           typeof h.defaultChurch === "string" ? h.defaultChurch : null,
+        // An agent that predates groups answers without them.
+        groups: Array.isArray(h.groups) ? h.groups : [],
       };
     },
     async faithSaveChurchHome(args) {
       const r = await ask(
         "seed.faith.church.home.save",
-        { churches: args.churches, defaultChurch: args.defaultChurch ?? "" },
-        "keep my church and site"
+        {
+          churches: args.churches,
+          defaultChurch: args.defaultChurch ?? "",
+          ...(args.groups ? { groups: args.groups } : {}),
+        },
+        "keep my church, site and groups"
       );
       return { ...(typeof r.answer === "string" ? { answer: r.answer } : {}) };
     },

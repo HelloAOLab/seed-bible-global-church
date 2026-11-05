@@ -57,11 +57,12 @@ const FORWARD = {
     to: "person.faith.shared.view",
     args: ["audience", "church", "friend", "purpose"],
   },
-  // The reader's church and site (ap-church spec 203 §3): one record their agent keeps, the same one the Church app reads.
+  // The reader's church, site and groups (ap-church specs 203 §3, 204 §2): one record their agent keeps, the same one
+  // the Church app reads. `groups` left out keeps the groups already stored.
   "seed.faith.church.home": { to: "person.church.home.get", args: [] },
   "seed.faith.church.home.save": {
     to: "person.church.home.save",
-    args: ["churches", "defaultChurch"],
+    args: ["churches", "defaultChurch", "groups"],
   },
   // The churches the reader belongs to, from their own links — who a prayer or a care request can be shared with.
   "seed.faith.churches": {
@@ -131,15 +132,15 @@ export const FAITH_TOOLS: ToolSpec[] = [
   ),
   spec(
     "seed.faith.church.home",
-    "The signed-in reader's church and site — the churches they chose, the site at each, their default church — from their own agent (person.church.home.get). No args.",
+    "The signed-in reader's church, site and groups — the churches they chose, the site at each, their default church, and the groups they are part of — from their own agent (person.church.home.get). No args.",
     false,
-    ["my church", "which site do I go to"]
+    ["my church", "which site do I go to", "my groups"]
   ),
   spec(
     "seed.faith.church.home.save",
-    "Keeps the signed-in reader's church and site choice in their own vault, by their agent (person.church.home.save), checked against each church's own description. Args: churches (JSON list of {agent, name, site}), defaultChurch.",
+    "Keeps the signed-in reader's church and site choice, and their groups, in their own vault, by their agent (person.church.home.save), checked against each church's own description. Args: churches (JSON list of {agent, name, site}), defaultChurch, groups (optional JSON list of {church, id} for a church's group or {name, kind} for their own; left out, their groups stay).",
     true,
-    ["Calvary Erie is my church"]
+    ["Calvary Erie is my church", "I am in the men's group"]
   ),
   spec(
     "seed.faith.churches",
@@ -162,8 +163,8 @@ const MESSAGE: Record<FaithToolId, string> = {
   "seed.faith.prayer.save": "keep my prayer",
   "seed.faith.care.request": "keep my care request",
   "seed.faith.shared": "what of my faith life may this audience see",
-  "seed.faith.church.home": "which church and site are mine",
-  "seed.faith.church.home.save": "keep my church and site",
+  "seed.faith.church.home": "which church, site and groups are mine",
+  "seed.faith.church.home.save": "keep my church, site and groups",
   "seed.faith.churches": "which churches do I belong to",
   "seed.faith.church.find": "find a church on FaithNet",
 };
@@ -179,10 +180,12 @@ export function forwardedArgs(
   for (const a of route.args) {
     const v = args[a];
     if (v === undefined || v === null) continue;
-    // A list of plain words travels as "a,b"; a structured value (the churches of a church choice) as JSON.
+    // A list of plain words travels as "a,b"; a structured value (the churches of a church choice) as JSON. The
+    // reader's groups are always JSON: an empty list means "none now", which "" would not say.
     out[a] =
-      typeof v === "object" &&
-      (!Array.isArray(v) || v.some((x) => typeof x === "object"))
+      a === "groups" ||
+      (typeof v === "object" &&
+        (!Array.isArray(v) || v.some((x) => typeof x === "object")))
         ? JSON.stringify(v)
         : Array.isArray(v)
           ? v.map(String).join(",")

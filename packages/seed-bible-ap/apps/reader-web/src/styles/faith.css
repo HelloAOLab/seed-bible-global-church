@@ -362,3 +362,17 @@
   color: var(--sb-faith-muted);
   font-size: 0.875rem;
 }
+
+.sb-groups-joined {
+  align-self: center;
+  font-size: 0.875rem;
+}
+
+.sb-church-site-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  color: var(--sb-faith-muted);
+  font-size: 0.875rem;
+}

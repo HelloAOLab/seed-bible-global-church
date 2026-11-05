@@ -41,6 +41,26 @@ describe("faith forwarding", () => {
       defaultChurch: "0x" + "a".repeat(40),
     });
   });
+  it("the reader's groups travel as JSON beside the churches; an empty list still says none", () => {
+    const groups = [
+      { church: "0x" + "a".repeat(40), id: "group_mens" },
+      { name: "Thursday friends", kind: "home" },
+    ];
+    const out = forwardedArgs("seed.faith.church.home.save", {
+      churches: [],
+      groups,
+    });
+    expect(JSON.parse(out.groups!)).toEqual(groups);
+    expect(
+      forwardedArgs("seed.faith.church.home.save", { churches: [], groups: [] })
+        .groups
+    ).toBe("[]");
+  });
+  it("a church save that says nothing of groups sends none, so the agent keeps the ones it has", () => {
+    expect(
+      "groups" in forwardedArgs("seed.faith.church.home.save", { churches: [] })
+    ).toBe(false);
+  });
   it("the churches list asks for churches, whatever was sent", () => {
     expect(forwardedArgs("seed.faith.churches", { type: "treasury" })).toEqual({
       type: "church",

@@ -7,6 +7,7 @@
     "^story-tie-[A-Za-z]+$",
     "^story-family-(grandparents|parents|own|children|grandchildren)$",
     "^faith-stage-[A-Za-z]+(-desc)?$",
-    "^faith-milestone-[A-Za-z]+$"
+    "^faith-milestone-[A-Za-z]+$",
+    "^group-kind-[a-z-]+$"
   ]
 }

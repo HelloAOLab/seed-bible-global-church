@@ -7,6 +7,19 @@ import { createFaith } from "../../../apps/reader-web/src/state/faith/faith";
 
 const ME = { agent: "0x" + "a1".repeat(20), name: "Ruth", wire: true };
 
+const CALVARY = "0x863bd39e938ac593c8d67a11f2f6c12d824b2526";
+const calvary = {
+  church: {
+    agent: CALVARY,
+    name: "calvary-bible-co.church",
+    displayName: "Calvary Bible Church",
+  },
+  sites: [
+    { id: "campus_erie", name: "Erie" },
+    { id: "campus_boulder", name: "Boulder" },
+  ],
+};
+
 describe("the reader's faith records", () => {
   it("signed out: nothing is read and nothing is shown", async () => {
     const backend = createDevBackend(null);
@@ -76,19 +89,6 @@ describe("the reader's faith records", () => {
     expect(faith.prayers.value.prayers.map((p) => p.label)).toEqual(["Kept"]);
   });
 
-  const CALVARY = "0x863bd39e938ac593c8d67a11f2f6c12d824b2526";
-  const calvary = {
-    church: {
-      agent: CALVARY,
-      name: "calvary-bible-co.church",
-      displayName: "Calvary Bible Church",
-    },
-    sites: [
-      { id: "campus_erie", name: "Erie" },
-      { id: "campus_boulder", name: "Boulder" },
-    ],
-  };
-
   it("a church and site chosen from FaithNet's churches is kept by the agent and offered for care", async () => {
     const backend = createDevBackend(ME);
     backend.churchesOnFaithNet.push(calvary);
@@ -115,6 +115,7 @@ describe("the reader's faith records", () => {
         },
       ],
       defaultChurch: CALVARY,
+      groups: [],
     });
     expect(faith.churches.value).toEqual([
       { agent: CALVARY, name: "Calvary Bible Church" },
@@ -166,5 +167,114 @@ describe("the reader's faith records", () => {
       "Evans Somali house church",
       "Calvary Bible Church",
     ]);
+  });
+});
+
+describe("the reader's groups, kept beside their church (ap-church spec 204)", () => {
+  const withGroups = {
+    ...calvary,
+    groups: [
+      { id: "group_mens", name: "Men’s Group", kind: "men" as const },
+      { id: "group_erie_home", name: "Erie Home Group", kind: "home" as const },
+    ],
+  };
+  const evans = {
+    church: {
+      agent: "0x" + "e".repeat(40),
+      name: "evans-somali-house.church",
+      displayName: "Evans Somali house church",
+    },
+    sites: [],
+  };
+  const setup = async () => {
+    const backend = createDevBackend(ME);
+    backend.churchesOnFaithNet.push(withGroups, evans);
+    const faith = createFaith(backend, () => !!backend.identity());
+    await faith.chooseChurch(
+      { agent: CALVARY, name: "calvary-bible-co.church" },
+      "campus_erie"
+    );
+    return { backend, faith };
+  };
+
+  it("a group the church lists is joined under the church's name for it, and left again", async () => {
+    const { backend, faith } = await setup();
+    expect(await faith.joinGroup(CALVARY, "group_mens")).toBe(true);
+    expect(faith.churchHome.value.groups).toEqual([
+      { id: "group_mens", name: "Men’s Group", kind: "men", church: CALVARY },
+    ]);
+    // Another device, the same agent: the group is there.
+    const elsewhere = createFaith(backend, () => !!backend.identity());
+    await elsewhere.refresh();
+    expect(elsewhere.churchHome.value.groups.map((g) => g.id)).toEqual([
+      "group_mens",
+    ]);
+    expect(await faith.leaveGroup({ church: CALVARY, id: "group_mens" })).toBe(
+      true
+    );
+    expect(faith.churchHome.value.groups).toEqual([]);
+  });
+
+  it("a group of the reader's own needs no church, and stays when a church's group is added", async () => {
+    const { faith } = await setup();
+    await faith.addOwnGroup("  Thursday friends ", "home");
+    await faith.joinGroup(CALVARY, "group_erie_home");
+    expect(faith.churchHome.value.groups).toEqual([
+      {
+        id: "own-thursday-friends",
+        name: "Thursday friends",
+        kind: "home",
+        church: null,
+      },
+      {
+        id: "group_erie_home",
+        name: "Erie Home Group",
+        kind: "home",
+        church: CALVARY,
+      },
+    ]);
+  });
+
+  it("a group the church does not list is refused in words, and the groups stay as they were", async () => {
+    const { faith } = await setup();
+    await faith.joinGroup(CALVARY, "group_mens");
+    expect(await faith.joinGroup(CALVARY, "group_secret")).toBe(false);
+    expect(faith.message.value).toMatchObject({ error: true });
+    expect(faith.message.value?.text).toMatch(/does not list a group/);
+    expect(faith.churchHome.value.groups.map((g) => g.id)).toEqual([
+      "group_mens",
+    ]);
+  });
+
+  it("changing the site or adding a church keeps the groups; removing a church drops its groups only", async () => {
+    const { faith } = await setup();
+    await faith.joinGroup(CALVARY, "group_mens");
+    await faith.addOwnGroup("Lunch prayer", "prayer");
+    await faith.chooseChurch(
+      { agent: CALVARY, name: "calvary-bible-co.church" },
+      "campus_boulder"
+    );
+    await faith.addChurch(evans.church, null);
+    expect(faith.churchHome.value.defaultChurch).toBe(CALVARY);
+    expect(faith.churchHome.value.churches.map((c) => c.agent)).toEqual([
+      CALVARY,
+      evans.church.agent,
+    ]);
+    expect(faith.churchHome.value.groups).toHaveLength(2);
+    await faith.removeChurch(CALVARY);
+    expect(faith.churchHome.value.defaultChurch).toBe(evans.church.agent);
+    expect(faith.churchHome.value.groups.map((g) => g.name)).toEqual([
+      "Lunch prayer",
+    ]);
+  });
+
+  it("an agent that has not learned groups keeps the church and drops the group: the reader is told", async () => {
+    const { backend, faith } = await setup();
+    const save = backend.faithSaveChurchHome.bind(backend);
+    backend.faithSaveChurchHome = (args) =>
+      save({ churches: args.churches, defaultChurch: args.defaultChurch });
+    expect(await faith.joinGroup(CALVARY, "group_mens")).toBe(false);
+    expect(faith.message.value?.error).toBe(true);
+    expect(faith.message.value?.text).toMatch(/has not learned to keep groups/);
   });
 });

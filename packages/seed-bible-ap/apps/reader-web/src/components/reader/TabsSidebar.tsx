@@ -138,6 +138,24 @@ export function TabsSidebar({ state }: { state: ReaderState }) {
                   {t("friends", { defaultValue: "Friends" })}
                 </MenuItem>
                 <MenuItem
+                  icon="groups"
+                  onSelect={() => {
+                    state.ui.faithTab.value = "groups";
+                    state.ui.pane.value = "faith";
+                  }}
+                >
+                  {t("faith-tab-groups", { defaultValue: "Groups" })}
+                </MenuItem>
+                <MenuItem
+                  icon="church"
+                  onSelect={() => {
+                    state.ui.faithTab.value = "church";
+                    state.ui.pane.value = "faith";
+                  }}
+                >
+                  {t("faith-tab-church", { defaultValue: "Church" })}
+                </MenuItem>
+                <MenuItem
                   icon="route"
                   onSelect={() => {
                     state.ui.faithTab.value = "journey";
