@@ -378,3 +378,9 @@
   color: var(--sb-faith-muted);
   font-size: 0.875rem;
 }
+
+.sb-groups-church-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}

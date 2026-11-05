@@ -100,6 +100,7 @@ export interface ChurchDescription {
   };
   sites: ChurchSite[];
   groups: ChurchGroup[];
+  rosterApp?: string;
 }
 
 type NameView = {
@@ -248,10 +249,17 @@ export async function describeChurch(
     (s): s is ChurchSite =>
       !!s && typeof s.id === "string" && typeof s.name === "string"
   );
+  // Only ever opened as a link, so a church can name nothing but an https address here.
+  const named = (data as { rosterApp?: unknown }).rosterApp;
+  const rosterApp =
+    typeof named === "string" && /^https:\/\/[^\s]+$/.test(named)
+      ? named
+      : undefined;
   return {
     church: { ...data.church, agent, name: n },
     sites,
     groups: groupsOf((data as { groups?: unknown }).groups, sites),
+    ...(rosterApp ? { rosterApp } : {}),
   };
 }
 

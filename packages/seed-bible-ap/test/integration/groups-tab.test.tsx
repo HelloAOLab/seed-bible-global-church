@@ -1,7 +1,7 @@
 // MORE → GROUPS and MORE → CHURCH (ap-church spec 204): a reader joins a group their church lists, adds one of their
 // own, leaves one, and keeps more than one church. Everything is the one record their agent holds.
 import { afterEach, describe, expect, it } from "vitest";
-import { fireEvent, waitFor } from "@testing-library/preact";
+import { fireEvent, waitFor, within } from "@testing-library/preact";
 import { FaithPane } from "../../apps/reader-web/src/components/faith/FaithPane";
 import { createTestReaderState } from "../helpers/createTestReaderState";
 import { renderInHost } from "../helpers/TestHost";
@@ -169,6 +169,91 @@ describe("More → Groups", () => {
         "group_erie_home",
       ])
     );
+  });
+
+  describe("telling a group's leader (ap-church spec 205)", () => {
+    const APP = "https://church.test/";
+    const withRoster = { ...calvary, rosterApp: APP };
+    // An earlier test takes a group off the shared fixture; this copy is made before it runs.
+    const noRoster = { ...calvary };
+    const joined = async (
+      church: typeof calvary,
+      shared?: { name: string }
+    ) => {
+      const t = await createTestReaderState({});
+      t.backend!.churchesOnFaithNet.push(church);
+      await t.state.faith.chooseChurch(
+        { agent: CALVARY, name: calvary.church.name },
+        "campus_erie"
+      );
+      await t.backend!.faithSaveChurchHome({
+        churches: [
+          { agent: CALVARY, name: calvary.church.name, site: "campus_erie" },
+        ],
+        defaultChurch: CALVARY,
+        groups: [
+          { church: CALVARY, id: "group_mens", ...(shared ? { shared } : {}) },
+        ],
+      });
+      await t.state.faith.refresh();
+      t.state.ui.faithTab.value = "groups";
+      const r = renderInHost(<FaithPane state={t.state} />);
+      const row = () =>
+        within(r.getByRole("list", { name: "My groups" }))
+          .getByText("Men’s Group")
+          .closest("li")!;
+      return { t, r, row };
+    };
+
+    it("offers the Church app when the church can take names, and says nothing has been told", async () => {
+      const { row } = await joined(withRoster);
+      const link = await waitFor(() =>
+        within(row()).getByRole("link", {
+          name: "Tell the leader in the Church app",
+        })
+      );
+      expect(link.getAttribute("href")).toBe(APP);
+      expect(row().textContent).not.toMatch(/The leader sees you/);
+    });
+
+    it("offers nothing at a church with no roster", async () => {
+      const { r, row } = await joined(noRoster);
+      await waitFor(() => r.getByRole("list", { name: /Groups at/ }));
+      expect(within(row()).queryByRole("link")).toBeNull();
+      expect(
+        within(row()).queryByRole("button", { name: /Leave/ })
+      ).not.toBeNull();
+    });
+
+    it("once told, shows the name, sends them to take it back, and does not offer to leave", async () => {
+      const { r, row } = await joined(withRoster, { name: "Ruth P" });
+      await waitFor(() =>
+        within(row()).getByRole("link", {
+          name: "Take my name back in the Church app",
+        })
+      );
+      expect(row().textContent).toMatch(/The leader sees you as Ruth P/);
+      expect(r.queryAllByRole("button", { name: /Leave Men/ })).toEqual([]);
+    });
+
+    it("what they told stays through other changes, and cannot be stranded by leaving or removing the church", async () => {
+      const { t } = await joined(withRoster, { name: "Ruth P" });
+      const { faith } = t.state;
+      await faith.addOwnGroup("Thursday friends", "home");
+      expect(
+        faith.churchHome.value.groups.find((g) => g.id === "group_mens")?.shared
+          ?.name
+      ).toBe("Ruth P");
+      expect(
+        await faith.leaveGroup({ church: CALVARY, id: "group_mens" })
+      ).toBe(false);
+      expect(faith.message.value?.text).toMatch(
+        /Take it back in the Church app/
+      );
+      expect(await faith.removeChurch(CALVARY)).toBe(false);
+      expect(faith.churchHome.value.churches).toHaveLength(1);
+      expect(faith.churchHome.value.groups).toHaveLength(2);
+    });
   });
 
   it("a stranger is asked to sign in", async () => {

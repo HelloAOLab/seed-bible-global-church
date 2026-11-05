@@ -143,11 +143,18 @@ export function createDevFaith(guard: () => void): DevFaith {
               throw new Error(
                 `${d.church.displayName} does not list a group "${g.id}"`
               );
+            // Left unsaid, what the reader told the leaders stays (spec 205 §2).
+            const held = home.groups.find(
+              (x) => x.church === g.church && x.id === g.id
+            )?.shared;
+            const shared =
+              g.shared === undefined ? held : g.shared || undefined;
             groups.push({
               id: hit.id,
               name: hit.name,
               kind: hit.kind,
               church: g.church,
+              ...(shared ? { shared } : {}),
             });
           } else {
             if (!g.name.trim())

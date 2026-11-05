@@ -156,6 +156,8 @@ export interface MyGroup {
   name: string;
   kind: GroupKind;
   church: string | null;
+  /** Spec 205: the name the reader told this group's leaders. Set and taken back in the Church app, whose sign-in proves them to the church. */
+  shared?: { name: string; at?: string };
 }
 /** What a church says of itself in `church.describe` (spec 203 §2). */
 export interface ChurchDescription {
@@ -169,6 +171,8 @@ export interface ChurchDescription {
   };
   sites: ChurchSite[];
   groups?: ChurchGroup[];
+  /** Spec 205 §3: where a person can tell a group's leader. Absent when the church has no roster. */
+  rosterApp?: string;
 }
 /** The reader's church, site and groups, kept by their agent — the record the Church app reads too (specs 203 §3, 204 §2). */
 export interface ChurchHome {
@@ -183,7 +187,7 @@ export interface ChurchHome {
 }
 /** A group as it is sent to the agent: a church's group by its id, one of the reader's own by its name. */
 export type GroupSaveArg =
-  | { church: string; id: string }
+  | { church: string; id: string; shared?: { name: string } | false }
   | { id?: string; name: string; kind: GroupKind };
 export interface ChurchHomeSaveArgs {
   churches: Array<{ agent: string; name: string; site: string | null }>;
@@ -349,6 +353,16 @@ export function createFaith(
       site: c.site?.id ?? null,
     }));
   /** Keep the churches as they are and replace the groups; `kept` says which groups must be there afterwards. */
+  // The church keeps the name it was told until the reader takes it back, which only the Church app can do. Going
+  // ahead here would leave their name on a roster with nothing in the reader to say so.
+  function refuseToStrand(group: MyGroup) {
+    message.value = {
+      text: `You told the leader of ${group.name} your name. Take it back in the Church app first.`,
+      error: true,
+    };
+    return Promise.resolve(false);
+  }
+
   async function saveGroups(
     groups: GroupSaveArg[],
     kept: (after: MyGroup[]) => boolean
@@ -438,6 +452,10 @@ export function createFaith(
     },
     /** Stop naming a church. Its groups go with it (the agent's rule); the next church becomes the main one. */
     removeChurch(agent: string) {
+      const told = home.value.groups.find(
+        (g) => g.church === agent && g.shared
+      );
+      if (told) return refuseToStrand(told);
       const left = churchArgs().filter((c) => c.agent !== agent);
       const main = home.value.defaultChurch;
       return saveChurches(
@@ -463,6 +481,10 @@ export function createFaith(
       );
     },
     leaveGroup(group: Pick<MyGroup, "church" | "id">) {
+      const told = home.value.groups.find(
+        (g) => sameGroup(g, group.church, group.id) && g.shared
+      );
+      if (told) return refuseToStrand(told);
       return saveGroups(
         home.value.groups
           .filter((g) => !sameGroup(g, group.church, group.id))

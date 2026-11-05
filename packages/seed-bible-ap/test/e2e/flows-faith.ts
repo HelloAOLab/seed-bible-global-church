@@ -404,4 +404,129 @@ export const FAITH_FLOWS: Flow[] = [
       return "Fort Morgan was added under Other churches with Calvary still the main church, then removed";
     },
   },
+  {
+    id: "PY8",
+    section: "10a. Prayer, faith journey and care",
+    title: "Tell a group's leader in the Church app, and see it in the reader",
+    rows: ["Your groups"],
+    timeoutMs: 480_000,
+    checks:
+      "A group at Calvary Bible Church in My groups offers Tell the leader in the Church app, going to church.faithnet.io. Told there under a chosen name, the reader shows The leader sees you as that name, offers Take my name back in the Church app and no longer offers Leave. Taken back there, the reader offers Tell the leader and Leave again.",
+    run: async (c) => {
+      await c.open(CH);
+      await c.signInAsSample();
+      const pane = await openCommunity(c, "Groups");
+      await ensureCalvary(c, pane);
+      await pane.getByRole("tab", { name: "Groups" }).click();
+      const listed = pane.getByRole("list", {
+        name: "Groups at Calvary Bible Church",
+      });
+      await listed.waitFor({ timeout: 60000 });
+      const card = listed.locator(".sb-faith-card").first();
+      const name = (
+        await card.locator(".sb-faith-card-title").innerText()
+      ).trim();
+
+      const church = await c.page.context().newPage();
+      church.setDefaultTimeout(120000);
+      await church.goto("https://church.faithnet.io/", {
+        waitUntil: "networkidle",
+      });
+      await church
+        .getByRole("button", { name: "Sign in with FaithNet", exact: true })
+        .first()
+        .click();
+      await church
+        .getByRole("button", { name: "Continue with FaithNet" })
+        .click();
+      await church.waitForURL((u) => u.hostname.endsWith("faithnet.me"));
+      const people = church
+        .locator("summary")
+        .filter({ hasText: "Demo people" });
+      if (await people.count()) {
+        await people.click();
+        await church.getByRole("button", { name: /seed ?reader/i }).click();
+      }
+      const allow = church.getByRole("button", { name: /allow church/i });
+      await Promise.race([
+        church.waitForURL((u) => u.hostname === "church.faithnet.io"),
+        allow.waitFor().then(() => allow.click()),
+      ]);
+      await church.locator(".avatar").waitFor();
+      const openChurchGroups = async () => {
+        await church.goto("https://church.faithnet.io/", {
+          waitUntil: "networkidle",
+        });
+        await church.locator(".nav-item[data-go=group]").click();
+        await church.locator("#my-groups").waitFor();
+        await church.locator("article.record-card").first().waitFor();
+      };
+      const churchRow = () =>
+        church.locator("#my-groups li", { hasText: name }).first();
+      const takeBack = async () => {
+        await churchRow().locator("[data-group-unshare]").click();
+        await churchRow().locator("[data-group-share]").waitFor();
+      };
+      const readerRow = async () => {
+        await c.page.reload({ waitUntil: "domcontentloaded" });
+        await c.page
+          .locator(".sb-app:not(.sb-app-ssr)")
+          .waitFor({ timeout: 20000 });
+        const again = await openCommunity(c, "Groups");
+        const row = again
+          .getByRole("list", { name: "My groups" })
+          .locator(".sb-faith-card", { hasText: name });
+        await row.waitFor({ timeout: 60000 });
+        return row;
+      };
+
+      await openChurchGroups();
+      // A run that stopped half way may have left the name told.
+      if (await churchRow().locator("[data-group-unshare]").count())
+        await takeBack();
+      if (await card.getByRole("button", { name: `I'm in ${name}` }).count()) {
+        await card.getByRole("button", { name: `I'm in ${name}` }).click();
+        await card.getByText("In my groups").waitFor({ timeout: 90000 });
+      }
+
+      let row = await readerRow();
+      const tell = row.getByRole("link", {
+        name: "Tell the leader in the Church app",
+      });
+      await tell.waitFor({ timeout: 60000 });
+      if (
+        !/^https:\/\/church\.faithnet\.io/.test(
+          (await tell.getAttribute("href")) ?? ""
+        )
+      )
+        throw new Error("Tell the leader does not go to the Church app");
+
+      await openChurchGroups();
+      await churchRow().locator("[data-group-share]").click();
+      await church.locator("#share-form input[name=name]").fill("Seed R");
+      await church.locator("#share-form button[type=submit]").click();
+      await churchRow().locator("[data-group-unshare]").waitFor();
+
+      row = await readerRow();
+      await row
+        .getByText("The leader sees you as Seed R")
+        .waitFor({ timeout: 60000 });
+      await row
+        .getByRole("link", { name: "Take my name back in the Church app" })
+        .waitFor({ timeout: 30000 });
+      if (await row.getByRole("button", { name: `Leave ${name}` }).count())
+        throw new Error("Leave is offered while the leader has the name");
+
+      await openChurchGroups();
+      await takeBack();
+
+      row = await readerRow();
+      await row
+        .getByRole("link", { name: "Tell the leader in the Church app" })
+        .waitFor({ timeout: 60000 });
+      await row.getByRole("button", { name: `Leave ${name}` }).click();
+      await row.waitFor({ state: "detached", timeout: 90000 });
+      await church.close();
+    },
+  },
 ];

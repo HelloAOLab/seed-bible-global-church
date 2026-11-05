@@ -1,7 +1,7 @@
 // MORE → GROUPS (ap-church spec 204): the groups the reader is part of — a home group, a men's group. A church's groups
 // come from what the church says of itself; which ones are the reader's is kept by their own agent beside their
-// church, so the Church app shows the same list. The church is not told, and a church's groups are managed in the
-// Church app, never here.
+// church, so the Church app shows the same list. The church is not told unless the reader tells a group's leader
+// (spec 205), which happens in the Church app, as does managing a church's groups.
 import { useEffect, useState } from "preact/hooks";
 import type { ReaderState } from "../../state";
 import { useI18n } from "../../i18n";
@@ -75,6 +75,11 @@ function MyGroups({
     const d = descriptions[churchOf(g)?.name ?? ""];
     return !!d && !(d.groups ?? []).some((x) => x.id === g.id);
   };
+  /** Where the church says a person can tell a leader; nothing for a group of the reader's own or a church with no roster. */
+  const rosterAppOf = (g: MyGroup) => {
+    const d = descriptions[churchOf(g)?.name ?? ""];
+    return d ? d.rosterApp : undefined;
+  };
   return (
     <>
       <h3 className="sb-faith-heading">
@@ -108,30 +113,56 @@ function MyGroups({
                       })}
                     </span>
                   )}
+                  {g.shared && (
+                    <span>
+                      {t("groups-shared-as", {
+                        name: g.shared.name,
+                        defaultValue: `The leader sees you as ${g.shared.name}`,
+                      })}
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="sb-faith-card-actions">
-                <button
-                  type="button"
-                  className="sb-faith-button sb-faith-button-quiet"
-                  disabled={busy}
-                  aria-label={
-                    g.church
-                      ? t("groups-leave-named", {
-                          name: g.name,
-                          defaultValue: `Leave ${g.name}`,
+                {rosterAppOf(g) && (g.shared || !unlisted(g)) && (
+                  <a
+                    className="sb-faith-button sb-groups-church-link"
+                    href={rosterAppOf(g)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {g.shared
+                      ? t("groups-take-back", {
+                          defaultValue: "Take my name back in the Church app",
                         })
-                      : t("groups-remove-named", {
-                          name: g.name,
-                          defaultValue: `Remove ${g.name}`,
-                        })
-                  }
-                  onClick={() => run(() => faith.leaveGroup(g))}
-                >
-                  {g.church
-                    ? t("groups-leave", { defaultValue: "Leave" })
-                    : t("remove", { defaultValue: "Remove" })}
-                </button>
+                      : t("groups-tell-leader", {
+                          defaultValue: "Tell the leader in the Church app",
+                        })}
+                  </a>
+                )}
+                {!g.shared && (
+                  <button
+                    type="button"
+                    className="sb-faith-button sb-faith-button-quiet"
+                    disabled={busy}
+                    aria-label={
+                      g.church
+                        ? t("groups-leave-named", {
+                            name: g.name,
+                            defaultValue: `Leave ${g.name}`,
+                          })
+                        : t("groups-remove-named", {
+                            name: g.name,
+                            defaultValue: `Remove ${g.name}`,
+                          })
+                    }
+                    onClick={() => run(() => faith.leaveGroup(g))}
+                  >
+                    {g.church
+                      ? t("groups-leave", { defaultValue: "Leave" })
+                      : t("remove", { defaultValue: "Remove" })}
+                  </button>
+                )}
               </div>
             </li>
           ))}
@@ -198,9 +229,10 @@ function ChurchGroups({
           })}
         >
           {groups.map((g) => {
-            const joined = mine.some(
+            const held = mine.find(
               (m) => m.church === church.agent && m.id === g.id
             );
+            const joined = !!held;
             return (
               <li key={g.id} className="sb-faith-card">
                 <div className="sb-faith-card-main">
@@ -223,22 +255,27 @@ function ChurchGroups({
                       <span className="sb-faith-chip sb-groups-joined">
                         {t("groups-joined", { defaultValue: "In my groups" })}
                       </span>
-                      <button
-                        type="button"
-                        className="sb-faith-button sb-faith-button-quiet"
-                        disabled={busy}
-                        aria-label={t("groups-leave-named", {
-                          name: g.name,
-                          defaultValue: `Leave ${g.name}`,
-                        })}
-                        onClick={() =>
-                          run(() =>
-                            faith.leaveGroup({ church: church.agent, id: g.id })
-                          )
-                        }
-                      >
-                        {t("groups-leave", { defaultValue: "Leave" })}
-                      </button>
+                      {!held?.shared && (
+                        <button
+                          type="button"
+                          className="sb-faith-button sb-faith-button-quiet"
+                          disabled={busy}
+                          aria-label={t("groups-leave-named", {
+                            name: g.name,
+                            defaultValue: `Leave ${g.name}`,
+                          })}
+                          onClick={() =>
+                            run(() =>
+                              faith.leaveGroup({
+                                church: church.agent,
+                                id: g.id,
+                              })
+                            )
+                          }
+                        >
+                          {t("groups-leave", { defaultValue: "Leave" })}
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button
@@ -341,7 +378,7 @@ export function GroupsTab({ state }: { state: ReaderState }) {
       <p className="sb-faith-hint">
         {t("groups-hint", {
           defaultValue:
-            "The groups you are part of, like a home group or a men's group. Your own agent keeps this list, so the Church app shows the same groups. The church is not told.",
+            "The groups you are part of, like a home group or a men's group. Your own agent keeps this list, so the Church app shows the same groups. The church is not told unless you tell the leader.",
         })}
       </p>
       <MyGroups
