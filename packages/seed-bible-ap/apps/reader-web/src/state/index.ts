@@ -81,6 +81,7 @@ import { getVersePlainText } from "../components/reader/chapterContent";
 import { computed, effect } from "@preact/signals";
 import {
   DEFAULT_ESTATE,
+  isSessionCleared,
   loadSession,
   sessionExpiresAt,
   signOut as forgetSession,
@@ -1063,14 +1064,23 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
       // Immediate: the windows' own Esc listeners sit on the same window, after this one.
       e.stopImmediatePropagation();
     };
+    // Signed out in another tab (a Home's /sso-logout, or Sign out there): this tab stops acting as them too.
+    const onStorage = (e: StorageEvent) => {
+      if (!isSessionCleared(e) || !session.value) return;
+      forgetSession();
+      session.value = null;
+      buckets.reset();
+    };
     const keysOn = typeof window !== "undefined";
     if (keysOn) {
       window.addEventListener("keydown", onTourEsc, true);
       window.addEventListener("keydown", onKey);
+      window.addEventListener("storage", onStorage);
     }
     const stops = [
       () => keysOn && window.removeEventListener("keydown", onTourEsc, true),
       () => keysOn && window.removeEventListener("keydown", onKey),
+      () => keysOn && window.removeEventListener("storage", onStorage),
       bindWakeLock(settings.keepScreenAwake),
       bindRoute(readingOf),
       outbox.start(),

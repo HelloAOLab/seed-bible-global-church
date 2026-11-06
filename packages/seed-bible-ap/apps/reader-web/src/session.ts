@@ -119,6 +119,13 @@ export function signOut(): void {
   save(null);
 }
 
+/** Another tab's `storage` event saying the kept sign-in was removed (a Home's /sso-logout, or Sign out there). */
+export function isSessionCleared(
+  e: Pick<StorageEvent, "key" | "newValue">
+): boolean {
+  return e.key === KEY && e.newValue === null;
+}
+
 function isAllowedIssuer(estateId: EstateId, origin: string): boolean {
   const est = estateById(estateId);
   if (!est) return false;

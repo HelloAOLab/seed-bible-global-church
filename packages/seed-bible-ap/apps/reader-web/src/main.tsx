@@ -2,6 +2,7 @@ import { render } from "preact";
 import { relayCodeIfPopupReturn } from "@agenticprimitives/connect-client";
 import { App } from "./App";
 import { RELAY_CHANNEL, relayThen } from "./session";
+import { SSO_LOGOUT_PATH, ssoLogout } from "./ssoLogout";
 import { createReaderState } from "./state";
 import {
   BIBLE_API_ENDPOINT,
@@ -86,7 +87,10 @@ async function boot() {
 
 // A popup landing back with its code relays it to the opener and closes; render only if it is still here.
 const then = relayThen(search.get("ac_then"));
-if (search.get("ac_relay") === "1" && search.get("code") && then) {
+if (location.pathname === SSO_LOGOUT_PATH) {
+  // A Home's sign-out passing through: before any session is restored or the router reads the path (ssoLogout.ts).
+  void ssoLogout(location.search);
+} else if (search.get("ac_relay") === "1" && search.get("code") && then) {
   // Signed in, and the Home named one more step for this same window (adding the friend who invited them): hand the
   // code to the reader that opened it, then go on there instead of closing.
   const ch = new BroadcastChannel(RELAY_CHANNEL);
