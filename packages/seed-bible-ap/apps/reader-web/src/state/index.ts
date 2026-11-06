@@ -85,6 +85,7 @@ import {
   loadSession,
   sessionExpiresAt,
   signOut as forgetSession,
+  noSilentSignInThisTab,
   type ReaderSession,
 } from "../session";
 
@@ -850,6 +851,7 @@ export function createReaderState(opts: ReaderStateOptions = {}) {
     await presence.gone();
     await forgetPerson(stores.prefs);
     forgetSession();
+    noSilentSignInThisTab();
     session.value = null;
     buckets.reset();
     // Out of the Home too (its single sign-on), so the next sign-in asks who you are rather than reusing the last

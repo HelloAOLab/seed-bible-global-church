@@ -716,7 +716,7 @@ export function AccountCard({ state }: { state: ReaderState }) {
     state.ui.policy.value = p;
     state.ui.pane.value = "about";
   };
-  const onHome = async () => {
+  const onHome = async (differentAccount = false) => {
     if (needAgreement()) return;
     error.value = "";
     try {
@@ -725,7 +725,7 @@ export function AccountCard({ state }: { state: ReaderState }) {
       const out = await connectViaHome(
         DEFAULT_ESTATE,
         (m) => (progress.value = m),
-        { signal: stopSignIn.signal }
+        { signal: stopSignIn.signal, differentAccount }
       );
       if (out) await state.signIn(out, { announce: true });
     } catch (e) {
@@ -885,6 +885,18 @@ export function AccountCard({ state }: { state: ReaderState }) {
               defaultValue: `Sign in with ${estate.label}`,
             })}
           </button>
+          <p className="sb-small">
+            <button
+              type="button"
+              className="sb-discover-create-link"
+              onClick={() => void onHome(true)}
+              disabled={!HOME_SIGNIN_AVAILABLE}
+            >
+              {t("use-different-account", {
+                defaultValue: "Use a different account",
+              })}
+            </button>
+          </p>
           <p className="sb-small sb-muted sb-signin-estate">
             {TOWN.label} · {estate.label} ·{" "}
             <a href={estate.home}>{estate.homeHost}</a>

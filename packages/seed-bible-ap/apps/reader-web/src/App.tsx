@@ -50,7 +50,8 @@ import { OfflineRecovery } from "./components/reader/OfflineRecovery";
 import { AdoptPrompt } from "./components/chrome/AdoptPrompt";
 import { NoteConflict } from "./components/records/NoteConflict";
 import { ScriptureMapPane } from "./components/chrome/ScriptureMapPane";
-import { completeRedirectIfReturning } from "./session";
+import { completeRedirectIfReturning, silentSignInIfDue } from "./session";
+import { isHomeReturn } from "./sign-in-modes";
 
 /** Panes that take the whole reading area, as in the old reader (its `fullscreen` placement). */
 const FULL_WIDTH_PANES: readonly string[] = [
@@ -65,8 +66,13 @@ export function App({ state }: { state: ReaderState }) {
   useEffect(() => {
     let stop: (() => void) | undefined;
     void state.start().then((s) => (stop = s));
+    // A load that is the Home's answer never starts a silent attempt, whatever the answer was.
+    const fromHome = isHomeReturn(location.search);
     completeRedirectIfReturning()
-      .then((s) => s && state.signIn(s, { announce: true }))
+      .then(async (s) => {
+        if (s) await state.signIn(s, { announce: true });
+        else if (!fromHome) await silentSignInIfDue();
+      })
       .catch((e: unknown) => console.warn("[connect]", e));
     return () => stop?.();
   }, []);

@@ -1,7 +1,11 @@
 import { render } from "preact";
 import { relayCodeIfPopupReturn } from "@agenticprimitives/connect-client";
 import { App } from "./App";
-import { RELAY_CHANNEL, relayThen } from "./session";
+import {
+  RELAY_CHANNEL,
+  relayThen,
+  restoreSilentReturnAddress,
+} from "./session";
 import { SSO_LOGOUT_PATH, ssoLogout } from "./ssoLogout";
 import { createReaderState } from "./state";
 import {
@@ -63,6 +67,7 @@ import "leaflet/dist/leaflet.css";
 import "./styles/app.css";
 
 const root = document.getElementById("root")!;
+restoreSilentReturnAddress();
 const search = new URLSearchParams(location.search);
 
 async function boot() {
